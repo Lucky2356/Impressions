@@ -269,10 +269,17 @@ class KeyStorageSection extends ConsumerWidget {
                       .read(keyServiceProvider)
                       .moveSecretToOs();
                   ref.read(dataRefreshProvider.notifier).bump();
-                  if (!context.mounted || !moved) return;
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(l10n.keyStorageMoved)));
+                  if (!context.mounted) return;
+                  // Сообщаем и об отказе: молчащая кнопка выглядит сломанной.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        moved
+                            ? l10n.keyStorageMoved
+                            : l10n.keyStorageMoveFailed,
+                      ),
+                    ),
+                  );
                 },
                 child: Text(l10n.keyStorageMove),
               ),

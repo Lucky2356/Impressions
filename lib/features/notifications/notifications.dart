@@ -41,6 +41,9 @@ class AppNotification {
 /// Момент, до которого уведомления считаются прочитанными.
 const _seenKey = 'notifications_seen_at';
 
+/// Сколько карточек товаров дополнилось при последнем обновлении.
+const _productCountKey = 'product_auto_update_count';
+
 /// Собирает уведомления из уже существующих данных: непросмотренных входящих
 /// изменений, найденного обновления, журналов импорта и резервных копий.
 /// Отдельной таблицы для этого не заводим — иначе одни и те же события пришлось
@@ -99,6 +102,10 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     );
   }
 
+  // События старше этого срока в панели не показываем: иначе там навсегда
+  // повисает «импорт завершён» месячной давности.
+  final horizon = DateTime.now().subtract(const Duration(days: 14));
+
   // Последний импорт.
   final lastImport =
       await (db.select(db.importBatches)
@@ -110,7 +117,7 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
             ])
             ..limit(1))
           .getSingleOrNull();
-  if (lastImport != null) {
+  if (lastImport != null && lastImport.importedAt.isAfter(horizon)) {
     result.add(
       AppNotification(
         kind: NotificationKind.import,
@@ -124,11 +131,14 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     );
   }
 
-  // Обновлённые сведения о товарах.
+  // Обновлённые сведения о товарах — только если что-то действительно
+  // дополнилось: «обновлено 0 карточек» уведомлением не является.
   if (profile != null) {
     final productsAt = await settings.get(SettingKeys.productAutoUpdateAt);
     final at = DateTime.tryParse(productsAt ?? '');
-    if (at != null) {
+    final updated =
+        int.tryParse(await settings.get(_productCountKey) ?? '') ?? 0;
+    if (at != null && updated > 0 && at.isAfter(horizon)) {
       result.add(
         AppNotification(
           kind: NotificationKind.products,
@@ -375,8 +385,6 @@ final incomingCountProvider = FutureProvider<int>((ref) async {
 /// Сколько карточек товаров дополнено при последнем обновлении.
 final lastProductUpdateCountProvider = FutureProvider<int>((ref) async {
   ref.watch(dataRefreshProvider);
-  final raw = await ref
-      .watch(settingsRepositoryProvider)
-      .get('product_auto_update_count');
+  final raw = await ref.watch(settingsRepositoryProvider).get(_productCountKey);
   return int.tryParse(raw ?? '') ?? 0;
 });

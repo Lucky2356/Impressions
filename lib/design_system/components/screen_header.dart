@@ -17,6 +17,7 @@ class ScreenHeader extends StatelessWidget {
     this.leading,
     this.bottom,
     this.constrain = true,
+    this.maxWidth,
   });
 
   final String title;
@@ -30,6 +31,10 @@ class ScreenHeader extends StatelessWidget {
   /// Должно совпадать с одноимённым параметром [ScreenScaffold]: если
   /// содержимое раздела занимает всю ширину, шапка тоже не сужается.
   final bool constrain;
+
+  /// Своя предельная ширина вместо общей — для разделов вроде настроек,
+  /// где колонка уже. Должна совпадать с [ScreenScaffold.maxWidth].
+  final double? maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +58,11 @@ class ScreenHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: layout.gutter),
       child: _content(context),
     );
-    if (!constrain || !layout.contentMaxWidth.isFinite) return content;
+    final limit = maxWidth ?? layout.contentMaxWidth;
+    if (!constrain || !limit.isFinite) return content;
     return Center(
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
+        constraints: BoxConstraints(maxWidth: limit),
         child: content,
       ),
     );
@@ -128,21 +134,27 @@ class ScreenScaffold extends StatelessWidget {
     required this.header,
     required this.child,
     this.constrain = true,
+    this.maxWidth,
   });
 
   final Widget header;
   final Widget child;
   final bool constrain;
 
+  /// Своя предельная ширина вместо общей; должна совпадать с
+  /// [ScreenHeader.maxWidth], иначе шапка и содержимое разъедутся.
+  final double? maxWidth;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final layout = context.layout;
-    final body = constrain && layout.contentMaxWidth.isFinite
+    final limit = maxWidth ?? layout.contentMaxWidth;
+    final body = constrain && limit.isFinite
         ? Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
+              constraints: BoxConstraints(maxWidth: limit),
               child: child,
             ),
           )

@@ -63,7 +63,7 @@ class TypesSection extends ConsumerWidget {
       final chosen = await showDialog<String>(
         context: context,
         builder: (ctx) => SimpleDialog(
-          title: Text(l10n.typeRename),
+          title: Text(l10n.typeIcon),
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -126,7 +126,7 @@ class TypesSection extends ConsumerWidget {
             Row(
               children: [
                 IconButton(
-                  tooltip: l10n.typeRename,
+                  tooltip: l10n.typeIcon,
                   onPressed: () => pickIcon(types[i]),
                   icon: Icon(
                     AppIcons.byKey(types[i].icon),

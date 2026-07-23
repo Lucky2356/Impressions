@@ -140,6 +140,14 @@ class EntryCard extends StatelessWidget {
   }
 }
 
+/// Высота [EntryCardCompact] в сетке с фиксированной высотой ячейки.
+///
+/// Складывается из внутренних отступов и самого высокого содержимого — пути
+/// категории, названия в две строки и строки метаданных. Экраны должны брать
+/// это значение, а не подбирать своё: подобранное вручную оказалось на восемь
+/// точек меньше нужного, и карточки с длинным названием переполнялись.
+const double entryCardCompactHeight = 112;
+
 /// Компактная карточка записи (§3.4): строка с миниатюрой слева.
 class EntryCardCompact extends StatelessWidget {
   const EntryCardCompact({super.key, required this.data, this.onTap});

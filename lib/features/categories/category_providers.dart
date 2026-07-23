@@ -58,21 +58,26 @@ final categoryDirectCountsProvider = FutureProvider<Map<String, int>>((
 });
 
 /// Количество записей по ветке: сама категория плюс все её подкатегории (§7.5).
+///
+/// Считается за один проход: каждая категория добавляет свои записи себе и
+/// всем предкам по материализованному пути. Прежний вариант для каждой
+/// категории перебирал все остальные — на тысяче категорий это миллион
+/// сравнений строк при каждом обновлении данных.
 final categoryBranchCountsProvider = FutureProvider<Map<String, int>>((
   ref,
 ) async {
   final direct = await ref.watch(categoryDirectCountsProvider.future);
   final cats = await ref.watch(allCategoriesProvider.future);
-  final result = <String, int>{};
+
+  final result = {for (final cat in cats) cat.id: 0};
   for (final cat in cats) {
-    var total = direct[cat.id] ?? 0;
-    final prefix = '${cat.path}/';
-    for (final other in cats) {
-      if (other.path.startsWith(prefix)) {
-        total += direct[other.id] ?? 0;
-      }
+    final own = direct[cat.id] ?? 0;
+    if (own == 0) continue;
+    // Путь содержит саму категорию и всех её предков.
+    for (final ancestorId in cat.path.split('/')) {
+      final current = result[ancestorId];
+      if (current != null) result[ancestorId] = current + own;
     }
-    result[cat.id] = total;
   }
   return result;
 });

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import '../../app/app_state.dart';
 import '../../app/navigation.dart';
 import '../../app/theme_controller.dart';
 import '../../core/config/app_config.dart';
+import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
@@ -44,6 +47,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchFocus.dispose();
     super.dispose();
   }
@@ -148,8 +152,24 @@ class _AppShellState extends ConsumerState<AppShell> {
     _ => const HomeScreen(),
   };
 
+  Timer? _searchDebounce;
+
   /// Глобальный поиск: подставляет запрос в каталог и открывает его.
+  ///
+  /// С задержкой: без неё раздел переключался на первой же набранной букве —
+  /// экран прыгал прямо под руками.
   void _search(String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      ref.read(catalogStateProvider.notifier).setSearch(query);
+      if (query.trim().isNotEmpty) _go(NavIds.catalog);
+    });
+  }
+
+  /// Ввод завершён явно (Enter) — переходим сразу.
+  void _searchSubmitted(String query) {
+    _searchDebounce?.cancel();
     ref.read(catalogStateProvider.notifier).setSearch(query);
     if (query.trim().isNotEmpty) _go(NavIds.catalog);
   }
@@ -222,6 +242,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   wide: true,
                   searchFocus: _searchFocus,
                   onSearch: _search,
+                  onSearchSubmitted: _searchSubmitted,
                   onScan: _scanBarcode,
                 ),
                 Divider(height: 1, color: c.border),
@@ -248,6 +269,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           wide: false,
           searchFocus: _searchFocus,
           onSearch: _search,
+          onSearchSubmitted: _searchSubmitted,
           onScan: _scanBarcode,
         ),
       ),
@@ -297,6 +319,7 @@ class _TopHeader extends ConsumerWidget {
     required this.wide,
     required this.searchFocus,
     required this.onSearch,
+    required this.onSearchSubmitted,
     required this.onScan,
   });
 
@@ -304,6 +327,7 @@ class _TopHeader extends ConsumerWidget {
   final bool wide;
   final FocusNode searchFocus;
   final ValueChanged<String> onSearch;
+  final ValueChanged<String> onSearchSubmitted;
   final VoidCallback onScan;
 
   @override
@@ -332,7 +356,7 @@ class _TopHeader extends ConsumerWidget {
                 hint: l10n.searchGlobalHint,
                 focusNode: searchFocus,
                 onChanged: onSearch,
-                onSubmitted: onSearch,
+                onSubmitted: onSearchSubmitted,
               ),
             ),
             const SizedBox(width: AppDimens.space12),
@@ -405,23 +429,14 @@ class _TopHeader extends ConsumerWidget {
             children: [
               Text(l10n.hotkeysTitle, style: context.text.titleMedium),
               const SizedBox(height: AppDimens.space12),
-              for (final (keys, label) in [
-                ('Ctrl + N', l10n.hotkeyNewEntry),
-                ('Ctrl + B', l10n.hotkeyScan),
-                ('Ctrl + F', l10n.hotkeySearch),
-                ('Ctrl + I', l10n.hotkeyImport),
-                ('Ctrl + E', l10n.hotkeyExport),
-                ('Ctrl + P', l10n.hotkeyProfiles),
-                ('Ctrl + ,', l10n.hotkeySettings),
-                ('Esc', l10n.hotkeyClose),
-              ])
+              for (final hotkey in appHotkeys(l10n))
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppDimens.space8),
                   child: Row(
                     children: [
-                      SizedBox(width: 96, child: _KeyCap(label: keys)),
+                      SizedBox(width: 96, child: _KeyCap(label: hotkey.keys)),
                       const SizedBox(width: AppDimens.space12),
-                      Expanded(child: Text(label)),
+                      Expanded(child: Text(hotkey.label)),
                     ],
                   ),
                 ),

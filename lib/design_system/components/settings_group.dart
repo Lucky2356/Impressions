@@ -30,7 +30,15 @@ class SettingsGroup extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppDimens.space12),
-        AppCard(child: Column(children: children)),
+        // Содержимое прижато к левому краю: по умолчанию Column центрирует
+        // детей по горизонтали, из-за чего одиночные подписи и пустые
+        // состояния оказывались посреди карточки и выглядели как ошибка.
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        ),
       ],
     );
   }

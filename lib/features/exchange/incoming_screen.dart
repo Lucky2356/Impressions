@@ -44,18 +44,49 @@ final incomingChangesProvider = FutureProvider<List<IncomingItem>>((ref) async {
   final profiles = await db.select(db.profiles).get();
   final profileNames = {for (final p in profiles) p.id: p.firstName};
 
-  // Названия подтягиваем пакетно: список может быть длинным, а по одному
-  // запросу на строку — это сотни обращений к базе.
-  final objects = {
-    for (final o in await db.select(db.objects).get()) o.id: o.title,
-  };
-  final categories = {
-    for (final c in await db.select(db.categories).get()) c.id: c.name,
-  };
-  final entryTitles = <String, String>{};
-  for (final e in await db.select(db.profileEntries).get()) {
-    entryTitles[e.id] = objects[e.objectId] ?? e.id;
+  // Названия подтягиваем пакетно и только для затронутых сущностей: по одному
+  // запросу на строку — это сотни обращений к базе, а выборка целиком —
+  // загрузка всего каталога ради нескольких заголовков.
+  final idsByKind = <String, Set<String>>{};
+  for (final change in changes) {
+    (idsByKind[change.entityKind] ??= <String>{}).add(change.entityId);
   }
+
+  final entryIds = idsByKind['entry'] ?? const <String>{};
+  final entries = entryIds.isEmpty
+      ? <ProfileEntryRow>[]
+      : await (db.select(
+          db.profileEntries,
+        )..where((e) => e.id.isIn(entryIds))).get();
+
+  final objectIds = {
+    ...?idsByKind['object'],
+    ...entries.map((e) => e.objectId),
+  };
+  final objects = {
+    for (final o
+        in objectIds.isEmpty
+            ? <ObjectRow>[]
+            : await (db.select(
+                db.objects,
+              )..where((o) => o.id.isIn(objectIds))).get())
+      o.id: o.title,
+  };
+
+  final categoryIds = idsByKind['category'] ?? const <String>{};
+  final categories = {
+    for (final c
+        in categoryIds.isEmpty
+            ? <CategoryRow>[]
+            : await (db.select(
+                db.categories,
+              )..where((c) => c.id.isIn(categoryIds))).get())
+      c.id: c.name,
+  };
+
+  final entryTitles = {
+    for (final e in entries) e.id: objects[e.objectId] ?? e.id,
+  };
 
   return [
     for (final change in changes)

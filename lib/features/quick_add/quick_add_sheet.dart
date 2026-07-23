@@ -343,9 +343,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 const SizedBox(height: AppDimens.space16),
                 DropdownButtonFormField<String>(
                   initialValue: _typeId,
+                  // Без общего значка слева: у каждого типа он свой, и два
+                  // значка подряд в свёрнутом поле выглядели как ошибка.
                   decoration: InputDecoration(
                     labelText: l10n.quickAddTypeLabel,
-                    prefixIcon: const Icon(Icons.category_rounded, size: 20),
                   ),
                   // Без ограничения список типов раскрывался на всю высоту
                   // экрана и перекрывал форму.

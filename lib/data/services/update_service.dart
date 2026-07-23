@@ -255,9 +255,21 @@ class UpdateService {
     }
 
     final sources = await enabledSources();
+    // Отбираем только неполные карточки прямо в запросе. Иначе ограничение по
+    // количеству каждый раз забирало одни и те же первые строки, и до
+    // остальных товаров очередь не доходила никогда.
     final candidates =
         await (db.select(db.objects)
-              ..where((o) => o.barcode.isNotNull())
+              ..where(
+                (o) =>
+                    o.barcode.isNotNull() &
+                    o.barcode.equals('').not() &
+                    (o.creator.isNull() |
+                        o.creator.equals('') |
+                        o.summary.isNull() |
+                        o.summary.equals('') |
+                        o.title.equalsExp(o.barcode)),
+              )
               ..limit(limit))
             .get();
 

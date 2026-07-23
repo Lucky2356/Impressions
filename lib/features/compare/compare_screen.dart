@@ -98,122 +98,120 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     );
     final results = ref.watch(compareResultsProvider(params));
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimens.space20,
-            AppDimens.space16,
-            AppDimens.space20,
-            AppDimens.space12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: AppDimens.space12,
-                runSpacing: AppDimens.space12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  _ProfileDropdown(
-                    label: l10n.compareFirst,
-                    value: _firstId!,
-                    onChanged: (v) => setState(() {
-                      _firstId = v;
-                      _selected.clear();
-                    }),
-                  ),
-                  Icon(Icons.compare_arrows_rounded, color: c.textMuted),
-                  _ProfileDropdown(
-                    label: l10n.compareSecond,
-                    value: _secondId!,
-                    onChanged: (v) => setState(() {
-                      _secondId = v;
-                      _selected.clear();
-                    }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimens.space12),
-              Wrap(
-                spacing: AppDimens.space8,
-                runSpacing: AppDimens.space8,
-                children: [
-                  for (final mode in CompareMode.values)
-                    ChoiceChip(
-                      selected: _mode == mode,
-                      onSelected: (_) => setState(() {
-                        _mode = mode;
-                        _selected.clear();
-                      }),
-                      label: Text(_modeLabel(mode, l10n)),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        if (_selected.isNotEmpty)
-          Container(
-            width: double.infinity,
-            color: c.accentSoft,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.space20,
-              vertical: AppDimens.space8,
-            ),
-            child: Row(
+    return ScreenScaffold(
+      constrain: false,
+      header: ScreenHeader(
+        constrain: false,
+        title: l10n.compareTitle,
+        bottom: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: AppDimens.space12,
+              runSpacing: AppDimens.space12,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text(
-                  l10n.compareSelected(_selected.length),
-                  style: context.text.labelMedium,
+                _ProfileDropdown(
+                  label: l10n.compareFirst,
+                  value: _firstId!,
+                  onChanged: (v) => setState(() {
+                    _firstId = v;
+                    _selected.clear();
+                  }),
                 ),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: _busy ? null : () => _transferSelected(params),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(l10n.compareTransferSelected),
+                Icon(Icons.compare_arrows_rounded, color: c.textMuted),
+                _ProfileDropdown(
+                  label: l10n.compareSecond,
+                  value: _secondId!,
+                  onChanged: (v) => setState(() {
+                    _secondId = v;
+                    _selected.clear();
+                  }),
                 ),
               ],
             ),
-          ),
-        Divider(height: 1, color: c.border),
-        Expanded(
-          child: results.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Center(child: Text('$e')),
-            data: (rows) {
-              if (rows.isEmpty) {
-                return EmptyState(
-                  icon: Icons.search_off_rounded,
-                  title: l10n.compareEmpty,
-                  message: l10n.compareEmptyMessage,
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(AppDimens.space20),
-                itemCount: rows.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(height: AppDimens.space12),
-                itemBuilder: (context, i) {
-                  final row = rows[i];
-                  // Переносить можно только то, чего нет у активного профиля.
-                  final transferable = _transferableEntryId(row) != null;
-                  return _CompareRowCard(
-                    row: row,
-                    selected: _selected.contains(row.objectId),
-                    selectable: transferable,
-                    onToggle: () => setState(() {
-                      if (!_selected.remove(row.objectId)) {
-                        _selected.add(row.objectId);
-                      }
+            const SizedBox(height: AppDimens.space12),
+            Wrap(
+              spacing: AppDimens.space8,
+              runSpacing: AppDimens.space8,
+              children: [
+                for (final mode in CompareMode.values)
+                  ChoiceChip(
+                    selected: _mode == mode,
+                    onSelected: (_) => setState(() {
+                      _mode = mode;
+                      _selected.clear();
                     }),
-                  );
-                },
-              );
-            },
-          ),
+                    label: Text(_modeLabel(mode, l10n)),
+                  ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
+      child: Column(
+        children: [
+          if (_selected.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: c.accentSoft,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.space20,
+                vertical: AppDimens.space8,
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    l10n.compareSelected(_selected.length),
+                    style: context.text.labelMedium,
+                  ),
+                  const Spacer(),
+                  FilledButton.icon(
+                    onPressed: _busy ? null : () => _transferSelected(params),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text(l10n.compareTransferSelected),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: results.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, _) => Center(child: Text('$e')),
+              data: (rows) {
+                if (rows.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: l10n.compareEmpty,
+                    message: l10n.compareEmptyMessage,
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(AppDimens.space20),
+                  itemCount: rows.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppDimens.space12),
+                  itemBuilder: (context, i) {
+                    final row = rows[i];
+                    // Переносить можно только то, чего нет у активного профиля.
+                    final transferable = _transferableEntryId(row) != null;
+                    return _CompareRowCard(
+                      row: row,
+                      selected: _selected.contains(row.objectId),
+                      selectable: transferable,
+                      onToggle: () => setState(() {
+                        if (!_selected.remove(row.objectId)) {
+                          _selected.add(row.objectId);
+                        }
+                      }),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 

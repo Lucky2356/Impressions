@@ -71,7 +71,12 @@ class KeyService {
   }
 
   /// Где сейчас лежит секрет — показывается в настройках.
+  ///
+  /// Заодно создаёт секрет, если его ещё нет: иначе на свежей установке
+  /// настройки сообщали бы «в базе приложения», хотя там пусто, а кнопка
+  /// переноса не делала бы ничего.
   Future<SecretLocation> secretLocation() async {
+    await _deviceSecret();
     if (await _secrets.read(_deviceSecretKey) != null) {
       return SecretLocation.operatingSystem;
     }
@@ -79,9 +84,14 @@ class KeyService {
   }
 
   /// Переносит секрет из базы в хранилище ОС по требованию пользователя.
+  /// Возвращает false, если хранилище недоступно и переносить некуда.
   Future<bool> moveSecretToOs() async {
     final fromDb = await _settings.get(_deviceSecretKey);
-    if (fromDb == null || fromDb.isEmpty) return false;
+    if (fromDb == null || fromDb.isEmpty) {
+      // Секрета в базе нет — либо он уже перенесён, либо ещё не создан.
+      await _deviceSecret();
+      return _secrets.read(_deviceSecretKey).then((v) => v != null);
+    }
     if (!await _secrets.write(_deviceSecretKey, fromDb)) return false;
     await _settings.set(_deviceSecretKey, '');
     return true;

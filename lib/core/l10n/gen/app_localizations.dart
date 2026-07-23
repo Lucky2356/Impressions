@@ -1495,7 +1495,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsPrivacyNote.
   ///
   /// In ru, this message translates to:
-  /// **'Приложение работает полностью локально: без сервера, облака, регистрации, аналитики и сетевых запросов.'**
+  /// **'Записи, фотографии и ключи хранятся только на устройстве: без сервера, облака, регистрации, аналитики и телеметрии. В сеть уходят лишь штрихкод при поиске товара и запрос списка выпусков при проверке обновлений — оба отключаются выше.'**
   String get settingsPrivacyNote;
 
   /// No description provided for @settingsLanguage.
@@ -1989,6 +1989,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Значок категории'**
   String get categoryIcon;
+
+  /// No description provided for @typeIcon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значок типа'**
+  String get typeIcon;
 
   /// No description provided for @categoryOpenInCatalog.
   ///
@@ -2667,6 +2673,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ключ перенесён в хранилище операционной системы'**
   String get keyStorageMoved;
+
+  /// No description provided for @keyStorageMoveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хранилище системы недоступно — секрет остался в базе'**
+  String get keyStorageMoveFailed;
 }
 
 class _AppLocalizationsDelegate

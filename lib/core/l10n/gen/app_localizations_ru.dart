@@ -781,7 +781,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsPrivacyNote =>
-      'Приложение работает полностью локально: без сервера, облака, регистрации, аналитики и сетевых запросов.';
+      'Записи, фотографии и ключи хранятся только на устройстве: без сервера, облака, регистрации, аналитики и телеметрии. В сеть уходят лишь штрихкод при поиске товара и запрос списка выпусков при проверке обновлений — оба отключаются выше.';
 
   @override
   String get settingsLanguage => 'Язык интерфейса';
@@ -1048,6 +1048,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get categoryIcon => 'Значок категории';
+
+  @override
+  String get typeIcon => 'Значок типа';
 
   @override
   String get categoryOpenInCatalog => 'Показать записи';
@@ -1473,4 +1476,8 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get keyStorageMoved =>
       'Ключ перенесён в хранилище операционной системы';
+
+  @override
+  String get keyStorageMoveFailed =>
+      'Хранилище системы недоступно — секрет остался в базе';
 }

@@ -5,6 +5,7 @@ import '../../core/domain/app_icons.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
@@ -39,15 +40,19 @@ class HomeScreen extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final layout = AppLayout.resolve(constraints.maxWidth);
         final showSide = constraints.maxWidth >= 1080;
-        final horizontal = constraints.maxWidth >= AppDimens.breakpointExpanded
-            ? AppDimens.space32
-            : AppDimens.space20;
+        final horizontal = layout.gutter;
 
         return SingleChildScrollView(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1720),
+              // Сводка шире обычной колонки текста: это плитки, а не чтение.
+              constraints: BoxConstraints(
+                maxWidth: layout.isUltra
+                    ? AppDimens.maxContentWidthUltra * 1.4
+                    : 1440,
+              ),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   horizontal,

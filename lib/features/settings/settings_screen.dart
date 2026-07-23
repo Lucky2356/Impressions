@@ -6,6 +6,7 @@ import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../app/theme_controller.dart';
 import '../../core/config/app_config.dart';
+import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -40,6 +41,9 @@ final backupsProvider = FutureProvider<List<BackupInfo>>((ref) async {
   return BackupService(ref.watch(appDatabaseProvider)).list();
 });
 
+/// Ширина колонки настроек: формы шире читать неудобно.
+const double _settingsMaxWidth = 880;
+
 /// Настройки приложения: оформление, поведение, данные, сведения.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -48,13 +52,23 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
+    // Настройки — колонка форм, она уже общей ширины контента. Одна и та же
+    // ширина задаётся шапке и содержимому, иначе заголовок и группы стоят с
+    // разным отступом слева.
     return ScreenScaffold(
-      header: ScreenHeader(title: l10n.navSettings),
+      maxWidth: _settingsMaxWidth,
+      header: ScreenHeader(
+        title: l10n.navSettings,
+        maxWidth: _settingsMaxWidth,
+      ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
+          constraints: const BoxConstraints(maxWidth: _settingsMaxWidth),
           child: ListView(
-            padding: const EdgeInsets.all(AppDimens.space24),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.space24,
+              vertical: AppDimens.space16,
+            ),
             children: const [
               _AppearanceSection(),
               SizedBox(height: AppDimens.space24),
@@ -97,28 +111,31 @@ class _AppearanceSection extends ConsumerWidget {
             Expanded(
               child: Text(l10n.settingsTheme, style: context.text.bodyMedium),
             ),
-            SegmentedButton<ThemeMode>(
+            // Тот же переключатель, что и в боковой панели: два разных
+            // элемента для одного и того же выбора выглядели как недоделка.
+            SegmentedToggle<ThemeMode>(
+              value: mode,
+              onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
               segments: [
-                ButtonSegment(
+                SegmentData(
                   value: ThemeMode.light,
-                  icon: const Icon(Icons.light_mode_rounded, size: 18),
+                  icon: Icons.light_mode_rounded,
                   tooltip: l10n.themeLight,
+                  label: l10n.themeLight,
                 ),
-                ButtonSegment(
+                SegmentData(
                   value: ThemeMode.dark,
-                  icon: const Icon(Icons.dark_mode_rounded, size: 18),
+                  icon: Icons.dark_mode_rounded,
                   tooltip: l10n.themeDark,
+                  label: l10n.themeDark,
                 ),
-                ButtonSegment(
+                SegmentData(
                   value: ThemeMode.system,
-                  icon: const Icon(Icons.brightness_auto_rounded, size: 18),
+                  icon: Icons.brightness_auto_rounded,
                   tooltip: l10n.themeSystem,
+                  label: l10n.themeSystem,
                 ),
               ],
-              selected: {mode},
-              showSelectedIcon: false,
-              onSelectionChanged: (set) =>
-                  ref.read(themeModeProvider.notifier).set(set.first),
             ),
           ],
         ),
@@ -261,24 +278,18 @@ class _BackupsSection extends ConsumerWidget {
         label: Text(l10n.backupCreate),
       ),
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            l10n.backupRetentionHint,
-            style: context.text.labelSmall?.copyWith(color: c.textMuted),
-          ),
+        Text(
+          l10n.backupRetentionHint,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
         if (backups.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: AppDimens.space12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                l10n.backupEmpty,
-                style: context.text.bodySmall?.copyWith(color: c.textMuted),
-              ),
+            child: Text(
+              l10n.backupEmpty,
+              style: context.text.bodySmall?.copyWith(color: c.textMuted),
             ),
           )
         else
@@ -413,12 +424,7 @@ class _HotkeysHint extends StatelessWidget {
       children: [
         Text(l10n.hotkeysTitle, style: context.text.titleMedium),
         const SizedBox(height: AppDimens.space8),
-        key('Ctrl + N', l10n.hotkeyNewEntry),
-        key('Ctrl + F', l10n.hotkeySearch),
-        key('Ctrl + I', l10n.hotkeyImport),
-        key('Ctrl + E', l10n.hotkeyExport),
-        key('Ctrl + P', l10n.hotkeyProfiles),
-        key('Escape', l10n.hotkeyClose),
+        for (final hotkey in appHotkeys(l10n)) key(hotkey.keys, hotkey.label),
       ],
     );
   }
