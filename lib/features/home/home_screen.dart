@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/navigation.dart';
 import '../../core/domain/app_icons.dart';
-import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
@@ -12,6 +12,7 @@ import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
+import '../wishlist/wishlist_screen.dart';
 import 'home_providers.dart';
 
 /// Главная (§14): визуальная сводка активного профиля на реальных данных.
@@ -98,6 +99,7 @@ class _MainColumn extends ConsumerWidget {
     final roots = ref.watch(rootCategoriesProvider).value ?? const [];
     // Для корневых плиток показываем счётчик по всей ветке (§7.5).
     final counts = ref.watch(categoryBranchCountsProvider).value ?? const {};
+    final byMonth = ref.watch(entriesByMonthProvider).value ?? const <double>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,21 +118,21 @@ class _MainColumn extends ConsumerWidget {
                     title: l10n.statEntries,
                     value: '${stats.entries}',
                     unit: l10n.statUnitPieces,
-                    trend: _trendFor(stats.entries),
+                    // Настоящие добавления по месяцам, а не линия, выведенная
+                    // из текущего числа.
+                    trend: byMonth,
                     trendColor: c.chartGreen,
                   ),
                   StatCard(
                     title: l10n.statCategories,
                     value: '${stats.categories}',
                     unit: l10n.statUnitPieces,
-                    trend: _trendFor(stats.categories),
                     trendColor: c.chartBlue,
                   ),
                   StatCard(
                     title: l10n.sectionWantToTry,
                     value: '${stats.wantToTry}',
                     unit: l10n.statUnitPieces,
-                    trend: _trendFor(stats.wantToTry),
                     trendColor: c.chartRed,
                   ),
                 ],
@@ -156,6 +158,7 @@ class _MainColumn extends ConsumerWidget {
                 for (final e in recent.take(cols * 2))
                   CoverProgress(
                     title: e.title,
+                    imagePath: e.coverPath,
                     seedColor: c.profileColorFor(e.objectId),
                     progress: e.rating == null ? null : e.rating! / 10,
                     leftLabel: e.categoryPath.isEmpty
@@ -190,6 +193,15 @@ class _MainColumn extends ConsumerWidget {
                       iconKey: roots[i].icon,
                       color: palette[i % palette.length],
                       count: counts[roots[i].id] ?? 0,
+                      // Плитки долго были просто картинкой: нажатие ничего не
+                      // делало. Открываем ветку на её экране, фильтр каталога
+                      // не трогаем.
+                      onTap: () {
+                        ref
+                            .read(selectedCategoryProvider.notifier)
+                            .select(roots[i].id);
+                        ref.read(navProvider.notifier).go(NavIds.categories);
+                      },
                     ),
                 ],
                 cols,
@@ -200,14 +212,6 @@ class _MainColumn extends ConsumerWidget {
         ],
       ],
     );
-  }
-
-  /// Мягкий восходящий тренд по текущему значению — визуальный акцент карточки.
-  List<double> _trendFor(int value) {
-    final v = value.toDouble();
-    return [
-      for (var i = 0; i < 10; i++) (v * (0.55 + i * 0.05)).clamp(0, v + 1),
-    ];
   }
 
   Widget _grid(List<Widget> children, int cols, double aspect) {
@@ -229,18 +233,21 @@ class _CategoryTile extends StatelessWidget {
     required this.iconKey,
     required this.color,
     required this.count,
+    required this.onTap,
   });
 
   final String name;
   final String? iconKey;
   final Color color;
   final int count;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final l10n = AppLocalizations.of(context);
     return AppCard(
+      onTap: onTap,
       child: Row(
         children: [
           Container(
@@ -283,7 +290,6 @@ class _SidePanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final c = context.colors;
     final want = ref.watch(wantToTryProvider).value ?? const <EntryView>[];
 
     if (want.isEmpty) return const SizedBox.shrink();
@@ -293,63 +299,13 @@ class _SidePanel extends ConsumerWidget {
       children: [
         SectionHeader(title: l10n.sectionWantToTry),
         const SizedBox(height: AppDimens.space16),
-        AppCard(
-          child: Column(
-            children: [
-              for (var i = 0; i < want.length; i++) ...[
-                _WantRow(entry: want[i]),
-                if (i != want.length - 1)
-                  Divider(height: AppDimens.space24, color: c.divider),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WantRow extends StatelessWidget {
-  const _WantRow({required this.entry});
-  final EntryView entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final color = c.profileColorFor(entry.objectId);
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: AppDimens.brSm,
-          ),
-          child: Icon(Relation.wantToTry.icon, size: 20, color: color),
-        ),
-        const SizedBox(width: AppDimens.space12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                entry.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.text.titleMedium,
-              ),
-              Text(
-                entry.categoryPath.isEmpty
-                    ? entry.typeName
-                    : entry.categoryPath.join(' / '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.text.labelSmall?.copyWith(color: c.textMuted),
-              ),
-            ],
-          ),
-        ),
+        // Та же строка, что и на своём экране: открывается по нажатию и даёт
+        // отметить попробованное. Прежняя копия здесь не делала ни того, ни
+        // другого.
+        for (var i = 0; i < want.length; i++) ...[
+          if (i != 0) const SizedBox(height: AppDimens.space8),
+          WishlistTile(entry: want[i]),
+        ],
       ],
     );
   }

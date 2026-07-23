@@ -524,6 +524,46 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoRemove => 'Удалить фотографию';
 
   @override
+  String get errorStateTitle => 'Не удалось показать этот раздел';
+
+  @override
+  String get errorStateMessage =>
+      'Данные на месте — сбой произошёл при их чтении. Попробуйте перейти в раздел заново или перезапустить приложение.';
+
+  @override
+  String get errorStateDetails => 'Подробности';
+
+  @override
+  String catalogSearchChip(String query) {
+    return 'Поиск: $query';
+  }
+
+  @override
+  String get purgeAction => 'Удалить навсегда';
+
+  @override
+  String purgeConfirmTitle(String title) {
+    return 'Удалить «$title» навсегда?';
+  }
+
+  @override
+  String get purgeConfirmMessage =>
+      'Это не архивирование: запись, её версии и фотографии будут стёрты. Отменить будет нельзя — вернуть можно только из резервной копии.';
+
+  @override
+  String get purgeDone => 'Удалено навсегда';
+
+  @override
+  String get purgeCategoryHasChildren =>
+      'Сначала разберитесь с подкатегориями: удалять ветку целиком нельзя.';
+
+  @override
+  String get photoMakeCover => 'Сделать обложкой';
+
+  @override
+  String get photoIsCover => 'Обложка записи';
+
+  @override
   String get photoDropHint => 'Перетащите изображения сюда';
 
   @override
@@ -827,7 +867,35 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupRetentionHint =>
-      'Автоматические копии создаются перед импортом. Хранятся последние 7, копии, созданные вручную, не удаляются.';
+      'Автоматические копии создаются перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.';
+
+  @override
+  String get backupRestore => 'Восстановить';
+
+  @override
+  String get backupRestoreConfirmTitle => 'Восстановить из копии?';
+
+  @override
+  String backupRestoreConfirmMessage(String date) {
+    return 'Все записи, категории и фотографии будут заменены содержимым копии от $date. Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.';
+  }
+
+  @override
+  String get backupRestoreDoneTitle => 'Копия восстановлена';
+
+  @override
+  String get backupRestoreDoneMessage =>
+      'Данные заменены. Закройте приложение и откройте снова — работать с восстановленной базой можно только после перезапуска.';
+
+  @override
+  String get backupRestoreQuit => 'Закрыть приложение';
+
+  @override
+  String get backupRestoreNotFound => 'Файл копии не найден';
+
+  @override
+  String get backupRestoreTooNew =>
+      'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.';
 
   @override
   String get settingsAppearance => 'Оформление';

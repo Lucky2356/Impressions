@@ -6,6 +6,7 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 
 /// Результат выбора категории: либо выбранная категория, либо явный сброс.
@@ -84,7 +85,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
         Expanded(
           child: categories.when(
             loading: () => const SizedBox.shrink(),
-            error: (e, _) => Center(child: Text('$e')),
+            error: (e, _) => ErrorState(error: e),
             data: (list) {
               final byId = {for (final cat in list) cat.id: cat};
               final filtered = _query.isEmpty

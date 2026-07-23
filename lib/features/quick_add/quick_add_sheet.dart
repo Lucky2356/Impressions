@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +14,11 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
+import '../../data/services/image_service.dart';
+import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
+import '../collections/collection_providers.dart';
+import '../entry/pending_photos_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
 
@@ -90,6 +96,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Когда впечатление случилось на самом деле (§10).
   DateTime? _impressionDate;
 
+  /// Фотографии, выбранные до сохранения: привязать их можно только к уже
+  /// созданной версии записи (§16, §18).
+  List<Uint8List> _photos = const [];
+
+  /// Названия тегов, которые получит запись (§7.2).
+  final List<String> _tags = [];
+
+  /// Подборка, в которую запись попадёт сразу (§27).
+  String? _collectionId;
+
   @override
   void initState() {
     super.initState();
@@ -158,7 +174,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             : CustomField.encodeValues(_customValues),
       );
 
-      await repo.createEntry(
+      final entry = await repo.createEntry(
         profileId: profile.id,
         objectId: object.id,
         relation: _relation?.name,
@@ -167,11 +183,86 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         impressionDate: _impressionDate,
         primaryCategoryId: _category?.id,
       );
+
+      for (final name in _tags) {
+        await repo.addTag(profile.id, entry.id, name);
+      }
+
+      final collectionId = _collectionId;
+      if (collectionId != null) {
+        await ref
+            .read(collectionRepositoryProvider)
+            .addEntry(collectionId, entry.id);
+      }
+
+      await _attachPhotos(entry);
+
       ref.read(dataRefreshProvider.notifier).bump();
       if (mounted) Navigator.of(context).pop(true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Переносит выбранные в форме снимки в хранилище и привязывает к записи.
+  ///
+  /// Порядок сохраняется, первый становится обложкой — её видно в каталоге.
+  /// Отклонённые файлы просто пропускаем: запись уже создана, и терять её
+  /// из-за одной неудачной картинки нельзя.
+  Future<void> _attachPhotos(ProfileEntryRow entry) async {
+    final revisionId = entry.currentRevisionId;
+    if (_photos.isEmpty || revisionId == null) return;
+
+    final images = ImageService(ref.read(appDatabaseProvider));
+    var rejected = 0;
+    for (final bytes in _photos) {
+      final result = await images.addFromBytes(bytes);
+      final attachment = switch (result) {
+        ImageAdded(attachment: final a) => a,
+        ImageDuplicate(attachment: final a) => a,
+        ImageRejected() => null,
+      };
+      if (attachment == null) {
+        rejected++;
+        continue;
+      }
+      await images.attachToEntry(
+        entryId: entry.id,
+        attachmentId: attachment.id,
+        revisionId: revisionId,
+      );
+    }
+
+    if (rejected > 0 && mounted) {
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.photoRejected)));
+    }
+  }
+
+  Future<void> _addTag() async {
+    final l10n = AppLocalizations.of(context);
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+
+    // Подсказываем уже заведённые теги: иначе «Острое» и «острое» разъедутся
+    // в две метки.
+    final existing = await ref
+        .read(entryRepositoryProvider)
+        .tagsOfProfile(profile.id);
+    if (!mounted) return;
+
+    final name = await TextInputDialog.show(
+      context,
+      title: l10n.tagAdd,
+      label: l10n.tagNameLabel,
+      suggestions: [for (final t in existing) t.name],
+    );
+    final trimmed = name?.trim() ?? '';
+    if (trimmed.isEmpty) return;
+    if (_tags.any((t) => t.toLowerCase() == trimmed.toLowerCase())) return;
+    setState(() => _tags.add(trimmed));
   }
 
   Future<void> _pickDate() async {
@@ -487,6 +578,25 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     onPick: _pickDate,
                     onClear: () => setState(() => _impressionDate = null),
                   ),
+                  const SizedBox(height: AppDimens.space20),
+                  // Фотографии, теги и подборка — прямо здесь. Раньше за
+                  // каждым из них приходилось открывать сохранённую запись.
+                  PendingPhotosField(
+                    photos: _photos,
+                    enabled: !_busy,
+                    onChanged: (list) => setState(() => _photos = list),
+                  ),
+                  const SizedBox(height: AppDimens.space20),
+                  _TagsField(
+                    tags: _tags,
+                    onAdd: _addTag,
+                    onRemove: (t) => setState(() => _tags.remove(t)),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                  _CollectionField(
+                    value: _collectionId,
+                    onChanged: (id) => setState(() => _collectionId = id),
+                  ),
                   // Пользовательские поля выбранного типа (§9).
                   ..._customFieldInputs(typeList, l10n),
                 ],
@@ -548,6 +658,123 @@ class _CategoryField extends StatelessWidget {
 
 /// Что делать с найденными похожими объектами (§26).
 enum _DuplicateChoice { useExisting, keepSeparate, cancelled }
+
+/// Теги новой записи (§7.2).
+class _TagsField extends StatelessWidget {
+  const _TagsField({
+    required this.tags,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<String> tags;
+  final VoidCallback onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(l10n.tagsLabel, style: context.text.titleMedium),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(l10n.tagAdd),
+            ),
+          ],
+        ),
+        if (tags.isEmpty)
+          Text(
+            l10n.tagsHint,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          )
+        else
+          Wrap(
+            spacing: AppDimens.space8,
+            runSpacing: AppDimens.space8,
+            children: [
+              for (final tag in tags)
+                InputChip(
+                  label: Text(tag),
+                  onDeleted: () => onRemove(tag),
+                  deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// Подборка, в которую запись попадёт сразу после сохранения (§27).
+class _CollectionField extends ConsumerWidget {
+  const _CollectionField({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final profile = ref.watch(activeProfileProvider);
+    final collections = ref.watch(collectionsProvider).value ?? const [];
+
+    Future<void> create() async {
+      if (profile == null) return;
+      final name = await TextInputDialog.show(
+        context,
+        title: l10n.collectionCreate,
+        label: l10n.collectionNameLabel,
+      );
+      if (name == null) return;
+      final created = await ref
+          .read(collectionRepositoryProvider)
+          .create(profile.id, name);
+      ref.read(dataRefreshProvider.notifier).bump();
+      onChanged(created.id);
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String?>(
+            initialValue: collections.any((c) => c.collection.id == value)
+                ? value
+                : null,
+            decoration: InputDecoration(labelText: l10n.collectionAddTo),
+            menuMaxHeight: 320,
+            borderRadius: AppDimens.brMd,
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+            items: [
+              DropdownMenuItem(
+                value: null,
+                child: Text(l10n.quickAddNoCategory),
+              ),
+              for (final v in collections)
+                DropdownMenuItem(
+                  value: v.collection.id,
+                  child: Text(v.collection.name),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
+        ),
+        const SizedBox(width: AppDimens.space8),
+        AppIconButton(
+          icon: Icons.add_rounded,
+          tooltip: l10n.collectionCreate,
+          onPressed: create,
+        ),
+      ],
+    );
+  }
+}
 
 /// Выбор даты впечатления в форме добавления.
 class _ImpressionDateField extends StatelessWidget {

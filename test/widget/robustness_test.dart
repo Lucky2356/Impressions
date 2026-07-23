@@ -253,4 +253,73 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('Обложки', () {
+    // Путь ведёт в никуда: фотографию могли удалить из папки данных мимо
+    // приложения, и карточка обязана это пережить.
+    const missing = 'C:/нет-такого-каталога/нет-такого-файла.jpg';
+
+    testWidgets('карточка с недоступной обложкой рисует заглушку', (
+      tester,
+    ) async {
+      _surface(tester, const Size(600, 700));
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            width: 220,
+            child: EntryCard(
+              data: EntryCardData(
+                title: _longTitle,
+                categoryPath: _longPath,
+                relation: Relation.love,
+                rating: 9.5,
+                imagePath: missing,
+                seedColor: const Color(0xFFF5822B),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      // Заглушка — первая буква названия.
+      expect(find.text('К'), findsOneWidget);
+    });
+
+    testWidgets('миниатюра строки списка переживает отсутствующий файл', (
+      tester,
+    ) async {
+      _surface(tester, const Size(400, 300));
+      await tester.pumpWidget(
+        _host(
+          const EntryThumb(
+            icon: Icons.bookmark_add_rounded,
+            color: Color(0xFF8B7BD8),
+            imagePath: missing,
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.bookmark_add_rounded), findsOneWidget);
+    });
+  });
+
+  group('Сообщение об ошибке', () {
+    testWidgets('показывает понятный текст, а не исключение', (tester) async {
+      _surface(tester, const Size(700, 600));
+      await tester.pumpWidget(
+        _host(const ErrorState(error: FormatException('Unexpected token'))),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Не удалось показать этот раздел'), findsOneWidget);
+      // Текст исключения спрятан под «Подробности», а не вывален на экран.
+      expect(find.textContaining('Unexpected token'), findsNothing);
+
+      await tester.tap(find.text('Подробности'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Unexpected token'), findsOneWidget);
+    });
+  });
 }

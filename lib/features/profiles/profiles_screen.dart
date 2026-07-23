@@ -49,7 +49,7 @@ class ProfilesScreen extends ConsumerWidget {
 
     return profiles.when(
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => ErrorState(error: e),
       data: (list) => ScreenScaffold(
         header: ScreenHeader(
           title: l10n.profilesTitle,

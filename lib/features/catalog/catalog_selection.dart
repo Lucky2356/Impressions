@@ -9,7 +9,7 @@ import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
-import '../collections/collections_screen.dart';
+import '../collections/collection_providers.dart';
 import '../quick_add/category_picker.dart';
 
 /// Выделенные в каталоге записи.

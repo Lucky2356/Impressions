@@ -259,7 +259,7 @@ final _entriesInCollectionProvider = FutureProvider.family<Set<String>, String>(
         .entriesOf(
           collectionId,
           profile.id,
-          allEntriesLoader: () => entries.entryViews(profile.id),
+          entriesLoader: (ids) => entries.entryViews(profile.id, entryIds: ids),
         );
     return list.map((e) => e.entryId).toSet();
   },

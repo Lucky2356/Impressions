@@ -26,6 +26,33 @@ class BackupInfo {
   String get fileName => p.basename(path);
 }
 
+/// Чем закончилась попытка восстановления.
+enum RestoreStatus {
+  ok,
+
+  /// Файла копии нет.
+  notFound,
+
+  /// Копия не прошла проверку контрольных сумм — восстанавливать нечего.
+  corrupted,
+
+  /// Копия сделана более новой версией приложения: её схему текущая версия
+  /// прочитать не сможет.
+  tooNew,
+}
+
+/// Итог восстановления.
+class RestoreResult {
+  const RestoreResult(this.status, {this.backupOfPrevious});
+
+  final RestoreStatus status;
+
+  /// Копия того состояния, которое было заменено (§28).
+  final BackupInfo? backupOfPrevious;
+
+  bool get isOk => status == RestoreStatus.ok;
+}
+
 /// Резервные копии (§28).
 ///
 /// Копия создаётся перед импортом, восстановлением и миграцией, а также
@@ -191,14 +218,115 @@ class BackupService {
     }
   }
 
-  /// Оставляет только последние N автоматических копий (§28).
+  /// Восстанавливает состояние из копии (§28).
+  ///
+  /// Перед заменой делается копия текущего состояния: если восстановили не то,
+  /// вернуться будет куда. Файлы пишутся во временные имена рядом и только
+  /// потом переименовываются — прерванное восстановление не оставит
+  /// полуразобранную базу.
+  ///
+  /// База должна быть закрыта вызывающей стороной после того, как копия
+  /// текущего состояния снята: пока файл открыт, Windows не даст его заменить.
+  Future<RestoreResult> restore(
+    String path, {
+    required Future<void> Function() closeDatabase,
+  }) async {
+    final file = File(path);
+    if (!file.existsSync()) return const RestoreResult(RestoreStatus.notFound);
+
+    final Archive archive;
+    try {
+      archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+    } on Object {
+      return const RestoreResult(RestoreStatus.corrupted);
+    }
+
+    final manifestFile = archive.files
+        .where((f) => f.name == _manifestName)
+        .firstOrNull;
+    if (manifestFile == null) {
+      return const RestoreResult(RestoreStatus.corrupted);
+    }
+
+    // Копию из будущего читать нечем: миграции идут только вперёд.
+    try {
+      final manifest =
+          jsonDecode(utf8.decode(manifestFile.content as List<int>))
+              as Map<String, Object?>;
+      final schema = manifest['schemaVersion'];
+      if (schema is int && schema > db.schemaVersion) {
+        return const RestoreResult(RestoreStatus.tooNew);
+      }
+    } on Object {
+      return const RestoreResult(RestoreStatus.corrupted);
+    }
+
+    if (!await verify(path)) {
+      return const RestoreResult(RestoreStatus.corrupted);
+    }
+
+    final backupOfPrevious = await create(reason: 'beforeRestore');
+    await closeDatabase();
+
+    final base = await _appDir();
+    final dbTarget = File(p.join(base.path, 'impressions.sqlite'));
+    final mediaDir = Directory(p.join(base.path, 'media'));
+
+    for (final entry in archive.files) {
+      if (entry.name == _manifestName || !entry.isFile) continue;
+      final bytes = entry.content as List<int>;
+
+      if (entry.name == _dbEntryName) {
+        await _replaceAtomic(dbTarget, bytes);
+        continue;
+      }
+      if (!entry.name.startsWith(_mediaPrefix)) continue;
+
+      if (!mediaDir.existsSync()) await mediaDir.create(recursive: true);
+      // Только имя файла: путь из архива к файловой системе не применяем.
+      final name = p.basename(entry.name);
+      if (name.isEmpty) continue;
+      await _replaceAtomic(File(p.join(mediaDir.path, name)), bytes);
+    }
+
+    // Журнал упреждающей записи остался от прежней базы. Если его не убрать,
+    // SQLite накатит чужие страницы на восстановленный файл и испортит его.
+    for (final suffix in const ['-wal', '-shm']) {
+      final side = File('${dbTarget.path}$suffix');
+      if (side.existsSync()) await side.delete();
+    }
+
+    // Изображения, которых в копии не было, остаются на диске: база на них
+    // больше не ссылается, а удалять чужие файлы при восстановлении опаснее,
+    // чем оставить лишние.
+    return RestoreResult(RestoreStatus.ok, backupOfPrevious: backupOfPrevious);
+  }
+
+  Future<void> _replaceAtomic(File target, List<int> bytes) async {
+    final tmp = File('${target.path}.restore-tmp');
+    await tmp.writeAsBytes(bytes, flush: true);
+    if (target.existsSync()) await target.delete();
+    await tmp.rename(target.path);
+  }
+
+  /// Оставляет только последние копии каждого вида (§28).
+  ///
+  /// Автоматические и ручные считаются отдельно: автоматических делается много
+  /// и они одноразовые, ручные создают осознанно.
   Future<void> _pruneOld() async {
     final all = await list();
-    final auto = all
-        .where((b) => b.reason != 'manual')
-        .toList(); // ручные не удаляем
-    if (auto.length <= AppConfig.autoBackupRetention) return;
-    for (final old in auto.skip(AppConfig.autoBackupRetention)) {
+    await _pruneKind(
+      all.where((b) => b.reason != 'manual'),
+      AppConfig.autoBackupRetention,
+    );
+    await _pruneKind(
+      all.where((b) => b.reason == 'manual'),
+      AppConfig.manualBackupRetention,
+    );
+  }
+
+  Future<void> _pruneKind(Iterable<BackupInfo> backups, int keep) async {
+    for (final old in backups.skip(keep)) {
       final file = File(old.path);
       if (file.existsSync()) await file.delete();
     }

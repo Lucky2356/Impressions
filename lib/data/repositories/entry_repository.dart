@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
+import 'package:path/path.dart' as p;
 
 import '../../core/utils/ids.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
 import '../models/entry_view.dart';
+import '../services/image_service.dart';
 import '../services/revision_service.dart';
 
 /// Репозиторий типов объектов, объектов и записей профилей (§6).
@@ -11,9 +15,15 @@ import '../services/revision_service.dart';
 ///
 /// Все изменения объектов и записей фиксируются как неизменяемые версии (§18).
 class EntryRepository {
-  EntryRepository(this.db) : revisions = RevisionService(db);
+  /// [mediaDirectory] задаёт каталог изображений в тестах: обложки в списках
+  /// собираются как абсолютные пути, а в приложении их корень — папка данных.
+  EntryRepository(this.db, {Directory? mediaDirectory})
+    : revisions = RevisionService(db),
+      _images = ImageService(db, mediaDirectory: mediaDirectory);
+
   final AppDatabase db;
   final RevisionService revisions;
+  final ImageService _images;
 
   // ---- Типы объектов ----
 
@@ -377,6 +387,9 @@ class EntryRepository {
   /// [categoryIds] — ограничить выбранными категориями (обычно вся ветка).
   Future<List<EntryView>> entryViews(
     String profileId, {
+
+    /// Только эти записи — например, состав подборки.
+    List<String>? entryIds,
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
@@ -428,6 +441,10 @@ class EntryRepository {
             ],
           });
 
+    if (entryIds != null) {
+      if (entryIds.isEmpty) return const [];
+      query.where(db.profileEntries.id.isIn(entryIds));
+    }
     if (relation != null) {
       query.where(db.profileEntries.relation.equals(relation));
     }
@@ -469,14 +486,14 @@ class EntryRepository {
     var rows = await query.get();
 
     // Основные категории записей.
-    final entryIds = rows
+    final pageEntryIds = rows
         .map((r) => r.readTable(db.profileEntries).id)
         .toList();
-    final links = entryIds.isEmpty
+    final links = pageEntryIds.isEmpty
         ? <EntryCategoryRow>[]
         : await (db.select(
             db.entryCategories,
-          )..where((ec) => ec.entryId.isIn(entryIds))).get();
+          )..where((ec) => ec.entryId.isIn(pageEntryIds))).get();
 
     if (categoryIds != null) {
       final allowed = categoryIds.toSet();
@@ -496,6 +513,10 @@ class EntryRepository {
     for (final l in links) {
       if (l.isPrimary) primaryByEntry[l.entryId] = l.categoryId;
     }
+
+    final covers = await _coversFor(
+      rows.map((r) => r.readTable(db.profileEntries)),
+    );
 
     // Карта категорий профиля для построения путей.
     final cats = await (db.select(
@@ -531,9 +552,63 @@ class EntryRepository {
             status: entry.status,
             impressionDate: entry.impressionDate,
             createdAt: entry.createdAt,
+            coverPath: covers[entry.id],
           );
         }(),
     ];
+  }
+
+  /// Обложки для набранной страницы записей: одна миниатюра на запись.
+  ///
+  /// Фотографии привязаны к версии записи, поэтому идём от её текущей версии.
+  /// Обложкой считается снимок с пометкой «главный», а если её нет — первый по
+  /// ручному порядку.
+  Future<Map<String, String>> _coversFor(
+    Iterable<ProfileEntryRow> entries,
+  ) async {
+    final revisionToEntry = <String, String>{
+      for (final e in entries)
+        if (e.currentRevisionId != null) e.currentRevisionId!: e.id,
+    };
+    if (revisionToEntry.isEmpty) return const {};
+
+    final links =
+        await (db.select(db.revisionAttachments)
+              ..where(
+                (ra) =>
+                    ra.entityKind.equals('entry') &
+                    ra.revisionId.isIn(revisionToEntry.keys),
+              )
+              ..orderBy([
+                (ra) => OrderingTerm(
+                  expression: ra.isPrimary,
+                  mode: OrderingMode.desc,
+                ),
+                (ra) => OrderingTerm(expression: ra.sortOrder),
+              ]))
+            .get();
+    if (links.isEmpty) return const {};
+
+    // Первая ссылка на запись и есть обложка: порядок уже задан запросом.
+    final attachmentByEntry = <String, String>{};
+    for (final link in links) {
+      final entryId = revisionToEntry[link.revisionId];
+      if (entryId == null) continue;
+      attachmentByEntry.putIfAbsent(entryId, () => link.attachmentId);
+    }
+
+    final rows = await (db.select(
+      db.attachments,
+    )..where((a) => a.id.isIn(attachmentByEntry.values.toSet()))).get();
+    final fileById = {for (final a in rows) a.id: a.thumbPath ?? a.storagePath};
+
+    // Каталог берём один раз на весь запрос, а не на каждую строку.
+    final mediaDir = await _images.mediaDirectoryPath();
+    return {
+      for (final e in attachmentByEntry.entries)
+        if (fileById[e.value] != null)
+          e.key: p.join(mediaDir, fileById[e.value]!),
+    };
   }
 
   /// Сводка по профилю для главной.

@@ -76,7 +76,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
 
     return detail.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => ErrorState(error: e),
       data: (d) {
         if (d == null) {
           return Center(child: Text(l10n.commonNothingFound));

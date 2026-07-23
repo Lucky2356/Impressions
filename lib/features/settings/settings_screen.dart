@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -250,6 +252,62 @@ class _BehaviourSection extends ConsumerWidget {
 class _BackupsSection extends ConsumerWidget {
   const _BackupsSection();
 
+  /// Восстановление из копии (§28).
+  ///
+  /// База закрывается прямо посреди работы приложения, поэтому дальше можно
+  /// только перезапуститься: половина экранов уже держит закрытое подключение.
+  Future<void> _restore(
+    BuildContext context,
+    WidgetRef ref,
+    BackupInfo backup,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final date = DateFormat('d MMMM y, HH:mm', 'ru').format(backup.createdAt);
+
+    final ok = await ConfirmDialog.show(
+      context,
+      title: l10n.backupRestoreConfirmTitle,
+      message: l10n.backupRestoreConfirmMessage(date),
+      confirmLabel: l10n.backupRestore,
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+
+    final db = ref.read(appDatabaseProvider);
+    final result = await BackupService(
+      db,
+    ).restore(backup.path, closeDatabase: db.close);
+    if (!context.mounted) return;
+
+    if (!result.isOk) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(switch (result.status) {
+            RestoreStatus.notFound => l10n.backupRestoreNotFound,
+            RestoreStatus.tooNew => l10n.backupRestoreTooNew,
+            _ => l10n.backupVerifyFailed,
+          }),
+        ),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.backupRestoreDoneTitle),
+        content: Text(l10n.backupRestoreDoneMessage),
+        actions: [
+          FilledButton(
+            onPressed: () => exit(0),
+            child: Text(l10n.backupRestoreQuit),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -333,6 +391,10 @@ class _BackupsSection extends ConsumerWidget {
                     );
                   },
                   child: Text(l10n.backupVerify),
+                ),
+                TextButton(
+                  onPressed: () => _restore(context, ref, backups[i]),
+                  child: Text(l10n.backupRestore),
                 ),
               ],
             ),

@@ -247,7 +247,7 @@ class CategoryDetail extends ConsumerWidget {
               const SizedBox(height: AppDimens.space12),
               entries.when(
                 loading: () => const SizedBox.shrink(),
-                error: (e, _) => Text('$e'),
+                error: (e, _) => ErrorState(error: e),
                 data: (list) {
                   if (list.isEmpty) {
                     return _EmptyBranch(
@@ -282,6 +282,7 @@ class CategoryDetail extends ConsumerWidget {
                               categoryPath: e.categoryPath,
                               relation: _relationOf(e.relation),
                               rating: e.rating,
+                              imagePath: e.coverPath,
                               seedColor: c.profileColorFor(e.objectId),
                             ),
                             onTap: () =>

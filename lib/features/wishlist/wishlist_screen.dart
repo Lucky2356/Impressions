@@ -72,14 +72,18 @@ class WishlistScreen extends ConsumerWidget {
         ),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-        itemBuilder: (context, i) => _WishlistTile(entry: items[i]),
+        itemBuilder: (context, i) => WishlistTile(entry: items[i]),
       ),
     );
   }
 }
 
-class _WishlistTile extends ConsumerWidget {
-  const _WishlistTile({required this.entry});
+/// Строка списка «Хочу попробовать».
+///
+/// Публичная, потому что тот же список показывает главная: раньше там была
+/// своя копия строки — и в ней ничего не нажималось.
+class WishlistTile extends ConsumerWidget {
+  const WishlistTile({super.key, required this.entry});
   final EntryView entry;
 
   /// Отмечает попробованное и сразу спрашивает оценку: без неё запись просто
@@ -113,14 +117,10 @@ class _WishlistTile extends ConsumerWidget {
       onTap: () => EntryDetailSheet.show(context, entry.entryId),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: c.lavender.withValues(alpha: 0.14),
-              borderRadius: AppDimens.brSm,
-            ),
-            child: Icon(Relation.wantToTry.icon, size: 19, color: c.lavender),
+          EntryThumb(
+            icon: Relation.wantToTry.icon,
+            color: c.lavender,
+            imagePath: entry.coverPath,
           ),
           const SizedBox(width: AppDimens.space12),
           Expanded(

@@ -155,10 +155,16 @@ class CollectionRepository {
   }
 
   /// Записи подборки в ручном порядке, в виде готовых представлений.
+  /// Записи подборки в ручном порядке (§27).
+  ///
+  /// [entriesLoader] получает только нужные идентификаторы: раньше сюда
+  /// передавали загрузчик всех записей профиля, и десяток строк в подборке
+  /// стоил чтения всего каталога.
   Future<List<EntryView>> entriesOf(
     String collectionId,
     String profileId, {
-    required Future<List<EntryView>> Function() allEntriesLoader,
+    required Future<List<EntryView>> Function(List<String> entryIds)
+    entriesLoader,
   }) async {
     final links =
         await (db.select(db.collectionEntries)
@@ -168,8 +174,7 @@ class CollectionRepository {
     if (links.isEmpty) return const [];
 
     final order = {for (var i = 0; i < links.length; i++) links[i].entryId: i};
-    final all = await allEntriesLoader();
-    final selected = all.where((e) => order.containsKey(e.entryId)).toList();
+    final selected = await entriesLoader(order.keys.toList());
     selected.sort((a, b) => order[a.entryId]!.compareTo(order[b.entryId]!));
     return selected;
   }

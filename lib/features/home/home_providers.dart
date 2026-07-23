@@ -14,6 +14,24 @@ final profileStatsProvider = FutureProvider<ProfileStats?>((ref) async {
   return ref.watch(entryRepositoryProvider).stats(profile.id);
 });
 
+/// Сколько записей добавлялось по месяцам — для графика на плитке.
+///
+/// Раньше плитки рисовали «рост», вычисленный из текущего числа: линия шла
+/// вверх независимо от того, что происходило на самом деле.
+final entriesByMonthProvider = FutureProvider<List<double>>((ref) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+  final insights = await ref
+      .watch(entryRepositoryProvider)
+      .insights(profile.id);
+  // Последний год: за более длинный срок точки на плитке уже не различить.
+  final months = insights.byMonth.length > 12
+      ? insights.byMonth.sublist(insights.byMonth.length - 12)
+      : insights.byMonth;
+  return [for (final m in months) m.count.toDouble()];
+});
+
 /// Недавние записи активного профиля.
 final recentEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   ref.watch(dataRefreshProvider);

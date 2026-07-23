@@ -6,6 +6,22 @@ import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
 
+/// Ветка, открытая на экране категорий.
+///
+/// Общий для всего приложения, а не внутреннее состояние экрана: на категорию
+/// нажимают и с главной. При этом фильтр каталога остаётся нетронутым — от
+/// скрытой подстановки фильтра записи когда-то «пропадали» из каталога.
+final selectedCategoryProvider = NotifierProvider<SelectedCategory, String?>(
+  SelectedCategory.new,
+);
+
+class SelectedCategory extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void select(String? id) => state = id;
+}
+
 /// Все неархивные категории активного профиля, отсортированные так, чтобы
 /// потомки шли сразу за родителем (сортировка по материализованному пути).
 final allCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {

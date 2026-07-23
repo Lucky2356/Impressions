@@ -126,7 +126,7 @@ class IncomingScreen extends ConsumerWidget {
 
     return items.when(
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => ErrorState(error: e),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(

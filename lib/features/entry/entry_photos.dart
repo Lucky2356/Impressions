@@ -1,11 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:file_selector/file_selector.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../app/data_refresh.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -14,6 +12,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
+import 'photo_source.dart';
 
 /// Фотографии записи (§16): добавление с камеры/галереи на Android, выбором
 /// файла и перетаскиванием на Windows; просмотр во весь экран.
@@ -34,11 +33,13 @@ class EntryPhotos extends ConsumerStatefulWidget {
 class _EntryPhotosState extends ConsumerState<EntryPhotos> {
   List<AttachmentRow> _photos = const [];
   final Map<String, String> _paths = {};
+
+  /// Какой снимок сейчас обложка записи.
+  String? _primaryId;
   bool _dragging = false;
   bool _busy = false;
 
-  bool get _isDesktop =>
-      !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+  bool get _isDesktop => PhotoSource.isDesktop;
 
   @override
   void initState() {
@@ -67,13 +68,27 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
         row.thumbPath ?? row.storagePath,
       );
     }
+    final primary = await _service.primaryAttachmentId(revisionId);
     if (!mounted) return;
     setState(() {
       _photos = rows;
+      _primaryId = primary;
       _paths
         ..clear()
         ..addAll(paths);
     });
+  }
+
+  Future<void> _makeCover(AttachmentRow row) async {
+    final revisionId = widget.revisionId;
+    if (revisionId == null) return;
+    await _service.setPrimaryAttachment(
+      revisionId: revisionId,
+      attachmentId: row.id,
+    );
+    // Обложка видна в каталоге и на главной — их нужно перерисовать.
+    ref.read(dataRefreshProvider.notifier).bump();
+    await _load();
   }
 
   Future<void> _addBytes(Uint8List bytes) async {
@@ -118,21 +133,8 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      if (_isDesktop) {
-        const typeGroup = XTypeGroup(
-          label: 'Изображения',
-          extensions: ['jpg', 'jpeg', 'png', 'webp'],
-        );
-        final files = await openFiles(acceptedTypeGroups: const [typeGroup]);
-        for (final f in files) {
-          await _addBytes(await f.readAsBytes());
-        }
-      } else {
-        final picker = ImagePicker();
-        final files = await picker.pickMultiImage();
-        for (final f in files) {
-          await _addBytes(await f.readAsBytes());
-        }
+      for (final bytes in await PhotoSource.pick()) {
+        await _addBytes(bytes);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -140,10 +142,8 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
   }
 
   Future<void> _capture() async {
-    final picker = ImagePicker();
-    final shot = await picker.pickImage(source: ImageSource.camera);
-    if (shot == null) return;
-    await _addBytes(await shot.readAsBytes());
+    final shot = await PhotoSource.capture();
+    if (shot != null) await _addBytes(shot);
   }
 
   Future<void> _remove(AttachmentRow row) async {
@@ -207,8 +207,12 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
                 final path = _paths[row.id];
                 return _PhotoThumb(
                   path: path,
+                  isCover: row.id == _primaryId,
                   onRemove: () => _remove(row),
                   onOpen: () => _openFullscreen(i),
+                  onMakeCover: row.id == _primaryId
+                      ? null
+                      : () => _makeCover(row),
                 );
               },
             ),
@@ -248,13 +252,22 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
 class _PhotoThumb extends StatelessWidget {
   const _PhotoThumb({
     required this.path,
+    required this.isCover,
     required this.onRemove,
     required this.onOpen,
+    required this.onMakeCover,
   });
 
   final String? path;
+
+  /// Этот снимок показывается в каталоге и на главной.
+  final bool isCover;
+
   final VoidCallback onRemove;
   final VoidCallback onOpen;
+
+  /// null — снимок уже обложка, назначать нечего.
+  final VoidCallback? onMakeCover;
 
   @override
   Widget build(BuildContext context) {
@@ -265,14 +278,45 @@ class _PhotoThumb extends StatelessWidget {
         InkWell(
           onTap: onOpen,
           borderRadius: AppDimens.brMd,
-          child: ClipRRect(
-            borderRadius: AppDimens.brMd,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: AppDimens.brMd,
+              border: isCover
+                  ? Border.all(color: c.accentPrimary, width: 2)
+                  : null,
+            ),
+            clipBehavior: Clip.antiAlias,
             child: SizedBox(
               width: 108,
               height: 108,
               child: path == null || !File(path!).existsSync()
                   ? Container(color: c.surfaceMuted)
                   : Image.file(File(path!), fit: BoxFit.cover),
+            ),
+          ),
+        ),
+        // Обложка видна в списках, поэтому выбирать её должен человек, а не
+        // порядок добавления снимков.
+        Positioned(
+          bottom: 2,
+          left: 2,
+          child: Tooltip(
+            message: isCover ? l10n.photoIsCover : l10n.photoMakeCover,
+            child: Material(
+              color: c.surface.withValues(alpha: 0.85),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onMakeCover,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    isCover ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 14,
+                    color: isCover ? c.accentPrimary : c.textSecondary,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

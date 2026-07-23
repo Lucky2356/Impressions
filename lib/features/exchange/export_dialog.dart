@@ -14,7 +14,7 @@ import '../../data/providers.dart';
 import '../../data/services/readable_export_service.dart';
 import '../../data/services/export_service.dart';
 import '../categories/category_providers.dart';
-import '../collections/collections_screen.dart';
+import '../collections/collection_providers.dart';
 
 /// Экспорт профиля (§19): состав пакета показывается до сохранения файла.
 class ExportDialog extends ConsumerStatefulWidget {

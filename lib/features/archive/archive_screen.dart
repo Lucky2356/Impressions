@@ -11,6 +11,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/services/purge_service.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 
@@ -37,6 +38,46 @@ final archivedCollectionsProvider = FutureProvider<List<CollectionRow>>((
         ..where((c) => c.archivedAt.isNotNull()))
       .get();
 });
+
+/// Спрашивает подтверждение и удаляет насовсем.
+///
+/// Возврата не будет: об этом и говорится в подтверждении, чтобы «удалить» не
+/// путали с «архивировать».
+Future<void> _confirmPurge(
+  BuildContext context,
+  WidgetRef ref, {
+  required String title,
+  required Future<void> Function() purge,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final ok = await ConfirmDialog.show(
+    context,
+    title: l10n.purgeConfirmTitle(title),
+    message: l10n.purgeConfirmMessage,
+    confirmLabel: l10n.purgeAction,
+    destructive: true,
+  );
+  if (!ok) return;
+
+  try {
+    await purge();
+  } on PurgeException catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(switch (e.reason) {
+          PurgeRefusal.categoryHasChildren => l10n.purgeCategoryHasChildren,
+        }),
+      ),
+    );
+    return;
+  }
+  ref.read(dataRefreshProvider.notifier).bump();
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(l10n.purgeDone)));
+}
 
 /// Архив (§24): всё, что убрано из работы, но не удалено.
 ///
@@ -95,6 +136,14 @@ class ArchiveScreen extends ConsumerWidget {
                       .restoreEntry(entry.entryId);
                   ref.read(dataRefreshProvider.notifier).bump();
                 },
+                onPurge: () => _confirmPurge(
+                  context,
+                  ref,
+                  title: entry.title,
+                  purge: () => PurgeService(
+                    ref.read(appDatabaseProvider),
+                  ).purgeEntry(entry.entryId),
+                ),
               ),
             const SizedBox(height: AppDimens.space32),
           ],
@@ -112,6 +161,14 @@ class ArchiveScreen extends ConsumerWidget {
                       .restore(category.id);
                   ref.read(dataRefreshProvider.notifier).bump();
                 },
+                onPurge: () => _confirmPurge(
+                  context,
+                  ref,
+                  title: category.name,
+                  purge: () => PurgeService(
+                    ref.read(appDatabaseProvider),
+                  ).purgeCategory(category.id),
+                ),
               ),
             const SizedBox(height: AppDimens.space32),
           ],
@@ -129,6 +186,14 @@ class ArchiveScreen extends ConsumerWidget {
                       .restore(collection.id);
                   ref.read(dataRefreshProvider.notifier).bump();
                 },
+                onPurge: () => _confirmPurge(
+                  context,
+                  ref,
+                  title: collection.name,
+                  purge: () => PurgeService(
+                    ref.read(appDatabaseProvider),
+                  ).purgeCollection(collection.id),
+                ),
               ),
           ],
         ],
@@ -143,12 +208,14 @@ class _ArchivedTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onRestore,
+    required this.onPurge,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onRestore;
+  final VoidCallback onPurge;
 
   @override
   Widget build(BuildContext context) {
@@ -201,6 +268,14 @@ class _ArchivedTile extends StatelessWidget {
               onPressed: onRestore,
               icon: const Icon(Icons.restore_rounded, size: 18),
               label: Text(l10n.commonRestore),
+            ),
+            const SizedBox(width: AppDimens.space8),
+            // Отмены здесь нет намеренно: обещать «Вернуть» после настоящего
+            // удаления было бы враньём.
+            AppIconButton(
+              icon: Icons.delete_forever_rounded,
+              tooltip: l10n.purgeAction,
+              onPressed: onPurge,
             ),
           ],
         ),

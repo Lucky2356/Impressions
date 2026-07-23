@@ -209,6 +209,12 @@ class ImageService {
     return p.join(dir.path, storagePath);
   }
 
+  /// Каталог хранения изображений.
+  ///
+  /// Нужен там, где путей сразу много: собирать их через [absolutePath] значит
+  /// на каждый запрашивать каталог заново.
+  Future<String> mediaDirectoryPath() async => (await _mediaDir()).path;
+
   /// Привязывает вложение к версии сущности (§16, §18).
   Future<void> attachToEntry({
     required String entryId,
@@ -232,18 +238,59 @@ class ImageService {
         ? 0
         : links.map((l) => l.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
 
-    await db
-        .into(db.revisionAttachments)
-        .insert(
-          RevisionAttachmentsCompanion.insert(
-            id: Ids.newId(),
-            entityKind: 'entry',
-            revisionId: revisionId,
-            attachmentId: attachmentId,
-            sortOrder: Value(next),
-            isPrimary: Value(isPrimary || links.isEmpty),
-          ),
-        );
+    await db.transaction(() async {
+      // Главная фотография ровно одна: без снятия прежней пометки обложкой в
+      // списках так и оставался бы первый добавленный снимок.
+      if (isPrimary && links.isNotEmpty) {
+        await (db.update(db.revisionAttachments)
+              ..where((ra) => ra.revisionId.equals(revisionId)))
+            .write(const RevisionAttachmentsCompanion(isPrimary: Value(false)));
+      }
+      await db
+          .into(db.revisionAttachments)
+          .insert(
+            RevisionAttachmentsCompanion.insert(
+              id: Ids.newId(),
+              entityKind: 'entry',
+              revisionId: revisionId,
+              attachmentId: attachmentId,
+              sortOrder: Value(next),
+              isPrimary: Value(isPrimary || links.isEmpty),
+            ),
+          );
+    });
+  }
+
+  /// Делает вложение обложкой записи (§16).
+  ///
+  /// Обложка видна в каталоге и на главной, поэтому выбирать её должен
+  /// пользователь, а не порядок добавления.
+  Future<void> setPrimaryAttachment({
+    required String revisionId,
+    required String attachmentId,
+  }) async {
+    await db.transaction(() async {
+      await (db.update(db.revisionAttachments)
+            ..where((ra) => ra.revisionId.equals(revisionId)))
+          .write(const RevisionAttachmentsCompanion(isPrimary: Value(false)));
+      await (db.update(db.revisionAttachments)..where(
+            (ra) =>
+                ra.revisionId.equals(revisionId) &
+                ra.attachmentId.equals(attachmentId),
+          ))
+          .write(const RevisionAttachmentsCompanion(isPrimary: Value(true)));
+    });
+  }
+
+  /// Какое вложение сейчас обложка.
+  Future<String?> primaryAttachmentId(String revisionId) async {
+    final row =
+        await (db.select(db.revisionAttachments)..where(
+              (ra) =>
+                  ra.revisionId.equals(revisionId) & ra.isPrimary.equals(true),
+            ))
+            .getSingleOrNull();
+    return row?.attachmentId;
   }
 
   /// Вложения, привязанные к версии.

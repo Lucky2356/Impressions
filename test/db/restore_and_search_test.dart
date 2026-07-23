@@ -195,7 +195,8 @@ void main() {
         final list = await collections.entriesOf(
           collection.id,
           env.profileId,
-          allEntriesLoader: () => entries.entryViews(env.profileId),
+          entriesLoader: (ids) =>
+              entries.entryViews(env.profileId, entryIds: ids),
         );
         return list.map((e) => e.title).toList();
       }

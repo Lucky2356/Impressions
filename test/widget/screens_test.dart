@@ -13,6 +13,7 @@ import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
 import 'package:impressions/features/categories/category_providers.dart';
+import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/collections/collections_screen.dart';
 import 'package:impressions/features/compare/compare_screen.dart';
 import 'package:impressions/features/home/home_providers.dart';

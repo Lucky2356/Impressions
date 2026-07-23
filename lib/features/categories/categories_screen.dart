@@ -35,7 +35,11 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   final Set<String> _collapsed = {};
   final _searchController = TextEditingController();
   String _query = '';
-  String? _selectedId;
+
+  // Выбранная ветка живёт в провайдере: на категорию нажимают и с главной.
+  String? get _selectedId => ref.watch(selectedCategoryProvider);
+  void _setSelected(String? id) =>
+      ref.read(selectedCategoryProvider.notifier).select(id);
 
   @override
   void dispose() {
@@ -64,7 +68,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final created = await ref
         .read(categoryRepositoryProvider)
         .createRoot(profile.id, name);
-    setState(() => _selectedId = created.id);
+    _setSelected(created.id);
     _bump();
   }
 
@@ -151,7 +155,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     );
     if (!ok) return;
     await ref.read(categoryRepositoryProvider).archive(cat.id);
-    if (_selectedId == cat.id) setState(() => _selectedId = null);
+    if (_selectedId == cat.id) _setSelected(null);
     _bump();
     if (!mounted) return;
     showUndoSnackBar(
@@ -174,8 +178,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
   /// Раскрывает всех предков, чтобы выбранная категория была видна в дереве.
   void _select(CategoryRow cat) {
+    _setSelected(cat.id);
     setState(() {
-      _selectedId = cat.id;
       for (final id in cat.path.split('/')) {
         _collapsed.remove(id);
       }
@@ -193,7 +197,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
 
     return categories.when(
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => ErrorState(error: e),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(
@@ -248,10 +252,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         // Узкий экран: сначала дерево, выбранная ветка открывается поверх.
         if (!layout.isWide) {
           if (selected == null) return tree;
-          return detailFor(
-            selected,
-            onBack: () => setState(() => _selectedId = null),
-          );
+          return detailFor(selected, onBack: () => _setSelected(null));
         }
 
         return Row(

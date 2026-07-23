@@ -130,7 +130,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       ),
       child: results.when(
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => ErrorState(error: e),
         data: (found) {
           final list = found.items;
           if (list.isEmpty) {
@@ -321,6 +321,7 @@ class _Results extends ConsumerWidget {
       categoryPath: e.categoryPath,
       relation: _relationOf(e.relation),
       rating: e.rating,
+      imagePath: e.coverPath,
       seedColor: context.colors.profileColorFor(e.objectId),
     );
   }
@@ -477,6 +478,18 @@ class _FilterBar extends ConsumerWidget {
               ],
               onChanged: (v) => controller.setSort(v ?? EntrySort.recent),
             ),
+            // Запрос мог прийти из шапки — тогда пользователь не набирал его
+            // здесь и не понимает, почему список сузился.
+            if (state.search.isNotEmpty)
+              InputChip(
+                label: Text(l10n.catalogSearchChip(state.search)),
+                avatar: const Icon(Icons.search_rounded, size: 16),
+                deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                onDeleted: () {
+                  searchController.clear();
+                  controller.setSearch('');
+                },
+              ),
             if (state.categoryId != null)
               FilterChip(
                 selected: state.includeSubcategories,

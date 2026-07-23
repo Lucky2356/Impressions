@@ -982,6 +982,72 @@ abstract class AppLocalizations {
   /// **'Удалить фотографию'**
   String get photoRemove;
 
+  /// No description provided for @errorStateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось показать этот раздел'**
+  String get errorStateTitle;
+
+  /// No description provided for @errorStateMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные на месте — сбой произошёл при их чтении. Попробуйте перейти в раздел заново или перезапустить приложение.'**
+  String get errorStateMessage;
+
+  /// No description provided for @errorStateDetails.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подробности'**
+  String get errorStateDetails;
+
+  /// No description provided for @catalogSearchChip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск: {query}'**
+  String catalogSearchChip(String query);
+
+  /// No description provided for @purgeAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить навсегда'**
+  String get purgeAction;
+
+  /// No description provided for @purgeConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить «{title}» навсегда?'**
+  String purgeConfirmTitle(String title);
+
+  /// No description provided for @purgeConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не архивирование: запись, её версии и фотографии будут стёрты. Отменить будет нельзя — вернуть можно только из резервной копии.'**
+  String get purgeConfirmMessage;
+
+  /// No description provided for @purgeDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалено навсегда'**
+  String get purgeDone;
+
+  /// No description provided for @purgeCategoryHasChildren.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала разберитесь с подкатегориями: удалять ветку целиком нельзя.'**
+  String get purgeCategoryHasChildren;
+
+  /// No description provided for @photoMakeCover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделать обложкой'**
+  String get photoMakeCover;
+
+  /// No description provided for @photoIsCover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обложка записи'**
+  String get photoIsCover;
+
   /// No description provided for @photoDropHint.
   ///
   /// In ru, this message translates to:
@@ -1531,8 +1597,56 @@ abstract class AppLocalizations {
   /// No description provided for @backupRetentionHint.
   ///
   /// In ru, this message translates to:
-  /// **'Автоматические копии создаются перед импортом. Хранятся последние 7, копии, созданные вручную, не удаляются.'**
+  /// **'Автоматические копии создаются перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.'**
   String get backupRetentionHint;
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановить'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestoreConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановить из копии?'**
+  String get backupRestoreConfirmTitle;
+
+  /// No description provided for @backupRestoreConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все записи, категории и фотографии будут заменены содержимым копии от {date}. Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.'**
+  String backupRestoreConfirmMessage(String date);
+
+  /// No description provided for @backupRestoreDoneTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия восстановлена'**
+  String get backupRestoreDoneTitle;
+
+  /// No description provided for @backupRestoreDoneMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные заменены. Закройте приложение и откройте снова — работать с восстановленной базой можно только после перезапуска.'**
+  String get backupRestoreDoneMessage;
+
+  /// No description provided for @backupRestoreQuit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть приложение'**
+  String get backupRestoreQuit;
+
+  /// No description provided for @backupRestoreNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл копии не найден'**
+  String get backupRestoreNotFound;
+
+  /// No description provided for @backupRestoreTooNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.'**
+  String get backupRestoreTooNew;
 
   /// No description provided for @settingsAppearance.
   ///

@@ -11,6 +11,8 @@ export 'components/cover_image.dart';
 export 'components/cover_progress.dart';
 export 'components/empty_state.dart';
 export 'components/entry_card.dart';
+export 'components/entry_thumb.dart';
+export 'components/error_state.dart';
 export 'components/nav_sidebar.dart';
 export 'components/profile_avatar.dart';
 export 'components/profile_card.dart';

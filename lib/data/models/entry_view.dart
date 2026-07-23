@@ -16,6 +16,7 @@ class EntryView {
     this.status,
     this.impressionDate,
     this.createdAt,
+    this.coverPath,
   });
 
   final String entryId;
@@ -34,6 +35,12 @@ class EntryView {
   /// Когда впечатление случилось, а не когда запись завели.
   final DateTime? impressionDate;
   final DateTime? createdAt;
+
+  /// Абсолютный путь к обложке — миниатюре главной фотографии записи.
+  ///
+  /// Заполняется списками: без него каталог и главная рисовали цветную
+  /// заглушку даже там, где фотография есть.
+  final String? coverPath;
 
   /// Полный путь с названием объекта: «Продукты / Колбасы / Папа может».
   String get fullPath => [...categoryPath, title].join(' / ');

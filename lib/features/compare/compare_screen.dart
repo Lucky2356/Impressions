@@ -177,7 +177,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
           Expanded(
             child: results.when(
               loading: () => const SizedBox.shrink(),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, _) => ErrorState(error: e),
               data: (rows) {
                 if (rows.isEmpty) {
                   return EmptyState(

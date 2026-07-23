@@ -7,36 +7,11 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
-import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
-import '../../data/repositories/collection_repository.dart';
 import '../../design_system/design_system.dart';
 import '../entry/entry_detail_sheet.dart';
 import 'collection_entry_picker.dart';
-
-/// Подборки активного профиля с числом записей.
-final collectionsProvider = FutureProvider<List<CollectionView>>((ref) async {
-  ref.watch(dataRefreshProvider);
-  final profile = ref.watch(activeProfileProvider);
-  if (profile == null) return const [];
-  return ref.watch(collectionRepositoryProvider).listWithCounts(profile.id);
-});
-
-/// Записи выбранной подборки.
-final collectionEntriesProvider =
-    FutureProvider.family<List<EntryView>, String>((ref, collectionId) async {
-      ref.watch(dataRefreshProvider);
-      final profile = ref.watch(activeProfileProvider);
-      if (profile == null) return const [];
-      final entries = ref.watch(entryRepositoryProvider);
-      return ref
-          .watch(collectionRepositoryProvider)
-          .entriesOf(
-            collectionId,
-            profile.id,
-            allEntriesLoader: () => entries.entryViews(profile.id),
-          );
-    });
+import 'collection_providers.dart';
 
 /// Экран подборок (§27): ручные списки записей внутри профиля.
 /// Подборки не заменяют категории.
@@ -87,7 +62,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
 
     return collections.when(
       loading: () => const SizedBox.shrink(),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => ErrorState(error: e),
       data: (list) {
         if (list.isEmpty) {
           return EmptyState(
@@ -247,7 +222,7 @@ class _CollectionDetail extends ConsumerWidget {
       ),
       child: entries.when(
         loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => ErrorState(error: e),
         data: (list) {
           if (list.isEmpty) {
             return EmptyState(
@@ -308,6 +283,7 @@ class _CollectionDetail extends ConsumerWidget {
                           subtitle: e.subtitle,
                           categoryPath: e.categoryPath,
                           rating: e.rating,
+                          imagePath: e.coverPath,
                           seedColor: c.profileColorFor(e.objectId),
                         ),
                         onTap: () => EntryDetailSheet.show(context, e.entryId),

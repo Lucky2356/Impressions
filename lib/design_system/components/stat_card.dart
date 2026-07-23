@@ -12,8 +12,8 @@ class StatCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.value,
-    required this.trend,
     required this.trendColor,
+    this.trend = const [],
     this.unit,
     this.subtitle,
   });
@@ -22,7 +22,11 @@ class StatCard extends StatelessWidget {
   final String value;
   final String? unit;
   final String? subtitle;
+
+  /// Настоящая история значения. Пустая или из одной точки — график не
+  /// рисуется вовсе: линия «роста», выведенная из текущего числа, обманывает.
   final List<double> trend;
+
   final Color trendColor;
 
   @override
@@ -63,10 +67,15 @@ class StatCard extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(
-                width: 88,
-                child: Sparkline(values: trend, color: trendColor, height: 40),
-              ),
+              if (trend.length > 1)
+                SizedBox(
+                  width: 88,
+                  child: Sparkline(
+                    values: trend,
+                    color: trendColor,
+                    height: 40,
+                  ),
+                ),
             ],
           ),
           if (subtitle != null) ...[

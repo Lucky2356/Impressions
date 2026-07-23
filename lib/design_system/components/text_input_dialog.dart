@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/l10n/gen/app_localizations.dart';
+import '../../core/theme/app_dimens.dart';
 
 /// Диалог ввода одной строки.
 ///
@@ -16,6 +17,7 @@ class TextInputDialog extends StatefulWidget {
     this.hint,
     this.initial,
     this.confirmLabel,
+    this.suggestions = const [],
   });
 
   final String title;
@@ -23,6 +25,10 @@ class TextInputDialog extends StatefulWidget {
   final String? hint;
   final String? initial;
   final String? confirmLabel;
+
+  /// Уже существующие значения — показываются под полем, чтобы одно и то же
+  /// не заводилось дважды в разном написании.
+  final List<String> suggestions;
 
   /// Возвращает введённую строку или null, если отменено/пусто.
   static Future<String?> show(
@@ -32,6 +38,7 @@ class TextInputDialog extends StatefulWidget {
     String? hint,
     String? initial,
     String? confirmLabel,
+    List<String> suggestions = const [],
   }) async {
     final result = await showDialog<String>(
       context: context,
@@ -41,6 +48,7 @@ class TextInputDialog extends StatefulWidget {
         hint: hint,
         initial: initial,
         confirmLabel: confirmLabel,
+        suggestions: suggestions,
       ),
     );
     final trimmed = result?.trim();
@@ -69,14 +77,37 @@ class _TextInputDialogState extends State<TextInputDialog> {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(widget.title),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          hintText: widget.hint,
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: widget.label,
+                hintText: widget.hint,
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+            if (widget.suggestions.isNotEmpty) ...[
+              const SizedBox(height: AppDimens.space12),
+              Wrap(
+                spacing: AppDimens.space8,
+                runSpacing: AppDimens.space8,
+                children: [
+                  for (final s in widget.suggestions.take(12))
+                    ActionChip(
+                      label: Text(s),
+                      onPressed: () => Navigator.of(context).pop(s),
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
-        onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(

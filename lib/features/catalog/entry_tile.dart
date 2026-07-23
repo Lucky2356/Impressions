@@ -9,7 +9,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
-import '../collections/collections_screen.dart';
+import '../collections/collection_providers.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/category_picker.dart';
 import 'catalog_selection.dart';
