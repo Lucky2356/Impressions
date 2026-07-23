@@ -1,0 +1,25 @@
+/// Барель-экспорт дизайн-системы: единая точка импорта переиспользуемых
+/// компонентов (§3.4). Не дублировать стили вручную на экранах.
+library;
+
+export 'components/app_card.dart';
+export 'components/breadcrumbs.dart';
+export 'components/collection_card.dart';
+export 'components/confirm_dialog.dart';
+export 'components/cover_image.dart';
+export 'components/cover_progress.dart';
+export 'components/empty_state.dart';
+export 'components/entry_card.dart';
+export 'components/nav_sidebar.dart';
+export 'components/profile_avatar.dart';
+export 'components/profile_card.dart';
+export 'components/profile_switcher.dart';
+export 'components/rating_view.dart';
+export 'components/relation_chip.dart';
+export 'components/section_header.dart';
+export 'components/settings_group.dart';
+export 'components/sparkline.dart';
+export 'components/stat_card.dart';
+export 'components/status_chip.dart';
+export 'components/text_input_dialog.dart';
+export 'components/transfer_button.dart';

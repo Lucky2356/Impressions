@@ -1,0 +1,558 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../app/app_state.dart';
+import '../../app/data_refresh.dart';
+import '../../core/domain/relation.dart';
+import '../../core/l10n/gen/app_localizations.dart';
+import '../../core/theme/app_dimens.dart';
+import '../../core/theme/theme_context.dart';
+import '../../data/providers.dart';
+import '../../data/services/revision_service.dart';
+import '../../data/services/transfer_service.dart';
+import '../../design_system/design_system.dart';
+import 'entry_photos.dart';
+import 'entry_providers.dart';
+import 'entry_tags.dart';
+
+/// Карточка записи: путь категорий, отношение, оценка, заметка, история версий
+/// с восстановлением (§18) и архивирование (§24).
+class EntryDetailSheet extends ConsumerStatefulWidget {
+  const EntryDetailSheet({super.key, required this.entryId});
+
+  final String entryId;
+
+  static Future<void> show(BuildContext context, String entryId) {
+    final wide =
+        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
+    if (wide) {
+      return showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: 640,
+            height: 700,
+            child: EntryDetailSheet(entryId: entryId),
+          ),
+        ),
+      );
+    }
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: EntryDetailSheet(entryId: entryId),
+      ),
+    );
+  }
+
+  @override
+  ConsumerState<EntryDetailSheet> createState() => _EntryDetailSheetState();
+}
+
+class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
+  final _note = TextEditingController();
+  bool _noteInitialised = false;
+  bool _showHistory = false;
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  void _bump() => ref.read(dataRefreshProvider.notifier).bump();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final detail = ref.watch(entryDetailProvider(widget.entryId));
+
+    return detail.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+      data: (d) {
+        if (d == null) {
+          return Center(child: Text(l10n.commonNothingFound));
+        }
+        if (!_noteInitialised) {
+          _note.text = d.entry.detailedNote ?? '';
+          _noteInitialised = true;
+        }
+        final relation = _relationOf(d.entry.relation);
+        // Чужую запись нельзя редактировать: мнение принадлежит её автору (§6.2).
+        // Вместо редактирования предлагается добавить её себе (§12).
+        final active = ref.watch(activeProfileProvider);
+        final isOwn = active != null && d.entry.profileId == active.id;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Шапка
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimens.space20,
+                AppDimens.space16,
+                AppDimens.space8,
+                AppDimens.space8,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.entryDetailTitle,
+                      style: context.text.headlineSmall,
+                    ),
+                  ),
+                  if (isOwn) ...[
+                    IconButton(
+                      tooltip: l10n.collectionAddTo,
+                      onPressed: () => _addToCollection(d.entry.id),
+                      icon: const Icon(Icons.playlist_add_rounded),
+                    ),
+                    IconButton(
+                      tooltip: l10n.entryArchive,
+                      onPressed: () => _archive(d.entry.id),
+                      icon: const Icon(Icons.archive_outlined),
+                    ),
+                  ],
+                  IconButton(
+                    tooltip: l10n.commonClose,
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: c.border),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(AppDimens.space20),
+                children: [
+                  // Хлебные крошки: Продукты / Колбасы / Папа может (§7.6)
+                  Breadcrumbs(
+                    crumbs: [
+                      for (final name in d.categoryPath) Crumb(name),
+                      Crumb(d.object.title),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  Text(d.object.title, style: context.text.displayMedium),
+                  const SizedBox(height: AppDimens.space4),
+                  Text(
+                    [
+                      d.typeName,
+                      if (d.object.creator != null) d.object.creator!,
+                    ].join(' · '),
+                    style: context.text.bodyMedium?.copyWith(
+                      color: c.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space24),
+
+                  // Чужая запись: мнение источника только для чтения (§12).
+                  if (!isOwn) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      decoration: BoxDecoration(
+                        color: c.accentSoft,
+                        borderRadius: AppDimens.brMd,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.transferTitle,
+                            style: context.text.titleMedium,
+                          ),
+                          const SizedBox(height: AppDimens.space4),
+                          Text(
+                            l10n.transferDone,
+                            style: context.text.bodySmall?.copyWith(
+                              color: c.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.space12),
+                          TransferButton(
+                            onPressed: () => _transferToMe(d.entry.id),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.space20),
+                  ],
+
+                  // Отношение
+                  Text(
+                    l10n.quickAddRelationLabel,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space8),
+                  Wrap(
+                    spacing: AppDimens.space8,
+                    runSpacing: AppDimens.space8,
+                    children: [
+                      for (final r in Relation.values)
+                        ChoiceChip(
+                          selected: relation == r,
+                          onSelected: isOwn
+                              ? (s) => _setRelation(d.entry.id, s ? r : null)
+                              : null,
+                          avatar: Icon(
+                            r.icon,
+                            size: 16,
+                            color: relation == r
+                                ? r.accent(c)
+                                : c.textSecondary,
+                          ),
+                          label: Text(r.label(l10n)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.space20),
+
+                  // Оценка
+                  Row(
+                    children: [
+                      Text(
+                        l10n.quickAddRatingLabel,
+                        style: context.text.labelSmall?.copyWith(
+                          color: c.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      RatingView(value: d.entry.rating, compact: true),
+                    ],
+                  ),
+                  Slider(
+                    value: d.entry.rating ?? 0,
+                    min: 0,
+                    max: 10,
+                    divisions: 20,
+                    label: (d.entry.rating ?? 0).toStringAsFixed(1),
+                    onChanged: isOwn ? (v) => _setRating(d.entry.id, v) : null,
+                  ),
+                  if (d.entry.rating != null && isOwn)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => _setRating(d.entry.id, null),
+                        child: Text(l10n.quickAddRatingNone),
+                      ),
+                    ),
+                  const SizedBox(height: AppDimens.space12),
+
+                  // Заметка
+                  TextField(
+                    controller: _note,
+                    minLines: 3,
+                    maxLines: 8,
+                    readOnly: !isOwn,
+                    decoration: InputDecoration(labelText: l10n.entryNoteLabel),
+                    onEditingComplete: () => _saveNote(d.entry.id),
+                  ),
+                  if (isOwn) ...[
+                    const SizedBox(height: AppDimens.space8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: () => _saveNote(d.entry.id),
+                        child: Text(l10n.commonSave),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: AppDimens.space20),
+                  Divider(color: c.divider),
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Теги (§7.2)
+                  EntryTags(entryId: d.entry.id, editable: isOwn),
+
+                  const SizedBox(height: AppDimens.space16),
+                  Divider(color: c.divider),
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Доступность записи при передаче (§25)
+                  PrivacySelector(
+                    value: d.entry.privacy,
+                    onChanged: isOwn ? (v) => _setPrivacy(d.entry.id, v) : null,
+                  ),
+
+                  const SizedBox(height: AppDimens.space16),
+                  Divider(color: c.divider),
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Фотографии (§16)
+                  EntryPhotos(
+                    entryId: d.entry.id,
+                    revisionId: d.entry.currentRevisionId,
+                  ),
+
+                  const SizedBox(height: AppDimens.space16),
+                  Divider(color: c.divider),
+                  const SizedBox(height: AppDimens.space8),
+
+                  // История версий
+                  InkWell(
+                    onTap: () => setState(() => _showHistory = !_showHistory),
+                    borderRadius: AppDimens.brSm,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppDimens.space8,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            l10n.entryHistory,
+                            style: context.text.titleMedium,
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${d.history.length}',
+                            style: context.text.labelSmall?.copyWith(
+                              color: c.textMuted,
+                            ),
+                          ),
+                          Icon(
+                            _showHistory
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            color: c.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_showHistory)
+                    for (final rev in d.history)
+                      _RevisionRow(
+                        dateLabel: DateFormat(
+                          'd MMMM y, HH:mm',
+                          'ru',
+                        ).format(rev.createdAt),
+                        isCurrent: rev.id == d.entry.currentRevisionId,
+                        onRestore: rev.id == d.entry.currentRevisionId
+                            ? null
+                            : () => _restore(d.entry.id, rev.id),
+                      ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Relation? _relationOf(String? name) {
+    if (name == null) return null;
+    for (final r in Relation.values) {
+      if (r.name == name) return r;
+    }
+    return null;
+  }
+
+  Future<void> _setRelation(String entryId, Relation? r) async {
+    await ref
+        .read(entryRepositoryProvider)
+        .updateEntry(entryId, relation: r?.name);
+    _bump();
+  }
+
+  Future<void> _setRating(String entryId, double? value) async {
+    await ref.read(entryRepositoryProvider).updateEntry(entryId, rating: value);
+    _bump();
+  }
+
+  Future<void> _setPrivacy(String entryId, String privacy) async {
+    await ref
+        .read(entryRepositoryProvider)
+        .updateEntry(entryId, privacy: privacy);
+    _bump();
+  }
+
+  Future<void> _saveNote(String entryId) async {
+    final text = _note.text.trim();
+    await ref
+        .read(entryRepositoryProvider)
+        .updateEntry(entryId, detailedNote: text.isEmpty ? null : text);
+    _bump();
+  }
+
+  Future<void> _restore(String entryId, String revisionId) async {
+    final l10n = AppLocalizations.of(context);
+    final db = ref.read(appDatabaseProvider);
+    await RevisionService(db).restoreEntryRevision(entryId, revisionId);
+    _noteInitialised = false;
+    _bump();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.entryRestored)));
+  }
+
+  /// Добавление записи в подборку с возможностью создать новую (§27).
+  Future<void> _addToCollection(String entryId) async {
+    final l10n = AppLocalizations.of(context);
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+
+    final repo = ref.read(collectionRepositoryProvider);
+    final existing = await repo.listWithCounts(profile.id);
+    final already = await repo.collectionsOfEntry(entryId);
+    if (!mounted) return;
+
+    final chosen = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.collectionAddTo),
+        children: [
+          for (final v in existing)
+            SimpleDialogOption(
+              onPressed: already.contains(v.collection.id)
+                  ? null
+                  : () => Navigator.of(ctx).pop(v.collection.id),
+              child: Row(
+                children: [
+                  Icon(
+                    already.contains(v.collection.id)
+                        ? Icons.check_rounded
+                        : Icons.collections_bookmark_outlined,
+                    size: 18,
+                  ),
+                  const SizedBox(width: AppDimens.space12),
+                  Expanded(child: Text(v.collection.name)),
+                ],
+              ),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(ctx).pop('__new__'),
+            child: Row(
+              children: [
+                const Icon(Icons.add_rounded, size: 18),
+                const SizedBox(width: AppDimens.space12),
+                Expanded(child: Text(l10n.collectionCreate)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    if (chosen == null || !mounted) return;
+
+    var collectionId = chosen;
+    if (chosen == '__new__') {
+      final name = await TextInputDialog.show(
+        context,
+        title: l10n.collectionCreate,
+        label: l10n.collectionNameLabel,
+      );
+      if (name == null || !mounted) return;
+      final created = await repo.create(profile.id, name);
+      collectionId = created.id;
+    }
+
+    await repo.addEntry(collectionId, entryId);
+    _bump();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.collectionAdded)));
+  }
+
+  /// Добавляет чужую запись в активный профиль (§12).
+  Future<void> _transferToMe(String sourceEntryId) async {
+    final l10n = AppLocalizations.of(context);
+    final active = ref.read(activeProfileProvider);
+    if (active == null) return;
+
+    final service = TransferService(ref.read(appDatabaseProvider));
+    final source = await ref.read(entryDetailProvider(sourceEntryId).future);
+    if (source != null &&
+        await service.hasEntryFor(active.id, source.object.id)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.transferAlreadyHave)));
+      return;
+    }
+
+    await service.transfer(
+      sourceEntryId: sourceEntryId,
+      targetProfileId: active.id,
+      mode: TransferCategoryMode.autoCreate,
+    );
+    _bump();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.transferDone)));
+  }
+
+  Future<void> _archive(String entryId) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await ConfirmDialog.show(
+      context,
+      title: l10n.entryArchive,
+      message: l10n.categoryArchiveConfirm,
+      confirmLabel: l10n.commonArchive,
+      destructive: true,
+    );
+    if (!ok) return;
+    await ref.read(entryRepositoryProvider).archiveEntry(entryId);
+    _bump();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+}
+
+class _RevisionRow extends StatelessWidget {
+  const _RevisionRow({
+    required this.dateLabel,
+    required this.isCurrent,
+    required this.onRestore,
+  });
+
+  final String dateLabel;
+  final bool isCurrent;
+  final VoidCallback? onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.space8),
+      child: Row(
+        children: [
+          Icon(
+            isCurrent ? Icons.radio_button_checked : Icons.history_rounded,
+            size: 18,
+            color: isCurrent ? c.accentPrimary : c.textMuted,
+          ),
+          const SizedBox(width: AppDimens.space12),
+          Expanded(
+            child: Text(
+              l10n.entryVersionAt(dateLabel),
+              style: context.text.bodySmall,
+            ),
+          ),
+          if (onRestore != null)
+            TextButton(
+              onPressed: onRestore,
+              child: Text(l10n.entryRestoreRevision),
+            ),
+        ],
+      ),
+    );
+  }
+}
