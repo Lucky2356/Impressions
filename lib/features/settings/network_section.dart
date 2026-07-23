@@ -85,25 +85,36 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
     setState(() => _busy = true);
     try {
       final version = await ref.read(appVersionProvider.future);
-      final release = await ref
+      final result = await ref
           .read(updateServiceProvider)
-          .checkAppUpdate(currentVersion: version, force: true);
+          .checkAppUpdateManually(version);
       ref.read(dataRefreshProvider.notifier).bump();
       if (!mounted) return;
-      if (release == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.settingsUpToDate)));
-        return;
+
+      switch (result.status) {
+        case UpdateCheckStatus.updateAvailable:
+          final release = result.release!;
+          await showUpdateDialog(
+            context,
+            release.version,
+            release.installerUrl ?? release.url,
+          );
+        case UpdateCheckStatus.upToDate:
+          _notify(l10n.settingsUpToDate);
+        case UpdateCheckStatus.unavailable:
+          _notify(l10n.settingsUpdateUnavailable);
+        case UpdateCheckStatus.failed:
+          _notify(l10n.settingsUpdateFailed);
       }
-      await showUpdateDialog(
-        context,
-        release.version,
-        release.installerUrl ?? release.url,
-      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _notify(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

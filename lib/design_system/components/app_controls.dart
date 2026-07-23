@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 
@@ -19,7 +20,7 @@ class AppSearchField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.autofocus = false,
-    this.height = AppDimens.controlHeight,
+    this.height = AppDimens.searchFieldHeight,
   });
 
   final String hint;
@@ -39,20 +40,28 @@ class _AppSearchFieldState extends State<AppSearchField> {
   TextEditingController get _controller =>
       widget.controller ?? (_own ??= TextEditingController());
 
+  FocusNode? _ownFocus;
+  FocusNode get _focus => widget.focusNode ?? (_ownFocus ??= FocusNode());
+
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_onText);
+    _controller.addListener(_redraw);
+    // Рамка и значок подсвечиваются, пока в поле стоит курсор, — значит, на
+    // изменение фокуса тоже надо перерисовываться.
+    _focus.addListener(_redraw);
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_onText);
+    _controller.removeListener(_redraw);
+    _focus.removeListener(_redraw);
     _own?.dispose();
+    _ownFocus?.dispose();
     super.dispose();
   }
 
-  void _onText() {
+  void _redraw() {
     if (mounted) setState(() {});
   }
 
@@ -60,11 +69,22 @@ class _AppSearchFieldState extends State<AppSearchField> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final hasText = _controller.text.isNotEmpty;
+    final focused = _focus.hasFocus;
+
+    // Поле — сплошной прямоугольник с заметной заливкой, а не тонкая рамка:
+    // в тёмной теме «таблетка» с одним контуром сливалась с фоном и читалась
+    // как незаконченный элемент. Тон заливки строим от текста — он одинаково
+    // виден на светлой и тёмной теме.
+    final fill = c.textMuted.withValues(alpha: focused ? 0.16 : 0.10);
+    final borderColor = focused
+        ? c.accentPrimary
+        : c.textMuted.withValues(alpha: 0.30);
+
     return SizedBox(
       height: widget.height,
       child: TextField(
         controller: _controller,
-        focusNode: widget.focusNode,
+        focusNode: _focus,
         autofocus: widget.autofocus,
         onChanged: widget.onChanged,
         onSubmitted: widget.onSubmitted,
@@ -72,27 +92,53 @@ class _AppSearchFieldState extends State<AppSearchField> {
         style: context.text.bodyMedium,
         decoration: InputDecoration(
           hintText: widget.hint,
-          isDense: true,
-          prefixIcon: Icon(Icons.search_rounded, size: 20, color: c.textMuted),
-          prefixIconConstraints: const BoxConstraints(minWidth: 42),
+          hintStyle: context.text.bodyMedium?.copyWith(color: c.textMuted),
+          isCollapsed: true,
+          filled: true,
+          fillColor: fill,
+          // Значок вплотную к тексту: большой отступ слева делал поле «дырявым».
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(
+              left: AppDimens.space16,
+              right: AppDimens.space8,
+            ),
+            child: Icon(
+              Icons.search_rounded,
+              size: 22,
+              color: focused ? c.accentPrimary : c.textSecondary,
+            ),
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
           suffixIcon: hasText
               ? IconButton(
-                  iconSize: 18,
-                  splashRadius: 18,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36),
+                  iconSize: 20,
+                  tooltip: AppLocalizations.of(context).searchClear,
                   onPressed: () {
                     _controller.clear();
                     widget.onChanged?.call('');
                   },
-                  icon: Icon(Icons.close_rounded, color: c.textMuted),
+                  icon: Icon(Icons.close_rounded, color: c.textSecondary),
                 )
               : null,
+          // Центрируем текст по высоте поля.
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.space12,
+            vertical: AppDimens.space16,
           ),
+          border: _outline(borderColor, width: focused ? 1.6 : 1),
+          enabledBorder: _outline(borderColor, width: 1),
+          focusedBorder: _outline(c.accentPrimary, width: 1.6),
         ),
       ),
+    );
+  }
+
+  OutlineInputBorder _outline(Color color, {double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: AppDimens.brMd,
+      borderSide: BorderSide(color: color, width: width),
     );
   }
 }
@@ -108,6 +154,7 @@ class AppDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.icon,
     this.showLabel = true,
+    this.active = false,
   });
 
   final String label;
@@ -117,29 +164,33 @@ class AppDropdown<T> extends StatelessWidget {
   final IconData? icon;
   final bool showLabel;
 
+  /// Значение отличается от «все» — фильтр включён.
+  ///
+  /// Включённый фильтр подсвечивается: иначе четыре одинаковые серые таблетки
+  /// не дают понять, что список сужен.
+  final bool active;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final tint = active ? c.accentPrimary : c.textMuted;
     return Container(
       height: AppDimens.controlHeightSm,
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.space12),
       decoration: BoxDecoration(
-        color: c.surface,
+        color: active ? c.accentSoft : c.surfaceMuted,
         borderRadius: AppDimens.brPill,
-        border: Border.all(color: c.border),
+        border: Border.all(color: active ? c.accentPrimary : c.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16, color: c.textMuted),
+            Icon(icon, size: 16, color: tint),
             const SizedBox(width: AppDimens.space8),
           ],
           if (showLabel) ...[
-            Text(
-              label,
-              style: context.text.labelSmall?.copyWith(color: c.textMuted),
-            ),
+            Text(label, style: context.text.labelSmall?.copyWith(color: tint)),
             const SizedBox(width: AppDimens.space8),
           ],
           DropdownButtonHideUnderline(
@@ -149,12 +200,15 @@ class AppDropdown<T> extends StatelessWidget {
               onChanged: onChanged,
               isDense: true,
               borderRadius: AppDimens.brMd,
-              style: context.text.labelMedium?.copyWith(color: c.textPrimary),
+              style: context.text.labelMedium?.copyWith(
+                color: c.textPrimary,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              ),
               dropdownColor: c.surface,
               icon: Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 18,
-                color: c.textSecondary,
+                color: active ? c.accentPrimary : c.textSecondary,
               ),
             ),
           ),

@@ -162,7 +162,9 @@ void main() {
           child: golden(const CategoriesScreen(), brightness: brightness),
         ),
       );
-      await tester.pump();
+      // Ждём появления карточек: Appear заводит отложенные таймеры, и без
+      // полной прокрутки анимаций golden снимался бы на середине перехода.
+      await tester.pumpAndSettle();
 
       await expectLater(
         find.byType(CategoriesScreen),
@@ -204,7 +206,9 @@ void main() {
           child: golden(const CatalogScreen(), brightness: brightness),
         ),
       );
-      await tester.pump();
+      // Ждём появления карточек: Appear заводит отложенные таймеры, и без
+      // полной прокрутки анимаций golden снимался бы на середине перехода.
+      await tester.pumpAndSettle();
 
       await expectLater(
         find.byType(CatalogScreen),

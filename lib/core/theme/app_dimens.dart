@@ -58,6 +58,10 @@ class AppDimens {
   /// Уменьшенный вариант — плотные панели фильтров и вложенные действия.
   static const double controlHeightSm = 36;
 
+  /// Высота поля поиска — заметно больше обычной кнопки: поиск открывают часто,
+  /// и мелкое поле в него неудобно попадать. Одинаковая во всех разделах.
+  static const double searchFieldHeight = 48;
+
   /// Высота шапки экрана.
   static const double headerHeight = 72;
   static const double headerHeightCompact = 60;

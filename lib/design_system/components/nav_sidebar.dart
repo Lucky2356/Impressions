@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 
+import 'app_logo.dart';
+
 /// Пункт боковой навигации.
 class NavItemData {
   const NavItemData({
@@ -119,20 +121,7 @@ class _Logo extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: c.accentPrimary,
-              borderRadius: AppDimens.brSm,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.bookmark_rounded,
-              size: 20,
-              color: c.accentPrimaryOn,
-            ),
-          ),
+          const AppLogo(size: 34),
           const SizedBox(width: AppDimens.space12),
           Expanded(
             child: Text(

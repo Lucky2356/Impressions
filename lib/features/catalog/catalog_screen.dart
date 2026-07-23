@@ -43,6 +43,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
 
+  /// Развёрнута ли панель фильтров. На широком окне она открыта сразу, на
+  /// телефоне прячется — иначе четыре списка занимают экран до первой записи.
+  bool? _filtersExpanded;
+
   @override
   void initState() {
     super.initState();
@@ -126,6 +130,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         bottom: _FilterBar(
           searchController: _searchController,
           onSearchChanged: _onSearchChanged,
+          expanded: _filtersExpanded ?? context.layout.isWide,
+          onToggleFilters: () => setState(
+            () =>
+                _filtersExpanded = !(_filtersExpanded ?? context.layout.isWide),
+          ),
         ),
       ),
       child: results.when(
@@ -256,13 +265,16 @@ class _Results extends ConsumerWidget {
           ),
           itemCount: entries.length,
           separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-          itemBuilder: (context, i) => EntryTile(
-            entry: entries[i],
-            selected: selected.contains(entries[i].entryId),
-            selectionActive: selected.isNotEmpty,
-            builder: (onTap) => EntryCardCompact(
-              data: _toCardData(context, entries[i]),
-              onTap: onTap,
+          itemBuilder: (context, i) => Appear(
+            index: i,
+            child: EntryTile(
+              entry: entries[i],
+              selected: selected.contains(entries[i].entryId),
+              selectionActive: selected.isNotEmpty,
+              builder: (onTap) => EntryCardCompact(
+                data: _toCardData(context, entries[i]),
+                onTap: onTap,
+              ),
             ),
           ),
         ),
@@ -298,14 +310,17 @@ class _Results extends ConsumerWidget {
               ),
             ),
             itemCount: entries.length,
-            itemBuilder: (context, i) => EntryTile(
-              entry: entries[i],
-              selected: selected.contains(entries[i].entryId),
-              selectionActive: selected.isNotEmpty,
-              builder: (onTap) => EntryCard(
-                dense: dense,
-                data: _toCardData(context, entries[i]),
-                onTap: onTap,
+            itemBuilder: (context, i) => Appear(
+              index: i,
+              child: EntryTile(
+                entry: entries[i],
+                selected: selected.contains(entries[i].entryId),
+                selectionActive: selected.isNotEmpty,
+                builder: (onTap) => EntryCard(
+                  dense: dense,
+                  data: _toCardData(context, entries[i]),
+                  onTap: onTap,
+                ),
               ),
             ),
           ),
@@ -339,10 +354,16 @@ class _FilterBar extends ConsumerWidget {
   const _FilterBar({
     required this.searchController,
     required this.onSearchChanged,
+    required this.expanded,
+    required this.onToggleFilters,
   });
 
   final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
+
+  /// Показаны ли списки фильтров.
+  final bool expanded;
+  final VoidCallback onToggleFilters;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -360,17 +381,25 @@ class _FilterBar extends ConsumerWidget {
         state.categoryId != null ||
         state.tagIds.isNotEmpty;
 
+    // Сколько фильтров включено — число на кнопке, когда панель свёрнута.
+    final activeCount = [
+      state.typeId != null,
+      state.categoryId != null,
+      state.relation != null,
+      state.tagIds.isNotEmpty,
+    ].where((x) => x).length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             // Поле поиска не растягивается на всю ширину окна: на широком
-            // мониторе строка ввода в 1800 точек выглядит нелепо.
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: SizedBox(
-                width: 420,
+            // мониторе строка ввода в 1800 точек выглядит нелепо. На узком —
+            // наоборот, занимает всё доступное место.
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
                 child: AppSearchField(
                   hint: l10n.catalogSearchHint,
                   controller: searchController,
@@ -379,7 +408,15 @@ class _FilterBar extends ConsumerWidget {
               ),
             ),
             const Spacer(),
-            const SizedBox(width: AppDimens.space12),
+            const SizedBox(width: AppDimens.space8),
+            // Фильтры прячутся за одну кнопку: четыре списка подряд занимали
+            // на телефоне пол-экрана ещё до первой записи.
+            _FilterToggle(
+              expanded: expanded,
+              activeCount: activeCount,
+              onPressed: onToggleFilters,
+            ),
+            const SizedBox(width: AppDimens.space8),
             SegmentedToggle<CatalogViewMode>(
               value: state.view,
               onChanged: controller.setView,
@@ -403,133 +440,213 @@ class _FilterBar extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppDimens.space12),
-        Wrap(
-          spacing: AppDimens.space8,
-          runSpacing: AppDimens.space8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            AppDropdown<String?>(
-              label: l10n.catalogTypeLabel,
-              icon: Icons.category_rounded,
-              value: state.typeId,
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text(l10n.catalogAllTypes),
-                ),
-                for (final t in types)
-                  DropdownMenuItem(value: t.id, child: Text(t.name)),
-              ],
-              onChanged: controller.setType,
-            ),
-            AppDropdown<String?>(
-              label: l10n.catalogCategoryLabel,
-              icon: Icons.account_tree_rounded,
-              value: state.categoryId,
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text(l10n.catalogAllCategories),
-                ),
-                for (final cat in categories)
+        if (expanded) ...[
+          const SizedBox(height: AppDimens.space12),
+          Wrap(
+            spacing: AppDimens.space8,
+            runSpacing: AppDimens.space8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              AppDropdown<String?>(
+                label: l10n.catalogTypeLabel,
+                icon: Icons.category_rounded,
+                value: state.typeId,
+                items: [
                   DropdownMenuItem(
-                    value: cat.id,
-                    child: Text('${'   ' * cat.level}${cat.name}'),
+                    value: null,
+                    child: Text(l10n.catalogAllTypes),
                   ),
-              ],
-              onChanged: controller.setCategory,
-            ),
-            AppDropdown<String?>(
-              label: l10n.catalogRelationLabel,
-              icon: Icons.favorite_rounded,
-              value: state.relation,
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text(l10n.catalogAllRelations),
-                ),
-                for (final r in Relation.values)
-                  DropdownMenuItem(value: r.name, child: Text(r.label(l10n))),
-              ],
-              onChanged: controller.setRelation,
-            ),
-            AppDropdown<EntrySort>(
-              label: l10n.catalogSortLabel,
-              icon: Icons.sort_rounded,
-              value: state.sort,
-              items: [
-                DropdownMenuItem(
-                  value: EntrySort.recent,
-                  child: Text(l10n.catalogSortRecent),
-                ),
-                DropdownMenuItem(
-                  value: EntrySort.title,
-                  child: Text(l10n.catalogSortTitle),
-                ),
-                DropdownMenuItem(
-                  value: EntrySort.rating,
-                  child: Text(l10n.catalogSortRating),
-                ),
-                DropdownMenuItem(
-                  value: EntrySort.impressionDate,
-                  child: Text(l10n.catalogSortImpression),
-                ),
-              ],
-              onChanged: (v) => controller.setSort(v ?? EntrySort.recent),
-            ),
-            // Запрос мог прийти из шапки — тогда пользователь не набирал его
-            // здесь и не понимает, почему список сузился.
-            if (state.search.isNotEmpty)
-              InputChip(
-                label: Text(l10n.catalogSearchChip(state.search)),
-                avatar: const Icon(Icons.search_rounded, size: 16),
-                deleteIcon: const Icon(Icons.close_rounded, size: 16),
-                onDeleted: () {
-                  searchController.clear();
-                  controller.setSearch('');
-                },
+                  for (final t in types)
+                    DropdownMenuItem(value: t.id, child: Text(t.name)),
+                ],
+                onChanged: controller.setType,
+                active: state.typeId != null,
               ),
-            if (state.categoryId != null)
-              FilterChip(
-                selected: state.includeSubcategories,
-                onSelected: controller.setIncludeSubcategories,
-                label: Text(l10n.categoryShowSubcategories),
-                showCheckmark: false,
-                avatar: Icon(
-                  state.includeSubcategories
-                      ? Icons.check_rounded
-                      : Icons.subdirectory_arrow_right_rounded,
-                  size: 16,
+              AppDropdown<String?>(
+                label: l10n.catalogCategoryLabel,
+                icon: Icons.account_tree_rounded,
+                value: state.categoryId,
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(l10n.catalogAllCategories),
+                  ),
+                  for (final cat in categories)
+                    DropdownMenuItem(
+                      value: cat.id,
+                      child: Text('${'   ' * cat.level}${cat.name}'),
+                    ),
+                ],
+                onChanged: controller.setCategory,
+                active: state.categoryId != null,
+              ),
+              AppDropdown<String?>(
+                label: l10n.catalogRelationLabel,
+                icon: Icons.favorite_rounded,
+                value: state.relation,
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(l10n.catalogAllRelations),
+                  ),
+                  for (final r in Relation.values)
+                    DropdownMenuItem(value: r.name, child: Text(r.label(l10n))),
+                ],
+                onChanged: controller.setRelation,
+                active: state.relation != null,
+              ),
+              AppDropdown<EntrySort>(
+                label: l10n.catalogSortLabel,
+                icon: Icons.sort_rounded,
+                value: state.sort,
+                items: [
+                  DropdownMenuItem(
+                    value: EntrySort.recent,
+                    child: Text(l10n.catalogSortRecent),
+                  ),
+                  DropdownMenuItem(
+                    value: EntrySort.title,
+                    child: Text(l10n.catalogSortTitle),
+                  ),
+                  DropdownMenuItem(
+                    value: EntrySort.rating,
+                    child: Text(l10n.catalogSortRating),
+                  ),
+                  DropdownMenuItem(
+                    value: EntrySort.impressionDate,
+                    child: Text(l10n.catalogSortImpression),
+                  ),
+                ],
+                onChanged: (v) => controller.setSort(v ?? EntrySort.recent),
+                active: state.sort != EntrySort.recent,
+              ),
+              // Запрос мог прийти из шапки — тогда пользователь не набирал его
+              // здесь и не понимает, почему список сузился.
+              if (state.search.isNotEmpty)
+                InputChip(
+                  label: Text(l10n.catalogSearchChip(state.search)),
+                  avatar: const Icon(Icons.search_rounded, size: 16),
+                  deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                  onDeleted: () {
+                    searchController.clear();
+                    controller.setSearch('');
+                  },
                 ),
-              ),
-            // Теги — плоские метки, поэтому выбираются чипами, а не списком:
-            // их можно выбрать несколько сразу.
-            for (final tag in tags)
-              FilterChip(
-                selected: state.tagIds.contains(tag.id),
-                onSelected: (_) => controller.toggleTag(tag.id),
-                label: Text(tag.name),
-                showCheckmark: false,
-                avatar: Icon(
-                  state.tagIds.contains(tag.id)
-                      ? Icons.check_rounded
-                      : Icons.label_outline_rounded,
-                  size: 16,
+              if (state.categoryId != null)
+                FilterChip(
+                  selected: state.includeSubcategories,
+                  onSelected: controller.setIncludeSubcategories,
+                  label: Text(l10n.categoryShowSubcategories),
+                  showCheckmark: false,
+                  avatar: Icon(
+                    state.includeSubcategories
+                        ? Icons.check_rounded
+                        : Icons.subdirectory_arrow_right_rounded,
+                    size: 16,
+                  ),
                 ),
-              ),
-            if (hasFilters)
-              TextButton.icon(
-                onPressed: () {
-                  searchController.clear();
-                  controller.reset();
-                },
-                icon: const Icon(Icons.close_rounded, size: 16),
-                label: Text(l10n.catalogResetFilters),
-              ),
-          ],
-        ),
+              // Теги — плоские метки, поэтому выбираются чипами, а не списком:
+              // их можно выбрать несколько сразу.
+              for (final tag in tags)
+                FilterChip(
+                  selected: state.tagIds.contains(tag.id),
+                  onSelected: (_) => controller.toggleTag(tag.id),
+                  label: Text(tag.name),
+                  showCheckmark: false,
+                  avatar: Icon(
+                    state.tagIds.contains(tag.id)
+                        ? Icons.check_rounded
+                        : Icons.label_outline_rounded,
+                    size: 16,
+                  ),
+                ),
+              if (hasFilters)
+                TextButton.icon(
+                  onPressed: () {
+                    searchController.clear();
+                    controller.reset();
+                  },
+                  icon: const Icon(Icons.close_rounded, size: 16),
+                  label: Text(l10n.catalogResetFilters),
+                ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+/// Кнопка «Фильтры» со счётчиком включённых.
+class _FilterToggle extends StatelessWidget {
+  const _FilterToggle({
+    required this.expanded,
+    required this.activeCount,
+    required this.onPressed,
+  });
+
+  final bool expanded;
+  final int activeCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final on = expanded || activeCount > 0;
+
+    return Material(
+      color: on ? c.accentSoft : c.surfaceMuted,
+      borderRadius: AppDimens.brPill,
+      child: InkWell(
+        borderRadius: AppDimens.brPill,
+        onTap: onPressed,
+        child: Container(
+          height: AppDimens.controlHeightSm,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space12),
+          decoration: BoxDecoration(
+            borderRadius: AppDimens.brPill,
+            border: Border.all(color: on ? c.accentPrimary : c.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.tune_rounded,
+                size: 16,
+                color: on ? c.accentPrimary : c.textMuted,
+              ),
+              const SizedBox(width: AppDimens.space8),
+              Text(
+                l10n.catalogFilters,
+                style: context.text.labelMedium?.copyWith(
+                  color: on ? c.accentPrimary : c.textSecondary,
+                ),
+              ),
+              if (activeCount > 0) ...[
+                const SizedBox(width: AppDimens.space8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.accentPrimary,
+                    borderRadius: AppDimens.brPill,
+                  ),
+                  child: Text(
+                    '$activeCount',
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.accentPrimaryOn,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

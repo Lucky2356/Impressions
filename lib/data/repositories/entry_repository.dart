@@ -558,6 +558,51 @@ class EntryRepository {
     ];
   }
 
+  /// Несколько обложек на категорию — для карточек-полок (§7).
+  ///
+  /// Считаются по всей ветке: у корневой полки обычно нет собственных записей,
+  /// но её содержимое должно быть видно. Берём только записи с фотографиями,
+  /// их обычно немного, поэтому один проход дешевле выборки всего каталога.
+  Future<Map<String, List<String>>> categoryCovers(
+    String profileId, {
+    int perCategory = 3,
+  }) async {
+    final entries =
+        await (db.select(db.profileEntries)..where(
+              (e) => e.profileId.equals(profileId) & e.archivedAt.isNull(),
+            ))
+            .get();
+    if (entries.isEmpty) return const {};
+
+    final covers = await _coversFor(entries);
+    if (covers.isEmpty) return const {};
+
+    // Основная категория записи и путь до корня.
+    final links =
+        await (db.select(db.entryCategories)..where(
+              (ec) => ec.entryId.isIn(covers.keys) & ec.isPrimary.equals(true),
+            ))
+            .get();
+    if (links.isEmpty) return const {};
+
+    final cats = await (db.select(
+      db.categories,
+    )..where((c) => c.profileId.equals(profileId))).get();
+    final pathById = {for (final c in cats) c.id: c.path};
+
+    final result = <String, List<String>>{};
+    for (final link in links) {
+      final cover = covers[link.entryId];
+      final path = pathById[link.categoryId];
+      if (cover == null || path == null) continue;
+      for (final ancestorId in path.split('/')) {
+        final list = result.putIfAbsent(ancestorId, () => []);
+        if (list.length < perCategory) list.add(cover);
+      }
+    }
+    return result;
+  }
+
   /// Обложки для набранной страницы записей: одна миниатюра на запись.
   ///
   /// Фотографии привязаны к версии записи, поэтому идём от её текущей версии.

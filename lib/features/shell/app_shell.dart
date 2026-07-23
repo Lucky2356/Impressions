@@ -160,6 +160,30 @@ class _AppShellState extends ConsumerState<AppShell> {
     _ => AppConfig.appName,
   };
 
+  /// Раздел с плавной сменой.
+  ///
+  /// Разделы не маршруты, а ветки switch, поэтому переход между ними надо
+  /// анимировать самому: без этого экран подменялся рывком и было непонятно,
+  /// сменился раздел или просто перерисовался.
+  Widget _animatedBody(String id) {
+    return AnimatedSwitcher(
+      duration: AppDimens.durationMedium,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 0.02),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: KeyedSubtree(key: ValueKey(id), child: _body(id)),
+    );
+  }
+
   Widget _body(String id) => switch (id) {
     NavIds.home => const HomeScreen(),
     NavIds.categories => const CategoriesScreen(),
@@ -270,7 +294,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   onScan: _scanBarcode,
                 ),
                 Divider(height: 1, color: c.border),
-                Expanded(child: _body(activeId)),
+                Expanded(child: _animatedBody(activeId)),
               ],
             ),
           ),
@@ -285,19 +309,32 @@ class _AppShellState extends ConsumerState<AppShell> {
     final selectedIndex = _bottomOrder
         .indexOf(activeId)
         .clamp(0, _bottomOrder.length - 1);
+    // Высота статус-бара (на телефонах с вырезом — вместе с ним). Без этого
+    // заголовок уезжал под часы и значок сети.
+    final topInset = MediaQuery.paddingOf(context).top;
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(AppDimens.headerHeightCompact),
-        child: _TopHeader(
-          title: _titleFor(activeId, l10n),
-          wide: false,
-          searchFocus: _searchFocus,
-          onSearch: _search,
-          onSearchSubmitted: _searchSubmitted,
-          onScan: _scanBarcode,
+        preferredSize: Size.fromHeight(
+          AppDimens.headerHeightCompact + topInset,
+        ),
+        // Полоса статус-бара красится в тот же цвет, что и шапка, иначе над
+        // ней остаётся чужеродная тёмная лента.
+        child: ColoredBox(
+          color: context.colors.surface,
+          child: Padding(
+            padding: EdgeInsets.only(top: topInset),
+            child: _TopHeader(
+              title: _titleFor(activeId, l10n),
+              wide: false,
+              searchFocus: _searchFocus,
+              onSearch: _search,
+              onSearchSubmitted: _searchSubmitted,
+              onScan: _scanBarcode,
+            ),
+          ),
         ),
       ),
-      body: _body(activeId),
+      body: SafeArea(top: false, child: _animatedBody(activeId)),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (i) => _go(_bottomOrder[i]),
@@ -368,19 +405,31 @@ class _TopHeader extends ConsumerWidget {
       ),
       child: Row(
         children: [
+          // Заголовок стоит первым и всегда виден целиком.
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: wide ? context.text.headlineMedium : context.text.titleLarge,
           ),
-          const Spacer(),
+          // Гарантированный зазор между заголовком и поиском.
+          const SizedBox(width: AppDimens.space24),
           if (wide) ...[
-            SizedBox(
-              width: 320,
-              child: AppSearchField(
-                hint: l10n.searchGlobalHint,
-                focusNode: searchFocus,
-                onChanged: onSearch,
-                onSubmitted: onSearchSubmitted,
+            // Поиск прижат вправо и сам сжимается, когда места мало: важнее
+            // сохранить заголовок и кнопки, чем ширину поля. Раньше поле имело
+            // фиксированные 360 и наезжало на заголовок.
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 380),
+                  child: AppSearchField(
+                    hint: l10n.searchGlobalHint,
+                    focusNode: searchFocus,
+                    onChanged: onSearch,
+                    onSubmitted: onSearchSubmitted,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: AppDimens.space12),
@@ -403,6 +452,8 @@ class _TopHeader extends ConsumerWidget {
             ),
             const SizedBox(width: AppDimens.space8),
           ] else ...[
+            // На телефоне поиска в шапке нет — распорка отжимает значки вправо.
+            const Spacer(),
             IconActionButton(
               icon: Icons.qr_code_scanner_rounded,
               tooltip: l10n.barcodeScanAction,

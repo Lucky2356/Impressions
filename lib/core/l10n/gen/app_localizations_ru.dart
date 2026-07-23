@@ -524,6 +524,107 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoRemove => 'Удалить фотографию';
 
   @override
+  String get tourTitle => 'Как пользоваться';
+
+  @override
+  String get tourSkip => 'Пропустить';
+
+  @override
+  String get tourNext => 'Дальше';
+
+  @override
+  String get tourFinish => 'Понятно';
+
+  @override
+  String get tourRepeat => 'Пройти обучение заново';
+
+  @override
+  String get tourAddTitle => 'Записать впечатление';
+
+  @override
+  String get tourAddBody =>
+      'Для новой записи хватает названия. Отношение, оценку, заметку, фотографии, теги и подборку можно задать сразу же — кнопкой «Добавить подробности».';
+
+  @override
+  String get tourAddHintDesktop =>
+      'Ctrl + N — открыть форму, не отрывая рук от клавиатуры';
+
+  @override
+  String get tourAddHintMobile =>
+      'Оранжевая кнопка «+» внизу справа доступна с любого экрана';
+
+  @override
+  String get tourScanTitle => 'Товар по штрихкоду';
+
+  @override
+  String get tourScanBodyDesktop =>
+      'Штрихкод можно ввести руками, считать USB-сканером или распознать с фотографии. Название и бренд подтянутся из открытых товарных баз.';
+
+  @override
+  String get tourScanBodyMobile =>
+      'Наведите камеру на штрихкод — название и бренд подтянутся из открытых товарных баз. Наружу уходит только сам код.';
+
+  @override
+  String get tourScanHintDesktop => 'Ctrl + B — открыть сканирование';
+
+  @override
+  String get tourShelvesTitle => 'Полки вместо списка';
+
+  @override
+  String get tourShelvesBody =>
+      'Категории показываются полками: видно цвет, число записей и фотографии из ветки. Нажатие уводит вглубь, значок списка показывает записи самой полки. Кто привык к дереву — переключатель рядом с заголовком.';
+
+  @override
+  String get tourSearchTitle => 'Найти за секунду';
+
+  @override
+  String get tourSearchBody =>
+      'Поиск идёт по названиям и по тексту заметок. Фильтры по типу, категории, отношению и тегам прячутся за кнопкой «Фильтры», а включённые подсвечиваются.';
+
+  @override
+  String get tourSearchHintDesktop => 'Ctrl + F — перейти в поиск';
+
+  @override
+  String get tourBulkTitle => 'Разом, а не по одной';
+
+  @override
+  String get tourBulkBodyDesktop =>
+      'Ctrl + нажатие выделяет записи. Выделенным можно сразу назначить категорию, добавить тег, положить в подборку или убрать в архив. Правая кнопка открывает меню записи.';
+
+  @override
+  String get tourBulkBodyMobile =>
+      'Долгое нажатие включает выделение. Выделенным можно сразу назначить категорию, добавить тег, положить в подборку или убрать в архив.';
+
+  @override
+  String get tourSafetyTitle => 'Ничего не пропадает';
+
+  @override
+  String get tourSafetyBody =>
+      'Убранное уходит в архив и возвращается оттуда целым. Каждое изменение записи сохраняется отдельной версией. В настройках есть резервные копии — их можно создать и развернуть обратно.';
+
+  @override
+  String get searchClear => 'Очистить поиск';
+
+  @override
+  String get catalogFilters => 'Фильтры';
+
+  @override
+  String get categoryShowEntries => 'Показать записи';
+
+  @override
+  String get categoryViewShelves => 'Полками';
+
+  @override
+  String get categoryViewTree => 'Деревом';
+
+  @override
+  String get categoryShelfEmptyTitle => 'Внутри пока пусто';
+
+  @override
+  String get categoryShelfEmptyMessage =>
+      'Добавьте подкатегорию или заведите сюда первую запись.';
+
+  @override
   String get errorStateTitle => 'Не удалось показать этот раздел';
 
   @override
@@ -1480,6 +1581,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsUpToDate => 'Установлена последняя версия';
+
+  @override
+  String get settingsUpdateUnavailable =>
+      'Список версий недоступен. Возможно, репозиторий закрыт — тогда обновляйте приложение вручную со страницы выпусков.';
+
+  @override
+  String get settingsUpdateFailed =>
+      'Не удалось проверить обновления. Проверьте подключение к интернету и попробуйте позже.';
 
   @override
   String get updateTitle => 'Обновление приложения';

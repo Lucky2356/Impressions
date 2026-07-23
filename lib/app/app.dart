@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -6,6 +7,9 @@ import '../core/config/app_config.dart';
 import '../core/l10n/gen/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../data/providers.dart';
+import '../data/repositories/settings_repository.dart';
+import '../design_system/design_system.dart';
+import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/shell/app_shell.dart';
 import 'app_state.dart';
@@ -28,7 +32,32 @@ class ImpressionsApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: const _RootGate(),
+      home: const _SystemBars(child: _RootGate()),
+    );
+  }
+}
+
+/// Прозрачные системные панели Android с читаемыми значками.
+///
+/// Цвет значков зависит от темы приложения, а не от системной: на светлой теме
+/// белые часы поверх светлой шапки не видно.
+class _SystemBars extends StatelessWidget {
+  const _SystemBars({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final icons = dark ? Brightness.light : Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: icons,
+        statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: icons,
+      ),
+      child: child,
     );
   }
 }
@@ -43,14 +72,7 @@ class _RootGate extends ConsumerWidget {
     return profiles.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('$e', textAlign: TextAlign.center),
-          ),
-        ),
-      ),
+      error: (e, _) => Scaffold(body: ErrorState(error: e)),
       data: (list) => list.isEmpty
           ? const OnboardingScreen()
           : const _StartupTasks(child: AppShell()),
@@ -78,7 +100,22 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _run());
   }
 
+  /// Обучение показывается один раз — сразу после первого запуска.
+  ///
+  /// Отдельно от онбординга: тот объясняет модель до создания профиля, а это —
+  /// где что лежит, когда уже есть куда смотреть.
+  Future<void> _showTourIfNeeded() async {
+    final settings = ref.read(settingsRepositoryProvider);
+    final done = await settings.getBool(
+      SettingKeys.tourDone,
+      defaultValue: false,
+    );
+    if (done || !mounted) return;
+    await AppTour.show(context);
+  }
+
   Future<void> _run() async {
+    await _showTourIfNeeded();
     try {
       final service = ref.read(updateServiceProvider);
       final version = (await PackageInfo.fromPlatform()).version;

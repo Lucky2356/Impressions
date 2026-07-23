@@ -98,6 +98,16 @@ final categoryBranchCountsProvider = FutureProvider<Map<String, int>>((
   return result;
 });
 
+/// По несколько обложек на категорию — для карточек-полок.
+final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((
+  ref,
+) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const {};
+  return ref.watch(entryRepositoryProvider).categoryCovers(profile.id);
+});
+
 /// Сортировка по дереву: сравниваем последовательности sortOrder предков.
 List<CategoryRow> _sortByTreeOrder(List<CategoryRow> rows) {
   final byId = {for (final r in rows) r.id: r};

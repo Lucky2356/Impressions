@@ -104,44 +104,38 @@ class _MainColumn extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Три числа в одной невысокой строке. Раньше это были три плитки в
+        // половину экрана каждая — на телефоне ради трёх цифр приходилось
+        // прокручивать всю главную, и выглядели они как пустые блоки.
         if (stats != null)
-          LayoutBuilder(
-            builder: (context, cns) {
-              final cols = cns.maxWidth >= 900
-                  ? 3
-                  : cns.maxWidth >= 560
-                  ? 2
-                  : 1;
-              return _grid(
-                [
-                  StatCard(
-                    title: l10n.statEntries,
-                    value: '${stats.entries}',
-                    unit: l10n.statUnitPieces,
-                    // Настоящие добавления по месяцам, а не линия, выведенная
-                    // из текущего числа.
-                    trend: byMonth,
-                    trendColor: c.chartGreen,
-                  ),
-                  StatCard(
-                    title: l10n.statCategories,
-                    value: '${stats.categories}',
-                    unit: l10n.statUnitPieces,
-                    trendColor: c.chartBlue,
-                  ),
-                  StatCard(
-                    title: l10n.sectionWantToTry,
-                    value: '${stats.wantToTry}',
-                    unit: l10n.statUnitPieces,
-                    trendColor: c.chartRed,
-                  ),
-                ],
-                cols,
-                1.9,
-              );
-            },
+          SummaryStrip(
+            items: [
+              SummaryItem(
+                label: l10n.statEntries,
+                value: '${stats.entries}',
+                icon: Icons.article_rounded,
+                color: c.chartGreen,
+                trend: byMonth,
+                onTap: () => ref.read(navProvider.notifier).go(NavIds.catalog),
+              ),
+              SummaryItem(
+                label: l10n.statCategories,
+                value: '${stats.categories}',
+                icon: Icons.account_tree_rounded,
+                color: c.chartBlue,
+                onTap: () =>
+                    ref.read(navProvider.notifier).go(NavIds.categories),
+              ),
+              SummaryItem(
+                label: l10n.sectionWantToTry,
+                value: '${stats.wantToTry}',
+                icon: Icons.bookmark_add_rounded,
+                color: c.chartRed,
+                onTap: () => ref.read(navProvider.notifier).go(NavIds.wishlist),
+              ),
+            ],
           ),
-        const SizedBox(height: AppDimens.space32),
+        const SizedBox(height: AppDimens.space24),
         SectionHeader(title: l10n.sectionRecent),
         const SizedBox(height: AppDimens.space16),
         LayoutBuilder(

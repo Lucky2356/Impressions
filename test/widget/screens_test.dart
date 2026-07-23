@@ -196,7 +196,9 @@ void main() {
   });
 
   group('Категории', () {
-    testWidgets('рендерит дерево с вложенностью', (tester) async {
+    /// Две категории: корневая «Продукты» и вложенные «Колбасы» с тремя
+    /// записями.
+    Future<void> pumpTwoLevels(WidgetTester tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -230,11 +232,42 @@ void main() {
         ),
       );
       await tester.pump();
+    }
 
+    testWidgets('полками показывает корневые категории со счётчиком', (
+      tester,
+    ) async {
+      await pumpTwoLevels(tester);
+
+      // По умолчанию — полки: карточка корневой категории с числом записей по
+      // ветке и перечнем подкатегорий.
+      expect(find.byType(CategoryShelfCard), findsOneWidget);
+      expect(find.text('Продукты'), findsWidgets);
+      expect(find.text('3 записи'), findsOneWidget);
+      expect(find.text('Колбасы'), findsOneWidget);
+    });
+
+    testWidgets('полка с подкатегориями раскрывается нажатием', (tester) async {
+      await pumpTwoLevels(tester);
+
+      await tester.tap(find.byType(CategoryShelfCard));
+      await tester.pumpAndSettle();
+
+      // Внутри «Продуктов» лежат «Колбасы» — теперь они и есть полка.
+      expect(find.widgetWithText(CategoryShelfCard, 'Колбасы'), findsOneWidget);
+    });
+
+    testWidgets('переключение на дерево показывает вложенность', (
+      tester,
+    ) async {
+      await pumpTwoLevels(tester);
+
+      await tester.tap(find.byTooltip('Деревом'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CategoryTreeRow), findsNWidgets(2));
       expect(find.text('Продукты'), findsWidgets);
       expect(find.text('Колбасы'), findsOneWidget);
-      // Счётчик ветки показывается значком с числом рядом с категорией.
-      expect(find.text('3'), findsWidgets);
     });
 
     testWidgets('пустое дерево предлагает создать категорию', (tester) async {

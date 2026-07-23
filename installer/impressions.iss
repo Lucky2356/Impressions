@@ -39,6 +39,14 @@ DefaultGroupName={#AppName}
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 
+; Обычный ход установки: приветствие, лицензия, выбор папки, подтверждение.
+; Inno 6 по умолчанию пропускает приветствие, а из-за DisableProgramGroupPage
+; установщик выглядел так, будто ничего не спрашивает вовсе.
+DisableWelcomePage=no
+DisableDirPage=no
+DisableReadyPage=no
+LicenseFile=license_ru.txt
+
 OutputDir={#OutputDir}
 OutputBaseFilename=Impressions-{#AppVersion}-windows-x64-setup
 SetupIconFile={#SourceDir}\..\..\..\..\..\windows\runner\resources\app_icon.ico

@@ -16,6 +16,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
 import '../../design_system/design_system.dart';
+import '../onboarding/app_tour.dart';
 import 'devices_section.dart';
 import 'network_section.dart';
 import 'types_section.dart';
@@ -105,56 +106,48 @@ class _AppearanceSection extends ConsumerWidget {
     final c = context.colors;
     final mode = ref.watch(themeModeProvider);
 
+    // Переключатель с тремя подписями шире, чем остаётся места рядом с
+    // заголовком на телефоне: там он наезжал на слово «Тема», разбивая его
+    // по букве на строку. На узком экране он встаёт под заголовок.
     return SettingsGroup(
       title: l10n.settingsAppearance,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(l10n.settingsTheme, style: context.text.bodyMedium),
-            ),
-            // Тот же переключатель, что и в боковой панели: два разных
-            // элемента для одного и того же выбора выглядели как недоделка.
-            SegmentedToggle<ThemeMode>(
-              value: mode,
-              onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
-              segments: [
-                SegmentData(
-                  value: ThemeMode.light,
-                  icon: Icons.light_mode_rounded,
-                  tooltip: l10n.themeLight,
-                  label: l10n.themeLight,
-                ),
-                SegmentData(
-                  value: ThemeMode.dark,
-                  icon: Icons.dark_mode_rounded,
-                  tooltip: l10n.themeDark,
-                  label: l10n.themeDark,
-                ),
-                SegmentData(
-                  value: ThemeMode.system,
-                  icon: Icons.brightness_auto_rounded,
-                  tooltip: l10n.themeSystem,
-                  label: l10n.themeSystem,
-                ),
-              ],
-            ),
-          ],
+        SettingsRow(
+          label: l10n.settingsTheme,
+          control: SegmentedToggle<ThemeMode>(
+            value: mode,
+            onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
+            segments: [
+              SegmentData(
+                value: ThemeMode.light,
+                icon: Icons.light_mode_rounded,
+                tooltip: l10n.themeLight,
+                label: l10n.themeLight,
+              ),
+              SegmentData(
+                value: ThemeMode.dark,
+                icon: Icons.dark_mode_rounded,
+                tooltip: l10n.themeDark,
+                label: l10n.themeDark,
+              ),
+              SegmentData(
+                value: ThemeMode.system,
+                icon: Icons.brightness_auto_rounded,
+                tooltip: l10n.themeSystem,
+                label: l10n.themeSystem,
+              ),
+            ],
+          ),
+          // Переключатель занимает всю ширину, когда стоит на своей строке.
+          minControlWidth: 330,
         ),
         Divider(height: AppDimens.space24, color: c.divider),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.settingsLanguage,
-                style: context.text.bodyMedium,
-              ),
-            ),
-            Text(
-              l10n.settingsLanguageRu,
-              style: context.text.labelMedium?.copyWith(color: c.textSecondary),
-            ),
-          ],
+        SettingsRow(
+          label: l10n.settingsLanguage,
+          control: Text(
+            l10n.settingsLanguageRu,
+            style: context.text.labelMedium?.copyWith(color: c.textSecondary),
+          ),
         ),
       ],
     );
@@ -437,6 +430,17 @@ class _AboutSection extends ConsumerWidget {
         row('Профилей максимум', '${AppConfig.maxProfiles}'),
         row('Глубина категорий', '${AppConfig.defaultMaxCategoryDepth}'),
         Divider(height: AppDimens.space24, color: c.divider),
+        // Обучение показывается один раз при первом запуске — но забыть его
+        // содержание проще, чем найти, где оно было.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () => AppTour.show(context),
+            icon: const Icon(Icons.school_outlined, size: 18),
+            label: Text(l10n.tourRepeat),
+          ),
+        ),
+        const SizedBox(height: AppDimens.space16),
         Text(
           l10n.settingsPrivacyNote,
           style: context.text.bodySmall?.copyWith(color: c.textSecondary),

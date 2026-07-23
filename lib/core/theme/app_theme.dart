@@ -57,6 +57,17 @@ class AppTheme {
       textTheme: textTheme,
       splashFactory: InkSparkle.splashFactory,
       extensions: [c],
+      // Единый переход между экранами на всех платформах: по умолчанию
+      // Windows подставляет резкое появление без анимации вовсе, а Android —
+      // системный, который в тёмной теме мигает белым.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: c.background,
         surfaceTintColor: Colors.transparent,

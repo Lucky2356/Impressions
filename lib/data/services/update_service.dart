@@ -30,6 +30,27 @@ class AppRelease {
   final String? installerUrl;
 }
 
+/// Чем закончилась ручная проверка обновлений.
+enum UpdateCheckStatus {
+  /// Установлена последняя версия.
+  upToDate,
+
+  /// Есть новая версия.
+  updateAvailable,
+
+  /// Список выпусков недоступен: репозиторий приватный или его нет.
+  unavailable,
+
+  /// Не удалось проверить: нет сети или сервис ответил ошибкой.
+  failed,
+}
+
+class UpdateCheck {
+  const UpdateCheck(this.status, {this.release});
+  final UpdateCheckStatus status;
+  final AppRelease? release;
+}
+
 /// Итог фонового обновления сведений о товарах.
 class ProductRefreshReport {
   const ProductRefreshReport({
@@ -65,6 +86,45 @@ class UpdateService {
   static const _minInterval = Duration(hours: 20);
 
   // ---- Обновление приложения ----
+
+  /// Чем закончилась проверка обновлений, запущенная вручную.
+  ///
+  /// Нужна, чтобы отличить «всё актуально» от «не смогли проверить». Молчаливое
+  /// «актуально» при недоступном репозитории сбивало с толку: приватный
+  /// репозиторий отвечает 404, а пользователь думал, что новых версий нет.
+  Future<UpdateCheck> checkAppUpdateManually(String currentVersion) async {
+    try {
+      final response = await _client
+          .get(
+            Uri.parse(AppConfig.releasesApiUrl),
+            headers: const {
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'Impressions',
+            },
+          )
+          .timeout(_timeout);
+
+      // 404 у GitHub значит «репозиторий приватный или его нет»: без токена
+      // релизы такого репозитория не видны.
+      if (response.statusCode == 404) {
+        return const UpdateCheck(UpdateCheckStatus.unavailable);
+      }
+      if (response.statusCode != 200) {
+        return const UpdateCheck(UpdateCheckStatus.failed);
+      }
+
+      final release = await _parseRelease(
+        response.bodyBytes,
+        currentVersion: currentVersion,
+      );
+      return release == null
+          ? const UpdateCheck(UpdateCheckStatus.upToDate)
+          : UpdateCheck(UpdateCheckStatus.updateAvailable, release: release);
+    } on Object {
+      // Нет сети, таймаут, неверный ответ — «не смогли проверить».
+      return const UpdateCheck(UpdateCheckStatus.failed);
+    }
+  }
 
   /// Сравнивает версии вида `1.2.3`. Возвращает true, если [candidate] новее.
   static bool isNewer(String candidate, String current) {
@@ -109,52 +169,60 @@ class UpdateService {
           .timeout(_timeout);
       if (response.statusCode != 200) return null;
 
-      final json = jsonDecode(utf8.decode(response.bodyBytes));
-      if (json is! Map) return null;
-      final tag = json['tag_name'];
-      if (tag is! String) return null;
-
-      await _settings.set(
-        SettingKeys.appUpdateCheckedAt,
-        DateTime.now().toIso8601String(),
-      );
-
-      final version = tag.replaceAll(RegExp(r'^v'), '');
-      if (!isNewer(version, currentVersion)) {
-        await _settings.set(SettingKeys.appUpdateLatest, '');
-        return null;
-      }
-
-      // Ищем установщик среди приложенных файлов.
-      String? installer;
-      final assets = json['assets'];
-      if (assets is List) {
-        for (final a in assets) {
-          if (a is! Map) continue;
-          final name = a['name'];
-          final url = a['browser_download_url'];
-          if (name is String &&
-              url is String &&
-              name.toLowerCase().endsWith('.exe')) {
-            installer = url;
-            break;
-          }
-        }
-      }
-
-      final pageUrl = json['html_url'] as String? ?? AppConfig.releasesPageUrl;
-      await _settings.set(SettingKeys.appUpdateLatest, version);
-      await _settings.set(SettingKeys.appUpdateUrl, installer ?? pageUrl);
-
-      return AppRelease(
-        version: version,
-        url: pageUrl,
-        notes: json['body'] as String?,
-        installerUrl: installer,
-      );
+      return _parseRelease(response.bodyBytes, currentVersion: currentVersion);
     } catch (_) {
       return null;
     }
+  }
+
+  /// Разбирает ответ GitHub и запоминает найденный выпуск.
+  Future<AppRelease?> _parseRelease(
+    List<int> bytes, {
+    required String currentVersion,
+  }) async {
+    final json = jsonDecode(utf8.decode(bytes));
+    if (json is! Map) return null;
+    final tag = json['tag_name'];
+    if (tag is! String) return null;
+
+    await _settings.set(
+      SettingKeys.appUpdateCheckedAt,
+      DateTime.now().toIso8601String(),
+    );
+
+    final version = tag.replaceAll(RegExp(r'^v'), '');
+    if (!isNewer(version, currentVersion)) {
+      await _settings.set(SettingKeys.appUpdateLatest, '');
+      return null;
+    }
+
+    // Ищем установщик среди приложенных файлов.
+    String? installer;
+    final assets = json['assets'];
+    if (assets is List) {
+      for (final a in assets) {
+        if (a is! Map) continue;
+        final name = a['name'];
+        final url = a['browser_download_url'];
+        if (name is String &&
+            url is String &&
+            name.toLowerCase().endsWith('.exe')) {
+          installer = url;
+          break;
+        }
+      }
+    }
+
+    final pageUrl = json['html_url'] as String? ?? AppConfig.releasesPageUrl;
+    await _settings.set(SettingKeys.appUpdateLatest, version);
+    await _settings.set(SettingKeys.appUpdateUrl, installer ?? pageUrl);
+
+    return AppRelease(
+      version: version,
+      url: pageUrl,
+      notes: json['body'] as String?,
+      installerUrl: installer,
+    );
   }
 
   // ---- Скачивание и установка обновления ----

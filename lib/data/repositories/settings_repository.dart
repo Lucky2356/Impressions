@@ -9,6 +9,9 @@ class SettingKeys {
   static const catalogIncludeSubcategories = 'catalog_include_subcategories';
   static const onboardingDone = 'onboarding_done';
 
+  /// Обучение по разделам пройдено или пропущено.
+  static const tourDone = 'tour_done';
+
   /// Режим переноса записей между профилями (§7.4).
   static const transferMode = 'transfer_mode';
 

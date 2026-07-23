@@ -982,6 +982,186 @@ abstract class AppLocalizations {
   /// **'Удалить фотографию'**
   String get photoRemove;
 
+  /// No description provided for @tourTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как пользоваться'**
+  String get tourTitle;
+
+  /// No description provided for @tourSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get tourSkip;
+
+  /// No description provided for @tourNext.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дальше'**
+  String get tourNext;
+
+  /// No description provided for @tourFinish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понятно'**
+  String get tourFinish;
+
+  /// No description provided for @tourRepeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пройти обучение заново'**
+  String get tourRepeat;
+
+  /// No description provided for @tourAddTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записать впечатление'**
+  String get tourAddTitle;
+
+  /// No description provided for @tourAddBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для новой записи хватает названия. Отношение, оценку, заметку, фотографии, теги и подборку можно задать сразу же — кнопкой «Добавить подробности».'**
+  String get tourAddBody;
+
+  /// No description provided for @tourAddHintDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ctrl + N — открыть форму, не отрывая рук от клавиатуры'**
+  String get tourAddHintDesktop;
+
+  /// No description provided for @tourAddHintMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оранжевая кнопка «+» внизу справа доступна с любого экрана'**
+  String get tourAddHintMobile;
+
+  /// No description provided for @tourScanTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товар по штрихкоду'**
+  String get tourScanTitle;
+
+  /// No description provided for @tourScanBodyDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Штрихкод можно ввести руками, считать USB-сканером или распознать с фотографии. Название и бренд подтянутся из открытых товарных баз.'**
+  String get tourScanBodyDesktop;
+
+  /// No description provided for @tourScanBodyMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наведите камеру на штрихкод — название и бренд подтянутся из открытых товарных баз. Наружу уходит только сам код.'**
+  String get tourScanBodyMobile;
+
+  /// No description provided for @tourScanHintDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ctrl + B — открыть сканирование'**
+  String get tourScanHintDesktop;
+
+  /// No description provided for @tourShelvesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полки вместо списка'**
+  String get tourShelvesTitle;
+
+  /// No description provided for @tourShelvesBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категории показываются полками: видно цвет, число записей и фотографии из ветки. Нажатие уводит вглубь, значок списка показывает записи самой полки. Кто привык к дереву — переключатель рядом с заголовком.'**
+  String get tourShelvesBody;
+
+  /// No description provided for @tourSearchTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти за секунду'**
+  String get tourSearchTitle;
+
+  /// No description provided for @tourSearchBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск идёт по названиям и по тексту заметок. Фильтры по типу, категории, отношению и тегам прячутся за кнопкой «Фильтры», а включённые подсвечиваются.'**
+  String get tourSearchBody;
+
+  /// No description provided for @tourSearchHintDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ctrl + F — перейти в поиск'**
+  String get tourSearchHintDesktop;
+
+  /// No description provided for @tourBulkTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разом, а не по одной'**
+  String get tourBulkTitle;
+
+  /// No description provided for @tourBulkBodyDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ctrl + нажатие выделяет записи. Выделенным можно сразу назначить категорию, добавить тег, положить в подборку или убрать в архив. Правая кнопка открывает меню записи.'**
+  String get tourBulkBodyDesktop;
+
+  /// No description provided for @tourBulkBodyMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Долгое нажатие включает выделение. Выделенным можно сразу назначить категорию, добавить тег, положить в подборку или убрать в архив.'**
+  String get tourBulkBodyMobile;
+
+  /// No description provided for @tourSafetyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ничего не пропадает'**
+  String get tourSafetyTitle;
+
+  /// No description provided for @tourSafetyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убранное уходит в архив и возвращается оттуда целым. Каждое изменение записи сохраняется отдельной версией. В настройках есть резервные копии — их можно создать и развернуть обратно.'**
+  String get tourSafetyBody;
+
+  /// No description provided for @searchClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить поиск'**
+  String get searchClear;
+
+  /// No description provided for @catalogFilters.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтры'**
+  String get catalogFilters;
+
+  /// No description provided for @categoryShowEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать записи'**
+  String get categoryShowEntries;
+
+  /// No description provided for @categoryViewShelves.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полками'**
+  String get categoryViewShelves;
+
+  /// No description provided for @categoryViewTree.
+  ///
+  /// In ru, this message translates to:
+  /// **'Деревом'**
+  String get categoryViewTree;
+
+  /// No description provided for @categoryShelfEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внутри пока пусто'**
+  String get categoryShelfEmptyTitle;
+
+  /// No description provided for @categoryShelfEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте подкатегорию или заведите сюда первую запись.'**
+  String get categoryShelfEmptyMessage;
+
   /// No description provided for @errorStateTitle.
   ///
   /// In ru, this message translates to:
@@ -2637,6 +2817,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Установлена последняя версия'**
   String get settingsUpToDate;
+
+  /// No description provided for @settingsUpdateUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список версий недоступен. Возможно, репозиторий закрыт — тогда обновляйте приложение вручную со страницы выпусков.'**
+  String get settingsUpdateUnavailable;
+
+  /// No description provided for @settingsUpdateFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось проверить обновления. Проверьте подключение к интернету и попробуйте позже.'**
+  String get settingsUpdateFailed;
 
   /// No description provided for @updateTitle.
   ///

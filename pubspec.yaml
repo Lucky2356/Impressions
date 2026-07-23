@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.6.0+8
+version: 1.7.0+9
 environment:
   sdk: ^3.12.2
 
@@ -87,6 +87,11 @@ flutter:
 
   # Включаем кодогенерацию локализаций из .arb (см. l10n.yaml).
   generate: true
+
+  # Значок приложения — тот же, что на рабочем столе. Собирается из
+  # scripts/make_icon.py, поэтому лежит в репозитории готовым файлом.
+  assets:
+    - assets/icon/app_icon.png
 
   # Локальный Inter с полной кириллицей. Файл вариативный: начертание задаётся
   # осью wght в AppTypography, поэтому достаточно одного ресурса вместо

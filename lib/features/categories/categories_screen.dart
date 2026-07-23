@@ -31,10 +31,61 @@ class CategoriesScreen extends ConsumerStatefulWidget {
   ConsumerState<CategoriesScreen> createState() => _CategoriesScreenState();
 }
 
+/// Как показывать категории: полками или деревом.
+enum CategoryViewMode { shelves, tree }
+
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   final Set<String> _collapsed = {};
   final _searchController = TextEditingController();
   String _query = '';
+
+  /// Полки или дерево. По умолчанию полки: дерево нужно, когда категорий много
+  /// и важна вложенность, а не когда нужно понять, что внутри.
+  CategoryViewMode _mode = CategoryViewMode.shelves;
+
+  /// Какая ветка раскрыта в режиме полок; null — корень.
+  String? _shelfParentId;
+
+  String? _parentOf(List<CategoryRow> all, String? id) {
+    if (id == null) return null;
+    return all.where((x) => x.id == id).firstOrNull?.parentId;
+  }
+
+  /// Меню полки: те же действия, что и в дереве.
+  Future<void> _shelfMenu(CategoryRow cat, Offset position) async {
+    final l10n = AppLocalizations.of(context);
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (overlay == null) return;
+
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        position & const Size(1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem(value: 'add', child: Text(l10n.categoryAddChild)),
+        PopupMenuItem(value: 'rename', child: Text(l10n.categoryRename)),
+        PopupMenuItem(value: 'icon', child: Text(l10n.categoryIcon)),
+        PopupMenuItem(value: 'move', child: Text(l10n.categoryMove)),
+        PopupMenuItem(value: 'archive', child: Text(l10n.categoryArchive)),
+      ],
+    );
+    if (!mounted) return;
+    switch (action) {
+      case 'add':
+        await _createChild(cat);
+      case 'rename':
+        await _rename(cat);
+      case 'icon':
+        await _pickIcon(cat);
+      case 'move':
+        await _move(cat);
+      case 'archive':
+        await _archive(cat);
+    }
+  }
 
   // Выбранная ветка живёт в провайдере: на категорию нажимают и с главной.
   String? get _selectedId => ref.watch(selectedCategoryProvider);
@@ -249,21 +300,47 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               onArchive: () => _archive(cat),
             );
 
-        // Узкий экран: сначала дерево, выбранная ветка открывается поверх.
+        final shelves = _ShelfPane(
+          categories: list,
+          branchCounts: branch,
+          covers: ref.watch(categoryCoversProvider).value ?? const {},
+          openedId: _shelfParentId,
+          query: _query,
+          searchController: _searchController,
+          onQuery: (v) => setState(() => _query = v),
+          onOpen: (cat) => setState(() => _shelfParentId = cat.id),
+          onUp: () =>
+              setState(() => _shelfParentId = _parentOf(list, _shelfParentId)),
+          onShow: _select,
+          onCreateRoot: _createRoot,
+          onAddChild: _createChild,
+          onMenu: _shelfMenu,
+          onModeChanged: (m) => setState(() => _mode = m),
+          mode: _mode,
+        );
+
+        final browser = _mode == CategoryViewMode.shelves ? shelves : tree;
+
+        // Узкий экран: сначала обзор, выбранная ветка открывается поверх.
         if (!layout.isWide) {
-          if (selected == null) return tree;
+          if (selected == null) return browser;
           return detailFor(selected, onBack: () => _setSelected(null));
         }
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(width: layout.treePaneWidth, child: tree),
+            SizedBox(
+              width: _mode == CategoryViewMode.shelves
+                  ? layout.treePaneWidth * 1.45
+                  : layout.treePaneWidth,
+              child: browser,
+            ),
             VerticalDivider(width: 1, color: c.border),
             Expanded(
               child: selected == null
                   ? EmptyState(
-                      icon: Icons.account_tree_rounded,
+                      icon: Icons.grid_view_rounded,
                       title: l10n.categoryPickTitle,
                       message: l10n.categoryPickMessage,
                     )
@@ -272,6 +349,214 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Полки: категории карточками с цветом, счётчиком и фотографиями из ветки.
+///
+/// Прежний плоский список не давал понять, что внутри полки и есть ли там
+/// вообще что-нибудь. Здесь видно и то, и другое, а вглубь идут нажатием.
+class _ShelfPane extends StatelessWidget {
+  const _ShelfPane({
+    required this.categories,
+    required this.branchCounts,
+    required this.covers,
+    required this.openedId,
+    required this.query,
+    required this.searchController,
+    required this.onQuery,
+    required this.onOpen,
+    required this.onUp,
+    required this.onShow,
+    required this.onCreateRoot,
+    required this.onAddChild,
+    required this.onMenu,
+    required this.mode,
+    required this.onModeChanged,
+  });
+
+  final List<CategoryRow> categories;
+  final Map<String, int> branchCounts;
+  final Map<String, List<String>> covers;
+
+  /// Раскрытая ветка; null — показываем корневые полки.
+  final String? openedId;
+
+  final String query;
+  final TextEditingController searchController;
+  final ValueChanged<String> onQuery;
+  final ValueChanged<CategoryRow> onOpen;
+  final VoidCallback onUp;
+
+  /// Открыть содержимое полки в правой панели.
+  final ValueChanged<CategoryRow> onShow;
+
+  final VoidCallback onCreateRoot;
+  final ValueChanged<CategoryRow> onAddChild;
+  final void Function(CategoryRow, Offset) onMenu;
+  final CategoryViewMode mode;
+  final ValueChanged<CategoryViewMode> onModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final palette = c.profilePalette;
+    final byId = {for (final x in categories) x.id: x};
+    final opened = openedId == null ? null : byId[openedId];
+
+    // Поиск ищет по всему дереву, а не только внутри открытой полки: искать
+    // «Колбасы», стоя в «Местах», — нормальное желание.
+    final normalized = Normalize.name(query);
+    final shown = normalized.isNotEmpty
+        ? categories
+              .where((x) => x.normalizedName.contains(normalized))
+              .toList()
+        : categories.where((x) => x.parentId == openedId).toList();
+
+    return Container(
+      color: c.background,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.space16,
+              AppDimens.space20,
+              AppDimens.space16,
+              AppDimens.space12,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (opened != null)
+                      AppIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: l10n.commonBack,
+                        onPressed: onUp,
+                      ),
+                    Expanded(
+                      child: Text(
+                        opened?.name ?? l10n.categoriesTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.text.headlineSmall,
+                      ),
+                    ),
+                    SegmentedToggle<CategoryViewMode>(
+                      value: mode,
+                      onChanged: onModeChanged,
+                      segments: [
+                        SegmentData(
+                          value: CategoryViewMode.shelves,
+                          icon: Icons.grid_view_rounded,
+                          tooltip: l10n.categoryViewShelves,
+                        ),
+                        SegmentData(
+                          value: CategoryViewMode.tree,
+                          icon: Icons.account_tree_rounded,
+                          tooltip: l10n.categoryViewTree,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: AppDimens.space8),
+                    AppIconButton(
+                      icon: Icons.add_rounded,
+                      tooltip: opened == null
+                          ? l10n.categoryAddRoot
+                          : l10n.categoryAddChild,
+                      onPressed: () =>
+                          opened == null ? onCreateRoot() : onAddChild(opened),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimens.space12),
+                AppSearchField(
+                  hint: l10n.categorySearchHint,
+                  controller: searchController,
+                  onChanged: onQuery,
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: c.border),
+          Expanded(
+            child: shown.isEmpty
+                ? EmptyState(
+                    icon: Icons.grid_view_rounded,
+                    title: normalized.isEmpty
+                        ? l10n.categoryShelfEmptyTitle
+                        : l10n.catalogNothingFoundTitle,
+                    message: normalized.isEmpty
+                        ? l10n.categoryShelfEmptyMessage
+                        : l10n.catalogNothingFoundMessage,
+                  )
+                : LayoutBuilder(
+                    builder: (context, cns) {
+                      final cols = (cns.maxWidth / 210).floor().clamp(1, 6);
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.space16,
+                          AppDimens.space16,
+                          AppDimens.space16,
+                          AppDimens.space40,
+                        ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          mainAxisSpacing: AppDimens.space12,
+                          crossAxisSpacing: AppDimens.space12,
+                          // Высота фиксирована: содержимое карточки не
+                          // зависит от ширины, а соотношение сторон при
+                          // другом числе колонок ломало вёрстку.
+                          mainAxisExtent: categoryShelfHeight,
+                        ),
+                        itemCount: shown.length,
+                        itemBuilder: (context, i) {
+                          final cat = shown[i];
+                          final children = categories
+                              .where((x) => x.parentId == cat.id)
+                              .toList();
+                          final count = branchCounts[cat.id] ?? 0;
+                          final tone = cat.color != null
+                              ? Color(cat.color!)
+                              : palette[i % palette.length];
+
+                          return Appear(
+                            index: i,
+                            child: GestureDetector(
+                              onSecondaryTapDown: (d) =>
+                                  onMenu(cat, d.globalPosition),
+                              onLongPressStart: (d) =>
+                                  onMenu(cat, d.globalPosition),
+                              child: CategoryShelfCard(
+                                name: cat.name,
+                                icon: AppIcons.byKey(cat.icon),
+                                color: tone,
+                                count: count,
+                                countLabel: l10n.categoryEntriesCount(count),
+                                childNames: [
+                                  for (final x in children.take(4)) x.name,
+                                ],
+                                covers: covers[cat.id] ?? const [],
+                                // Нажатие открывает содержимое полки; если
+                                // внутри есть подкатегории — заходим в них.
+                                onTap: () => children.isEmpty
+                                    ? onShow(cat)
+                                    : onOpen(cat),
+                                onShowEntries: () => onShow(cat),
+                                showEntriesTooltip: l10n.categoryShowEntries,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -395,7 +680,6 @@ class _TreePane extends StatelessWidget {
                   hint: l10n.categorySearchHint,
                   controller: searchController,
                   onChanged: onQuery,
-                  height: AppDimens.controlHeightSm,
                 ),
               ],
             ),
