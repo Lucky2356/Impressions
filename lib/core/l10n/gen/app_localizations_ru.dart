@@ -1457,6 +1457,119 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateFailed => 'Не удалось обновить';
 
   @override
+  String get onboardingStep1Title => 'Ваши вкусы, а не чужие оценки';
+
+  @override
+  String get onboardingStep1Body =>
+      'Продукты, блюда, фильмы, книги, места — всё, о чём хочется помнить, понравилось оно или нет. Для новой записи хватает названия.';
+
+  @override
+  String get onboardingStep2Title => 'Мнение отдельно от вещи';
+
+  @override
+  String get onboardingStep2Body =>
+      '«Интерстеллар» — один объект на всех. Ваша оценка и оценка близкого человека — две разные записи. Поэтому профилями можно обмениваться: чужое мнение не перепишет ваше.';
+
+  @override
+  String get onboardingStep3Title => 'Всё остаётся у вас';
+
+  @override
+  String get onboardingStep3Body =>
+      'Без аккаунта, сервера и облака. Поделиться можно файлом, который вы создаёте сами и передаёте кому хотите.';
+
+  @override
+  String get onboardingStart => 'Начать';
+
+  @override
+  String get exportReadable => 'Для чтения';
+
+  @override
+  String get exportCsv => 'Таблица CSV';
+
+  @override
+  String get exportMarkdown => 'Текст Markdown';
+
+  @override
+  String get insightsTitle => 'Статистика';
+
+  @override
+  String insightsSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'По $count записям',
+      many: 'По $count записям',
+      few: 'По $count записям',
+      one: 'По $count записи',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get insightsEmptyTitle => 'Пока нечего показывать';
+
+  @override
+  String get insightsEmptyMessage =>
+      'Добавьте несколько записей — здесь появятся распределение оценок, отношения и динамика по месяцам.';
+
+  @override
+  String get insightsTotal => 'Записей';
+
+  @override
+  String get insightsAverage => 'Средняя оценка';
+
+  @override
+  String get insightsWithPhotos => 'С фотографиями';
+
+  @override
+  String get insightsWithNotes => 'С заметками';
+
+  @override
+  String get insightsRatings => 'Распределение оценок';
+
+  @override
+  String get insightsRelations => 'Отношение';
+
+  @override
+  String get insightsCategories => 'Самые заполненные категории';
+
+  @override
+  String get insightsTimeline => 'Добавления по месяцам';
+
+  @override
+  String get wishlistTitle => 'Хочу попробовать';
+
+  @override
+  String wishlistSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count задумок',
+      many: '$count задумок',
+      few: '$count задумки',
+      one: '$count задумка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wishlistEmptyTitle => 'Список пуст';
+
+  @override
+  String get wishlistEmptyMessage =>
+      'Отмечайте отношением «Хочу попробовать» то, до чего ещё не дошли руки, — оно соберётся здесь.';
+
+  @override
+  String get wishlistMarkTried => 'Попробовал';
+
+  @override
+  String get wishlistRatingTitle => 'Как впечатления?';
+
+  @override
+  String get wishlistRatingHint =>
+      'Отношение подставится по оценке, дата впечатления — сегодняшняя. Всё можно изменить в карточке.';
+
+  @override
   String get archiveTitle => 'Архив';
 
   @override

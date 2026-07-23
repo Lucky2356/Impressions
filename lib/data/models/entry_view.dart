@@ -14,6 +14,7 @@ class EntryView {
     this.relation,
     this.rating,
     this.status,
+    this.impressionDate,
     this.createdAt,
   });
 
@@ -29,6 +30,9 @@ class EntryView {
   final String? relation;
   final double? rating;
   final String? status;
+
+  /// Когда впечатление случилось, а не когда запись завели.
+  final DateTime? impressionDate;
   final DateTime? createdAt;
 
   /// Полный путь с названием объекта: «Продукты / Колбасы / Папа может».
@@ -48,4 +52,48 @@ class ProfileStats {
   final int categories;
   final int collections;
   final int wantToTry;
+}
+
+/// Развёрнутая статистика профиля (§14).
+///
+/// Отдельно от [ProfileStats]: та отвечает за плитки на главной и должна
+/// считаться быстро, а эта нужна только на своём экране.
+class ProfileInsights {
+  const ProfileInsights({
+    required this.total,
+    required this.rated,
+    required this.averageRating,
+    required this.ratingBuckets,
+    required this.byRelation,
+    required this.topCategories,
+    required this.byMonth,
+    required this.withPhotos,
+    required this.withNotes,
+  });
+
+  /// Всего неархивных записей.
+  final int total;
+
+  /// Сколько из них с оценкой.
+  final int rated;
+
+  /// Средняя оценка по тем, у кого она есть; null, если оценок нет.
+  final double? averageRating;
+
+  /// Распределение оценок по целым баллам: индекс 0 — «0–1», индекс 9 — «9–10».
+  final List<int> ratingBuckets;
+
+  /// Сколько записей на каждое отношение.
+  final Map<String, int> byRelation;
+
+  /// Самые заполненные категории: название и число записей в ветке.
+  final List<({String name, int count})> topCategories;
+
+  /// Сколько записей добавлено по месяцам, от старых к новым.
+  final List<({DateTime month, int count})> byMonth;
+
+  final int withPhotos;
+  final int withNotes;
+
+  bool get isEmpty => total == 0;
 }

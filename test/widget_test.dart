@@ -27,7 +27,9 @@ ProviderScope _app(List<ProfileRow> profiles) => ProviderScope(
 );
 
 void main() {
-  testWidgets('Нет профилей: показывается онбординг', (tester) async {
+  testWidgets('Нет профилей: онбординг начинается с объяснения', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1000, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -37,8 +39,24 @@ void main() {
     await tester.pump();
 
     expect(find.byType(OnboardingScreen), findsOneWidget);
+    // Сначала объясняем, зачем это нужно, и только потом просим имя.
+    expect(find.text('Ваши вкусы, а не чужие оценки'), findsOneWidget);
+    expect(find.text('Создать профиль'), findsNothing);
+  });
+
+  testWidgets('Объяснение можно пропустить и перейти к имени', (tester) async {
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app(const []));
+    await tester.pump();
+
+    await tester.tap(find.text('Пропустить'));
+    await tester.pump();
+
     expect(find.text('Создать профиль'), findsOneWidget);
-    expect(find.text('Укажите имя'), findsNothing);
   });
 
   testWidgets('Онбординг требует имя', (tester) async {
@@ -50,6 +68,8 @@ void main() {
     await tester.pumpWidget(_app(const []));
     await tester.pump();
 
+    await tester.tap(find.text('Пропустить'));
+    await tester.pump();
     await tester.tap(find.text('Создать профиль'));
     await tester.pump();
 

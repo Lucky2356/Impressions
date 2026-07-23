@@ -7,10 +7,12 @@ class NavIds {
   static const categories = 'categories';
   static const catalog = 'catalog';
   static const collections = 'collections';
+  static const wishlist = 'wishlist';
   static const compare = 'compare';
   static const profiles = 'profiles';
   static const import = 'import';
   static const incoming = 'incoming';
+  static const insights = 'insights';
   static const archive = 'archive';
   static const settings = 'settings';
 }

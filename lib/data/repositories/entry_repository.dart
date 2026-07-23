@@ -529,6 +529,7 @@ class EntryRepository {
             relation: entry.relation,
             rating: entry.rating,
             status: entry.status,
+            impressionDate: entry.impressionDate,
             createdAt: entry.createdAt,
           );
         }(),
@@ -589,6 +590,116 @@ class EntryRepository {
       categories: categoriesCount,
       collections: collectionsCount,
       wantToTry: wantCount,
+    );
+  }
+
+  /// Развёрнутая статистика профиля (§14).
+  ///
+  /// Считается одним проходом по записям профиля: агрегировать это в SQL
+  /// пришлось бы полудюжиной отдельных запросов, а объёмы здесь — тысячи
+  /// строк, а не миллионы.
+  Future<ProfileInsights> insights(String profileId) async {
+    final entries =
+        await (db.select(db.profileEntries)
+              ..where((e) => e.profileId.equals(profileId))
+              ..where((e) => e.archivedAt.isNull()))
+            .get();
+
+    if (entries.isEmpty) {
+      return const ProfileInsights(
+        total: 0,
+        rated: 0,
+        averageRating: null,
+        ratingBuckets: [],
+        byRelation: {},
+        topCategories: [],
+        byMonth: [],
+        withPhotos: 0,
+        withNotes: 0,
+      );
+    }
+
+    final buckets = List<int>.filled(10, 0);
+    final byRelation = <String, int>{};
+    final byMonth = <DateTime, int>{};
+    var ratingSum = 0.0;
+    var rated = 0;
+    var withNotes = 0;
+
+    for (final e in entries) {
+      final rating = e.rating;
+      if (rating != null) {
+        rated++;
+        ratingSum += rating;
+        // 10 попадает в последнюю корзину, а не в одиннадцатую.
+        buckets[rating.floor().clamp(0, 9)]++;
+      }
+      final relation = e.relation;
+      if (relation != null) {
+        byRelation[relation] = (byRelation[relation] ?? 0) + 1;
+      }
+      if ((e.detailedNote ?? e.shortNote ?? '').trim().isNotEmpty) withNotes++;
+
+      final m = DateTime(e.createdAt.year, e.createdAt.month);
+      byMonth[m] = (byMonth[m] ?? 0) + 1;
+    }
+
+    // Категории: считаем по ветке, чтобы корневые не выглядели пустыми.
+    final entryIds = entries.map((e) => e.id).toSet();
+    final links = await (db.select(
+      db.entryCategories,
+    )..where((ec) => ec.entryId.isIn(entryIds))).get();
+    final categories = await (db.select(
+      db.categories,
+    )..where((c) => c.profileId.equals(profileId))).get();
+    final catById = {for (final c in categories) c.id: c};
+
+    final perCategory = <String, int>{};
+    for (final link in links) {
+      if (!link.isPrimary) continue;
+      final cat = catById[link.categoryId];
+      if (cat == null) continue;
+      for (final ancestorId in cat.path.split('/')) {
+        perCategory[ancestorId] = (perCategory[ancestorId] ?? 0) + 1;
+      }
+    }
+    final top =
+        perCategory.entries
+            .where((e) => catById[e.key] != null)
+            .map((e) => (name: catById[e.key]!.name, count: e.value))
+            .toList()
+          ..sort((a, b) => b.count.compareTo(a.count));
+
+    // Вложения привязаны к версии записи, а не к самой записи, поэтому идём
+    // через текущую версию. Считаем записи, а не файлы: одна запись с пятью
+    // фотографиями — это одна запись с фотографиями.
+    final revisionByEntry = {
+      for (final e in entries)
+        if (e.currentRevisionId != null) e.currentRevisionId!: e.id,
+    };
+    final photoLinks = revisionByEntry.isEmpty
+        ? <RevisionAttachmentRow>[]
+        : await (db.select(db.revisionAttachments)
+                ..where((ra) => ra.entityKind.equals('entry'))
+                ..where((ra) => ra.revisionId.isIn(revisionByEntry.keys)))
+              .get();
+    final entriesWithPhotos = photoLinks
+        .map((ra) => revisionByEntry[ra.revisionId])
+        .nonNulls
+        .toSet();
+
+    final months = byMonth.keys.toList()..sort();
+
+    return ProfileInsights(
+      total: entries.length,
+      rated: rated,
+      averageRating: rated == 0 ? null : ratingSum / rated,
+      ratingBuckets: buckets,
+      byRelation: byRelation,
+      topCategories: top.take(8).toList(),
+      byMonth: [for (final m in months) (month: m, count: byMonth[m]!)],
+      withPhotos: entriesWithPhotos.length,
+      withNotes: withNotes,
     );
   }
 }

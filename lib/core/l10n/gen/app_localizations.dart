@@ -2596,6 +2596,180 @@ abstract class AppLocalizations {
   /// **'Не удалось обновить'**
   String get updateFailed;
 
+  /// No description provided for @onboardingStep1Title.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваши вкусы, а не чужие оценки'**
+  String get onboardingStep1Title;
+
+  /// No description provided for @onboardingStep1Body.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продукты, блюда, фильмы, книги, места — всё, о чём хочется помнить, понравилось оно или нет. Для новой записи хватает названия.'**
+  String get onboardingStep1Body;
+
+  /// No description provided for @onboardingStep2Title.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мнение отдельно от вещи'**
+  String get onboardingStep2Title;
+
+  /// No description provided for @onboardingStep2Body.
+  ///
+  /// In ru, this message translates to:
+  /// **'«Интерстеллар» — один объект на всех. Ваша оценка и оценка близкого человека — две разные записи. Поэтому профилями можно обмениваться: чужое мнение не перепишет ваше.'**
+  String get onboardingStep2Body;
+
+  /// No description provided for @onboardingStep3Title.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё остаётся у вас'**
+  String get onboardingStep3Title;
+
+  /// No description provided for @onboardingStep3Body.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без аккаунта, сервера и облака. Поделиться можно файлом, который вы создаёте сами и передаёте кому хотите.'**
+  String get onboardingStep3Body;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать'**
+  String get onboardingStart;
+
+  /// No description provided for @exportReadable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для чтения'**
+  String get exportReadable;
+
+  /// No description provided for @exportCsv.
+  ///
+  /// In ru, this message translates to:
+  /// **'Таблица CSV'**
+  String get exportCsv;
+
+  /// No description provided for @exportMarkdown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст Markdown'**
+  String get exportMarkdown;
+
+  /// No description provided for @insightsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статистика'**
+  String get insightsTitle;
+
+  /// No description provided for @insightsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{По {count} записи} few{По {count} записям} many{По {count} записям} other{По {count} записям}}'**
+  String insightsSubtitle(int count);
+
+  /// No description provided for @insightsEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нечего показывать'**
+  String get insightsEmptyTitle;
+
+  /// No description provided for @insightsEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте несколько записей — здесь появятся распределение оценок, отношения и динамика по месяцам.'**
+  String get insightsEmptyMessage;
+
+  /// No description provided for @insightsTotal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записей'**
+  String get insightsTotal;
+
+  /// No description provided for @insightsAverage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Средняя оценка'**
+  String get insightsAverage;
+
+  /// No description provided for @insightsWithPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'С фотографиями'**
+  String get insightsWithPhotos;
+
+  /// No description provided for @insightsWithNotes.
+  ///
+  /// In ru, this message translates to:
+  /// **'С заметками'**
+  String get insightsWithNotes;
+
+  /// No description provided for @insightsRatings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Распределение оценок'**
+  String get insightsRatings;
+
+  /// No description provided for @insightsRelations.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отношение'**
+  String get insightsRelations;
+
+  /// No description provided for @insightsCategories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Самые заполненные категории'**
+  String get insightsCategories;
+
+  /// No description provided for @insightsTimeline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавления по месяцам'**
+  String get insightsTimeline;
+
+  /// No description provided for @wishlistTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хочу попробовать'**
+  String get wishlistTitle;
+
+  /// No description provided for @wishlistSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} задумка} few{{count} задумки} many{{count} задумок} other{{count} задумок}}'**
+  String wishlistSubtitle(int count);
+
+  /// No description provided for @wishlistEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список пуст'**
+  String get wishlistEmptyTitle;
+
+  /// No description provided for @wishlistEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмечайте отношением «Хочу попробовать» то, до чего ещё не дошли руки, — оно соберётся здесь.'**
+  String get wishlistEmptyMessage;
+
+  /// No description provided for @wishlistMarkTried.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробовал'**
+  String get wishlistMarkTried;
+
+  /// No description provided for @wishlistRatingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как впечатления?'**
+  String get wishlistRatingTitle;
+
+  /// No description provided for @wishlistRatingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отношение подставится по оценке, дата впечатления — сегодняшняя. Всё можно изменить в карточке.'**
+  String get wishlistRatingHint;
+
   /// No description provided for @archiveTitle.
   ///
   /// In ru, this message translates to:

@@ -9,7 +9,9 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../core/domain/relation.dart';
 import '../../data/providers.dart';
+import '../../data/services/readable_export_service.dart';
 import '../../data/services/export_service.dart';
 import '../categories/category_providers.dart';
 import '../collections/collections_screen.dart';
@@ -97,6 +99,60 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       }
 
       await File(location.path).writeAsBytes(result.bytes, flush: true);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.exportSaved(location.path))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Выгрузка в читаемый вид: таблица или текст вместо контейнера обмена.
+  ///
+  /// Без подписи и вложений — это не формат обмена, а способ открыть свои
+  /// записи в таблице или распечатать их.
+  Future<void> _exportReadable(ReadableFormat format) async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _busy = true);
+    try {
+      final entries = await ref
+          .read(entryRepositoryProvider)
+          .entryViews(widget.profile.id);
+
+      String relationLabel(String? name) {
+        if (name == null) return '';
+        for (final r in Relation.values) {
+          if (r.name == name) return r.label(l10n);
+        }
+        return name;
+      }
+
+      const service = ReadableExportService();
+      final text = service.build(
+        entries: entries,
+        format: format,
+        profileName: widget.profile.firstName,
+        relationLabel: relationLabel,
+      );
+      final extension = service.extensionFor(format);
+
+      final location = await getSaveLocation(
+        suggestedName: 'Впечатления-${widget.profile.firstName}.$extension',
+        acceptedTypeGroups: [
+          XTypeGroup(label: extension.toUpperCase(), extensions: [extension]),
+        ],
+      );
+      if (!mounted) return;
+      if (location == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.exportCancelled)));
+        return;
+      }
+
+      await File(location.path).writeAsString(text, flush: true);
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(
@@ -223,6 +279,41 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                 ),
               ),
             const SizedBox(height: AppDimens.space20),
+            PopupMenuButton<ReadableFormat>(
+              tooltip: '',
+              enabled: !_busy,
+              onSelected: _exportReadable,
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: ReadableFormat.csv,
+                  height: 40,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.table_chart_rounded, size: 18),
+                      const SizedBox(width: AppDimens.space12),
+                      Text(l10n.exportCsv),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: ReadableFormat.markdown,
+                  height: 40,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description_rounded, size: 18),
+                      const SizedBox(width: AppDimens.space12),
+                      Text(l10n.exportMarkdown),
+                    ],
+                  ),
+                ),
+              ],
+              child: OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.download_rounded, size: 18),
+                label: Text(l10n.exportReadable),
+              ),
+            ),
+            const SizedBox(width: AppDimens.space8),
             FilledButton.icon(
               onPressed: _busy ? null : _export,
               icon: const Icon(Icons.upload_rounded, size: 20),

@@ -17,6 +17,12 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
+  /// Текущий шаг: сначала объясняем устройство приложения, потом просим имя.
+  ///
+  /// Раньше первый экран сразу требовал имя, и главная идея — что мнение
+  /// отделено от объекта — не объяснялась нигде вообще.
+  int _step = 0;
+
   final _formKey = GlobalKey<FormState>();
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
@@ -57,6 +63,99 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
+
+    final steps = <({IconData icon, String title, String body})>[
+      (
+        icon: Icons.bookmark_rounded,
+        title: l10n.onboardingStep1Title,
+        body: l10n.onboardingStep1Body,
+      ),
+      (
+        icon: Icons.compare_arrows_rounded,
+        title: l10n.onboardingStep2Title,
+        body: l10n.onboardingStep2Body,
+      ),
+      (
+        icon: Icons.lock_outline_rounded,
+        title: l10n.onboardingStep3Title,
+        body: l10n.onboardingStep3Body,
+      ),
+    ];
+
+    if (_step < steps.length) {
+      final step = steps[_step];
+      return Scaffold(
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: c.accentSoft,
+                        borderRadius: AppDimens.brLg,
+                      ),
+                      child: Icon(step.icon, size: 36, color: c.accentPrimary),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space32),
+                  Text(
+                    step.title,
+                    textAlign: TextAlign.center,
+                    style: context.text.headlineMedium,
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  Text(
+                    step.body,
+                    textAlign: TextAlign.center,
+                    style: context.text.bodyLarge?.copyWith(
+                      color: c.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < steps.length; i++)
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: i == _step ? 20 : 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: i == _step ? c.accentPrimary : c.border,
+                            borderRadius: AppDimens.brPill,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.space32),
+                  FilledButton(
+                    onPressed: () => setState(() => _step++),
+                    child: Text(
+                      _step == steps.length - 1
+                          ? l10n.onboardingStart
+                          : l10n.commonNext,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space8),
+                  TextButton(
+                    onPressed: () => setState(() => _step = steps.length),
+                    child: Text(l10n.commonSkip),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Center(

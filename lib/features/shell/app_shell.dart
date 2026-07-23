@@ -24,10 +24,12 @@ import '../compare/compare_screen.dart';
 import '../exchange/import_screen.dart';
 import '../exchange/incoming_screen.dart';
 import '../home/home_screen.dart';
+import '../insights/insights_screen.dart';
 import '../notifications/notifications.dart';
 import '../profiles/profiles_screen.dart';
 import '../quick_add/quick_add_sheet.dart';
 import '../settings/settings_screen.dart';
+import '../wishlist/wishlist_screen.dart';
 
 /// Адаптивная оболочка приложения (§4).
 ///
@@ -88,6 +90,11 @@ class _AppShellState extends ConsumerState<AppShell> {
           label: l10n.navCollections,
         ),
         NavItemData(
+          id: NavIds.wishlist,
+          icon: Icons.bookmark_add_rounded,
+          label: l10n.wishlistTitle,
+        ),
+        NavItemData(
           id: NavIds.compare,
           icon: Icons.compare_arrows_rounded,
           label: l10n.navCompare,
@@ -119,6 +126,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       title: l10n.navSectionOther,
       items: [
         NavItemData(
+          id: NavIds.insights,
+          icon: Icons.insights_rounded,
+          label: l10n.insightsTitle,
+        ),
+        NavItemData(
           id: NavIds.archive,
           icon: Icons.archive_rounded,
           label: l10n.archiveTitle,
@@ -141,6 +153,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.profiles => l10n.navProfiles,
     NavIds.import => l10n.navImport,
     NavIds.incoming => l10n.incomingTitle,
+    NavIds.wishlist => l10n.wishlistTitle,
+    NavIds.insights => l10n.insightsTitle,
     NavIds.archive => l10n.archiveTitle,
     NavIds.settings => l10n.navSettings,
     _ => AppConfig.appName,
@@ -155,6 +169,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.profiles => const ProfilesScreen(),
     NavIds.import => const ImportScreen(),
     NavIds.incoming => const IncomingScreen(),
+    NavIds.wishlist => const WishlistScreen(),
+    NavIds.insights => const InsightsScreen(),
     NavIds.archive => const ArchiveScreen(),
     NavIds.settings => const SettingsScreen(),
     _ => const HomeScreen(),
