@@ -53,6 +53,12 @@ class AppLayout {
   /// Множитель для размеров, растущих вместе с разрешением.
   final double scale;
 
+  /// Ширина панели дерева категорий на широком экране.
+  double get treePaneWidth => switch (size) {
+    LayoutSize.ultra => 380,
+    _ => 320,
+  };
+
   bool get isCompact => size == LayoutSize.compact;
   bool get isWide => size == LayoutSize.expanded || size == LayoutSize.ultra;
   bool get isUltra => size == LayoutSize.ultra;

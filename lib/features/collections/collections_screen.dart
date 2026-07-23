@@ -12,6 +12,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/collection_repository.dart';
 import '../../design_system/design_system.dart';
 import '../entry/entry_detail_sheet.dart';
+import 'collection_entry_picker.dart';
 
 /// Подборки активного профиля с числом записей.
 final collectionsProvider = FutureProvider<List<CollectionView>>((ref) async {
@@ -178,6 +179,13 @@ class _CollectionDetail extends ConsumerWidget {
           tooltip: l10n.commonBack,
           onPressed: onBack,
         ),
+        actions: [
+          FilledButton.icon(
+            onPressed: () => CollectionEntryPicker.show(context, collectionId),
+            icon: const Icon(Icons.playlist_add_rounded, size: 20),
+            label: Text(l10n.collectionPickTitle),
+          ),
+        ],
       ),
       child: entries.when(
         loading: () => const SizedBox.shrink(),
@@ -188,6 +196,12 @@ class _CollectionDetail extends ConsumerWidget {
               icon: Icons.playlist_add_rounded,
               title: l10n.collectionOpenEmpty,
               message: l10n.collectionEmptyMessage,
+              action: FilledButton.icon(
+                onPressed: () =>
+                    CollectionEntryPicker.show(context, collectionId),
+                icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                label: Text(l10n.collectionPickTitle),
+              ),
             );
           }
           return ListView.separated(

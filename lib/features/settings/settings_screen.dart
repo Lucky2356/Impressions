@@ -261,18 +261,24 @@ class _BackupsSection extends ConsumerWidget {
         label: Text(l10n.backupCreate),
       ),
       children: [
-        Text(
-          l10n.backupRetentionHint,
-          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            l10n.backupRetentionHint,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
         ),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
         if (backups.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: AppDimens.space12),
-            child: Text(
-              l10n.backupEmpty,
-              style: context.text.bodySmall?.copyWith(color: c.textMuted),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l10n.backupEmpty,
+                style: context.text.bodySmall?.copyWith(color: c.textMuted),
+              ),
             ),
           )
         else

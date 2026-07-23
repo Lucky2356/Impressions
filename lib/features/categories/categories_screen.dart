@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
-import '../../app/navigation.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
@@ -14,16 +13,17 @@ import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../design_system/design_system.dart';
-import '../catalog/catalog_providers.dart';
 import '../quick_add/category_picker.dart';
+import 'category_detail.dart';
 import 'category_providers.dart';
 
-/// Экран дерева категорий (§7).
+/// Экран категорий (§7): дерево слева, содержимое выбранной ветки справа.
 ///
-/// Дерево рисуется направляющими линиями и цветными плитками уровней, а не
-/// плоским списком с отступами: по такому списку невозможно понять вложенность.
-/// Корневые категории показываются крупными карточками-разделами, потомки —
-/// компактными строками внутри ветки.
+/// Раньше это был плоский список, по которому нельзя было ни понять
+/// вложенность, ни посмотреть, что в категории лежит. Нажатие на строку
+/// уводило в каталог и незаметно подставляло ему фильтр, из-за чего в каталоге
+/// потом «пропадали» новые записи. Теперь ветка раскрывается на месте, а
+/// состояние каталога экран категорий не трогает вовсе.
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
 
@@ -35,6 +35,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   final Set<String> _collapsed = {};
   final _searchController = TextEditingController();
   String _query = '';
+  String? _selectedId;
 
   @override
   void dispose() {
@@ -60,7 +61,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     if (profile == null) return;
     final name = await _askName(l10n.categoryAddRoot);
     if (name == null) return;
-    await ref.read(categoryRepositoryProvider).createRoot(profile.id, name);
+    final created = await ref
+        .read(categoryRepositoryProvider)
+        .createRoot(profile.id, name);
+    setState(() => _selectedId = created.id);
     _bump();
   }
 
@@ -147,15 +151,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     );
     if (!ok) return;
     await ref.read(categoryRepositoryProvider).archive(cat.id);
+    if (_selectedId == cat.id) setState(() => _selectedId = null);
     _bump();
-  }
-
-  /// Открывает каталог, отфильтрованный по этой ветке.
-  void _openInCatalog(CategoryRow cat) {
-    ref.read(catalogStateProvider.notifier)
-      ..setCategory(cat.id)
-      ..setIncludeSubcategories(true);
-    ref.read(navProvider.notifier).go(NavIds.catalog);
   }
 
   bool _hiddenByCollapse(CategoryRow cat) {
@@ -166,19 +163,21 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     return false;
   }
 
-  void _expandAll() => setState(_collapsed.clear);
-
-  void _collapseAll(List<CategoryRow> all) {
+  /// Раскрывает всех предков, чтобы выбранная категория была видна в дереве.
+  void _select(CategoryRow cat) {
     setState(() {
-      _collapsed
-        ..clear()
-        ..addAll(all.map((c) => c.id));
+      _selectedId = cat.id;
+      for (final id in cat.path.split('/')) {
+        _collapsed.remove(id);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final layout = context.layout;
     final categories = ref.watch(allCategoriesProvider);
     final direct = ref.watch(categoryDirectCountsProvider).value ?? const {};
     final branch = ref.watch(categoryBranchCountsProvider).value ?? const {};
@@ -200,301 +199,354 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           );
         }
 
-        final hasChildren = <String, bool>{};
-        final childCount = <String, int>{};
-        for (final cat in list) {
-          final parent = cat.parentId;
-          if (parent != null) {
-            hasChildren[parent] = true;
-            childCount[parent] = (childCount[parent] ?? 0) + 1;
-          }
+        final selected = list.where((x) => x.id == _selectedId).firstOrNull;
+        final tree = _TreePane(
+          categories: list,
+          branchCounts: branch,
+          directCounts: direct,
+          collapsed: _collapsed,
+          query: _query,
+          selectedId: selected?.id,
+          searchController: _searchController,
+          onQuery: (v) => setState(() => _query = v),
+          onToggle: (id) => setState(() {
+            if (!_collapsed.remove(id)) _collapsed.add(id);
+          }),
+          onSelect: _select,
+          onAddChild: _createChild,
+          onCreateRoot: _createRoot,
+          onExpandAll: () => setState(_collapsed.clear),
+          onCollapseAll: () => setState(() {
+            _collapsed
+              ..clear()
+              ..addAll(list.map((x) => x.id));
+          }),
+          hiddenByCollapse: _hiddenByCollapse,
+        );
+
+        Widget detailFor(CategoryRow cat, {VoidCallback? onBack}) =>
+            CategoryDetail(
+              category: cat,
+              onBack: onBack,
+              onOpenChild: _select,
+              onAddChild: () => _createChild(cat),
+              onRename: () => _rename(cat),
+              onIcon: () => _pickIcon(cat),
+              onMove: () => _move(cat),
+              onArchive: () => _archive(cat),
+            );
+
+        // Узкий экран: сначала дерево, выбранная ветка открывается поверх.
+        if (!layout.isWide) {
+          if (selected == null) return tree;
+          return detailFor(
+            selected,
+            onBack: () => setState(() => _selectedId = null),
+          );
         }
 
-        // Поиск по дереву: показываем совпавшие узлы вместе со всеми предками,
-        // чтобы путь оставался понятным.
-        final query = Normalize.name(_query);
-        final visible = <CategoryRow>[];
-        if (query.isEmpty) {
-          visible.addAll(list.where((cat) => !_hiddenByCollapse(cat)));
-        } else {
-          final keep = <String>{};
-          for (final cat in list) {
-            if (cat.normalizedName.contains(query)) {
-              keep.addAll(cat.path.split('/'));
-            }
-          }
-          visible.addAll(list.where((cat) => keep.contains(cat.id)));
-        }
-
-        // Последний потомок в своей ветке рисует уголок, а не «тройник».
-        // Узел последний, только если следующий видимый узел мельче по уровню:
-        // ровня — это ещё один брат, и линия должна идти дальше вниз.
-        final isLastChild = <String, bool>{};
-        for (var i = 0; i < visible.length; i++) {
-          final cat = visible[i];
-          final next = i + 1 < visible.length ? visible[i + 1] : null;
-          isLastChild[cat.id] = next == null || next.level < cat.level;
-        }
-
-        final total = list.length;
-        return ScreenScaffold(
-          header: ScreenHeader(
-            title: l10n.categoriesTitle,
-            subtitle: l10n.categoriesSubtitle(total),
-            actions: [
-              IconActionButton(
-                icon: Icons.unfold_more_rounded,
-                tooltip: l10n.categoryExpandAll,
-                onPressed: _expandAll,
-                size: AppDimens.controlHeight,
-              ),
-              IconActionButton(
-                icon: Icons.unfold_less_rounded,
-                tooltip: l10n.categoryCollapseAll,
-                onPressed: () => _collapseAll(list),
-                size: AppDimens.controlHeight,
-              ),
-              FilledButton.icon(
-                onPressed: _createRoot,
-                icon: const Icon(Icons.add_rounded, size: 20),
-                label: Text(l10n.categoryAddRoot),
-              ),
-            ],
-            bottom: SizedBox(
-              width: 360,
-              child: AppSearchField(
-                hint: l10n.categorySearchHint,
-                controller: _searchController,
-                onChanged: (v) => setState(() => _query = v),
-              ),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(width: layout.treePaneWidth, child: tree),
+            VerticalDivider(width: 1, color: c.border),
+            Expanded(
+              child: selected == null
+                  ? EmptyState(
+                      icon: Icons.account_tree_rounded,
+                      title: l10n.categoryPickTitle,
+                      message: l10n.categoryPickMessage,
+                    )
+                  : detailFor(selected),
             ),
-          ),
-          child: visible.isEmpty
-              ? EmptyState(
-                  icon: Icons.search_off_rounded,
-                  title: l10n.catalogNothingFoundTitle,
-                  message: l10n.catalogNothingFoundMessage,
-                )
-              : ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                    context.layout.gutter,
-                    AppDimens.space16,
-                    context.layout.gutter,
-                    AppDimens.space40,
-                  ),
-                  itemCount: visible.length,
-                  itemBuilder: (context, i) {
-                    final cat = visible[i];
-                    return _CategoryNode(
-                      category: cat,
-                      directCount: direct[cat.id] ?? 0,
-                      branchCount: branch[cat.id] ?? 0,
-                      childCount: childCount[cat.id] ?? 0,
-                      hasChildren: hasChildren[cat.id] ?? false,
-                      collapsed: _collapsed.contains(cat.id),
-                      isLast: isLastChild[cat.id] ?? true,
-                      onToggle: () => setState(() {
-                        if (!_collapsed.remove(cat.id)) _collapsed.add(cat.id);
-                      }),
-                      onOpen: () => _openInCatalog(cat),
-                      onAddChild: () => _createChild(cat),
-                      onRename: () => _rename(cat),
-                      onIcon: () => _pickIcon(cat),
-                      onMove: () => _move(cat),
-                      onArchive: () => _archive(cat),
-                    );
-                  },
-                ),
+          ],
         );
       },
     );
   }
 }
 
-/// Узел дерева. Корень — карточка-раздел, потомки — строки с направляющими.
-class _CategoryNode extends StatefulWidget {
-  const _CategoryNode({
+/// Левая панель: дерево категорий с направляющими линиями.
+class _TreePane extends StatelessWidget {
+  const _TreePane({
+    required this.categories,
+    required this.branchCounts,
+    required this.directCounts,
+    required this.collapsed,
+    required this.query,
+    required this.selectedId,
+    required this.searchController,
+    required this.onQuery,
+    required this.onToggle,
+    required this.onSelect,
+    required this.onAddChild,
+    required this.onCreateRoot,
+    required this.onExpandAll,
+    required this.onCollapseAll,
+    required this.hiddenByCollapse,
+  });
+
+  final List<CategoryRow> categories;
+  final Map<String, int> branchCounts;
+  final Map<String, int> directCounts;
+  final Set<String> collapsed;
+  final String query;
+  final String? selectedId;
+  final TextEditingController searchController;
+  final ValueChanged<String> onQuery;
+  final ValueChanged<String> onToggle;
+  final ValueChanged<CategoryRow> onSelect;
+  final ValueChanged<CategoryRow> onAddChild;
+  final VoidCallback onCreateRoot;
+  final VoidCallback onExpandAll;
+  final VoidCallback onCollapseAll;
+  final bool Function(CategoryRow) hiddenByCollapse;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    final hasChildren = <String, bool>{};
+    final childCount = <String, int>{};
+    for (final cat in categories) {
+      final parent = cat.parentId;
+      if (parent != null) {
+        hasChildren[parent] = true;
+        childCount[parent] = (childCount[parent] ?? 0) + 1;
+      }
+    }
+
+    // Поиск показывает совпавшие узлы вместе с предками — иначе теряется путь.
+    final normalized = Normalize.name(query);
+    final visible = <CategoryRow>[];
+    if (normalized.isEmpty) {
+      visible.addAll(categories.where((cat) => !hiddenByCollapse(cat)));
+    } else {
+      final keep = <String>{};
+      for (final cat in categories) {
+        if (cat.normalizedName.contains(normalized)) {
+          keep.addAll(cat.path.split('/'));
+        }
+      }
+      visible.addAll(categories.where((cat) => keep.contains(cat.id)));
+    }
+
+    // Узел последний, только если следующий видимый мельче по уровню: ровня —
+    // это ещё один брат, и линия должна идти дальше вниз.
+    final isLastChild = <String, bool>{};
+    for (var i = 0; i < visible.length; i++) {
+      final cat = visible[i];
+      final next = i + 1 < visible.length ? visible[i + 1] : null;
+      isLastChild[cat.id] = next == null || next.level < cat.level;
+    }
+
+    return Container(
+      color: c.background,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.space16,
+              AppDimens.space20,
+              AppDimens.space16,
+              AppDimens.space12,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.categoriesTitle,
+                        style: context.text.headlineSmall,
+                      ),
+                    ),
+                    AppIconButton(
+                      icon: Icons.unfold_more_rounded,
+                      tooltip: l10n.categoryExpandAll,
+                      onPressed: onExpandAll,
+                    ),
+                    AppIconButton(
+                      icon: Icons.unfold_less_rounded,
+                      tooltip: l10n.categoryCollapseAll,
+                      onPressed: onCollapseAll,
+                    ),
+                    AppIconButton(
+                      icon: Icons.add_rounded,
+                      tooltip: l10n.categoryAddRoot,
+                      onPressed: onCreateRoot,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimens.space12),
+                AppSearchField(
+                  hint: l10n.categorySearchHint,
+                  controller: searchController,
+                  onChanged: onQuery,
+                  height: AppDimens.controlHeightSm,
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: c.border),
+          Expanded(
+            child: visible.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppDimens.space24),
+                      child: Text(
+                        l10n.catalogNothingFoundTitle,
+                        style: context.text.bodyMedium?.copyWith(
+                          color: c.textMuted,
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimens.space12,
+                      AppDimens.space12,
+                      AppDimens.space12,
+                      AppDimens.space40,
+                    ),
+                    itemCount: visible.length,
+                    itemBuilder: (context, i) {
+                      final cat = visible[i];
+                      return CategoryTreeRow(
+                        category: cat,
+                        branchCount: branchCounts[cat.id] ?? 0,
+                        childCount: childCount[cat.id] ?? 0,
+                        hasChildren: hasChildren[cat.id] ?? false,
+                        collapsed: collapsed.contains(cat.id),
+                        selected: cat.id == selectedId,
+                        isLast: isLastChild[cat.id] ?? true,
+                        onToggle: () => onToggle(cat.id),
+                        onSelect: () => onSelect(cat),
+                        onAddChild: () => onAddChild(cat),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Строка дерева: направляющие линии, цветной значок, счётчик ветки.
+class CategoryTreeRow extends StatefulWidget {
+  const CategoryTreeRow({
+    super.key,
     required this.category,
-    required this.directCount,
     required this.branchCount,
     required this.childCount,
     required this.hasChildren,
     required this.collapsed,
+    required this.selected,
     required this.isLast,
     required this.onToggle,
-    required this.onOpen,
+    required this.onSelect,
     required this.onAddChild,
-    required this.onRename,
-    required this.onIcon,
-    required this.onMove,
-    required this.onArchive,
   });
 
   final CategoryRow category;
-  final int directCount;
   final int branchCount;
   final int childCount;
   final bool hasChildren;
   final bool collapsed;
+  final bool selected;
   final bool isLast;
   final VoidCallback onToggle;
-  final VoidCallback onOpen;
+  final VoidCallback onSelect;
   final VoidCallback onAddChild;
-  final VoidCallback onRename;
-  final VoidCallback onIcon;
-  final VoidCallback onMove;
-  final VoidCallback onArchive;
 
   @override
-  State<_CategoryNode> createState() => _CategoryNodeState();
+  State<CategoryTreeRow> createState() => _CategoryTreeRowState();
 }
 
-class _CategoryNodeState extends State<_CategoryNode> {
+class _CategoryTreeRowState extends State<CategoryTreeRow> {
   bool _hovered = false;
 
-  static const double _indent = 26;
+  static const double _indent = 18;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final l10n = AppLocalizations.of(context);
     final cat = widget.category;
-    final isRoot = cat.level == 0;
     final tone = cat.color != null
         ? Color(cat.color!)
         : c.profileColorFor(cat.id);
+    final isRoot = cat.level == 0;
 
-    final tile = Container(
-      decoration: BoxDecoration(
-        color: isRoot
-            ? c.surface
-            : (_hovered ? c.surfaceMuted : Colors.transparent),
-        borderRadius: isRoot ? AppDimens.brLg : AppDimens.brMd,
-        border: isRoot ? Border.all(color: c.border) : null,
-        boxShadow: isRoot
-            ? [BoxShadow(color: c.shadow, blurRadius: 14, offset: Offset(0, 4))]
-            : null,
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: isRoot ? AppDimens.brLg : AppDimens.brMd,
-          onTap: widget.branchCount > 0 ? widget.onOpen : widget.onAddChild,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimens.space12,
-              vertical: isRoot ? AppDimens.space12 : AppDimens.space8,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  child: widget.hasChildren
-                      ? _Chevron(
-                          collapsed: widget.collapsed,
-                          onTap: widget.onToggle,
-                        )
-                      : null,
+    final tile = Material(
+      color: widget.selected
+          ? c.navActiveBg
+          : (_hovered ? c.surfaceMuted : Colors.transparent),
+      borderRadius: AppDimens.brSm,
+      child: InkWell(
+        borderRadius: AppDimens.brSm,
+        onTap: widget.onSelect,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.space8,
+            vertical: AppDimens.space8,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                child: widget.hasChildren
+                    ? _Chevron(
+                        collapsed: widget.collapsed,
+                        onTap: widget.onToggle,
+                      )
+                    : null,
+              ),
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: tone.withValues(alpha: widget.selected ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                _IconTile(
-                  icon: AppIcons.byKey(cat.icon),
-                  tone: tone,
-                  big: isRoot,
-                ),
-                const SizedBox(width: AppDimens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        cat.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: isRoot
-                            ? context.text.titleLarge
-                            : context.text.titleMedium,
-                      ),
-                      if (widget.hasChildren || widget.branchCount > 0)
-                        Text(
-                          _meta(l10n),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.text.labelSmall?.copyWith(
-                            color: c.textMuted,
-                          ),
-                        ),
-                    ],
+                child: Icon(AppIcons.byKey(cat.icon), size: 15, color: tone),
+              ),
+              const SizedBox(width: AppDimens.space8),
+              Expanded(
+                child: Text(
+                  cat.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.bodyMedium?.copyWith(
+                    color: widget.selected ? c.navActiveFg : c.textPrimary,
+                    fontWeight: widget.selected || isRoot
+                        ? FontWeight.w600
+                        : FontWeight.w500,
                   ),
                 ),
-                if (widget.branchCount > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppDimens.space8),
-                    child: _CountBadge(count: widget.branchCount, tone: tone),
+              ),
+              if (_hovered)
+                AppIconButton(
+                  icon: Icons.add_rounded,
+                  tooltip: l10n.categoryAddChild,
+                  onPressed: widget.onAddChild,
+                )
+              else if (widget.branchCount > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space8,
                   ),
-                // Действия проявляются при наведении, чтобы дерево не рябило
-                // от иконок; на сенсорном экране показываем всегда.
-                AnimatedOpacity(
-                  duration: AppDimens.durationFast,
-                  opacity: _hovered || context.layout.isCompact ? 1 : 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIconButton(
-                        icon: Icons.add_rounded,
-                        tooltip: l10n.categoryAddChild,
-                        onPressed: widget.onAddChild,
-                      ),
-                      PopupMenuButton<String>(
-                        tooltip: '',
-                        icon: Icon(
-                          Icons.more_horiz_rounded,
-                          size: 18,
-                          color: c.textSecondary,
-                        ),
-                        onSelected: (v) => switch (v) {
-                          'rename' => widget.onRename(),
-                          'icon' => widget.onIcon(),
-                          'move' => widget.onMove(),
-                          'open' => widget.onOpen(),
-                          'archive' => widget.onArchive(),
-                          _ => null,
-                        },
-                        itemBuilder: (_) => [
-                          _menuItem(
-                            'open',
-                            Icons.grid_view_rounded,
-                            l10n.categoryOpenInCatalog,
-                          ),
-                          _menuItem(
-                            'rename',
-                            Icons.edit_rounded,
-                            l10n.categoryRename,
-                          ),
-                          _menuItem(
-                            'icon',
-                            Icons.emoji_symbols_rounded,
-                            l10n.categoryIcon,
-                          ),
-                          _menuItem(
-                            'move',
-                            Icons.drive_file_move_rounded,
-                            l10n.categoryMove,
-                          ),
-                          const PopupMenuDivider(),
-                          _menuItem(
-                            'archive',
-                            Icons.archive_rounded,
-                            l10n.categoryArchive,
-                            danger: true,
-                          ),
-                        ],
-                      ),
-                    ],
+                  child: Text(
+                    '${widget.branchCount}',
+                    style: context.text.labelSmall?.copyWith(
+                      color: widget.selected ? c.navActiveFg : c.textMuted,
+                    ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -504,8 +556,8 @@ class _CategoryNodeState extends State<_CategoryNode> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: Padding(
-        padding: EdgeInsets.only(bottom: isRoot ? AppDimens.space8 : 2),
-        child: cat.level == 0
+        padding: const EdgeInsets.only(bottom: 1),
+        child: isRoot
             ? tile
             : CustomPaint(
                 painter: _TreeGuidePainter(
@@ -522,41 +574,9 @@ class _CategoryNodeState extends State<_CategoryNode> {
       ),
     );
   }
-
-  PopupMenuItem<String> _menuItem(
-    String value,
-    IconData icon,
-    String label, {
-    bool danger = false,
-  }) {
-    final c = context.colors;
-    return PopupMenuItem(
-      value: value,
-      height: 40,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: danger ? c.coral : c.textSecondary),
-          const SizedBox(width: AppDimens.space12),
-          Text(label, style: danger ? TextStyle(color: c.coral) : null),
-        ],
-      ),
-    );
-  }
-
-  String _meta(AppLocalizations l10n) {
-    final parts = <String>[];
-    if (widget.childCount > 0) {
-      parts.add(l10n.categorySubcategoriesCount(widget.childCount));
-    }
-    if (widget.directCount > 0 && widget.directCount != widget.branchCount) {
-      parts.add(l10n.categoryDirectCount(widget.directCount));
-    }
-    return parts.join(' · ');
-  }
 }
 
-/// Направляющие линии дерева: вертикали для каждого уровня предков и уголок
-/// к самому узлу.
+/// Направляющие линии дерева: вертикали предков и уголок к самому узлу.
 class _TreeGuidePainter extends CustomPainter {
   const _TreeGuidePainter({
     required this.level,
@@ -570,6 +590,10 @@ class _TreeGuidePainter extends CustomPainter {
   final bool isLast;
   final Color color;
 
+  /// Отступ от начала строки до значка: внутренний отступ плюс место
+  /// под шеврон.
+  static const double _rowIconOffset = AppDimens.space8 + 20;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -577,14 +601,11 @@ class _TreeGuidePainter extends CustomPainter {
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
 
-    // Вертикали предков — от верха до низа строки.
     for (var i = 0; i < level - 1; i++) {
       final x = indent * i + indent / 2;
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
 
-    // Ветка к текущему узлу: вертикаль до середины и горизонталь до плитки
-    // значка, иначе линия обрывается в пустоте и связь не читается.
     final x = indent * (level - 1) + indent / 2;
     final midY = size.height / 2;
     canvas.drawLine(
@@ -599,63 +620,9 @@ class _TreeGuidePainter extends CustomPainter {
     );
   }
 
-  /// Отступ от начала строки до плитки значка: внутренний отступ карточки
-  /// плюс место под шеврон.
-  static const double _rowIconOffset = AppDimens.space12 + 24;
-
   @override
   bool shouldRepaint(_TreeGuidePainter old) =>
       old.level != level || old.isLast != isLast || old.color != color;
-}
-
-/// Цветная плитка иконки категории.
-class _IconTile extends StatelessWidget {
-  const _IconTile({required this.icon, required this.tone, required this.big});
-
-  final IconData icon;
-  final Color tone;
-  final bool big;
-
-  @override
-  Widget build(BuildContext context) {
-    final side = big ? 40.0 : 30.0;
-    return Container(
-      width: side,
-      height: side,
-      decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(big ? 12 : 9),
-      ),
-      child: Icon(icon, size: big ? 21 : 17, color: tone),
-    );
-  }
-}
-
-class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count, required this.tone});
-
-  final int count;
-  final Color tone;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space8),
-      height: 22,
-      decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.12),
-        borderRadius: AppDimens.brPill,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '$count',
-        style: context.text.labelSmall?.copyWith(
-          color: tone,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
 }
 
 class _Chevron extends StatelessWidget {
@@ -671,14 +638,14 @@ class _Chevron extends StatelessWidget {
       onTap: onTap,
       borderRadius: AppDimens.brPill,
       child: SizedBox(
-        width: 24,
-        height: 24,
+        width: 20,
+        height: 20,
         child: AnimatedRotation(
           turns: collapsed ? -0.25 : 0,
           duration: AppDimens.durationFast,
           child: Icon(
             Icons.keyboard_arrow_down_rounded,
-            size: 20,
+            size: 18,
             color: c.textSecondary,
           ),
         ),

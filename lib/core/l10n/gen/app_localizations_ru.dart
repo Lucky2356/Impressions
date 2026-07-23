@@ -247,7 +247,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String categoryEntriesCount(int count) {
-    return '$count зап.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей',
+      many: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -283,6 +291,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogResetFilters => 'Сбросить фильтры';
 
   @override
+  String get catalogAddedHiddenByFilters =>
+      'Запись добавлена, но не подходит под текущие фильтры';
+
+  @override
   String get catalogViewGrid => 'Крупная сетка';
 
   @override
@@ -308,7 +320,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String catalogFound(int count) {
-    return 'Найдено: $count';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Найдено $count записей',
+      many: 'Найдено $count записей',
+      few: 'Найдено $count записи',
+      one: 'Найдена $count запись',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -361,7 +381,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String collectionEntriesCount(int count) {
-    return '$count зап.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей',
+      many: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -446,7 +474,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String profileEntriesCount(int count) {
-    return '$count зап.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей',
+      many: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -990,7 +1026,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String categoriesSubtitle(int count) {
-    return 'Категорий в дереве: $count';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count категорий в дереве',
+      many: '$count категорий в дереве',
+      few: '$count категории в дереве',
+      one: '$count категория в дереве',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1010,13 +1054,58 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String categorySubcategoriesCount(int count) {
-    return '$count подкатегорий';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count подкатегорий',
+      many: '$count подкатегорий',
+      few: '$count подкатегории',
+      one: '$count подкатегория',
+    );
+    return '$_temp0';
   }
 
   @override
   String categoryDirectCount(int count) {
-    return '$count здесь';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count прямо здесь',
+      many: '$count прямо здесь',
+      few: '$count прямо здесь',
+      one: '$count прямо здесь',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String categoryBranchCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей в ветке',
+      many: '$count записей в ветке',
+      few: '$count записи в ветке',
+      one: '$count запись в ветке',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get categorySubcategoriesTitle => 'Подкатегории';
+
+  @override
+  String get categoryEntriesTitle => 'Записи';
+
+  @override
+  String get categoryBranchEmpty => 'В этой ветке пока нет записей';
+
+  @override
+  String get categoryPickTitle => 'Выберите категорию';
+
+  @override
+  String get categoryPickMessage =>
+      'Слева — дерево категорий. Выберите ветку, чтобы увидеть, что в ней лежит.';
 
   @override
   String get catalogTypeLabel => 'Тип';
@@ -1057,7 +1146,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String notificationIncomingBody(int count) {
-    return '$count изменений в импортированных профилях';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count изменений в импортированных профилях',
+      many: '$count изменений в импортированных профилях',
+      few: '$count изменения в импортированных профилях',
+      one: '$count изменение в импортированных профилях',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1090,6 +1187,18 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String notificationBackupBody(String date) {
     return 'Последняя копия от $date';
+  }
+
+  @override
+  String get collectionPickTitle => 'Добавить записи';
+
+  @override
+  String get collectionPickEmpty =>
+      'В профиле пока нет записей, которые можно добавить';
+
+  @override
+  String collectionPickSelected(int count) {
+    return 'Выбрано: $count';
   }
 
   @override
@@ -1228,6 +1337,24 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get updateSkip => 'Пропустить эту версию';
+
+  @override
+  String get updateInstallNow => 'Установить';
+
+  @override
+  String get updateInstallHint =>
+      'Приложение закроется, обновится и запустится снова.';
+
+  @override
+  String updateDownloading(int percent) {
+    return 'Скачивание: $percent%';
+  }
+
+  @override
+  String get updateDownloadingUnknown => 'Скачивание…';
+
+  @override
+  String get updateFailed => 'Не удалось обновить';
 
   @override
   String get incomingTitle => 'Входящие изменения';

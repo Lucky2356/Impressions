@@ -35,8 +35,8 @@ class EntryCardData {
 /// Высота текстового блока карточки: путь категории, название в две строки и
 /// строка метаданных. Вынесена в константу, потому что от неё считается
 /// соотношение сторон ячейки сетки.
-const double _cardContentHeight = 92;
-const double _cardContentHeightDense = 74;
+const double _cardContentHeight = 82;
+const double _cardContentHeightDense = 68;
 const double _cardPadding = AppDimens.space8;
 
 /// Вычисляет соотношение сторон ячейки сетки так, чтобы [EntryCard] помещалась

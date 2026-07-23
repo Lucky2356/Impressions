@@ -15,6 +15,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/product_lookup_service.dart';
 import '../../data/services/secret_storage.dart';
+import '../../data/services/update_service.dart';
 import '../../design_system/design_system.dart';
 
 /// Текущая версия приложения из манифеста сборки.
@@ -323,45 +324,144 @@ class _SwitchRow extends StatelessWidget {
   }
 }
 
-/// Предложение обновиться с прямой ссылкой на установщик.
+/// Предложение обновиться: на Windows скачивает и ставит, иначе открывает
+/// страницу выпуска.
 Future<void> showUpdateDialog(
   BuildContext context,
   String version,
   String url,
-) async {
-  final l10n = AppLocalizations.of(context);
-  await showDialog<void>(
+) {
+  return showDialog<void>(
     context: context,
-    builder: (ctx) => AlertDialog(
+    barrierDismissible: false,
+    builder: (_) => _UpdateDialog(version: version, url: url),
+  );
+}
+
+class _UpdateDialog extends ConsumerStatefulWidget {
+  const _UpdateDialog({required this.version, required this.url});
+
+  final String version;
+  final String url;
+
+  @override
+  ConsumerState<_UpdateDialog> createState() => _UpdateDialogState();
+}
+
+class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
+  double _progress = 0;
+  bool _downloading = false;
+  String? _error;
+
+  /// Установить одним нажатием можно только там, где есть наш установщик.
+  bool get _canInstall =>
+      Platform.isWindows && UpdateService.isTrustedInstallerUrl(widget.url);
+
+  Future<void> _installNow() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _downloading = true;
+      _error = null;
+      _progress = 0;
+    });
+    try {
+      final service = ref.read(updateServiceProvider);
+      final file = await service.downloadInstaller(
+        widget.url,
+        onProgress: (p) {
+          if (mounted) setState(() => _progress = p);
+        },
+      );
+      await service.runInstaller(file);
+      // Установщик закроет приложение сам; окно убираем сразу, чтобы не
+      // казалось, что ничего не произошло.
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _downloading = false;
+          _error = '${l10n.updateFailed}: $e';
+        });
+      }
+    }
+  }
+
+  Future<void> _openPage() => _openExternally(AppConfig.releasesPageUrl);
+
+  /// Там, где своего установщика нет, скачивание отдаётся браузеру.
+  Future<void> _downloadInBrowser() => _openExternally(widget.url);
+
+  Future<void> _openExternally(String url) async {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    return AlertDialog(
       icon: const Icon(Icons.system_update_rounded),
       title: Text(l10n.updateTitle),
-      content: Text(l10n.updateAvailable(version)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(l10n.updateLater),
+      content: SizedBox(
+        width: 380,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.updateAvailable(widget.version)),
+            if (_canInstall && !_downloading) ...[
+              const SizedBox(height: AppDimens.space8),
+              Text(
+                l10n.updateInstallHint,
+                style: context.text.labelSmall?.copyWith(color: c.textMuted),
+              ),
+            ],
+            if (_downloading) ...[
+              const SizedBox(height: AppDimens.space20),
+              LinearProgressIndicator(
+                value: _progress >= 0 ? _progress : null,
+                minHeight: 6,
+                borderRadius: AppDimens.brPill,
+              ),
+              const SizedBox(height: AppDimens.space8),
+              Text(
+                _progress >= 0
+                    ? l10n.updateDownloading((_progress * 100).round())
+                    : l10n.updateDownloadingUnknown,
+                style: context.text.labelSmall?.copyWith(color: c.textMuted),
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: AppDimens.space16),
+              Text(
+                _error!,
+                style: context.text.bodySmall?.copyWith(color: c.coral),
+              ),
+            ],
+          ],
         ),
-        TextButton(
-          onPressed: () async {
-            await launchUrl(
-              Uri.parse(AppConfig.releasesPageUrl),
-              mode: LaunchMode.externalApplication,
-            );
-            if (ctx.mounted) Navigator.of(ctx).pop();
-          },
-          child: Text(l10n.updateOpenPage),
-        ),
-        FilledButton(
-          onPressed: () async {
-            await launchUrl(
-              Uri.parse(url),
-              mode: LaunchMode.externalApplication,
-            );
-            if (ctx.mounted) Navigator.of(ctx).pop();
-          },
-          child: Text(l10n.updateDownload),
-        ),
-      ],
-    ),
-  );
+      ),
+      actions: _downloading
+          ? const []
+          : [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.updateLater),
+              ),
+              TextButton(
+                onPressed: _openPage,
+                child: Text(l10n.updateOpenPage),
+              ),
+              FilledButton(
+                onPressed: _canInstall ? _installNow : _downloadInBrowser,
+                child: Text(
+                  _canInstall ? l10n.updateInstallNow : l10n.updateDownload,
+                ),
+              ),
+            ],
+    );
+  }
 }

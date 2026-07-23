@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/domain/app_icons.dart';
 import '../../core/domain/custom_fields.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -20,15 +21,19 @@ import 'category_picker.dart';
 /// «Добавить подробности». Открывается диалогом на широком экране и нижним
 /// листом на узком.
 class QuickAddSheet extends ConsumerStatefulWidget {
-  const QuickAddSheet({super.key, this.prefill});
+  const QuickAddSheet({super.key, this.prefill, this.initialCategory});
 
   /// Данные, полученные сканированием штрихкода.
   final ScannedProduct? prefill;
+
+  /// Категория, подставляемая заранее: форма открыта из ветки категорий.
+  final CategoryRow? initialCategory;
 
   /// Показывает форму подходящим для платформы способом.
   static Future<bool> show(
     BuildContext context, {
     ScannedProduct? prefill,
+    CategoryRow? initialCategory,
   }) async {
     final wide =
         MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
@@ -39,7 +44,10 @@ class QuickAddSheet extends ConsumerStatefulWidget {
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 width: 560,
-                child: QuickAddSheet(prefill: prefill),
+                child: QuickAddSheet(
+                  prefill: prefill,
+                  initialCategory: initialCategory,
+                ),
               ),
             ),
           )
@@ -47,7 +55,10 @@ class QuickAddSheet extends ConsumerStatefulWidget {
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
-            builder: (_) => QuickAddSheet(prefill: prefill),
+            builder: (_) => QuickAddSheet(
+              prefill: prefill,
+              initialCategory: initialCategory,
+            ),
           );
     return result ?? false;
   }
@@ -78,6 +89,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   @override
   void initState() {
     super.initState();
+    _category = widget.initialCategory;
     _applyPrefill(widget.prefill);
   }
 
@@ -333,10 +345,29 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   initialValue: _typeId,
                   decoration: InputDecoration(
                     labelText: l10n.quickAddTypeLabel,
+                    prefixIcon: const Icon(Icons.category_rounded, size: 20),
                   ),
+                  // Без ограничения список типов раскрывался на всю высоту
+                  // экрана и перекрывал форму.
+                  menuMaxHeight: 320,
+                  borderRadius: AppDimens.brMd,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
                   items: [
                     for (final t in typeList)
-                      DropdownMenuItem(value: t.id, child: Text(t.name)),
+                      DropdownMenuItem(
+                        value: t.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              AppIcons.byKey(t.icon),
+                              size: 18,
+                              color: c.textSecondary,
+                            ),
+                            const SizedBox(width: AppDimens.space12),
+                            Text(t.name),
+                          ],
+                        ),
+                      ),
                   ],
                   onChanged: (v) => setState(() => _typeId = v),
                 ),

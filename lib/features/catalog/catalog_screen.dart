@@ -50,6 +50,37 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     });
   }
 
+  /// Добавление записи из каталога.
+  ///
+  /// Если включены фильтры, новая запись может под них не подойти и создаётся
+  /// впечатление, что она не сохранилась. Поэтому предлагаем сбросить фильтры.
+  Future<void> _add() async {
+    final l10n = AppLocalizations.of(context);
+    final added = await QuickAddSheet.show(context);
+    if (!added || !mounted) return;
+
+    final state = ref.read(catalogStateProvider);
+    final filtered =
+        state.search.isNotEmpty ||
+        state.typeId != null ||
+        state.relation != null ||
+        state.categoryId != null;
+    if (!filtered) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.catalogAddedHiddenByFilters),
+        action: SnackBarAction(
+          label: l10n.catalogResetFilters,
+          onPressed: () {
+            _searchController.clear();
+            ref.read(catalogStateProvider.notifier).reset();
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -71,7 +102,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         subtitle: count == null ? null : l10n.catalogFound(count),
         actions: [
           FilledButton.icon(
-            onPressed: () => QuickAddSheet.show(context),
+            onPressed: _add,
             icon: const Icon(Icons.add_rounded, size: 20),
             label: Text(l10n.commonAdd),
           ),
@@ -235,13 +266,20 @@ class _FilterBar extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: AppSearchField(
-                hint: l10n.catalogSearchHint,
-                controller: searchController,
-                onChanged: onSearchChanged,
+            // Поле поиска не растягивается на всю ширину окна: на широком
+            // мониторе строка ввода в 1800 точек выглядит нелепо.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SizedBox(
+                width: 420,
+                child: AppSearchField(
+                  hint: l10n.catalogSearchHint,
+                  controller: searchController,
+                  onChanged: onSearchChanged,
+                ),
               ),
             ),
+            const Spacer(),
             const SizedBox(width: AppDimens.space12),
             SegmentedToggle<CatalogViewMode>(
               value: state.view,

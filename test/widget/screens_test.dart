@@ -128,7 +128,8 @@ void main() {
       // полный путь остаётся в карточке записи.
       expect(find.text('Колбасы'), findsOneWidget);
       expect(find.byType(EntryCard), findsOneWidget);
-      expect(find.text('Найдено: 1'), findsOneWidget);
+      // Счётчик склоняется по-русски: одна запись — «найдена», а не «найдено».
+      expect(find.text('Найдена 1 запись'), findsOneWidget);
     });
 
     testWidgets('пустой результат показывает пустое состояние', (tester) async {

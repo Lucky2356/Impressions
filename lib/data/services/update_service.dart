@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
 
 import '../../core/config/app_config.dart';
 import '../db/database.dart';
@@ -153,6 +155,81 @@ class UpdateService {
     } catch (_) {
       return null;
     }
+  }
+
+  // ---- Скачивание и установка обновления ----
+
+  /// Ссылка ведёт на выпуск нашего же репозитория.
+  ///
+  /// Проверка обязательна: файл после скачивания запускается, поэтому адрес,
+  /// пришедший из ответа сервера, нельзя принимать на веру.
+  static bool isTrustedInstallerUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https') return false;
+    const hosts = {
+      'github.com',
+      'objects.githubusercontent.com',
+      'release-assets.githubusercontent.com',
+    };
+    if (!hosts.contains(uri.host)) return false;
+    if (!uri.path.toLowerCase().endsWith('.exe')) return false;
+    // Прямые ссылки на файлы выпуска идут через redirect на CDN, поэтому
+    // проверяем принадлежность репозиторию только там, где путь её содержит.
+    if (uri.host == 'github.com' &&
+        !uri.path.startsWith('/Lucky2356/Impressions/')) {
+      return false;
+    }
+    return true;
+  }
+
+  /// Скачивает установщик во временный каталог.
+  ///
+  /// [onProgress] получает долю от 0 до 1; если сервер не сообщил размер,
+  /// вызывается с -1.
+  Future<File> downloadInstaller(
+    String url, {
+    void Function(double progress)? onProgress,
+  }) async {
+    if (!isTrustedInstallerUrl(url)) {
+      throw ArgumentError('Недоверенный адрес установщика: $url');
+    }
+
+    final response = await _client
+        .send(http.Request('GET', Uri.parse(url))..followRedirects = true)
+        .timeout(const Duration(minutes: 5));
+    if (response.statusCode != 200) {
+      throw StateError('Сервер ответил ${response.statusCode}');
+    }
+
+    final dir = await Directory.systemTemp.createTemp('impressions_update');
+    final file = File(p.join(dir.path, 'Impressions-setup.exe'));
+    final sink = file.openWrite();
+    final total = response.contentLength ?? 0;
+    var received = 0;
+
+    try {
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        received += chunk.length;
+        onProgress?.call(total > 0 ? received / total : -1);
+      }
+    } finally {
+      await sink.close();
+    }
+    return file;
+  }
+
+  /// Запускает установщик и завершает приложение.
+  ///
+  /// Установщик закрывает работающую копию сам (`/CLOSEAPPLICATIONS`) и
+  /// запускает её обратно после обновления.
+  Future<void> runInstaller(File installer) async {
+    await Process.start(installer.path, const [
+      '/SILENT',
+      '/CLOSEAPPLICATIONS',
+      '/RESTARTAPPLICATIONS',
+      '/NORESTART',
+    ], mode: ProcessStartMode.detached);
   }
 
   // ---- Обновление сведений о товарах ----

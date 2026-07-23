@@ -565,7 +565,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryEntriesCount.
   ///
   /// In ru, this message translates to:
-  /// **'{count} зап.'**
+  /// **'{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}'**
   String categoryEntriesCount(int count);
 
   /// No description provided for @categoryShowSubcategories.
@@ -628,6 +628,12 @@ abstract class AppLocalizations {
   /// **'Сбросить фильтры'**
   String get catalogResetFilters;
 
+  /// No description provided for @catalogAddedHiddenByFilters.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись добавлена, но не подходит под текущие фильтры'**
+  String get catalogAddedHiddenByFilters;
+
   /// No description provided for @catalogViewGrid.
   ///
   /// In ru, this message translates to:
@@ -679,7 +685,7 @@ abstract class AppLocalizations {
   /// No description provided for @catalogFound.
   ///
   /// In ru, this message translates to:
-  /// **'Найдено: {count}'**
+  /// **'{count, plural, one{Найдена {count} запись} few{Найдено {count} записи} many{Найдено {count} записей} other{Найдено {count} записей}}'**
   String catalogFound(int count);
 
   /// No description provided for @entryDetailTitle.
@@ -775,7 +781,7 @@ abstract class AppLocalizations {
   /// No description provided for @collectionEntriesCount.
   ///
   /// In ru, this message translates to:
-  /// **'{count} зап.'**
+  /// **'{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}'**
   String collectionEntriesCount(int count);
 
   /// No description provided for @collectionOpenEmpty.
@@ -937,7 +943,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileEntriesCount.
   ///
   /// In ru, this message translates to:
-  /// **'{count} зап.'**
+  /// **'{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}'**
   String profileEntriesCount(int count);
 
   /// No description provided for @compareTitle.
@@ -1957,7 +1963,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoriesSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Категорий в дереве: {count}'**
+  /// **'{count, plural, one{{count} категория в дереве} few{{count} категории в дереве} many{{count} категорий в дереве} other{{count} категорий в дереве}}'**
   String categoriesSubtitle(int count);
 
   /// No description provided for @categorySearchHint.
@@ -1993,14 +1999,50 @@ abstract class AppLocalizations {
   /// No description provided for @categorySubcategoriesCount.
   ///
   /// In ru, this message translates to:
-  /// **'{count} подкатегорий'**
+  /// **'{count, plural, one{{count} подкатегория} few{{count} подкатегории} many{{count} подкатегорий} other{{count} подкатегорий}}'**
   String categorySubcategoriesCount(int count);
 
   /// No description provided for @categoryDirectCount.
   ///
   /// In ru, this message translates to:
-  /// **'{count} здесь'**
+  /// **'{count, plural, one{{count} прямо здесь} few{{count} прямо здесь} many{{count} прямо здесь} other{{count} прямо здесь}}'**
   String categoryDirectCount(int count);
+
+  /// No description provided for @categoryBranchCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись в ветке} few{{count} записи в ветке} many{{count} записей в ветке} other{{count} записей в ветке}}'**
+  String categoryBranchCount(int count);
+
+  /// No description provided for @categorySubcategoriesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подкатегории'**
+  String get categorySubcategoriesTitle;
+
+  /// No description provided for @categoryEntriesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи'**
+  String get categoryEntriesTitle;
+
+  /// No description provided for @categoryBranchEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этой ветке пока нет записей'**
+  String get categoryBranchEmpty;
+
+  /// No description provided for @categoryPickTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите категорию'**
+  String get categoryPickTitle;
+
+  /// No description provided for @categoryPickMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слева — дерево категорий. Выберите ветку, чтобы увидеть, что в ней лежит.'**
+  String get categoryPickMessage;
 
   /// No description provided for @catalogTypeLabel.
   ///
@@ -2077,7 +2119,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationIncomingBody.
   ///
   /// In ru, this message translates to:
-  /// **'{count} изменений в импортированных профилях'**
+  /// **'{count, plural, one{{count} изменение в импортированных профилях} few{{count} изменения в импортированных профилях} many{{count} изменений в импортированных профилях} other{{count} изменений в импортированных профилях}}'**
   String notificationIncomingBody(int count);
 
   /// No description provided for @notificationUpdateTitle.
@@ -2127,6 +2169,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Последняя копия от {date}'**
   String notificationBackupBody(String date);
+
+  /// No description provided for @collectionPickTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить записи'**
+  String get collectionPickTitle;
+
+  /// No description provided for @collectionPickEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В профиле пока нет записей, которые можно добавить'**
+  String get collectionPickEmpty;
+
+  /// No description provided for @collectionPickSelected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрано: {count}'**
+  String collectionPickSelected(int count);
 
   /// No description provided for @profilesSubtitle.
   ///
@@ -2367,6 +2427,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пропустить эту версию'**
   String get updateSkip;
+
+  /// No description provided for @updateInstallNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установить'**
+  String get updateInstallNow;
+
+  /// No description provided for @updateInstallHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение закроется, обновится и запустится снова.'**
+  String get updateInstallHint;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скачивание: {percent}%'**
+  String updateDownloading(int percent);
+
+  /// No description provided for @updateDownloadingUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скачивание…'**
+  String get updateDownloadingUnknown;
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось обновить'**
+  String get updateFailed;
 
   /// No description provided for @incomingTitle.
   ///
