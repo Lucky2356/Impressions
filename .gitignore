@@ -53,3 +53,6 @@ app.*.map.json
 MASTER_PROMPT.md
 /image/
 dist/
+
+# Артефакты неудачных golden-тестов — только для локального разбора
+test/golden/failures/

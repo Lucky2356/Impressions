@@ -14,6 +14,33 @@ class SettingKeys {
 
   /// Идентификатор текущего устройства (§5.2).
   static const currentDeviceId = 'current_device_id';
+
+  // ---- Сетевые возможности ----
+  // Всё, что обращается в сеть, выключается здесь и по умолчанию ограничено
+  // явными действиями пользователя.
+
+  /// Поиск сведений о товаре по отсканированному штрихкоду.
+  static const barcodeLookupEnabled = 'barcode_lookup_enabled';
+
+  /// Включённые источники товарных данных, через запятую.
+  static const barcodeSources = 'barcode_sources';
+
+  /// Фоновое обновление сведений о товарах с штрихкодом.
+  static const productAutoUpdate = 'product_auto_update';
+
+  /// Отметка времени последнего обновления товаров.
+  static const productAutoUpdateAt = 'product_auto_update_at';
+
+  /// Проверка новых версий приложения.
+  static const appUpdateCheck = 'app_update_check';
+
+  /// Последняя найденная версия приложения и ссылка на неё.
+  static const appUpdateLatest = 'app_update_latest';
+  static const appUpdateUrl = 'app_update_url';
+  static const appUpdateCheckedAt = 'app_update_checked_at';
+
+  /// Версия, о которой пользователь попросил больше не напоминать.
+  static const appUpdateDismissed = 'app_update_dismissed';
 }
 
 /// Репозиторий настроек (таблица ключ-значение).

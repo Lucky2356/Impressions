@@ -51,6 +51,17 @@ class AppDimens {
   static const double avatarLg = 64;
   static const double coverRadius = radiusMd;
 
+  /// Единая высота интерактивных элементов управления: кнопок, полей ввода,
+  /// выпадающих списков, сегментов. Один размер на всё приложение (§3.4).
+  static const double controlHeight = 44;
+
+  /// Уменьшенный вариант — плотные панели фильтров и вложенные действия.
+  static const double controlHeightSm = 36;
+
+  /// Высота шапки экрана.
+  static const double headerHeight = 72;
+  static const double headerHeightCompact = 60;
+
   // ---- Адаптивные брейкпоинты ----
   /// Ниже — компактная (мобильная) раскладка; выше — широкая (десктоп).
   static const double breakpointCompact = 640;
@@ -59,8 +70,13 @@ class AppDimens {
   /// Порог трёхпанельной раскладки Windows (§4.1).
   static const double breakpointExpanded = 1200;
 
+  /// Порог сверхширокой раскладки: 4K при 100 % масштабе и ультраширокие.
+  static const double breakpointUltra = 2200;
+
   // ---- Ширины панелей на широком экране ----
   static const double navRailWidth = 268;
+  static const double navRailWidthUltra = 300;
   static const double catalogPaneWidth = 340;
   static const double maxContentWidth = 1160;
+  static const double maxContentWidthUltra = 1560;
 }

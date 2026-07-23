@@ -3,41 +3,34 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
+import '../../app/navigation.dart';
 import '../../app/theme_controller.dart';
 import '../../core/config/app_config.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../design_system/design_system.dart';
+import '../barcode/barcode_scan_sheet.dart';
+import '../catalog/catalog_providers.dart';
 import '../catalog/catalog_screen.dart';
 import '../categories/categories_screen.dart';
 import '../collections/collections_screen.dart';
 import '../compare/compare_screen.dart';
 import '../exchange/import_screen.dart';
+import '../exchange/incoming_screen.dart';
 import '../home/home_screen.dart';
+import '../notifications/notifications.dart';
 import '../profiles/profiles_screen.dart';
 import '../quick_add/quick_add_sheet.dart';
 import '../settings/settings_screen.dart';
-
-/// Идентификаторы разделов навигации.
-class NavIds {
-  static const home = 'home';
-  static const categories = 'categories';
-  static const catalog = 'catalog';
-  static const collections = 'collections';
-  static const compare = 'compare';
-  static const profiles = 'profiles';
-  static const import = 'import';
-  static const settings = 'settings';
-}
 
 /// Адаптивная оболочка приложения (§4).
 ///
 /// Windows/широкий экран: боковая навигация + верхний заголовок + контент.
 /// Android/узкий экран: верхняя панель + нижняя навигация.
-/// Раскладка рассчитана на разрешения от Full HD до 4K: фиксированная боковая
-/// панель в логических пикселях (масштабируется вместе с DPI), гибкий контент
-/// с ограничением максимальной ширины.
+/// Раскладка рассчитана на разрешения от Full HD до 4K: ширина боковой панели,
+/// отступы и плотность сетки берутся из [AppLayout].
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
@@ -46,8 +39,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  String _activeId = NavIds.home;
-
   /// Фокус поля поиска — для Ctrl+F (§4.1).
   final FocusNode _searchFocus = FocusNode();
 
@@ -65,7 +56,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.settings,
   ];
 
-  List<NavGroup> _groups(AppLocalizations l10n) => [
+  void _go(String id) => ref.read(navProvider.notifier).go(id);
+
+  List<NavGroup> _groups(AppLocalizations l10n, int incoming) => [
     NavGroup(
       title: l10n.navSectionMain,
       items: [
@@ -109,6 +102,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           icon: Icons.download_rounded,
           label: l10n.navImport,
         ),
+        NavItemData(
+          id: NavIds.incoming,
+          icon: Icons.inbox_rounded,
+          label: l10n.incomingTitle,
+          badge: incoming,
+        ),
       ],
     ),
     NavGroup(
@@ -131,39 +130,51 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.compare => l10n.navCompare,
     NavIds.profiles => l10n.navProfiles,
     NavIds.import => l10n.navImport,
+    NavIds.incoming => l10n.incomingTitle,
     NavIds.settings => l10n.navSettings,
     _ => AppConfig.appName,
   };
 
-  Widget _body(String id) {
-    if (id == NavIds.home) return const HomeScreen();
-    if (id == NavIds.categories) return const CategoriesScreen();
-    if (id == NavIds.catalog) return const CatalogScreen();
-    if (id == NavIds.collections) return const CollectionsScreen();
-    if (id == NavIds.compare) return const CompareScreen();
-    if (id == NavIds.profiles) return const ProfilesScreen();
-    if (id == NavIds.import) return const ImportScreen();
-    if (id == NavIds.settings) return const SettingsScreen();
-    final l10n = AppLocalizations.of(context);
-    return EmptyState(
-      icon: Icons.construction_rounded,
-      title: l10n.comingSoonTitle,
-      message: l10n.comingSoonMessage,
-    );
+  Widget _body(String id) => switch (id) {
+    NavIds.home => const HomeScreen(),
+    NavIds.categories => const CategoriesScreen(),
+    NavIds.catalog => const CatalogScreen(),
+    NavIds.collections => const CollectionsScreen(),
+    NavIds.compare => const CompareScreen(),
+    NavIds.profiles => const ProfilesScreen(),
+    NavIds.import => const ImportScreen(),
+    NavIds.incoming => const IncomingScreen(),
+    NavIds.settings => const SettingsScreen(),
+    _ => const HomeScreen(),
+  };
+
+  /// Глобальный поиск: подставляет запрос в каталог и открывает его.
+  void _search(String query) {
+    ref.read(catalogStateProvider.notifier).setSearch(query);
+    if (query.trim().isNotEmpty) _go(NavIds.catalog);
+  }
+
+  Future<void> _scanBarcode() async {
+    final scanned = await BarcodeScanSheet.show(context);
+    if (scanned == null || !mounted) return;
+    await QuickAddSheet.show(context, prefill: scanned);
   }
 
   /// Горячие клавиши Windows (§4.1). Escape обрабатывают сами диалоги.
   Map<ShortcutActivator, VoidCallback> _shortcuts() => {
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
         QuickAddSheet.show(context),
-    const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
-        _searchFocus.requestFocus(),
+    const SingleActivator(LogicalKeyboardKey.keyB, control: true): _scanBarcode,
+    const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+        _searchFocus.requestFocus,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true): () =>
-        setState(() => _activeId = NavIds.import),
+        _go(NavIds.import),
     const SingleActivator(LogicalKeyboardKey.keyE, control: true): () =>
-        setState(() => _activeId = NavIds.profiles),
+        _go(NavIds.profiles),
     const SingleActivator(LogicalKeyboardKey.keyP, control: true): () =>
-        setState(() => _activeId = NavIds.profiles),
+        _go(NavIds.profiles),
+    const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+        _go(NavIds.settings),
   };
 
   @override
@@ -175,8 +186,10 @@ class _AppShellState extends ConsumerState<AppShell> {
         autofocus: true,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final wide = constraints.maxWidth >= AppDimens.breakpointExpanded;
-            return wide ? _wideLayout(l10n) : _compactLayout(l10n);
+            final layout = AppLayout.resolve(constraints.maxWidth);
+            return layout.isWide
+                ? _wideLayout(l10n, layout)
+                : _compactLayout(l10n);
           },
         ),
       ),
@@ -184,28 +197,35 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   // ---- Широкая раскладка (Windows) ----
-  Widget _wideLayout(AppLocalizations l10n) {
+  Widget _wideLayout(AppLocalizations l10n, AppLayout layout) {
     final c = context.colors;
+    final activeId = ref.watch(navProvider);
+    final incoming = ref.watch(incomingCountProvider).value ?? 0;
     return Scaffold(
       body: Row(
         children: [
-          NavSidebar(
-            appTitle: AppConfig.appName,
-            groups: _groups(l10n),
-            activeId: _activeId,
-            onSelected: (id) => setState(() => _activeId = id),
-            footer: _ThemeToggle(),
+          SizedBox(
+            width: layout.sidebarWidth,
+            child: NavSidebar(
+              appTitle: AppConfig.appName,
+              groups: _groups(l10n, incoming),
+              activeId: activeId,
+              onSelected: _go,
+              footer: const _ThemeToggle(),
+            ),
           ),
           Expanded(
             child: Column(
               children: [
                 _TopHeader(
-                  title: _titleFor(_activeId, l10n),
+                  title: _titleFor(activeId, l10n),
                   wide: true,
                   searchFocus: _searchFocus,
+                  onSearch: _search,
+                  onScan: _scanBarcode,
                 ),
                 Divider(height: 1, color: c.border),
-                Expanded(child: _body(_activeId)),
+                Expanded(child: _body(activeId)),
               ],
             ),
           ),
@@ -216,23 +236,25 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   // ---- Компактная раскладка (Android) ----
   Widget _compactLayout(AppLocalizations l10n) {
+    final activeId = ref.watch(navProvider);
     final selectedIndex = _bottomOrder
-        .indexOf(_activeId)
+        .indexOf(activeId)
         .clamp(0, _bottomOrder.length - 1);
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(64),
+        preferredSize: const Size.fromHeight(AppDimens.headerHeightCompact),
         child: _TopHeader(
-          title: _titleFor(_activeId, l10n),
+          title: _titleFor(activeId, l10n),
           wide: false,
           searchFocus: _searchFocus,
+          onSearch: _search,
+          onScan: _scanBarcode,
         ),
       ),
-      body: _body(_activeId),
+      body: _body(activeId),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
-        onDestinationSelected: (i) =>
-            setState(() => _activeId = _bottomOrder[i]),
+        onDestinationSelected: (i) => _go(_bottomOrder[i]),
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
@@ -269,56 +291,98 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-class _TopHeader extends StatelessWidget {
+class _TopHeader extends ConsumerWidget {
   const _TopHeader({
     required this.title,
     required this.wide,
     required this.searchFocus,
+    required this.onSearch,
+    required this.onScan,
   });
 
   final String title;
   final bool wide;
   final FocusNode searchFocus;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onScan;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final l10n = AppLocalizations.of(context);
+    final unread = ref.watch(unreadNotificationsProvider);
+
     return Container(
-      height: wide ? 72 : 64,
+      height: wide ? AppDimens.headerHeight : AppDimens.headerHeightCompact,
       color: c.surface,
       padding: EdgeInsets.symmetric(
-        horizontal: wide ? AppDimens.space32 : AppDimens.space16,
+        horizontal: wide ? AppDimens.space24 : AppDimens.space16,
       ),
       child: Row(
         children: [
-          Text(title, style: context.text.headlineMedium),
+          Text(
+            title,
+            style: wide ? context.text.headlineMedium : context.text.titleLarge,
+          ),
           const Spacer(),
           if (wide) ...[
             SizedBox(
               width: 320,
-              child: _SearchField(
-                hint: l10n.headerSearchHint,
+              child: AppSearchField(
+                hint: l10n.searchGlobalHint,
                 focusNode: searchFocus,
+                onChanged: onSearch,
+                onSubmitted: onSearch,
               ),
             ),
-            const SizedBox(width: AppDimens.space16),
+            const SizedBox(width: AppDimens.space12),
+            IconActionButton(
+              icon: Icons.qr_code_scanner_rounded,
+              tooltip: l10n.barcodeScanAction,
+              onPressed: onScan,
+            ),
+            const SizedBox(width: AppDimens.space8),
             FilledButton.icon(
               onPressed: () => QuickAddSheet.show(context),
               icon: const Icon(Icons.add_rounded, size: 20),
               label: Text(l10n.commonAdd),
             ),
-            const SizedBox(width: AppDimens.space12),
-            _IconCircle(
+            const SizedBox(width: AppDimens.space8),
+            IconActionButton(
               icon: Icons.help_outline_rounded,
               tooltip: l10n.headerHelp,
+              onPressed: () => _showHelp(context),
+            ),
+            const SizedBox(width: AppDimens.space8),
+          ] else ...[
+            IconActionButton(
+              icon: Icons.qr_code_scanner_rounded,
+              tooltip: l10n.barcodeScanAction,
+              onPressed: onScan,
+              size: AppDimens.controlHeightSm,
             ),
             const SizedBox(width: AppDimens.space8),
           ],
-          _IconCircle(
-            icon: Icons.notifications_none_rounded,
-            tooltip: '',
-            badge: true,
+          Builder(
+            builder: (buttonContext) => IconActionButton(
+              icon: unread > 0
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_none_rounded,
+              tooltip: l10n.headerNotifications,
+              badgeCount: unread,
+              size: wide ? AppDimens.controlHeight : AppDimens.controlHeightSm,
+              onPressed: () {
+                final box = buttonContext.findRenderObject() as RenderBox?;
+                if (box == null) return;
+                final pos = box.localToGlobal(
+                  Offset(box.size.width, box.size.height),
+                );
+                NotificationPanel.show(
+                  context,
+                  anchor: pos + const Offset(0, 8),
+                );
+              },
+            ),
           ),
           const SizedBox(width: AppDimens.space12),
           const _ProfileChip(),
@@ -326,156 +390,201 @@ class _TopHeader extends StatelessWidget {
       ),
     );
   }
-}
 
-class _SearchField extends StatelessWidget {
-  const _SearchField({required this.hint, required this.focusNode});
-  final String hint;
-  final FocusNode focusNode;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return SizedBox(
-      height: 44,
-      child: TextField(
-        focusNode: focusNode,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(Icons.search_rounded, color: c.textMuted, size: 20),
-          isDense: true,
-        ),
-        style: context.text.bodyMedium,
-      ),
-    );
-  }
-}
-
-class _IconCircle extends StatelessWidget {
-  const _IconCircle({
-    required this.icon,
-    required this.tooltip,
-    this.badge = false,
-  });
-  final IconData icon;
-  final String tooltip;
-  final bool badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final btn = Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: c.surface,
-        shape: BoxShape.circle,
-        border: Border.all(color: c.border),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(icon, size: 20, color: c.textSecondary),
-          if (badge)
-            Positioned(
-              top: 11,
-              right: 12,
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: c.accentPrimary,
-                  shape: BoxShape.circle,
+  void _showHelp(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.headerHelp),
+        content: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.hotkeysTitle, style: context.text.titleMedium),
+              const SizedBox(height: AppDimens.space12),
+              for (final (keys, label) in [
+                ('Ctrl + N', l10n.hotkeyNewEntry),
+                ('Ctrl + B', l10n.hotkeyScan),
+                ('Ctrl + F', l10n.hotkeySearch),
+                ('Ctrl + I', l10n.hotkeyImport),
+                ('Ctrl + E', l10n.hotkeyExport),
+                ('Ctrl + P', l10n.hotkeyProfiles),
+                ('Ctrl + ,', l10n.hotkeySettings),
+                ('Esc', l10n.hotkeyClose),
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppDimens.space8),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 96, child: _KeyCap(label: keys)),
+                      const SizedBox(width: AppDimens.space12),
+                      Expanded(child: Text(label)),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.commonClose),
+          ),
         ],
       ),
     );
-    return tooltip.isEmpty ? btn : Tooltip(message: tooltip, child: btn);
   }
 }
 
+/// Клавиша в подсказке по горячим клавишам.
+class _KeyCap extends StatelessWidget {
+  const _KeyCap({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.space8,
+        vertical: AppDimens.space4,
+      ),
+      decoration: BoxDecoration(
+        color: c.surfaceMuted,
+        borderRadius: AppDimens.brSm,
+        border: Border.all(color: c.border),
+      ),
+      alignment: Alignment.center,
+      child: Text(label, style: context.text.labelMedium),
+    );
+  }
+}
+
+/// Профиль в шапке. Меню открывается всегда, даже когда профиль один: раньше
+/// нажатие просто ничего не делало.
 class _ProfileChip extends ConsumerWidget {
   const _ProfileChip();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
+    final l10n = AppLocalizations.of(context);
     final profile = ref.watch(activeProfileProvider);
     if (profile == null) return const SizedBox.shrink();
 
     final name = profile.nickname?.isNotEmpty == true
         ? profile.nickname!
         : profile.firstName;
-    final wide =
-        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
+    final wide = context.layout.isWide;
     final profiles = ref.watch(profilesProvider).value ?? const [];
 
-    final chip = Row(
-      children: [
-        ProfileAvatar(
-          name: name,
-          color: c.profileColorFor(profile.id),
-          size: AppDimens.avatarMd,
-        ),
-        if (wide) ...[
-          const SizedBox(width: AppDimens.space8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.labelMedium,
-                ),
-                Text(
-                  profile.type == 'myPrimary'
-                      ? 'Мой основной профиль'
-                      : profile.firstName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
-                ),
-              ],
-            ),
+    final chip = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ProfileAvatar(
+            name: name,
+            color: c.profileColorFor(profile.id),
+            size: wide ? AppDimens.avatarMd : AppDimens.avatarSm,
           ),
-          const SizedBox(width: AppDimens.space4),
-          Icon(Icons.keyboard_arrow_down_rounded, color: c.textMuted, size: 20),
+          if (wide) ...[
+            const SizedBox(width: AppDimens.space8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.labelMedium,
+                  ),
+                  Text(
+                    profile.type == 'myPrimary'
+                        ? l10n.profileTypePrimary
+                        : l10n.profileTypeExternal,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppDimens.space4),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: c.textMuted,
+              size: 20,
+            ),
+          ],
         ],
-      ],
+      ),
     );
 
-    if (profiles.length < 2) return chip;
-
-    // Верхний переключатель активного профиля (§4.2).
     return PopupMenuButton<String>(
       tooltip: '',
-      offset: const Offset(0, 48),
-      onSelected: (id) =>
-          ref.read(activeProfileIdProvider.notifier).setActive(id),
+      offset: const Offset(0, 52),
+      position: PopupMenuPosition.under,
+      onSelected: (value) {
+        switch (value) {
+          case 'manage':
+            ref.read(navProvider.notifier).go(NavIds.profiles);
+          case 'settings':
+            ref.read(navProvider.notifier).go(NavIds.settings);
+          default:
+            ref.read(activeProfileIdProvider.notifier).setActive(value);
+        }
+      },
       itemBuilder: (_) => [
-        for (final p in profiles)
-          PopupMenuItem(
-            value: p.id,
-            child: Row(
-              children: [
-                ProfileAvatar(
-                  name: p.firstName,
-                  color: c.profileColorFor(p.id),
-                  size: AppDimens.avatarSm,
-                ),
-                const SizedBox(width: AppDimens.space12),
-                Expanded(child: Text(p.firstName)),
-                if (p.id == profile.id)
-                  Icon(Icons.check_rounded, size: 18, color: c.accentPrimary),
-              ],
+        // Список профилей показывается, только когда есть между чем выбирать.
+        if (profiles.length > 1) ...[
+          for (final p in profiles)
+            PopupMenuItem(
+              value: p.id,
+              child: Row(
+                children: [
+                  ProfileAvatar(
+                    name: p.firstName,
+                    color: c.profileColorFor(p.id),
+                    size: AppDimens.avatarSm,
+                  ),
+                  const SizedBox(width: AppDimens.space12),
+                  Expanded(child: Text(p.firstName)),
+                  if (p.id == profile.id)
+                    Icon(Icons.check_rounded, size: 18, color: c.accentPrimary),
+                ],
+              ),
             ),
+          const PopupMenuDivider(),
+        ],
+        PopupMenuItem(
+          value: 'manage',
+          child: Row(
+            children: [
+              Icon(Icons.people_alt_rounded, size: 18, color: c.textSecondary),
+              const SizedBox(width: AppDimens.space12),
+              Text(l10n.profileMenuManage),
+            ],
           ),
+        ),
+        PopupMenuItem(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(Icons.settings_rounded, size: 18, color: c.textSecondary),
+              const SizedBox(width: AppDimens.space12),
+              Text(l10n.profileMenuSettings),
+            ],
+          ),
+        ),
       ],
       child: chip,
     );
@@ -483,53 +592,33 @@ class _ProfileChip extends ConsumerWidget {
 }
 
 class _ThemeToggle extends ConsumerWidget {
+  const _ThemeToggle();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
     final l10n = AppLocalizations.of(context);
     final mode = ref.watch(themeModeProvider);
-    Widget seg(IconData icon, ThemeMode m, String tip) {
-      final active = mode == m;
-      return Expanded(
-        child: Tooltip(
-          message: tip,
-          child: Material(
-            color: active ? c.navActiveBg : Colors.transparent,
-            borderRadius: AppDimens.brSm,
-            child: InkWell(
-              borderRadius: AppDimens.brSm,
-              onTap: () => ref.read(themeModeProvider.notifier).set(m),
-              child: SizedBox(
-                height: 36,
-                child: Icon(
-                  icon,
-                  size: 18,
-                  color: active ? c.navActiveFg : c.textMuted,
-                ),
-              ),
-            ),
-          ),
+    return SegmentedToggle<ThemeMode>(
+      value: mode,
+      expand: true,
+      onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
+      segments: [
+        SegmentData(
+          value: ThemeMode.light,
+          icon: Icons.light_mode_rounded,
+          tooltip: l10n.themeLight,
         ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: c.surfaceMuted,
-        borderRadius: AppDimens.brMd,
-      ),
-      child: Row(
-        children: [
-          seg(Icons.light_mode_rounded, ThemeMode.light, l10n.themeLight),
-          seg(Icons.dark_mode_rounded, ThemeMode.dark, l10n.themeDark),
-          seg(
-            Icons.brightness_auto_rounded,
-            ThemeMode.system,
-            l10n.themeSystem,
-          ),
-        ],
-      ),
+        SegmentData(
+          value: ThemeMode.dark,
+          icon: Icons.dark_mode_rounded,
+          tooltip: l10n.themeDark,
+        ),
+        SegmentData(
+          value: ThemeMode.system,
+          icon: Icons.brightness_auto_rounded,
+          tooltip: l10n.themeSystem,
+        ),
+      ],
     );
   }
 }

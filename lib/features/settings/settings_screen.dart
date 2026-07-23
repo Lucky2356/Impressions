@@ -14,6 +14,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
 import '../../design_system/design_system.dart';
 import 'devices_section.dart';
+import 'network_section.dart';
 import 'types_section.dart';
 
 /// Значение настройки «при переносе записей» (§7.4).
@@ -47,27 +48,32 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 880),
-        child: ListView(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          children: [
-            Text(l10n.navSettings, style: context.text.headlineSmall),
-            const SizedBox(height: AppDimens.space20),
-            const _AppearanceSection(),
-            const SizedBox(height: AppDimens.space24),
-            const _BehaviourSection(),
-            const SizedBox(height: AppDimens.space24),
-            const TypesSection(),
-            const SizedBox(height: AppDimens.space24),
-            const DevicesSection(),
-            const SizedBox(height: AppDimens.space24),
-            const _BackupsSection(),
-            const SizedBox(height: AppDimens.space24),
-            const _AboutSection(),
-            const SizedBox(height: AppDimens.space40),
-          ],
+    return ScreenScaffold(
+      header: ScreenHeader(title: l10n.navSettings),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 880),
+          child: ListView(
+            padding: const EdgeInsets.all(AppDimens.space24),
+            children: const [
+              _AppearanceSection(),
+              SizedBox(height: AppDimens.space24),
+              _BehaviourSection(),
+              SizedBox(height: AppDimens.space24),
+              NetworkSection(),
+              SizedBox(height: AppDimens.space24),
+              TypesSection(),
+              SizedBox(height: AppDimens.space24),
+              DevicesSection(),
+              SizedBox(height: AppDimens.space24),
+              _BackupsSection(),
+              SizedBox(height: AppDimens.space24),
+              KeyStorageSection(),
+              SizedBox(height: AppDimens.space24),
+              _AboutSection(),
+              SizedBox(height: AppDimens.space40),
+            ],
+          ),
         ),
       ),
     );
@@ -347,7 +353,7 @@ class _AboutSection extends ConsumerWidget {
     return SettingsGroup(
       title: l10n.settingsAbout,
       children: [
-        row(l10n.settingsVersion, '1.0.0'),
+        row(l10n.settingsVersion, ref.watch(appVersionProvider).value ?? '—'),
         row('Формат обмена', AppConfig.profileFileExtensionDotted),
         row('Профилей максимум', '${AppConfig.maxProfiles}'),
         row('Глубина категорий', '${AppConfig.defaultMaxCategoryDepth}'),

@@ -84,52 +84,96 @@ class AppTheme {
           vertical: AppDimens.space8,
         ),
       ),
+      // Все кнопки одной высоты и одного радиуса — различается только заливка.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: c.accentPrimary,
           foregroundColor: c.accentPrimaryOn,
+          disabledBackgroundColor: c.surfaceMuted,
+          disabledForegroundColor: c.textMuted,
           textStyle: textTheme.labelLarge,
-          minimumSize: const Size(0, AppDimens.minTouchTarget),
+          minimumSize: const Size(0, AppDimens.controlHeight),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20),
           shape: const RoundedRectangleBorder(borderRadius: AppDimens.brMd),
+          elevation: 0,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: c.textPrimary,
+          backgroundColor: c.surface,
           textStyle: textTheme.labelLarge,
-          minimumSize: const Size(0, AppDimens.minTouchTarget),
+          minimumSize: const Size(0, AppDimens.controlHeight),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20),
           side: BorderSide(color: c.border),
           shape: const RoundedRectangleBorder(borderRadius: AppDimens.brMd),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: c.accentPrimary,
           textStyle: textTheme.labelLarge,
-          minimumSize: const Size(0, AppDimens.minTouchTarget),
+          minimumSize: const Size(0, AppDimens.controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space12),
+          shape: const RoundedRectangleBorder(borderRadius: AppDimens.brMd),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: c.textSecondary,
+          shape: const RoundedRectangleBorder(borderRadius: AppDimens.brSm),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+      // Поля ввода той же формы, что и таблетки фильтров: светлая поверхность
+      // с мягкой границей, акцент при фокусе.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: c.surfaceMuted,
+        fillColor: c.surface,
         hintStyle: textTheme.bodyMedium?.copyWith(color: c.textMuted),
+        labelStyle: textTheme.bodyMedium?.copyWith(color: c.textSecondary),
+        floatingLabelStyle: textTheme.labelMedium?.copyWith(
+          color: c.accentPrimary,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimens.space16,
           vertical: AppDimens.space12,
         ),
-        border: const OutlineInputBorder(
+        border: OutlineInputBorder(
           borderRadius: AppDimens.brMd,
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: c.border),
         ),
-        enabledBorder: const OutlineInputBorder(
+        enabledBorder: OutlineInputBorder(
           borderRadius: AppDimens.brMd,
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: c.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppDimens.brMd,
           borderSide: BorderSide(color: c.accentPrimary, width: 1.5),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: c.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shadowColor: c.shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppDimens.brMd,
+          side: BorderSide(color: c.border),
+        ),
+        textStyle: textTheme.bodyMedium,
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(
+          backgroundColor: c.surface,
+          selectedBackgroundColor: c.navActiveBg,
+          selectedForegroundColor: c.navActiveFg,
+          side: BorderSide(color: c.border),
+          shape: const RoundedRectangleBorder(borderRadius: AppDimens.brMd),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(

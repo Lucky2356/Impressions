@@ -51,4 +51,19 @@ class AppConfig {
 
   /// Максимальное количество импортируемых профилей (§0, §29).
   static const int maxProfiles = 10;
+
+  // ---- Обновления ----
+  // Единственные адреса, к которым приложение обращается само, и только когда
+  // проверка обновлений включена в настройках.
+
+  /// Репозиторий проекта.
+  static const String repositoryUrl =
+      'https://github.com/Lucky2356/Impressions';
+
+  /// Страница выпусков для человека.
+  static const String releasesPageUrl = '$repositoryUrl/releases';
+
+  /// Последний выпуск в машиночитаемом виде.
+  static const String releasesApiUrl =
+      'https://api.github.com/repos/Lucky2356/Impressions/releases/latest';
 }

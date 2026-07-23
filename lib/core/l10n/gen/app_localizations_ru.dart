@@ -896,6 +896,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hotkeyClose => 'Закрыть диалог';
 
   @override
+  String get hotkeyScan => 'Сканировать штрихкод';
+
+  @override
+  String get hotkeySettings => 'Настройки';
+
+  @override
   String get onboardingWelcomeTitle => 'Ваш личный архив впечатлений';
 
   @override
@@ -981,4 +987,363 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get breadcrumbObjectSeparator => ' / ';
+
+  @override
+  String categoriesSubtitle(int count) {
+    return 'Категорий в дереве: $count';
+  }
+
+  @override
+  String get categorySearchHint => 'Найти категорию';
+
+  @override
+  String get categoryExpandAll => 'Развернуть всё';
+
+  @override
+  String get categoryCollapseAll => 'Свернуть всё';
+
+  @override
+  String get categoryIcon => 'Значок категории';
+
+  @override
+  String get categoryOpenInCatalog => 'Показать записи';
+
+  @override
+  String categorySubcategoriesCount(int count) {
+    return '$count подкатегорий';
+  }
+
+  @override
+  String categoryDirectCount(int count) {
+    return '$count здесь';
+  }
+
+  @override
+  String get catalogTypeLabel => 'Тип';
+
+  @override
+  String get catalogCategoryLabel => 'Категория';
+
+  @override
+  String get catalogRelationLabel => 'Отношение';
+
+  @override
+  String get searchGlobalHint => 'Поиск по записям';
+
+  @override
+  String get searchResultsTitle => 'Результаты поиска';
+
+  @override
+  String get headerNotifications => 'Уведомления';
+
+  @override
+  String get notificationsTitle => 'Уведомления';
+
+  @override
+  String get notificationsEmpty => 'Новых событий нет';
+
+  @override
+  String get notificationsEmptyHint =>
+      'Здесь появятся входящие изменения, обновления и итоги импорта.';
+
+  @override
+  String get notificationsMarkAllRead => 'Отметить всё прочитанным';
+
+  @override
+  String get notificationsOpen => 'Открыть';
+
+  @override
+  String get notificationIncomingTitle => 'Входящие изменения';
+
+  @override
+  String notificationIncomingBody(int count) {
+    return '$count изменений в импортированных профилях';
+  }
+
+  @override
+  String get notificationUpdateTitle => 'Доступна новая версия';
+
+  @override
+  String notificationUpdateBody(String version) {
+    return 'Версия $version готова к установке';
+  }
+
+  @override
+  String get notificationProductsTitle => 'Сведения о товарах обновлены';
+
+  @override
+  String notificationProductsBody(int count) {
+    return 'Дополнено карточек: $count';
+  }
+
+  @override
+  String get notificationImportTitle => 'Импорт завершён';
+
+  @override
+  String notificationImportBody(String date) {
+    return 'Пакет от $date';
+  }
+
+  @override
+  String get notificationBackupTitle => 'Резервная копия создана';
+
+  @override
+  String notificationBackupBody(String date) {
+    return 'Последняя копия от $date';
+  }
+
+  @override
+  String profilesSubtitle(int count, int max) {
+    return '$count из $max возможных';
+  }
+
+  @override
+  String get profileMenuManage => 'Все профили';
+
+  @override
+  String get profileMenuLocal => 'Локальные настройки';
+
+  @override
+  String get profileMenuExport => 'Экспортировать профиль';
+
+  @override
+  String get profileMenuSwitch => 'Переключиться';
+
+  @override
+  String get profileMenuSettings => 'Настройки приложения';
+
+  @override
+  String get barcodeTitle => 'Добавить по штрихкоду';
+
+  @override
+  String get barcodeHintMobile =>
+      'Наведите камеру на штрихкод или QR-код либо введите цифры вручную.';
+
+  @override
+  String get barcodeHintDesktop =>
+      'Введите код вручную, отсканируйте USB-сканером или распознайте с фотографии.';
+
+  @override
+  String get barcodeCodeLabel => 'Штрихкод или QR';
+
+  @override
+  String get barcodeLookup => 'Найти';
+
+  @override
+  String get barcodeUseCamera => 'Камера';
+
+  @override
+  String get barcodePhoto => 'Сфотографировать';
+
+  @override
+  String get barcodeFromFile => 'Распознать с изображения';
+
+  @override
+  String get barcodeNotRecognized =>
+      'Код на изображении не найден. Попробуйте снимок покрупнее и без бликов.';
+
+  @override
+  String get barcodeUseResult => 'Добавить';
+
+  @override
+  String barcodeFoundIn(String source) {
+    return 'Источник: $source';
+  }
+
+  @override
+  String get barcodeNotFound => 'Товар не найден ни в одной базе';
+
+  @override
+  String get barcodeLookupFailed => 'Не удалось связаться с базами товаров';
+
+  @override
+  String get barcodeFillManually =>
+      'Код сохранится в карточке — название можно ввести вручную.';
+
+  @override
+  String get barcodeTorch => 'Подсветка';
+
+  @override
+  String get barcodeScanAction => 'Сканировать код';
+
+  @override
+  String get settingsNetworkTitle => 'Товарные базы и обновления';
+
+  @override
+  String get settingsNetworkHint =>
+      'Единственные сетевые запросы приложения. Наружу уходит только штрихкод и номер версии.';
+
+  @override
+  String get settingsBarcodeLookup => 'Искать товар по штрихкоду';
+
+  @override
+  String get settingsBarcodeSources => 'Источники данных';
+
+  @override
+  String get settingsProductAutoUpdate =>
+      'Дополнять карточки товаров автоматически';
+
+  @override
+  String get settingsProductAutoUpdateHint =>
+      'Не чаще раза в сутки. Введённые вручную названия не заменяются.';
+
+  @override
+  String get settingsProductRefreshNow => 'Обновить сейчас';
+
+  @override
+  String settingsProductRefreshed(int checked, int updated) {
+    return 'Проверено $checked, дополнено $updated';
+  }
+
+  @override
+  String get settingsAppUpdateCheck => 'Проверять обновления приложения';
+
+  @override
+  String get settingsAppUpdateNow => 'Проверить сейчас';
+
+  @override
+  String get settingsUpToDate => 'Установлена последняя версия';
+
+  @override
+  String get updateTitle => 'Обновление приложения';
+
+  @override
+  String updateAvailable(String version) {
+    return 'Доступна версия $version';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'Установлена версия $version';
+  }
+
+  @override
+  String get updateDownload => 'Скачать установщик';
+
+  @override
+  String get updateOpenPage => 'Открыть страницу выпуска';
+
+  @override
+  String get updateLater => 'Позже';
+
+  @override
+  String get updateSkip => 'Пропустить эту версию';
+
+  @override
+  String get incomingTitle => 'Входящие изменения';
+
+  @override
+  String get incomingSubtitle =>
+      'Что изменилось в импортированных профилях (§23)';
+
+  @override
+  String get incomingEmptyTitle => 'Изменений нет';
+
+  @override
+  String get incomingEmptyMessage =>
+      'После импорта обновлённого профиля здесь появится список того, что изменилось.';
+
+  @override
+  String get incomingMarkSeen => 'Отметить просмотренным';
+
+  @override
+  String get incomingMarkAllSeen => 'Отметить все просмотренными';
+
+  @override
+  String get incomingKindEntry => 'Запись';
+
+  @override
+  String get incomingKindObject => 'Объект';
+
+  @override
+  String get incomingKindCategory => 'Категория';
+
+  @override
+  String incomingReceivedAt(String date) {
+    return 'Получено $date';
+  }
+
+  @override
+  String get incomingNewBadge => 'Новое';
+
+  @override
+  String get fieldsTitle => 'Поля типа';
+
+  @override
+  String get fieldsHint =>
+      'Дополнительные поля, которые появятся у записей этого типа.';
+
+  @override
+  String get fieldsAdd => 'Добавить поле';
+
+  @override
+  String get fieldsEmpty => 'Своих полей пока нет';
+
+  @override
+  String get fieldsNameLabel => 'Название поля';
+
+  @override
+  String get fieldsKindLabel => 'Тип значения';
+
+  @override
+  String get fieldsKindText => 'Текст';
+
+  @override
+  String get fieldsKindNumber => 'Число';
+
+  @override
+  String get fieldsKindDate => 'Дата';
+
+  @override
+  String get fieldsKindBool => 'Да или нет';
+
+  @override
+  String get fieldsKindChoice => 'Выбор из списка';
+
+  @override
+  String get fieldsChoicesLabel => 'Варианты через запятую';
+
+  @override
+  String get fieldsRemove => 'Удалить поле';
+
+  @override
+  String fieldsEditFor(String type) {
+    return 'Поля типа «$type»';
+  }
+
+  @override
+  String get fieldsValuesTitle => 'Дополнительно';
+
+  @override
+  String quickAddBarcodeHint(String code) {
+    return 'Заполнено по штрихкоду $code';
+  }
+
+  @override
+  String get keyStorageTitle => 'Хранение закрытого ключа';
+
+  @override
+  String get keyStorageOs => 'Отдельно от базы, под защитой системы';
+
+  @override
+  String get keyStorageOsWindows =>
+      'Файл зашифрован средствами Windows (DPAPI) на вашу учётную запись: на другом компьютере он бесполезен.';
+
+  @override
+  String get keyStorageOsMobile =>
+      'Файл лежит в защищённом каталоге приложения и не попадает в резервные копии.';
+
+  @override
+  String get keyStorageDb => 'В базе приложения, зашифровано';
+
+  @override
+  String get keyStorageDbHint =>
+      'Секрет лежит рядом с зашифрованным ключом. Перенесите его, чтобы копия базы стала бесполезной без вашей учётной записи.';
+
+  @override
+  String get keyStorageMove => 'Перенести в хранилище ОС';
+
+  @override
+  String get keyStorageMoved =>
+      'Ключ перенесён в хранилище операционной системы';
 }

@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import '../../core/utils/hashing.dart';
 import '../db/database.dart';
 import '../repositories/settings_repository.dart';
+import 'secret_storage.dart';
 
 /// Ключи и цифровая подпись профиля (§22).
 ///
@@ -13,15 +14,18 @@ import '../repositories/settings_repository.dart';
 /// в обычный экспорт. Открытый ключ и отпечаток входят в профиль и экспорт и
 /// используются для проверки последующих импортов.
 class KeyService {
-  KeyService(this.db) : _settings = SettingsRepository(db);
+  KeyService(this.db, {SecretStorage? secrets})
+    : _settings = SettingsRepository(db),
+      _secrets = secrets ?? const SecretStorage();
 
   final AppDatabase db;
   final SettingsRepository _settings;
+  final SecretStorage _secrets;
 
   static final _ed25519 = Ed25519();
   static final _aes = AesGcm.with256bits();
 
-  /// Ключ настроек, где лежит локальный секрет шифрования закрытых ключей.
+  /// Ключ, под которым лежит локальный секрет шифрования закрытых ключей.
   static const String _deviceSecretKey = 'device_secret';
 
   // ---- Отпечаток ----
@@ -39,15 +43,48 @@ class KeyService {
 
   // ---- Локальный секрет шифрования ----
 
+  /// Секрет шифрования: сначала хранилище ОС, затем — база.
+  ///
+  /// Секрет, оставшийся в базе от прежних версий, при первой же возможности
+  /// переезжает в хранилище ОС и стирается из базы.
   Future<SecretKey> _deviceSecret() async {
-    var stored = await _settings.get(_deviceSecretKey);
-    if (stored == null) {
-      final key = await _aes.newSecretKey();
-      final bytes = await key.extractBytes();
-      stored = base64Encode(bytes);
-      await _settings.set(_deviceSecretKey, stored);
+    final fromOs = await _secrets.read(_deviceSecretKey);
+    if (fromOs != null) return SecretKey(base64Decode(fromOs));
+
+    // Пустая строка остаётся после переноса — это не секрет.
+    final fromDb = await _settings.get(_deviceSecretKey);
+    if (fromDb != null && fromDb.isNotEmpty) {
+      if (await _secrets.write(_deviceSecretKey, fromDb)) {
+        await _settings.set(_deviceSecretKey, '');
+      }
+      return SecretKey(base64Decode(fromDb));
     }
-    return SecretKey(base64Decode(stored));
+
+    final key = await _aes.newSecretKey();
+    final encoded = base64Encode(await key.extractBytes());
+    if (!await _secrets.write(_deviceSecretKey, encoded)) {
+      // Хранилище ОС недоступно — работаем как раньше, но об этом честно
+      // сообщается в настройках.
+      await _settings.set(_deviceSecretKey, encoded);
+    }
+    return SecretKey(base64Decode(encoded));
+  }
+
+  /// Где сейчас лежит секрет — показывается в настройках.
+  Future<SecretLocation> secretLocation() async {
+    if (await _secrets.read(_deviceSecretKey) != null) {
+      return SecretLocation.operatingSystem;
+    }
+    return SecretLocation.database;
+  }
+
+  /// Переносит секрет из базы в хранилище ОС по требованию пользователя.
+  Future<bool> moveSecretToOs() async {
+    final fromDb = await _settings.get(_deviceSecretKey);
+    if (fromDb == null || fromDb.isEmpty) return false;
+    if (!await _secrets.write(_deviceSecretKey, fromDb)) return false;
+    await _settings.set(_deviceSecretKey, '');
+    return true;
   }
 
   Future<String> _encrypt(List<int> data) async {

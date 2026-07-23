@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Типографическая шкала (§3.3).
 ///
-/// Используется системный стек: Segoe UI на Windows, Roboto на Android и как
-/// fallback. Оба шрифта имеют полную поддержку кириллицы, ничего не грузится
-/// из сети. Локальный Inter можно подключить позже (см. pubspec.yaml).
+/// Основной шрифт — локальный Inter с полной кириллицей: он лежит в assets и
+/// ничего не грузит из сети. Файл вариативный, поэтому начертание задаётся
+/// осью `wght`; [FontWeight] оставлен для запасных системных шрифтов.
 class AppTypography {
   const AppTypography._();
 
-  static const String _primaryFamily = 'Segoe UI';
-  static const List<String> _fallback = ['Roboto'];
+  static const String _primaryFamily = 'Inter';
+  static const List<String> _fallback = ['Segoe UI', 'Roboto'];
 
   /// Строит [TextTheme] с заданными цветами основного и вторичного текста.
   static TextTheme build({required Color primary, required Color secondary}) {
@@ -25,6 +25,7 @@ class AppTypography {
         fontFamilyFallback: _fallback,
         fontSize: size,
         fontWeight: weight,
+        fontVariations: [FontVariation('wght', weight.value.toDouble())],
         height: height,
         letterSpacing: spacing,
         color: color,

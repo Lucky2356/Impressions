@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/domain/custom_fields.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
+import '../barcode/barcode_scan_sheet.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
 
@@ -18,25 +20,34 @@ import 'category_picker.dart';
 /// «Добавить подробности». Открывается диалогом на широком экране и нижним
 /// листом на узком.
 class QuickAddSheet extends ConsumerStatefulWidget {
-  const QuickAddSheet({super.key});
+  const QuickAddSheet({super.key, this.prefill});
+
+  /// Данные, полученные сканированием штрихкода.
+  final ScannedProduct? prefill;
 
   /// Показывает форму подходящим для платформы способом.
-  static Future<bool> show(BuildContext context) async {
+  static Future<bool> show(
+    BuildContext context, {
+    ScannedProduct? prefill,
+  }) async {
     final wide =
         MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
     final result = wide
         ? await showDialog<bool>(
             context: context,
-            builder: (_) => const Dialog(
+            builder: (_) => Dialog(
               clipBehavior: Clip.antiAlias,
-              child: SizedBox(width: 560, child: QuickAddSheet()),
+              child: SizedBox(
+                width: 560,
+                child: QuickAddSheet(prefill: prefill),
+              ),
             ),
           )
         : await showModalBottomSheet<bool>(
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
-            builder: (_) => const QuickAddSheet(),
+            builder: (_) => QuickAddSheet(prefill: prefill),
           );
     return result ?? false;
   }
@@ -57,11 +68,38 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   bool _showDetails = false;
   bool _busy = false;
 
+  /// Штрихкод и бренд, полученные сканированием.
+  String? _barcode;
+  String? _creator;
+
+  /// Значения пользовательских полей типа (§9).
+  final Map<String, String> _customValues = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _applyPrefill(widget.prefill);
+  }
+
+  void _applyPrefill(ScannedProduct? scanned) {
+    if (scanned == null) return;
+    _title.text = scanned.suggestedTitle;
+    _barcode = scanned.code.isProductCode ? scanned.code.value : null;
+    _creator = scanned.info?.brand;
+    _showDetails = true;
+  }
+
   @override
   void dispose() {
     _title.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _scan() async {
+    final scanned = await BarcodeScanSheet.show(context);
+    if (scanned == null || !mounted) return;
+    setState(() => _applyPrefill(scanned));
   }
 
   Future<void> _save() async {
@@ -75,21 +113,35 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       final repo = ref.read(entryRepositoryProvider);
       final title = _title.text.trim();
 
-      // Поиск возможных дублей (§26): автоматически ничего не объединяем,
-      // только предлагаем использовать существующий объект.
-      final candidates = await repo.findDuplicateCandidates(typeId, title);
-      var objectId = <String>[];
-      if (candidates.isNotEmpty && mounted) {
-        final chosen = await _askDuplicate(candidates);
-        if (chosen == _DuplicateChoice.cancelled) return;
-        if (chosen == _DuplicateChoice.useExisting) {
-          objectId = [candidates.first.id];
+      // Штрихкод определяет товар однозначно: если он уже заводился, берём
+      // существующий объект, не спрашивая про дубли.
+      ObjectRow? object;
+      final code = _barcode;
+      if (code != null) object = await repo.findByBarcode(code);
+
+      if (object == null) {
+        // Поиск возможных дублей (§26): автоматически ничего не объединяем,
+        // только предлагаем использовать существующий объект.
+        final candidates = await repo.findDuplicateCandidates(typeId, title);
+        if (candidates.isNotEmpty && mounted) {
+          final chosen = await _askDuplicate(candidates);
+          if (chosen == _DuplicateChoice.cancelled) return;
+          if (chosen == _DuplicateChoice.useExisting) {
+            object = candidates.first;
+          }
         }
       }
 
-      final object = objectId.isNotEmpty
-          ? candidates.firstWhere((o) => o.id == objectId.first)
-          : await repo.createObject(typeId: typeId, title: title);
+      object ??= await repo.createObject(
+        typeId: typeId,
+        title: title,
+        creator: _creator,
+        barcode: _barcode,
+        customFields: _customValues.isEmpty
+            ? null
+            : CustomField.encodeValues(_customValues),
+      );
+
       await repo.createEntry(
         profileId: profile.id,
         objectId: object.id,
@@ -103,6 +155,56 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Поля, заданные для выбранного типа объекта (§9).
+  List<Widget> _customFieldInputs(
+    List<ObjectTypeRow> types,
+    AppLocalizations l10n,
+  ) {
+    final type = types.where((t) => t.id == _typeId).firstOrNull;
+    if (type == null) return const [];
+    final fields = CustomField.decodeSchema(type.fieldsSchema);
+    if (fields.isEmpty) return const [];
+
+    return [
+      const SizedBox(height: AppDimens.space20),
+      Text(l10n.fieldsValuesTitle, style: context.text.titleMedium),
+      for (final field in fields) ...[
+        const SizedBox(height: AppDimens.space12),
+        if (field.kind == FieldKind.boolean)
+          Row(
+            children: [
+              Expanded(child: Text(field.name)),
+              Switch(
+                value: _customValues[field.key] == 'true',
+                onChanged: (v) =>
+                    setState(() => _customValues[field.key] = '$v'),
+              ),
+            ],
+          )
+        else if (field.kind == FieldKind.choice)
+          DropdownButtonFormField<String>(
+            initialValue: _customValues[field.key],
+            decoration: InputDecoration(labelText: field.name),
+            items: [
+              for (final choice in field.choices)
+                DropdownMenuItem(value: choice, child: Text(choice)),
+            ],
+            onChanged: (v) =>
+                setState(() => _customValues[field.key] = v ?? ''),
+          )
+        else
+          TextFormField(
+            initialValue: _customValues[field.key],
+            keyboardType: field.kind == FieldKind.number
+                ? TextInputType.number
+                : TextInputType.text,
+            decoration: InputDecoration(labelText: field.name),
+            onChanged: (v) => _customValues[field.key] = v,
+          ),
+      ],
+    ];
   }
 
   /// Спрашивает, что делать с найденными похожими объектами (§26).
@@ -182,6 +284,11 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       ),
                     ),
                     IconButton(
+                      tooltip: l10n.barcodeScanAction,
+                      onPressed: _busy ? null : _scan,
+                      icon: const Icon(Icons.qr_code_scanner_rounded),
+                    ),
+                    IconButton(
                       tooltip: l10n.commonClose,
                       onPressed: () => Navigator.of(context).pop(false),
                       icon: const Icon(Icons.close_rounded),
@@ -200,6 +307,27 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       ? l10n.quickAddNameRequired
                       : null,
                 ),
+                if (_barcode != null) ...[
+                  const SizedBox(height: AppDimens.space8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.qr_code_2_rounded,
+                        size: 16,
+                        color: c.accentPrimary,
+                      ),
+                      const SizedBox(width: AppDimens.space8),
+                      Expanded(
+                        child: Text(
+                          l10n.quickAddBarcodeHint(_barcode!),
+                          style: context.text.labelSmall?.copyWith(
+                            color: c.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: AppDimens.space16),
                 DropdownButtonFormField<String>(
                   initialValue: _typeId,
@@ -304,6 +432,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       labelText: l10n.quickAddNoteLabel,
                     ),
                   ),
+                  // Пользовательские поля выбранного типа (§9).
+                  ..._customFieldInputs(typeList, l10n),
                 ],
                 const SizedBox(height: AppDimens.space24),
                 Row(

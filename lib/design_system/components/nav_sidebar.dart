@@ -9,10 +9,14 @@ class NavItemData {
     required this.id,
     required this.icon,
     required this.label,
+    this.badge = 0,
   });
   final String id;
   final IconData icon;
   final String label;
+
+  /// Счётчик справа: непросмотренные входящие изменения и т. п.
+  final int badge;
 }
 
 /// Группа пунктов с заголовком-капсом.
@@ -43,8 +47,9 @@ class NavSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    // Ширину задаёт вызывающая сторона по разрешению экрана — панель просто
+    // занимает всё доступное место.
     return Container(
-      width: AppDimens.navRailWidth,
       decoration: BoxDecoration(
         color: c.surface,
         border: Border(right: BorderSide(color: c.border)),
@@ -184,6 +189,25 @@ class _NavTile extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (data.badge > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.space8,
+                    ),
+                    height: 20,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.accentPrimary,
+                      borderRadius: AppDimens.brPill,
+                    ),
+                    child: Text(
+                      data.badge > 99 ? '99+' : '${data.badge}',
+                      style: context.text.labelSmall?.copyWith(
+                        color: c.accentPrimaryOn,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

@@ -16,8 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
-
+version: 1.1.0+2
 environment:
   sdk: ^3.12.2
 
@@ -54,7 +53,12 @@ dependencies:
   archive: ^4.0.9
   cryptography: ^2.9.0
   desktop_drop: ^0.7.1
-
+  http: ^1.6.0
+  mobile_scanner: ^7.4.0
+  zxing2: ^0.2.4
+  package_info_plus: ^10.2.1
+  url_launcher: ^6.3.2
+  ffi: ^2.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -84,10 +88,10 @@ flutter:
   # Включаем кодогенерацию локализаций из .arb (см. l10n.yaml).
   generate: true
 
-  # Шрифты: по умолчанию используется системный стек (см. core/theme/typography.dart).
-  # Локальный Inter можно добавить позже, положив .ttf в assets/fonts/ и раскомментировав ниже.
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: assets/fonts/Inter-Regular.ttf
-  #         weight: 400
+  # Локальный Inter с полной кириллицей. Файл вариативный: начертание задаётся
+  # осью wght в AppTypography, поэтому достаточно одного ресурса вместо
+  # четырёх статических.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf

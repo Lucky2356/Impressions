@@ -63,6 +63,7 @@ class EntryRepository {
     String? creator,
     int? year,
     String? barcode,
+    String? customFields,
   }) async {
     final id = Ids.newId();
     await db
@@ -81,6 +82,7 @@ class EntryRepository {
             creator: Value(creator),
             year: Value(year),
             barcode: Value(barcode),
+            customFields: Value(customFields),
             createdAt: DateTime.now(),
           ),
         );
@@ -113,6 +115,17 @@ class EntryRepository {
       ),
     );
     await revisions.commitObject(objectId);
+  }
+
+  /// Объект с таким штрихкодом, если он уже заводился.
+  ///
+  /// Штрихкод определяет товар однозначно, поэтому повторное сканирование
+  /// должно вести к существующему объекту, а не создавать копию.
+  Future<ObjectRow?> findByBarcode(String barcode) {
+    return (db.select(db.objects)
+          ..where((o) => o.barcode.equals(barcode))
+          ..limit(1))
+        .getSingleOrNull();
   }
 
   /// Поиск возможных дублей объекта (§26): по нормализованному названию в рамках

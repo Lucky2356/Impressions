@@ -7,7 +7,6 @@ import 'app_card.dart';
 import 'cover_image.dart';
 import 'rating_view.dart';
 import 'relation_chip.dart';
-import 'status_chip.dart';
 
 /// Презентационные данные карточки записи. Слой данных (Drift) отображается
 /// в эту модель, чтобы дизайн-компоненты не зависели от БД.
@@ -33,41 +32,64 @@ class EntryCardData {
   final Color? seedColor;
 }
 
+/// Высота текстового блока карточки: путь категории, название в две строки и
+/// строка метаданных. Вынесена в константу, потому что от неё считается
+/// соотношение сторон ячейки сетки.
+const double _cardContentHeight = 92;
+const double _cardContentHeightDense = 74;
+const double _cardPadding = AppDimens.space8;
+
 /// Вычисляет соотношение сторон ячейки сетки так, чтобы [EntryCard] помещалась
 /// целиком.
 ///
 /// Высота карточки складывается из обложки (3:4 от внутренней ширины) и блока
-/// текста с чипами. Считать её из фактической ширины ячейки надёжнее, чем
-/// подбирать константу: при другом числе колонок карточка переполнялась.
+/// текста. Считать её из фактической ширины ячейки надёжнее, чем подбирать
+/// константу: при другом числе колонок карточка переполнялась.
 double entryCardAspectRatio({
   required double availableWidth,
   required int columns,
-  double outerPadding = AppDimens.space20 * 2,
-  double spacing = AppDimens.space16,
-  double cardPadding = AppDimens.space12 * 2,
-  double contentHeight = 132,
+  double outerPadding = AppDimens.space24 * 2,
+  double spacing = AppDimens.space12,
+  double cardPadding = _cardPadding * 2,
+  bool dense = false,
+  double? contentHeight,
 }) {
+  final content =
+      contentHeight ?? (dense ? _cardContentHeightDense : _cardContentHeight);
   final usable = availableWidth - outerPadding - spacing * (columns - 1);
   final cellWidth = (usable / columns).clamp(80.0, double.infinity);
   final coverHeight = (cellWidth - cardPadding) * 4 / 3;
-  final totalHeight = coverHeight + cardPadding + contentHeight;
+  final totalHeight = coverHeight + cardPadding + content;
   return cellWidth / totalHeight;
 }
 
-/// Крупная редакционная карточка записи (§3.4). Выразительная обложка сверху,
-/// затем путь категорий, название и метаданные.
+/// Карточка записи в сетке каталога (§3.4): обложка сверху, под ней путь
+/// категорий, название и метаданные.
+///
+/// Карточка намеренно компактная — на экране должно помещаться заметно больше
+/// записей, но название, отношение и оценка остаются видимыми без открытия.
 class EntryCard extends StatelessWidget {
-  const EntryCard({super.key, required this.data, this.onTap});
+  const EntryCard({
+    super.key,
+    required this.data,
+    this.onTap,
+    this.dense = false,
+  });
 
   final EntryCardData data;
   final VoidCallback? onTap;
 
+  /// Плотный режим: без пути категории и подзаголовка.
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final showPath = !dense && data.categoryPath.isNotEmpty;
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppDimens.space12),
+      padding: const EdgeInsets.all(_cardPadding),
+      borderRadius: AppDimens.brMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -76,45 +98,40 @@ class EntryCard extends StatelessWidget {
             title: data.title,
             imagePath: data.imagePath,
             seedColor: data.seedColor,
+            borderRadius: AppDimens.brSm,
           ),
-          const SizedBox(height: AppDimens.space12),
-          if (data.categoryPath.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppDimens.space4),
-              child: Text(
-                data.categoryPath.join(' / '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          const SizedBox(height: AppDimens.space8),
+          if (showPath)
+            Text(
+              data.categoryPath.last,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelSmall?.copyWith(
+                color: c.textMuted,
+                fontSize: 11,
               ),
             ),
           Text(
             data.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: context.text.titleLarge,
-          ),
-          if (data.subtitle != null) ...[
-            const SizedBox(height: AppDimens.space2),
-            Text(
-              data.subtitle!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.text.bodySmall?.copyWith(color: c.textSecondary),
+            style: context.text.titleMedium?.copyWith(
+              fontSize: 14,
+              height: 1.2,
             ),
-          ],
-          const SizedBox(height: AppDimens.space12),
-          Wrap(
-            spacing: AppDimens.space8,
-            runSpacing: AppDimens.space8,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          ),
+          const Spacer(),
+          Row(
             children: [
               if (data.relation != null)
-                RelationChip(relation: data.relation!, compact: true),
-              if (data.rating != null)
+                Flexible(
+                  child: RelationChip(relation: data.relation!, compact: true),
+                ),
+              if (data.rating != null) ...[
+                if (data.relation != null)
+                  const SizedBox(width: AppDimens.space4),
                 RatingView(value: data.rating, compact: true),
-              if (data.statusLabel != null)
-                StatusChip(label: data.statusLabel!, compact: true),
+              ],
             ],
           ),
         ],

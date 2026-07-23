@@ -3,6 +3,7 @@
 library;
 
 export 'components/app_card.dart';
+export 'components/app_controls.dart';
 export 'components/breadcrumbs.dart';
 export 'components/collection_card.dart';
 export 'components/confirm_dialog.dart';
@@ -16,6 +17,7 @@ export 'components/profile_card.dart';
 export 'components/profile_switcher.dart';
 export 'components/rating_view.dart';
 export 'components/relation_chip.dart';
+export 'components/screen_header.dart';
 export 'components/section_header.dart';
 export 'components/settings_group.dart';
 export 'components/sparkline.dart';

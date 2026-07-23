@@ -124,7 +124,9 @@ void main() {
       await tester.pump();
 
       expect(find.text('Папа может'), findsOneWidget);
-      expect(find.text('Продукты / Колбасы'), findsOneWidget);
+      // Карточка компактная: из пути показывается только последняя категория,
+      // полный путь остаётся в карточке записи.
+      expect(find.text('Колбасы'), findsOneWidget);
       expect(find.byType(EntryCard), findsOneWidget);
       expect(find.text('Найдено: 1'), findsOneWidget);
     });
@@ -225,9 +227,10 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Продукты'), findsOneWidget);
+      expect(find.text('Продукты'), findsWidgets);
       expect(find.text('Колбасы'), findsOneWidget);
-      expect(find.text('3 зап.'), findsOneWidget);
+      // Счётчик ветки показывается значком с числом рядом с категорией.
+      expect(find.text('3'), findsWidgets);
     });
 
     testWidgets('пустое дерево предлагает создать категорию', (tester) async {

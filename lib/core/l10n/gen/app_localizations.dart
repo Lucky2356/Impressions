@@ -1774,6 +1774,18 @@ abstract class AppLocalizations {
   /// **'Закрыть диалог'**
   String get hotkeyClose;
 
+  /// No description provided for @hotkeyScan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать штрихкод'**
+  String get hotkeyScan;
+
+  /// No description provided for @hotkeySettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get hotkeySettings;
+
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In ru, this message translates to:
@@ -1941,6 +1953,630 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **' / '**
   String get breadcrumbObjectSeparator;
+
+  /// No description provided for @categoriesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категорий в дереве: {count}'**
+  String categoriesSubtitle(int count);
+
+  /// No description provided for @categorySearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти категорию'**
+  String get categorySearchHint;
+
+  /// No description provided for @categoryExpandAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развернуть всё'**
+  String get categoryExpandAll;
+
+  /// No description provided for @categoryCollapseAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть всё'**
+  String get categoryCollapseAll;
+
+  /// No description provided for @categoryIcon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значок категории'**
+  String get categoryIcon;
+
+  /// No description provided for @categoryOpenInCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать записи'**
+  String get categoryOpenInCatalog;
+
+  /// No description provided for @categorySubcategoriesCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} подкатегорий'**
+  String categorySubcategoriesCount(int count);
+
+  /// No description provided for @categoryDirectCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} здесь'**
+  String categoryDirectCount(int count);
+
+  /// No description provided for @catalogTypeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип'**
+  String get catalogTypeLabel;
+
+  /// No description provided for @catalogCategoryLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория'**
+  String get catalogCategoryLabel;
+
+  /// No description provided for @catalogRelationLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отношение'**
+  String get catalogRelationLabel;
+
+  /// No description provided for @searchGlobalHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск по записям'**
+  String get searchGlobalHint;
+
+  /// No description provided for @searchResultsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Результаты поиска'**
+  String get searchResultsTitle;
+
+  /// No description provided for @headerNotifications.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get headerNotifications;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новых событий нет'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появятся входящие изменения, обновления и итоги импорта.'**
+  String get notificationsEmptyHint;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметить всё прочитанным'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть'**
+  String get notificationsOpen;
+
+  /// No description provided for @notificationIncomingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Входящие изменения'**
+  String get notificationIncomingTitle;
+
+  /// No description provided for @notificationIncomingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} изменений в импортированных профилях'**
+  String notificationIncomingBody(int count);
+
+  /// No description provided for @notificationUpdateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступна новая версия'**
+  String get notificationUpdateTitle;
+
+  /// No description provided for @notificationUpdateBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия {version} готова к установке'**
+  String notificationUpdateBody(String version);
+
+  /// No description provided for @notificationProductsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сведения о товарах обновлены'**
+  String get notificationProductsTitle;
+
+  /// No description provided for @notificationProductsBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнено карточек: {count}'**
+  String notificationProductsBody(int count);
+
+  /// No description provided for @notificationImportTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импорт завершён'**
+  String get notificationImportTitle;
+
+  /// No description provided for @notificationImportBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пакет от {date}'**
+  String notificationImportBody(String date);
+
+  /// No description provided for @notificationBackupTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Резервная копия создана'**
+  String get notificationBackupTitle;
+
+  /// No description provided for @notificationBackupBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последняя копия от {date}'**
+  String notificationBackupBody(String date);
+
+  /// No description provided for @profilesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} из {max} возможных'**
+  String profilesSubtitle(int count, int max);
+
+  /// No description provided for @profileMenuManage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все профили'**
+  String get profileMenuManage;
+
+  /// No description provided for @profileMenuLocal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Локальные настройки'**
+  String get profileMenuLocal;
+
+  /// No description provided for @profileMenuExport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экспортировать профиль'**
+  String get profileMenuExport;
+
+  /// No description provided for @profileMenuSwitch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переключиться'**
+  String get profileMenuSwitch;
+
+  /// No description provided for @profileMenuSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки приложения'**
+  String get profileMenuSettings;
+
+  /// No description provided for @barcodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить по штрихкоду'**
+  String get barcodeTitle;
+
+  /// No description provided for @barcodeHintMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наведите камеру на штрихкод или QR-код либо введите цифры вручную.'**
+  String get barcodeHintMobile;
+
+  /// No description provided for @barcodeHintDesktop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите код вручную, отсканируйте USB-сканером или распознайте с фотографии.'**
+  String get barcodeHintDesktop;
+
+  /// No description provided for @barcodeCodeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Штрихкод или QR'**
+  String get barcodeCodeLabel;
+
+  /// No description provided for @barcodeLookup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти'**
+  String get barcodeLookup;
+
+  /// No description provided for @barcodeUseCamera.
+  ///
+  /// In ru, this message translates to:
+  /// **'Камера'**
+  String get barcodeUseCamera;
+
+  /// No description provided for @barcodePhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сфотографировать'**
+  String get barcodePhoto;
+
+  /// No description provided for @barcodeFromFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Распознать с изображения'**
+  String get barcodeFromFile;
+
+  /// No description provided for @barcodeNotRecognized.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код на изображении не найден. Попробуйте снимок покрупнее и без бликов.'**
+  String get barcodeNotRecognized;
+
+  /// No description provided for @barcodeUseResult.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить'**
+  String get barcodeUseResult;
+
+  /// No description provided for @barcodeFoundIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник: {source}'**
+  String barcodeFoundIn(String source);
+
+  /// No description provided for @barcodeNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товар не найден ни в одной базе'**
+  String get barcodeNotFound;
+
+  /// No description provided for @barcodeLookupFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось связаться с базами товаров'**
+  String get barcodeLookupFailed;
+
+  /// No description provided for @barcodeFillManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код сохранится в карточке — название можно ввести вручную.'**
+  String get barcodeFillManually;
+
+  /// No description provided for @barcodeTorch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подсветка'**
+  String get barcodeTorch;
+
+  /// No description provided for @barcodeScanAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать код'**
+  String get barcodeScanAction;
+
+  /// No description provided for @settingsNetworkTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товарные базы и обновления'**
+  String get settingsNetworkTitle;
+
+  /// No description provided for @settingsNetworkHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Единственные сетевые запросы приложения. Наружу уходит только штрихкод и номер версии.'**
+  String get settingsNetworkHint;
+
+  /// No description provided for @settingsBarcodeLookup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искать товар по штрихкоду'**
+  String get settingsBarcodeLookup;
+
+  /// No description provided for @settingsBarcodeSources.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источники данных'**
+  String get settingsBarcodeSources;
+
+  /// No description provided for @settingsProductAutoUpdate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнять карточки товаров автоматически'**
+  String get settingsProductAutoUpdate;
+
+  /// No description provided for @settingsProductAutoUpdateHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не чаще раза в сутки. Введённые вручную названия не заменяются.'**
+  String get settingsProductAutoUpdateHint;
+
+  /// No description provided for @settingsProductRefreshNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить сейчас'**
+  String get settingsProductRefreshNow;
+
+  /// No description provided for @settingsProductRefreshed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверено {checked}, дополнено {updated}'**
+  String settingsProductRefreshed(int checked, int updated);
+
+  /// No description provided for @settingsAppUpdateCheck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверять обновления приложения'**
+  String get settingsAppUpdateCheck;
+
+  /// No description provided for @settingsAppUpdateNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить сейчас'**
+  String get settingsAppUpdateNow;
+
+  /// No description provided for @settingsUpToDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установлена последняя версия'**
+  String get settingsUpToDate;
+
+  /// No description provided for @updateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновление приложения'**
+  String get updateTitle;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступна версия {version}'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateCurrent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Установлена версия {version}'**
+  String updateCurrent(String version);
+
+  /// No description provided for @updateDownload.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скачать установщик'**
+  String get updateDownload;
+
+  /// No description provided for @updateOpenPage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть страницу выпуска'**
+  String get updateOpenPage;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In ru, this message translates to:
+  /// **'Позже'**
+  String get updateLater;
+
+  /// No description provided for @updateSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить эту версию'**
+  String get updateSkip;
+
+  /// No description provided for @incomingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Входящие изменения'**
+  String get incomingTitle;
+
+  /// No description provided for @incomingSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что изменилось в импортированных профилях (§23)'**
+  String get incomingSubtitle;
+
+  /// No description provided for @incomingEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменений нет'**
+  String get incomingEmptyTitle;
+
+  /// No description provided for @incomingEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'После импорта обновлённого профиля здесь появится список того, что изменилось.'**
+  String get incomingEmptyMessage;
+
+  /// No description provided for @incomingMarkSeen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметить просмотренным'**
+  String get incomingMarkSeen;
+
+  /// No description provided for @incomingMarkAllSeen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметить все просмотренными'**
+  String get incomingMarkAllSeen;
+
+  /// No description provided for @incomingKindEntry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись'**
+  String get incomingKindEntry;
+
+  /// No description provided for @incomingKindObject.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объект'**
+  String get incomingKindObject;
+
+  /// No description provided for @incomingKindCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория'**
+  String get incomingKindCategory;
+
+  /// No description provided for @incomingReceivedAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Получено {date}'**
+  String incomingReceivedAt(String date);
+
+  /// No description provided for @incomingNewBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое'**
+  String get incomingNewBadge;
+
+  /// No description provided for @fieldsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поля типа'**
+  String get fieldsTitle;
+
+  /// No description provided for @fieldsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительные поля, которые появятся у записей этого типа.'**
+  String get fieldsHint;
+
+  /// No description provided for @fieldsAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить поле'**
+  String get fieldsAdd;
+
+  /// No description provided for @fieldsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Своих полей пока нет'**
+  String get fieldsEmpty;
+
+  /// No description provided for @fieldsNameLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название поля'**
+  String get fieldsNameLabel;
+
+  /// No description provided for @fieldsKindLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип значения'**
+  String get fieldsKindLabel;
+
+  /// No description provided for @fieldsKindText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст'**
+  String get fieldsKindText;
+
+  /// No description provided for @fieldsKindNumber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Число'**
+  String get fieldsKindNumber;
+
+  /// No description provided for @fieldsKindDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата'**
+  String get fieldsKindDate;
+
+  /// No description provided for @fieldsKindBool.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да или нет'**
+  String get fieldsKindBool;
+
+  /// No description provided for @fieldsKindChoice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбор из списка'**
+  String get fieldsKindChoice;
+
+  /// No description provided for @fieldsChoicesLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Варианты через запятую'**
+  String get fieldsChoicesLabel;
+
+  /// No description provided for @fieldsRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить поле'**
+  String get fieldsRemove;
+
+  /// No description provided for @fieldsEditFor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поля типа «{type}»'**
+  String fieldsEditFor(String type);
+
+  /// No description provided for @fieldsValuesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительно'**
+  String get fieldsValuesTitle;
+
+  /// No description provided for @quickAddBarcodeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнено по штрихкоду {code}'**
+  String quickAddBarcodeHint(String code);
+
+  /// No description provided for @keyStorageTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хранение закрытого ключа'**
+  String get keyStorageTitle;
+
+  /// No description provided for @keyStorageOs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отдельно от базы, под защитой системы'**
+  String get keyStorageOs;
+
+  /// No description provided for @keyStorageOsWindows.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл зашифрован средствами Windows (DPAPI) на вашу учётную запись: на другом компьютере он бесполезен.'**
+  String get keyStorageOsWindows;
+
+  /// No description provided for @keyStorageOsMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл лежит в защищённом каталоге приложения и не попадает в резервные копии.'**
+  String get keyStorageOsMobile;
+
+  /// No description provided for @keyStorageDb.
+  ///
+  /// In ru, this message translates to:
+  /// **'В базе приложения, зашифровано'**
+  String get keyStorageDb;
+
+  /// No description provided for @keyStorageDbHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секрет лежит рядом с зашифрованным ключом. Перенесите его, чтобы копия базы стала бесполезной без вашей учётной записи.'**
+  String get keyStorageDbHint;
+
+  /// No description provided for @keyStorageMove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести в хранилище ОС'**
+  String get keyStorageMove;
+
+  /// No description provided for @keyStorageMoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключ перенесён в хранилище операционной системы'**
+  String get keyStorageMoved;
 }
 
 class _AppLocalizationsDelegate

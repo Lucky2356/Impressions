@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/config/app_config.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
@@ -41,7 +43,6 @@ class ProfilesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final c = context.colors;
     final profiles = ref.watch(profilesProvider);
     final active = ref.watch(activeProfileProvider);
     final counts = ref.watch(entryCountsByProfileProvider).value ?? const {};
@@ -49,49 +50,36 @@ class ProfilesScreen extends ConsumerWidget {
     return profiles.when(
       loading: () => const SizedBox.shrink(),
       error: (e, _) => Center(child: Text('$e')),
-      data: (list) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimens.space24,
-              AppDimens.space20,
-              AppDimens.space24,
-              AppDimens.space12,
+      data: (list) => ScreenScaffold(
+        header: ScreenHeader(
+          title: l10n.profilesTitle,
+          subtitle: l10n.profilesSubtitle(list.length, AppConfig.maxProfiles),
+          actions: [
+            FilledButton.icon(
+              onPressed: () => _createProfile(context, ref),
+              icon: const Icon(Icons.person_add_alt_rounded, size: 20),
+              label: Text(l10n.profileCreate),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.profilesTitle,
-                    style: context.text.headlineSmall,
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: () => _createProfile(context, ref),
-                  icon: const Icon(Icons.person_add_alt_rounded, size: 20),
-                  label: Text(l10n.profileCreate),
-                ),
-              ],
-            ),
+          ],
+        ),
+        child: ListView.separated(
+          padding: EdgeInsets.fromLTRB(
+            context.layout.gutter,
+            AppDimens.space16,
+            context.layout.gutter,
+            AppDimens.space40,
           ),
-          Divider(height: 1, color: c.border),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(AppDimens.space20),
-              itemCount: list.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppDimens.space12),
-              itemBuilder: (context, i) {
-                final p = list[i];
-                return _ProfileTile(
-                  profile: p,
-                  isActive: active?.id == p.id,
-                  entryCount: counts[p.id] ?? 0,
-                );
-              },
-            ),
-          ),
-        ],
+          itemCount: list.length,
+          separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space12),
+          itemBuilder: (context, i) {
+            final p = list[i];
+            return _ProfileTile(
+              profile: p,
+              isActive: active?.id == p.id,
+              entryCount: counts[p.id] ?? 0,
+            );
+          },
+        ),
       ),
     );
   }

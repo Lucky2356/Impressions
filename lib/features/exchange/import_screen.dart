@@ -10,6 +10,7 @@ import '../../app/data_refresh.dart';
 import '../../core/config/app_config.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
 import '../../data/services/backup_service.dart';
@@ -115,11 +116,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     final c = context.colors;
 
     final body = ListView(
-      padding: const EdgeInsets.all(AppDimens.space24),
+      padding: EdgeInsets.fromLTRB(
+        context.layout.gutter,
+        AppDimens.space16,
+        context.layout.gutter,
+        AppDimens.space40,
+      ),
       children: [
-        Text(l10n.importTitle, style: context.text.headlineSmall),
-        const SizedBox(height: AppDimens.space16),
-
         // Зона выбора/перетаскивания файла.
         Container(
           height: 140,
@@ -212,18 +215,24 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       ],
     );
 
-    if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
-      return body;
-    }
-    return DropTarget(
-      onDragEntered: (_) => setState(() => _dragging = true),
-      onDragExited: (_) => setState(() => _dragging = false),
-      onDragDone: (details) async {
-        setState(() => _dragging = false);
-        if (details.files.isEmpty) return;
-        await _inspect(await details.files.first.readAsBytes());
-      },
-      child: body,
+    final desktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    return ScreenScaffold(
+      header: ScreenHeader(
+        title: l10n.importTitle,
+        subtitle: l10n.importDropHint,
+      ),
+      child: desktop
+          ? DropTarget(
+              onDragEntered: (_) => setState(() => _dragging = true),
+              onDragExited: (_) => setState(() => _dragging = false),
+              onDragDone: (details) async {
+                setState(() => _dragging = false);
+                if (details.files.isEmpty) return;
+                await _inspect(await details.files.first.readAsBytes());
+              },
+              child: body,
+            )
+          : body,
     );
   }
 }

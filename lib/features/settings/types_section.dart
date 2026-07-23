@@ -11,6 +11,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
+import 'fields_editor.dart';
 
 /// Типы объектов активного профиля, включая скрытые.
 final allObjectTypesProvider = FutureProvider<List<ObjectTypeRow>>((ref) async {
@@ -151,20 +152,22 @@ class TypesSection extends ConsumerWidget {
                       ),
                     ),
                   ),
-                IconButton(
+                AppIconButton(
+                  icon: Icons.edit_rounded,
                   tooltip: l10n.typeRename,
                   onPressed: () => rename(types[i]),
-                  icon: const Icon(Icons.edit_rounded, size: 18),
                 ),
-                IconButton(
+                AppIconButton(
+                  icon: Icons.list_alt_rounded,
+                  tooltip: l10n.fieldsTitle,
+                  onPressed: () => FieldsEditor.show(context, types[i]),
+                ),
+                AppIconButton(
+                  icon: types[i].hidden
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
                   tooltip: types[i].hidden ? l10n.typeShow : l10n.typeHide,
                   onPressed: () => toggleHidden(types[i]),
-                  icon: Icon(
-                    types[i].hidden
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                    size: 18,
-                  ),
                 ),
               ],
             ),
