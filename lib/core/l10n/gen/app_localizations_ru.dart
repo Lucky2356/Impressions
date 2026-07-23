@@ -353,6 +353,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryNoteLabel => 'Заметка';
 
   @override
+  String get entryEditObject => 'Изменить описание';
+
+  @override
+  String get entryEditObjectHint =>
+      'Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.';
+
+  @override
+  String get entryCreatorLabel => 'Бренд, автор или режиссёр';
+
+  @override
+  String get entryYearLabel => 'Год';
+
+  @override
+  String get entryImpressionDate => 'Дата впечатления';
+
+  @override
+  String get entryImpressionDateNone => 'Не указана';
+
+  @override
+  String get entryImpressionDateClear => 'Убрать дату';
+
+  @override
   String get entryArchive => 'Архивировать запись';
 
   @override
@@ -1358,6 +1380,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get updateFailed => 'Не удалось обновить';
+
+  @override
+  String get archiveTitle => 'Архив';
+
+  @override
+  String archiveSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count убранных объектов',
+      many: '$count убранных объектов',
+      few: '$count убранных объекта',
+      one: '$count убранный объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveEmptyTitle => 'Архив пуст';
+
+  @override
+  String get archiveEmptyMessage =>
+      'Здесь появляется всё, что вы убрали из работы. Ничего не удаляется — любое можно вернуть.';
+
+  @override
+  String get archiveEntries => 'Записи';
+
+  @override
+  String get archiveCategories => 'Категории';
+
+  @override
+  String get archiveCollections => 'Подборки';
+
+  @override
+  String archiveCategoryLevel(int level) {
+    return 'Уровень вложенности: $level';
+  }
+
+  @override
+  String get archiveRestored => 'Возвращено из архива';
 
   @override
   String get incomingTitle => 'Входящие изменения';

@@ -11,6 +11,7 @@ class NavIds {
   static const profiles = 'profiles';
   static const import = 'import';
   static const incoming = 'incoming';
+  static const archive = 'archive';
   static const settings = 'settings';
 }
 

@@ -27,8 +27,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  // Заголовок окна и панели задач — отображаемое имя приложения.
-  if (!window.Create(L"Впечатления", origin, size)) {
+  // Window and taskbar title. Written as escapes on purpose: MSVC reads .cpp
+  // in the system codepage, and Cyrillic spelled out here turned into garbage
+  // in the taskbar.
+  const wchar_t *kWindowTitle =
+      L"\x0412\x043F\x0435\x0447\x0430\x0442\x043B\x0435\x043D\x0438\x044F";
+  if (!window.Create(kWindowTitle, origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

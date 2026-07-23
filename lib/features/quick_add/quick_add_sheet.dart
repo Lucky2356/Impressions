@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
@@ -86,6 +87,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Значения пользовательских полей типа (§9).
   final Map<String, String> _customValues = {};
 
+  /// Когда впечатление случилось на самом деле (§10).
+  DateTime? _impressionDate;
+
   @override
   void initState() {
     super.initState();
@@ -160,6 +164,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         relation: _relation?.name,
         rating: _rating,
         detailedNote: _note.text.trim().isEmpty ? null : _note.text.trim(),
+        impressionDate: _impressionDate,
         primaryCategoryId: _category?.id,
       );
       ref.read(dataRefreshProvider.notifier).bump();
@@ -167,6 +172,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _impressionDate ?? now,
+      firstDate: DateTime(now.year - 50),
+      lastDate: now,
+      locale: const Locale('ru'),
+    );
+    if (picked != null) setState(() => _impressionDate = picked);
   }
 
   /// Поля, заданные для выбранного типа объекта (§9).
@@ -464,6 +481,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       labelText: l10n.quickAddNoteLabel,
                     ),
                   ),
+                  const SizedBox(height: AppDimens.space16),
+                  _ImpressionDateField(
+                    value: _impressionDate,
+                    onPick: _pickDate,
+                    onClear: () => setState(() => _impressionDate = null),
+                  ),
                   // Пользовательские поля выбранного типа (§9).
                   ..._customFieldInputs(typeList, l10n),
                 ],
@@ -525,3 +548,46 @@ class _CategoryField extends StatelessWidget {
 
 /// Что делать с найденными похожими объектами (§26).
 enum _DuplicateChoice { useExisting, keepSeparate, cancelled }
+
+/// Выбор даты впечатления в форме добавления.
+class _ImpressionDateField extends StatelessWidget {
+  const _ImpressionDateField({
+    required this.value,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return InkWell(
+      onTap: onPick,
+      borderRadius: AppDimens.brMd,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: l10n.entryImpressionDate,
+          suffixIcon: value == null
+              ? const Icon(Icons.event_rounded)
+              : IconButton(
+                  tooltip: l10n.entryImpressionDateClear,
+                  onPressed: onClear,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+        ),
+        child: Text(
+          value == null
+              ? l10n.entryImpressionDateNone
+              : DateFormat('d MMMM y', 'ru').format(value!),
+          style: context.text.bodyMedium?.copyWith(
+            color: value == null ? c.textMuted : c.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}

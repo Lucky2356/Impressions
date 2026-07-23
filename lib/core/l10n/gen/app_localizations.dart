@@ -730,6 +730,48 @@ abstract class AppLocalizations {
   /// **'Заметка'**
   String get entryNoteLabel;
 
+  /// No description provided for @entryEditObject.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить описание'**
+  String get entryEditObject;
+
+  /// No description provided for @entryEditObjectHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.'**
+  String get entryEditObjectHint;
+
+  /// No description provided for @entryCreatorLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бренд, автор или режиссёр'**
+  String get entryCreatorLabel;
+
+  /// No description provided for @entryYearLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год'**
+  String get entryYearLabel;
+
+  /// No description provided for @entryImpressionDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата впечатления'**
+  String get entryImpressionDate;
+
+  /// No description provided for @entryImpressionDateNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не указана'**
+  String get entryImpressionDateNone;
+
+  /// No description provided for @entryImpressionDateClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать дату'**
+  String get entryImpressionDateClear;
+
   /// No description provided for @entryArchive.
   ///
   /// In ru, this message translates to:
@@ -2463,6 +2505,60 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось обновить'**
   String get updateFailed;
+
+  /// No description provided for @archiveTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Архив'**
+  String get archiveTitle;
+
+  /// No description provided for @archiveSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} убранный объект} few{{count} убранных объекта} many{{count} убранных объектов} other{{count} убранных объектов}}'**
+  String archiveSubtitle(int count);
+
+  /// No description provided for @archiveEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Архив пуст'**
+  String get archiveEmptyTitle;
+
+  /// No description provided for @archiveEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появляется всё, что вы убрали из работы. Ничего не удаляется — любое можно вернуть.'**
+  String get archiveEmptyMessage;
+
+  /// No description provided for @archiveEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи'**
+  String get archiveEntries;
+
+  /// No description provided for @archiveCategories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категории'**
+  String get archiveCategories;
+
+  /// No description provided for @archiveCollections.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подборки'**
+  String get archiveCollections;
+
+  /// No description provided for @archiveCategoryLevel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уровень вложенности: {level}'**
+  String archiveCategoryLevel(int level);
+
+  /// No description provided for @archiveRestored.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возвращено из архива'**
+  String get archiveRestored;
 
   /// No description provided for @incomingTitle.
   ///

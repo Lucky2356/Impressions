@@ -3,18 +3,30 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_state.dart';
+import '../../app/data_refresh.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
+import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
+import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../home/home_providers.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'catalog_providers.dart';
+
+/// Теги активного профиля — источник для фильтра.
+final profileTagsProvider = FutureProvider<List<TagRow>>((ref) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+  return ref.watch(entryRepositoryProvider).tagsOfProfile(profile.id);
+});
 
 /// Каталог записей (§15): режимы отображения, фильтры, сортировка, поиск.
 /// Состояние режима и переключателя подкатегорий сохраняется.
@@ -64,7 +76,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         state.search.isNotEmpty ||
         state.typeId != null ||
         state.relation != null ||
-        state.categoryId != null;
+        state.categoryId != null ||
+        state.tagIds.isNotEmpty;
     if (!filtered) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -121,7 +134,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 state.search.isNotEmpty ||
                 state.typeId != null ||
                 state.relation != null ||
-                state.categoryId != null;
+                state.categoryId != null ||
+                state.tagIds.isNotEmpty;
             return EmptyState(
               icon: filtered
                   ? Icons.search_off_rounded
@@ -255,11 +269,13 @@ class _FilterBar extends ConsumerWidget {
     final types = ref.watch(objectTypesProvider).value ?? const [];
     final categories = ref.watch(allCategoriesProvider).value ?? const [];
 
+    final tags = ref.watch(profileTagsProvider).value ?? const <TagRow>[];
     final hasFilters =
         state.search.isNotEmpty ||
         state.typeId != null ||
         state.relation != null ||
-        state.categoryId != null;
+        state.categoryId != null ||
+        state.tagIds.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,6 +405,21 @@ class _FilterBar extends ConsumerWidget {
                   state.includeSubcategories
                       ? Icons.check_rounded
                       : Icons.subdirectory_arrow_right_rounded,
+                  size: 16,
+                ),
+              ),
+            // Теги — плоские метки, поэтому выбираются чипами, а не списком:
+            // их можно выбрать несколько сразу.
+            for (final tag in tags)
+              FilterChip(
+                selected: state.tagIds.contains(tag.id),
+                onSelected: (_) => controller.toggleTag(tag.id),
+                label: Text(tag.name),
+                showCheckmark: false,
+                avatar: Icon(
+                  state.tagIds.contains(tag.id)
+                      ? Icons.check_rounded
+                      : Icons.label_outline_rounded,
                   size: 16,
                 ),
               ),

@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -61,6 +61,15 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createIndexes();
       await _createSearch();
+    },
+    onUpgrade: (m, from, to) async {
+      // 2: поиск по тексту заметок. Таблицы объектов не менялись, поэтому
+      // достаточно завести недостающие виртуальные таблицы и наполнить их.
+      if (from < 2) {
+        await _createSearch();
+        await _rebuildSearchIndex();
+      }
+      await _createIndexes();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -89,6 +98,47 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// Полнотекстовый поиск заметок записей (FTS5) + триггеры синхронизации.
+  ///
+  /// Заметки лежат в другой таблице, чем названия, поэтому индексов два.
+  /// Без этого поиск находил только по названию объекта, а текст впечатления
+  /// оставался недоступен.
+  Future<void> _createEntrySearch() async {
+    await customStatement(
+      "CREATE VIRTUAL TABLE IF NOT EXISTS entry_search USING fts5("
+      "short_note, detailed_note, "
+      "content='profile_entries', content_rowid='rowid')",
+    );
+    await customStatement(
+      "CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON profile_entries "
+      "BEGIN INSERT INTO entry_search(rowid, short_note, detailed_note) "
+      "VALUES (new.rowid, new.short_note, new.detailed_note); END",
+    );
+    await customStatement(
+      "CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON profile_entries "
+      "BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) "
+      "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); END",
+    );
+    await customStatement(
+      "CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON profile_entries "
+      "BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) "
+      "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); "
+      "INSERT INTO entry_search(rowid, short_note, detailed_note) "
+      "VALUES (new.rowid, new.short_note, new.detailed_note); END",
+    );
+  }
+
+  /// Наполняет индексы по уже существующим строкам — нужно после обновления
+  /// схемы, когда триггеры ещё не видели старые данные.
+  Future<void> _rebuildSearchIndex() async {
+    await customStatement(
+      "INSERT INTO object_search(object_search) VALUES('rebuild')",
+    );
+    await customStatement(
+      "INSERT INTO entry_search(entry_search) VALUES('rebuild')",
+    );
+  }
+
   /// Полнотекстовый поиск объектов (FTS5) + триггеры синхронизации.
   Future<void> _createSearch() async {
     await customStatement(
@@ -112,21 +162,47 @@ class AppDatabase extends _$AppDatabase {
       "INSERT INTO object_search(rowid, title, alt_title, creator) "
       "VALUES (new.rowid, new.title, new.alt_title, new.creator); END",
     );
+    await _createEntrySearch();
+  }
+
+  /// Готовит запрос к FTS5: экранирует кавычки и разрешает поиск по началу
+  /// слова, чтобы «колб» находило «колбасу».
+  static String _matchExpression(String query) {
+    final safe = query.trim().replaceAll('"', '""');
+    return '"$safe"*';
   }
 
   /// Полнотекстовый поиск объектов по префиксу запроса. Возвращает id объектов.
-  Future<List<String>> searchObjectIds(String query, {int limit = 50}) async {
-    final trimmed = query.trim();
-    if (trimmed.isEmpty) return [];
-    // Экранируем и добавляем префиксный матч.
-    final safe = trimmed.replaceAll('"', '""');
-    final match = '"$safe"*';
+  Future<List<String>> searchObjectIds(String query, {int limit = 500}) async {
+    if (query.trim().isEmpty) return [];
     final rows = await customSelect(
       'SELECT o.id AS id FROM object_search s '
       'JOIN objects o ON o.rowid = s.rowid '
       'WHERE object_search MATCH ?1 ORDER BY rank LIMIT ?2',
-      variables: [Variable<String>(match), Variable<int>(limit)],
+      variables: [
+        Variable<String>(_matchExpression(query)),
+        Variable<int>(limit),
+      ],
       readsFrom: {objects},
+    ).get();
+    return rows.map((r) => r.read<String>('id')).toList();
+  }
+
+  /// Полнотекстовый поиск по тексту заметок. Возвращает id записей.
+  Future<List<String>> searchEntryIdsByNote(
+    String query, {
+    int limit = 500,
+  }) async {
+    if (query.trim().isEmpty) return [];
+    final rows = await customSelect(
+      'SELECT e.id AS id FROM entry_search s '
+      'JOIN profile_entries e ON e.rowid = s.rowid '
+      'WHERE entry_search MATCH ?1 ORDER BY rank LIMIT ?2',
+      variables: [
+        Variable<String>(_matchExpression(query)),
+        Variable<int>(limit),
+      ],
+      readsFrom: {profileEntries},
     ).get();
     return rows.map((r) => r.read<String>('id')).toList();
   }

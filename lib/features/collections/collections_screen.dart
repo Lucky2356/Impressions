@@ -204,7 +204,9 @@ class _CollectionDetail extends ConsumerWidget {
               ),
             );
           }
-          return ListView.separated(
+          // Порядок в подборке ручной (§27): его хранит sortOrder, но задать
+          // его до сих пор было нечем — список просто выводился как есть.
+          return ReorderableListView.builder(
             padding: EdgeInsets.fromLTRB(
               context.layout.gutter,
               AppDimens.space16,
@@ -212,19 +214,59 @@ class _CollectionDetail extends ConsumerWidget {
               AppDimens.space40,
             ),
             itemCount: list.length,
-            separatorBuilder: (_, _) =>
-                const SizedBox(height: AppDimens.space8),
+            // onReorderItem уже учитывает сдвиг из-за изъятого элемента,
+            // поэтому индекс поправлять вручную не нужно.
+            onReorderItem: (oldIndex, newIndex) async {
+              final reordered = [...list];
+              reordered.insert(newIndex, reordered.removeAt(oldIndex));
+              await ref.read(collectionRepositoryProvider).reorder(
+                collectionId,
+                [for (final e in reordered) e.entryId],
+              );
+              ref.read(dataRefreshProvider.notifier).bump();
+            },
             itemBuilder: (context, i) {
               final e = list[i];
-              return EntryCardCompact(
-                data: EntryCardData(
-                  title: e.title,
-                  subtitle: e.subtitle,
-                  categoryPath: e.categoryPath,
-                  rating: e.rating,
-                  seedColor: c.profileColorFor(e.objectId),
+              return Padding(
+                key: ValueKey(e.entryId),
+                padding: const EdgeInsets.only(bottom: AppDimens.space8),
+                child: Row(
+                  children: [
+                    ReorderableDragStartListener(
+                      index: i,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: AppDimens.space8),
+                        child: Icon(
+                          Icons.drag_indicator_rounded,
+                          size: 20,
+                          color: c.textMuted,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: EntryCardCompact(
+                        data: EntryCardData(
+                          title: e.title,
+                          subtitle: e.subtitle,
+                          categoryPath: e.categoryPath,
+                          rating: e.rating,
+                          seedColor: c.profileColorFor(e.objectId),
+                        ),
+                        onTap: () => EntryDetailSheet.show(context, e.entryId),
+                      ),
+                    ),
+                    AppIconButton(
+                      icon: Icons.playlist_remove_rounded,
+                      tooltip: l10n.collectionRemoveFrom,
+                      onPressed: () async {
+                        await ref
+                            .read(collectionRepositoryProvider)
+                            .removeEntry(collectionId, e.entryId);
+                        ref.read(dataRefreshProvider.notifier).bump();
+                      },
+                    ),
+                  ],
                 ),
-                onTap: () => EntryDetailSheet.show(context, e.entryId),
               );
             },
           );

@@ -136,6 +136,24 @@ class CollectionRepository {
         .go();
   }
 
+  /// Переставляет запись внутри подборки (§27).
+  ///
+  /// Порядок хранился с самого начала, но задать его было нечем. Записываем
+  /// весь новый порядок одной транзакцией, чтобы номера не разъезжались при
+  /// нескольких перестановках подряд.
+  Future<void> reorder(String collectionId, List<String> entryIdsInOrder) {
+    return db.transaction(() async {
+      for (var i = 0; i < entryIdsInOrder.length; i++) {
+        await (db.update(db.collectionEntries)..where(
+              (ce) =>
+                  ce.collectionId.equals(collectionId) &
+                  ce.entryId.equals(entryIdsInOrder[i]),
+            ))
+            .write(CollectionEntriesCompanion(sortOrder: Value(i)));
+      }
+    });
+  }
+
   /// Записи подборки в ручном порядке, в виде готовых представлений.
   Future<List<EntryView>> entriesOf(
     String collectionId,

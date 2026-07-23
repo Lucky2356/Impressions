@@ -157,6 +157,7 @@ class EntryRepository {
     String? shortNote,
     String? detailedNote,
     String privacy = 'shareable',
+    DateTime? impressionDate,
     String? primaryCategoryId,
     List<String> extraCategoryIds = const [],
   }) async {
@@ -175,6 +176,7 @@ class EntryRepository {
               shortNote: Value(shortNote),
               detailedNote: Value(detailedNote),
               privacy: Value(privacy),
+              impressionDate: Value(impressionDate),
               createdAt: DateTime.now(),
             ),
           );
@@ -202,6 +204,10 @@ class EntryRepository {
     Object? detailedNote = _unset,
     String? privacy,
     DateTime? impressionDate,
+
+    /// Явно стереть дату впечатления: `impressionDate: null` означает
+    /// «не менять», иначе дату нельзя было бы убрать.
+    bool clearImpressionDate = false,
   }) async {
     Value<T?> val<T>(Object? v) =>
         identical(v, _unset) ? const Value.absent() : Value(v as T?);
@@ -216,9 +222,11 @@ class EntryRepository {
         shortNote: val<String>(shortNote),
         detailedNote: val<String>(detailedNote),
         privacy: privacy == null ? const Value.absent() : Value(privacy),
-        impressionDate: impressionDate == null
-            ? const Value.absent()
-            : Value(impressionDate),
+        impressionDate: clearImpressionDate
+            ? const Value(null)
+            : (impressionDate == null
+                  ? const Value.absent()
+                  : Value(impressionDate)),
       ),
     );
     await revisions.commitEntry(entryId);
@@ -355,6 +363,13 @@ class EntryRepository {
         .write(ProfileEntriesCompanion(archivedAt: Value(DateTime.now())));
   }
 
+  /// Возвращает запись из архива (§24). Ничего не удалялось, поэтому связи с
+  /// категориями, тегами и фотографиями остаются на месте.
+  Future<void> restoreEntry(String entryId) async {
+    await (db.update(db.profileEntries)..where((e) => e.id.equals(entryId)))
+        .write(const ProfileEntriesCompanion(archivedAt: Value(null)));
+  }
+
   // ---- Представления для UI ----
 
   /// Записи профиля с названием объекта, типом и путём основной категории.
@@ -363,10 +378,12 @@ class EntryRepository {
   Future<List<EntryView>> entryViews(
     String profileId, {
     List<String>? categoryIds,
+    List<String>? tagIds,
     String? relation,
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
+    bool archived = false,
     int? limit,
     int offset = 0,
   }) async {
@@ -382,7 +399,11 @@ class EntryRepository {
             ),
           ])
           ..where(db.profileEntries.profileId.equals(profileId))
-          ..where(db.profileEntries.archivedAt.isNull())
+          ..where(
+            archived
+                ? db.profileEntries.archivedAt.isNotNull()
+                : db.profileEntries.archivedAt.isNull(),
+          )
           ..orderBy(switch (sort) {
             EntrySort.recent => [
               OrderingTerm(
@@ -414,11 +435,30 @@ class EntryRepository {
       query.where(db.objects.typeId.equals(typeId));
     }
     if (search != null && search.trim().isNotEmpty) {
-      final needle = '%${Normalize.name(search)}%';
-      query.where(
-        db.objects.normalizedTitle.like(needle) |
-            db.objects.normalizedAltTitle.like(needle),
-      );
+      // Полнотекстовый поиск по названиям и по тексту заметок (§29).
+      // Прежний `LIKE '%…%'` не мог опереться на индекс и не видел заметок.
+      final byTitle = await db.searchObjectIds(search);
+      final byNote = await db.searchEntryIdsByNote(search);
+
+      if (byTitle.isEmpty && byNote.isEmpty) {
+        // Запрос из одних служебных символов FTS ничего не найдёт, но и
+        // отдавать весь каталог нельзя — считаем, что совпадений нет.
+        return const [];
+      }
+      final conditions = <Expression<bool>>[
+        if (byTitle.isNotEmpty) db.objects.id.isIn(byTitle),
+        if (byNote.isNotEmpty) db.profileEntries.id.isIn(byNote),
+      ];
+      query.where(conditions.reduce((a, b) => a | b));
+    }
+    if (tagIds != null && tagIds.isNotEmpty) {
+      // Запись подходит, если помечена хотя бы одним из выбранных тегов.
+      final tagged = await (db.select(
+        db.entryTags,
+      )..where((t) => t.tagId.isIn(tagIds))).get();
+      final ids = tagged.map((t) => t.entryId).toSet();
+      if (ids.isEmpty) return const [];
+      query.where(db.profileEntries.id.isIn(ids));
     }
     // Пагинация применяется только когда не требуется постфильтрация по
     // категориям (иначе limit исказил бы результат).

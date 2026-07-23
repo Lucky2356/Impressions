@@ -16,6 +16,7 @@ class CatalogState {
     this.typeId,
     this.categoryId,
     this.includeSubcategories = true,
+    this.tagIds = const [],
     this.relation,
     this.search = '',
     this.sort = EntrySort.recent,
@@ -25,6 +26,9 @@ class CatalogState {
   final String? typeId;
   final String? categoryId;
   final bool includeSubcategories;
+
+  /// Выбранные теги: запись подходит, если помечена хотя бы одним (§7.2).
+  final List<String> tagIds;
   final String? relation;
   final String search;
   final EntrySort sort;
@@ -34,6 +38,7 @@ class CatalogState {
     Object? typeId = _unset,
     Object? categoryId = _unset,
     bool? includeSubcategories,
+    List<String>? tagIds,
     Object? relation = _unset,
     String? search,
     EntrySort? sort,
@@ -45,6 +50,7 @@ class CatalogState {
           ? this.categoryId
           : categoryId as String?,
       includeSubcategories: includeSubcategories ?? this.includeSubcategories,
+      tagIds: tagIds ?? this.tagIds,
       relation: identical(relation, _unset)
           ? this.relation
           : relation as String?,
@@ -84,6 +90,14 @@ class CatalogController extends Notifier<CatalogState> {
   void setType(String? id) => state = state.copyWith(typeId: id);
   void setRelation(String? r) => state = state.copyWith(relation: r);
   void setCategory(String? id) => state = state.copyWith(categoryId: id);
+
+  /// Переключает тег в фильтре.
+  void toggleTag(String tagId) {
+    final next = [...state.tagIds];
+    if (!next.remove(tagId)) next.add(tagId);
+    state = state.copyWith(tagIds: next);
+  }
+
   void setSearch(String q) => state = state.copyWith(search: q);
   void setSort(EntrySort s) => state = state.copyWith(sort: s);
 
@@ -139,6 +153,7 @@ final catalogResultsProvider = FutureProvider<List<EntryView>>((ref) async {
       .entryViews(
         profile.id,
         categoryIds: categoryIds,
+        tagIds: s.tagIds.isEmpty ? null : s.tagIds,
         relation: s.relation,
         typeId: s.typeId,
         search: s.search,

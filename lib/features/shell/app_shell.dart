@@ -14,6 +14,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../design_system/design_system.dart';
+import '../archive/archive_screen.dart';
 import '../barcode/barcode_scan_sheet.dart';
 import '../catalog/catalog_providers.dart';
 import '../catalog/catalog_screen.dart';
@@ -118,6 +119,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       title: l10n.navSectionOther,
       items: [
         NavItemData(
+          id: NavIds.archive,
+          icon: Icons.archive_rounded,
+          label: l10n.archiveTitle,
+        ),
+        NavItemData(
           id: NavIds.settings,
           icon: Icons.settings_rounded,
           label: l10n.navSettings,
@@ -135,6 +141,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.profiles => l10n.navProfiles,
     NavIds.import => l10n.navImport,
     NavIds.incoming => l10n.incomingTitle,
+    NavIds.archive => l10n.archiveTitle,
     NavIds.settings => l10n.navSettings,
     _ => AppConfig.appName,
   };
@@ -148,6 +155,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     NavIds.profiles => const ProfilesScreen(),
     NavIds.import => const ImportScreen(),
     NavIds.incoming => const IncomingScreen(),
+    NavIds.archive => const ArchiveScreen(),
     NavIds.settings => const SettingsScreen(),
     _ => const HomeScreen(),
   };
