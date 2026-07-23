@@ -153,6 +153,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     await ref.read(categoryRepositoryProvider).archive(cat.id);
     if (_selectedId == cat.id) setState(() => _selectedId = null);
     _bump();
+    if (!mounted) return;
+    showUndoSnackBar(
+      context,
+      message: l10n.categoryArchived,
+      onUndo: () async {
+        await ref.read(categoryRepositoryProvider).restore(cat.id);
+        _bump();
+      },
+    );
   }
 
   bool _hiddenByCollapse(CategoryRow cat) {

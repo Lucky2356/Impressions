@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
@@ -15,10 +16,11 @@ import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
-import '../entry/entry_detail_sheet.dart';
 import '../home/home_providers.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'catalog_providers.dart';
+import 'catalog_selection.dart';
+import 'entry_tile.dart';
 
 /// Теги активного профиля — источник для фильтра.
 final profileTagsProvider = FutureProvider<List<TagRow>>((ref) async {
@@ -99,7 +101,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(catalogStateProvider);
     final results = ref.watch(catalogResultsProvider);
-    final count = results.value?.length;
+    // Общее число под фильтрами, а не размер загруженной страницы.
+    final count = results.value?.total;
 
     // Строку поиска мог заполнить глобальный поиск в шапке — синхронизируем.
     if (_searchController.text != state.search &&
@@ -128,7 +131,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       child: results.when(
         loading: () => const SizedBox.shrink(),
         error: (e, _) => Center(child: Text('$e')),
-        data: (list) {
+        data: (found) {
+          final list = found.items;
           if (list.isEmpty) {
             final filtered =
                 state.search.isNotEmpty ||
@@ -161,36 +165,106 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     ),
             );
           }
-          return _Results(entries: list, view: state.view);
+          return _CatalogShortcuts(
+            entries: list,
+            child: Column(
+              children: [
+                if (ref.watch(catalogSelectionProvider).isNotEmpty)
+                  BulkActionsBar(
+                    onSelectAll: () => ref
+                        .read(catalogSelectionProvider.notifier)
+                        .selectAll(list.map((e) => e.entryId)),
+                  ),
+                Expanded(
+                  child: _Results(
+                    entries: list,
+                    view: state.view,
+                    hasMore: found.hasMore,
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
   }
 }
 
-class _Results extends StatelessWidget {
-  const _Results({required this.entries, required this.view});
+/// Каталог с клавиатурой и панелью массовых действий.
+///
+/// Стрелки и Enter работают через обычный обход фокуса Flutter: карточки
+/// фокусируемы, поэтому отдельный обработчик нужен только для действий над
+/// выделением.
+class _CatalogShortcuts extends ConsumerWidget {
+  const _CatalogShortcuts({required this.entries, required this.child});
+
+  final List<EntryView> entries;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selection = ref.read(catalogSelectionProvider.notifier);
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyA, control: true): () =>
+            selection.selectAll(entries.map((e) => e.entryId)),
+        const SingleActivator(LogicalKeyboardKey.escape): selection.clear,
+      },
+      child: Focus(child: child),
+    );
+  }
+}
+
+class _Results extends ConsumerWidget {
+  const _Results({
+    required this.entries,
+    required this.view,
+    required this.hasMore,
+  });
 
   final List<EntryView> entries;
   final CatalogViewMode view;
 
+  /// Есть ли что подгружать дальше.
+  final bool hasMore;
+
+  /// Подгружает следующую страницу, когда до конца списка осталось немного.
+  bool _onScroll(ScrollNotification n, WidgetRef ref) {
+    if (!hasMore) return false;
+    final metrics = n.metrics;
+    if (metrics.pixels >= metrics.maxScrollExtent - 600) {
+      ref.read(catalogPageProvider.notifier).more();
+    }
+    return false;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final layout = context.layout;
+    final selected = ref.watch(catalogSelectionProvider);
 
     if (view == CatalogViewMode.list) {
-      return ListView.separated(
-        padding: EdgeInsets.fromLTRB(
-          layout.gutter,
-          AppDimens.space16,
-          layout.gutter,
-          AppDimens.space40,
-        ),
-        itemCount: entries.length,
-        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-        itemBuilder: (context, i) => EntryCardCompact(
-          data: _toCardData(context, entries[i]),
-          onTap: () => EntryDetailSheet.show(context, entries[i].entryId),
+      return NotificationListener<ScrollNotification>(
+        onNotification: (n) => _onScroll(n, ref),
+        child: ListView.separated(
+          padding: EdgeInsets.fromLTRB(
+            layout.gutter,
+            AppDimens.space16,
+            layout.gutter,
+            AppDimens.space40,
+          ),
+          itemCount: entries.length,
+          separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
+          itemBuilder: (context, i) => EntryTile(
+            entry: entries[i],
+            selected: selected.contains(entries[i].entryId),
+            selectionActive: selected.isNotEmpty,
+            builder: (onTap) => EntryCardCompact(
+              data: _toCardData(context, entries[i]),
+              onTap: onTap,
+            ),
+          ),
         ),
       );
     }
@@ -203,29 +277,37 @@ class _Results extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, cns) {
         final cols = layout.columnsFor(cns.maxWidth, tileWidth: tile);
-        return GridView.builder(
-          padding: EdgeInsets.fromLTRB(
-            layout.gutter,
-            AppDimens.space16,
-            layout.gutter,
-            AppDimens.space40,
-          ),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: cols,
-            mainAxisSpacing: AppDimens.space12,
-            crossAxisSpacing: AppDimens.space12,
-            childAspectRatio: entryCardAspectRatio(
-              availableWidth: cns.maxWidth,
-              columns: cols,
-              outerPadding: layout.gutter * 2,
-              dense: dense,
+        return NotificationListener<ScrollNotification>(
+          onNotification: (n) => _onScroll(n, ref),
+          child: GridView.builder(
+            padding: EdgeInsets.fromLTRB(
+              layout.gutter,
+              AppDimens.space16,
+              layout.gutter,
+              AppDimens.space40,
             ),
-          ),
-          itemCount: entries.length,
-          itemBuilder: (context, i) => EntryCard(
-            dense: dense,
-            data: _toCardData(context, entries[i]),
-            onTap: () => EntryDetailSheet.show(context, entries[i].entryId),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              mainAxisSpacing: AppDimens.space12,
+              crossAxisSpacing: AppDimens.space12,
+              childAspectRatio: entryCardAspectRatio(
+                availableWidth: cns.maxWidth,
+                columns: cols,
+                outerPadding: layout.gutter * 2,
+                dense: dense,
+              ),
+            ),
+            itemCount: entries.length,
+            itemBuilder: (context, i) => EntryTile(
+              entry: entries[i],
+              selected: selected.contains(entries[i].entryId),
+              selectionActive: selected.isNotEmpty,
+              builder: (onTap) => EntryCard(
+                dense: dense,
+                data: _toCardData(context, entries[i]),
+                onTap: onTap,
+              ),
+            ),
           ),
         );
       },

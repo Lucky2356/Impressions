@@ -185,6 +185,64 @@ class _CollectionDetail extends ConsumerWidget {
             icon: const Icon(Icons.playlist_add_rounded, size: 20),
             label: Text(l10n.collectionPickTitle),
           ),
+          PopupMenuButton<String>(
+            tooltip: '',
+            icon: Icon(Icons.more_horiz_rounded, color: c.textSecondary),
+            onSelected: (v) async {
+              final repo = ref.read(collectionRepositoryProvider);
+              if (v == 'rename') {
+                final name = await TextInputDialog.show(
+                  context,
+                  title: l10n.collectionRename,
+                  label: l10n.collectionNameLabel,
+                  initial: collection?.collection.name,
+                );
+                if (name == null) return;
+                await repo.rename(collectionId, name);
+                ref.read(dataRefreshProvider.notifier).bump();
+              } else if (v == 'archive') {
+                await repo.archive(collectionId);
+                ref.read(dataRefreshProvider.notifier).bump();
+                onBack();
+                if (!context.mounted) return;
+                showUndoSnackBar(
+                  context,
+                  message: l10n.collectionArchived,
+                  onUndo: () async {
+                    await repo.restore(collectionId);
+                    ref.read(dataRefreshProvider.notifier).bump();
+                  },
+                );
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'rename',
+                height: 40,
+                child: Row(
+                  children: [
+                    const Icon(Icons.edit_rounded, size: 18),
+                    const SizedBox(width: AppDimens.space12),
+                    Text(l10n.collectionRename),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'archive',
+                height: 40,
+                child: Row(
+                  children: [
+                    Icon(Icons.archive_rounded, size: 18, color: c.coral),
+                    const SizedBox(width: AppDimens.space12),
+                    Text(
+                      l10n.collectionArchive,
+                      style: TextStyle(color: c.coral),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       child: entries.when(

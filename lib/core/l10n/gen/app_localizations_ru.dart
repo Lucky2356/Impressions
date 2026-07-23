@@ -30,6 +30,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonRestore => 'Восстановить';
 
   @override
+  String get commonUndo => 'Вернуть';
+
+  @override
   String get commonEdit => 'Редактировать';
 
   @override
@@ -223,6 +226,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryArchive => 'Архивировать';
 
   @override
+  String get categoryArchived => 'Категория убрана в архив';
+
+  @override
   String get categoryRestore => 'Восстановить';
 
   @override
@@ -289,6 +295,72 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogResetFilters => 'Сбросить фильтры';
+
+  @override
+  String bulkSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Выбрано $count записей',
+      many: 'Выбрано $count записей',
+      few: 'Выбрано $count записи',
+      one: 'Выбрана $count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bulkSelectAll => 'Выбрать все';
+
+  @override
+  String get bulkSelectOne => 'Выделить';
+
+  @override
+  String get bulkCancel => 'Снять выделение';
+
+  @override
+  String get bulkSetCategory => 'В категорию';
+
+  @override
+  String get bulkAddTag => 'Добавить тег';
+
+  @override
+  String get bulkAddToCollection => 'В подборку';
+
+  @override
+  String get bulkArchive => 'В архив';
+
+  @override
+  String bulkArchiveConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Убрать $count записей в архив? Их можно будет вернуть.',
+      many: 'Убрать $count записей в архив? Их можно будет вернуть.',
+      few: 'Убрать $count записи в архив? Их можно будет вернуть.',
+      one: 'Убрать $count запись в архив? Её можно будет вернуть.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bulkArchived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей убрано в архив',
+      many: '$count записей убрано в архив',
+      few: '$count записи убраны в архив',
+      one: '$count запись убрана в архив',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get entryOpen => 'Открыть';
+
+  @override
+  String get entryContextHint => 'Нажмите правой кнопкой для действий';
 
   @override
   String get catalogAddedHiddenByFilters =>
@@ -378,7 +450,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryArchive => 'Архивировать запись';
 
   @override
-  String get entryArchived => 'Запись архивирована';
+  String get entryArchived => 'Запись убрана в архив';
 
   @override
   String entryVersionAt(String date) {
@@ -428,6 +500,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get collectionArchive => 'Архивировать подборку';
+
+  @override
+  String get collectionArchived => 'Подборка убрана в архив';
 
   @override
   String get collectionAdded => 'Добавлено в подборку';

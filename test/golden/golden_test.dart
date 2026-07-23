@@ -181,7 +181,7 @@ void main() {
           overrides: [
             ...baseOverrides(),
             catalogResultsProvider.overrideWith(
-              (ref) async => [
+              (ref) async => CatalogResults.of([
                 entryView(
                   id: 'e1',
                   title: 'Папа может',
@@ -196,7 +196,7 @@ void main() {
                   relation: 'love',
                   rating: 9.5,
                 ),
-              ],
+              ]),
             ),
             objectTypesProvider.overrideWith((ref) async => []),
             allCategoriesProvider.overrideWith((ref) async => []),

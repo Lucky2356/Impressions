@@ -105,7 +105,7 @@ void main() {
           overrides: [
             ...baseOverrides(),
             catalogResultsProvider.overrideWith(
-              (ref) async => [
+              (ref) async => CatalogResults.of([
                 entryView(
                   id: 'e1',
                   title: 'Папа может',
@@ -113,7 +113,7 @@ void main() {
                   relation: 'like',
                   rating: 7,
                 ),
-              ],
+              ]),
             ),
             objectTypesProvider.overrideWith((ref) async => []),
             allCategoriesProvider.overrideWith((ref) async => []),
@@ -142,7 +142,9 @@ void main() {
         ProviderScope(
           overrides: [
             ...baseOverrides(),
-            catalogResultsProvider.overrideWith((ref) async => []),
+            catalogResultsProvider.overrideWith(
+              (ref) async => CatalogResults.of(const []),
+            ),
             objectTypesProvider.overrideWith((ref) async => []),
             allCategoriesProvider.overrideWith((ref) async => []),
           ],
@@ -166,7 +168,7 @@ void main() {
           overrides: [
             ...baseOverrides(),
             catalogResultsProvider.overrideWith(
-              (ref) async => [
+              (ref) async => CatalogResults.of([
                 entryView(
                   id: 'e1',
                   title:
@@ -177,7 +179,7 @@ void main() {
                     'И ещё одна вложенная категория с длинным названием',
                   ],
                 ),
-              ],
+              ]),
             ),
             objectTypesProvider.overrideWith((ref) async => []),
             allCategoriesProvider.overrideWith((ref) async => []),
@@ -321,9 +323,9 @@ void main() {
           overrides: [
             ...baseOverrides(),
             catalogResultsProvider.overrideWith(
-              (ref) async => [
+              (ref) async => CatalogResults.of([
                 entryView(id: 'e1', title: 'Интерстеллар', rating: 9.5),
-              ],
+              ]),
             ),
             objectTypesProvider.overrideWith((ref) async => []),
             allCategoriesProvider.overrideWith((ref) async => []),

@@ -587,6 +587,17 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     _bump();
     if (!mounted) return;
     Navigator.of(context).pop();
+
+    // Сообщение показываем уже поверх экрана, с которого пришли: карточка
+    // закрыта, и её ScaffoldMessenger вместе с ней.
+    showUndoSnackBar(
+      context,
+      message: l10n.entryArchived,
+      onUndo: () async {
+        await ref.read(entryRepositoryProvider).restoreEntry(entryId);
+        _bump();
+      },
+    );
   }
 }
 

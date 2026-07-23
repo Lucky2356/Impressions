@@ -122,8 +122,62 @@ final catalogStateProvider = NotifierProvider<CatalogController, CatalogState>(
   CatalogController.new,
 );
 
-/// Результаты каталога с учётом фильтров и сортировки.
-final catalogResultsProvider = FutureProvider<List<EntryView>>((ref) async {
+/// Сколько записей подгружается за один шаг прокрутки.
+///
+/// Каталог рассчитан на десятки тысяч записей, а строил разом весь список:
+/// при полном профиле это заметная задержка на каждом изменении фильтра.
+const int catalogPageSize = 60;
+
+/// Сколько записей каталог сейчас показывает.
+///
+/// Сбрасывается при любом изменении фильтров: иначе после смены условий
+/// осталась бы «подгруженная» глубина от прошлого запроса.
+class CatalogPage extends Notifier<int> {
+  @override
+  int build() {
+    ref.listen(catalogStateProvider, (_, _) => state = catalogPageSize);
+    return catalogPageSize;
+  }
+
+  void more() => state += catalogPageSize;
+}
+
+final catalogPageProvider = NotifierProvider<CatalogPage, int>(CatalogPage.new);
+
+/// Что показывает каталог: подгруженная часть и сколько всего подходит.
+///
+/// Одним значением, а не двумя провайдерами: иначе счётчик в заголовке и
+/// список могли разойтись — что и произошло, когда общее число считалось
+/// отдельно от отображаемого среза.
+class CatalogResults {
+  const CatalogResults({required this.items, required this.total});
+
+  /// Всё поместилось: показанное и есть весь результат.
+  CatalogResults.of(this.items) : total = items.length;
+
+  final List<EntryView> items;
+
+  /// Сколько записей подходит под фильтры целиком.
+  final int total;
+
+  bool get hasMore => items.length < total;
+}
+
+/// Видимая часть результатов вместе с общим числом.
+final catalogResultsProvider = FutureProvider<CatalogResults>((ref) async {
+  final all = await ref.watch(_catalogAllResultsProvider.future);
+  final limit = ref.watch(catalogPageProvider);
+  return CatalogResults(
+    items: all.length <= limit ? all : all.sublist(0, limit),
+    total: all.length,
+  );
+});
+
+/// Полный результат под текущими фильтрами.
+///
+/// Отбор идёт в базе, а срез по странице — уже в памяти: постфильтрация по
+/// категориям и тегам делает `LIMIT` в запросе неточным.
+final _catalogAllResultsProvider = FutureProvider<List<EntryView>>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];

@@ -136,6 +136,12 @@ abstract class AppLocalizations {
   /// **'Восстановить'**
   String get commonRestore;
 
+  /// No description provided for @commonUndo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вернуть'**
+  String get commonUndo;
+
   /// No description provided for @commonEdit.
   ///
   /// In ru, this message translates to:
@@ -520,6 +526,12 @@ abstract class AppLocalizations {
   /// **'Архивировать'**
   String get categoryArchive;
 
+  /// No description provided for @categoryArchived.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория убрана в архив'**
+  String get categoryArchived;
+
   /// No description provided for @categoryRestore.
   ///
   /// In ru, this message translates to:
@@ -627,6 +639,78 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сбросить фильтры'**
   String get catalogResetFilters;
+
+  /// No description provided for @bulkSelected.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Выбрана {count} запись} few{Выбрано {count} записи} many{Выбрано {count} записей} other{Выбрано {count} записей}}'**
+  String bulkSelected(int count);
+
+  /// No description provided for @bulkSelectAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать все'**
+  String get bulkSelectAll;
+
+  /// No description provided for @bulkSelectOne.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выделить'**
+  String get bulkSelectOne;
+
+  /// No description provided for @bulkCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снять выделение'**
+  String get bulkCancel;
+
+  /// No description provided for @bulkSetCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'В категорию'**
+  String get bulkSetCategory;
+
+  /// No description provided for @bulkAddTag.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить тег'**
+  String get bulkAddTag;
+
+  /// No description provided for @bulkAddToCollection.
+  ///
+  /// In ru, this message translates to:
+  /// **'В подборку'**
+  String get bulkAddToCollection;
+
+  /// No description provided for @bulkArchive.
+  ///
+  /// In ru, this message translates to:
+  /// **'В архив'**
+  String get bulkArchive;
+
+  /// No description provided for @bulkArchiveConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Убрать {count} запись в архив? Её можно будет вернуть.} few{Убрать {count} записи в архив? Их можно будет вернуть.} many{Убрать {count} записей в архив? Их можно будет вернуть.} other{Убрать {count} записей в архив? Их можно будет вернуть.}}'**
+  String bulkArchiveConfirm(int count);
+
+  /// No description provided for @bulkArchived.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись убрана в архив} few{{count} записи убраны в архив} many{{count} записей убрано в архив} other{{count} записей убрано в архив}}'**
+  String bulkArchived(int count);
+
+  /// No description provided for @entryOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть'**
+  String get entryOpen;
+
+  /// No description provided for @entryContextHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите правой кнопкой для действий'**
+  String get entryContextHint;
 
   /// No description provided for @catalogAddedHiddenByFilters.
   ///
@@ -781,7 +865,7 @@ abstract class AppLocalizations {
   /// No description provided for @entryArchived.
   ///
   /// In ru, this message translates to:
-  /// **'Запись архивирована'**
+  /// **'Запись убрана в архив'**
   String get entryArchived;
 
   /// No description provided for @entryVersionAt.
@@ -855,6 +939,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Архивировать подборку'**
   String get collectionArchive;
+
+  /// No description provided for @collectionArchived.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подборка убрана в архив'**
+  String get collectionArchived;
 
   /// No description provided for @collectionAdded.
   ///
