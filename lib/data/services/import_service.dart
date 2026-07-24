@@ -172,6 +172,18 @@ class ImportService {
       );
     }
 
+    // Сколько выйдет после распаковки — известно из оглавления архива. Раньше
+    // предел проверялся по ходу дела, то есть уже после того, как содержимое
+    // оказывалось в памяти: к моменту отказа памяти могло не остаться. Теперь
+    // заведомо неподъёмный архив отклоняется, не распаковав ни байта.
+    final declared = archive.files.fold<int>(0, (sum, f) => sum + f.size);
+    if (declared > AppConfig.maxUnpackedBytes) {
+      throw ImportException(
+        ImportProblem.limitExceeded,
+        'Распакованные данные превышают лимит',
+      );
+    }
+
     // Распаковка в память с проверками путей (§21).
     final files = <String, Uint8List>{};
     var unpacked = 0;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:drift/drift.dart';
 import 'package:image/image.dart' as img;
@@ -31,12 +32,66 @@ class ImageRejected extends ImageResult {
   final String reason;
 }
 
+/// Готовые байты после тяжёлой обработки.
+class _Processed {
+  const _Processed({
+    required this.optimized,
+    required this.thumb,
+    required this.width,
+    required this.height,
+  });
+
+  final Uint8List optimized;
+  final Uint8List thumb;
+  final int width;
+  final int height;
+}
+
+/// Разбор изображения, поворот по EXIF, ограничение размера, сжатие и
+/// миниатюра. Возвращает null, если это не изображение.
+///
+/// Функция верхнего уровня, потому что уходит в [Isolate.run]: замыкание не
+/// должно тянуть за собой ссылки на объекты вызывающего изолята. EXIF при этом
+/// не переносится — вместе с ним не переносится и геометка съёмки.
+_Processed? _processImage(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return null;
+
+  var image = img.bakeOrientation(decoded);
+  image.exif = img.ExifData();
+
+  if (image.width > ImageService.maxSide ||
+      image.height > ImageService.maxSide) {
+    image = image.width >= image.height
+        ? img.copyResize(image, width: ImageService.maxSide)
+        : img.copyResize(image, height: ImageService.maxSide);
+  }
+
+  // Всегда JPEG — компактно и предсказуемо; прозрачность для наших сценариев
+  // не критична.
+  final optimized = Uint8List.fromList(
+    img.encodeJpg(image, quality: ImageService.jpegQuality),
+  );
+  final thumbSource = image.width >= image.height
+      ? img.copyResize(image, width: ImageService.thumbSide)
+      : img.copyResize(image, height: ImageService.thumbSide);
+  final thumb = Uint8List.fromList(img.encodeJpg(thumbSource, quality: 80));
+
+  return _Processed(
+    optimized: optimized,
+    thumb: thumb,
+    width: image.width,
+    height: image.height,
+  );
+}
+
 /// Обработка изображений (§16), полностью локальная, без сети.
 ///
 /// Порядок: проверка сигнатуры → определение MIME → отклонение подозрительных
 /// файлов → удаление EXIF (включая геолокацию) → исправление ориентации →
 /// ограничение размера → оптимизированный оригинал + thumbnail → SHA-256 →
-/// дедупликация → атомарная запись.
+/// дедупликация → атомарная запись. Тяжёлая середина уходит в отдельный
+/// изолят: см. [_processImage].
 class ImageService {
   ImageService(this.db, {Directory? mediaDirectory})
     : _mediaOverride = mediaDirectory;
@@ -52,7 +107,7 @@ class ImageService {
   /// Сторона миниатюры.
   static const int thumbSide = 400;
 
-  static const int _jpegQuality = 88;
+  static const int jpegQuality = 88;
 
   /// Определяет MIME по сигнатуре файла (magic bytes), а не по расширению.
   static String? detectMime(Uint8List bytes) {
@@ -127,33 +182,16 @@ class ImageService {
       return const ImageRejected('Неподдерживаемый формат изображения');
     }
 
-    // Декодирование также подтверждает, что файл действительно изображение.
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) {
+    // 4-8. Разбор, поворот по EXIF, сжатие и миниатюра — в отдельном изоляте.
+    // `package:image` целиком на Dart, и снимок с телефона обрабатывается
+    // секунду-другую: в основном изоляте на это время замирал весь интерфейс,
+    // а фотографии как раз чаще всего добавляют с телефона.
+    final processed = await Isolate.run(() => _processImage(bytes));
+    if (processed == null) {
       return const ImageRejected('Не удалось прочитать изображение');
     }
-
-    // 4-5. Исправление ориентации по EXIF; сам EXIF далее не переносится,
-    // поэтому геолокация не сохраняется.
-    var image = img.bakeOrientation(decoded);
-    image.exif = img.ExifData();
-
-    // 6. Ограничение размера.
-    if (image.width > maxSide || image.height > maxSide) {
-      image = image.width >= image.height
-          ? img.copyResize(image, width: maxSide)
-          : img.copyResize(image, height: maxSide);
-    }
-
-    // 7-8. Оптимизированный оригинал и миниатюра (всегда JPEG — компактно
-    // и предсказуемо; прозрачность для наших сценариев не критична).
-    final optimized = Uint8List.fromList(
-      img.encodeJpg(image, quality: _jpegQuality),
-    );
-    final thumbSource = image.width >= image.height
-        ? img.copyResize(image, width: thumbSide)
-        : img.copyResize(image, height: thumbSide);
-    final thumb = Uint8List.fromList(img.encodeJpg(thumbSource, quality: 80));
+    final optimized = processed.optimized;
+    final thumb = processed.thumb;
 
     // 9-10. SHA-256 и дедупликация.
     final sha = Hashing.sha256OfBytes(optimized);
@@ -179,8 +217,8 @@ class ImageService {
             storagePath: p.basename(originalPath),
             thumbPath: Value(p.basename(thumbPath)),
             mimeType: 'image/jpeg',
-            width: Value(image.width),
-            height: Value(image.height),
+            width: Value(processed.width),
+            height: Value(processed.height),
             byteSize: optimized.length,
             caption: Value(caption),
             createdAt: DateTime.now(),

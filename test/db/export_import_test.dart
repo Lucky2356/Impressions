@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:impressions/core/config/app_config.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/repositories/category_repository.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
@@ -347,6 +348,36 @@ void main() {
         predicate(
           (e) =>
               e is ImportException && e.problem == ImportProblem.unexpectedFile,
+        ),
+      ),
+    );
+  });
+
+  test('слишком большой пакет отклоняется до распаковки (§21)', () async {
+    final target = openTestDb();
+    addTearDown(target.db0Close);
+
+    // Оглавление обещает больше предела. Нули сжимаются почти в ничто, поэтому
+    // сам файл остаётся крошечным — ровно та бомба, от которой защищаемся:
+    // раньше предел проверялся уже по ходу распаковки, то есть после того, как
+    // содержимое оказывалось в памяти.
+    final archive = Archive();
+    final huge = Uint8List(AppConfig.maxUnpackedBytes + 1024);
+    archive.add(ArchiveFile('attachments/huge.jpg', huge.length, huge));
+    final bytes = ZipEncoder().encode(archive);
+
+    expect(
+      bytes.length,
+      lessThan(AppConfig.maxUnpackedBytes),
+      reason: 'сам архив мал — велико только его содержимое',
+    );
+
+    await expectLater(
+      ImportService(target).inspect(Uint8List.fromList(bytes)),
+      throwsA(
+        predicate(
+          (e) =>
+              e is ImportException && e.problem == ImportProblem.limitExceeded,
         ),
       ),
     );

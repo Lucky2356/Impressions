@@ -656,7 +656,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     Expanded(
                       child: FilledButton(
                         onPressed: _busy || typeList.isEmpty ? null : _save,
-                        child: Text(l10n.commonSave),
+                        // Сохранение с фотографиями занимает заметное время:
+                        // каждый снимок разбирается и сжимается. Раньше кнопка
+                        // просто гасла, и было непонятно, идёт ли что-нибудь.
+                        child: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(l10n.commonSave),
                       ),
                     ),
                   ],

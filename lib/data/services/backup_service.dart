@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -99,25 +100,21 @@ class BackupService {
     final dbFile = File(p.join(base.path, 'impressions.sqlite'));
     final mediaDir = Directory(p.join(base.path, 'media'));
 
-    final archive = Archive();
-
-    if (dbFile.existsSync()) {
-      final bytes = await dbFile.readAsBytes();
-      archive.add(ArchiveFile(_dbEntryName, bytes.length, bytes));
-    }
-
+    // Что попадёт в копию: имя внутри архива → файл на диске.
+    final sources = <String, File>{};
+    if (dbFile.existsSync()) sources[_dbEntryName] = dbFile;
     if (mediaDir.existsSync()) {
       for (final entity in mediaDir.listSync()) {
         if (entity is! File) continue;
-        final bytes = await entity.readAsBytes();
-        archive.add(
-          ArchiveFile(
-            '$_mediaPrefix${p.basename(entity.path)}',
-            bytes.length,
-            bytes,
-          ),
-        );
+        sources['$_mediaPrefix${p.basename(entity.path)}'] = entity;
       }
+    }
+
+    // Контрольные суммы считаются потоково: файл не поднимается в память
+    // целиком даже ради хеша.
+    final checksums = <String, String>{};
+    for (final entry in sources.entries) {
+      checksums[entry.key] = await _sha256OfFile(entry.value);
     }
 
     final createdAt = DateTime.now();
@@ -126,37 +123,53 @@ class BackupService {
       'reason': reason,
       'schemaVersion': db.schemaVersion,
       'appVersion': AppConfig.payloadVersion,
-      'files': {
-        for (final f in archive.files)
-          f.name: Hashing.sha256Hex(f.content as List<int>),
-      },
+      'files': checksums,
     };
     final manifestBytes = utf8.encode(jsonEncode(manifest));
-    archive.add(
-      ArchiveFile(_manifestName, manifestBytes.length, manifestBytes),
-    );
 
-    final bytes = ZipEncoder().encode(archive);
     final dir = await backupsDir();
     final stamp = createdAt
         .toIso8601String()
         .replaceAll(':', '-')
         .replaceAll('.', '-');
     final file = File(p.join(dir.path, 'backup_${reason}_$stamp.zip'));
-
-    // Атомарная запись.
     final tmp = File('${file.path}.tmp');
-    await tmp.writeAsBytes(bytes, flush: true);
+
+    // Архив пишется сразу в файл. Раньше он собирался в памяти целиком, а
+    // затем ещё раз кодировался в неё же — то есть база и все фотографии
+    // держались в оперативной памяти в двух экземплярах. На телефоне с большой
+    // медиатекой это заканчивалось нехваткой памяти.
+    final encoder = ZipFileEncoder();
+    encoder.create(tmp.path);
+    try {
+      for (final entry in sources.entries) {
+        await encoder.addFile(entry.value, entry.key);
+      }
+      encoder.addArchiveFile(ArchiveFile.bytes(_manifestName, manifestBytes));
+    } finally {
+      await encoder.close();
+    }
+
+    // Атомарная замена: незавершённая копия не должна выглядеть готовой.
     await tmp.rename(file.path);
 
+    // Размер снимаем до очистки: она может удалить и эту копию, если предел
+    // хранения уже достигнут, и тогда файла к моменту ответа не будет.
+    final byteSize = await file.length();
     await _pruneOld();
 
     return BackupInfo(
       path: file.path,
       createdAt: createdAt,
-      byteSize: bytes.length,
+      byteSize: byteSize,
       reason: reason,
     );
+  }
+
+  /// SHA-256 файла без чтения его целиком в память.
+  static Future<String> _sha256OfFile(File file) async {
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString();
   }
 
   /// Список копий, от новых к старым.

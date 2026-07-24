@@ -162,7 +162,15 @@ class _PendingThumb extends StatelessWidget {
                 : null,
           ),
           clipBehavior: Clip.antiAlias,
-          child: Image.memory(bytes, fit: BoxFit.cover),
+          // Здесь лежит исходный снимок целиком — на телефоне это 12 Мп.
+          // Без cacheWidth Flutter развернул бы его в память в полном размере
+          // ради квадратика 84×84.
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            cacheWidth: 168,
+            filterQuality: FilterQuality.low,
+          ),
         ),
         Positioned(
           top: 2,
