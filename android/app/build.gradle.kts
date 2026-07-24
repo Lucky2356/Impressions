@@ -52,7 +52,12 @@ android {
             create("release") {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                // Путь считается от каталога android/ — там же, где лежит
+                // key.properties. Обычный file() отсчитывал бы от android/app/,
+                // и ключ рядом с key.properties просто не нашёлся бы.
+                storeFile = keystoreProperties
+                    .getProperty("storeFile")
+                    ?.let { rootProject.file(it) }
                 storePassword = keystoreProperties.getProperty("storePassword")
             }
         }
