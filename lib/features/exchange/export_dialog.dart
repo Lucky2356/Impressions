@@ -313,7 +313,9 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                 label: Text(l10n.exportReadable),
               ),
             ),
-            const SizedBox(width: AppDimens.space8),
+            // Отступ между кнопками задавался шириной, хотя они стоят в
+            // колонке: по вертикали зазора не было вовсе и кнопки слипались.
+            const SizedBox(height: AppDimens.space12),
             FilledButton.icon(
               onPressed: _busy ? null : _export,
               icon: const Icon(Icons.upload_rounded, size: 20),

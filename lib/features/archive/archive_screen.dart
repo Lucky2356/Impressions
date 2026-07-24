@@ -222,62 +222,90 @@ class _ArchivedTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
 
+    final info = Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: c.surfaceMuted,
+            borderRadius: AppDimens.brSm,
+          ),
+          child: Icon(icon, size: 19, color: c.textMuted),
+        ),
+        const SizedBox(width: AppDimens.space12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.titleMedium?.copyWith(
+                  color: c.textSecondary,
+                ),
+              ),
+              if (subtitle.isNotEmpty)
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final actions = [
+      OutlinedButton.icon(
+        onPressed: onRestore,
+        icon: const Icon(Icons.restore_rounded, size: 18),
+        label: Text(l10n.commonRestore),
+      ),
+      const SizedBox(width: AppDimens.space8),
+      // Отмены здесь нет намеренно: обещать «Вернуть» после настоящего
+      // удаления было бы враньём.
+      AppIconButton(
+        icon: Icons.delete_forever_rounded,
+        tooltip: l10n.purgeAction,
+        onPressed: onPurge,
+      ),
+    ];
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimens.space8),
       child: AppCard(
         elevated: false,
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: c.surfaceMuted,
-                borderRadius: AppDimens.brSm,
-              ),
-              child: Icon(icon, size: 19, color: c.textMuted),
-            ),
-            const SizedBox(width: AppDimens.space12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        // «Вернуть» и удаление вместе занимают около 160 точек. На телефоне они
+        // выдавливали название за край карточки, поэтому там уходят под него.
+        child: LayoutBuilder(
+          builder: (context, cns) {
+            if (cns.maxWidth >= 420) {
+              return Row(
                 children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.titleMedium?.copyWith(
-                      color: c.textSecondary,
-                    ),
-                  ),
-                  if (subtitle.isNotEmpty)
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.text.labelSmall?.copyWith(
-                        color: c.textMuted,
-                      ),
-                    ),
+                  Expanded(child: info),
+                  const SizedBox(width: AppDimens.space12),
+                  ...actions,
                 ],
-              ),
-            ),
-            const SizedBox(width: AppDimens.space12),
-            OutlinedButton.icon(
-              onPressed: onRestore,
-              icon: const Icon(Icons.restore_rounded, size: 18),
-              label: Text(l10n.commonRestore),
-            ),
-            const SizedBox(width: AppDimens.space8),
-            // Отмены здесь нет намеренно: обещать «Вернуть» после настоящего
-            // удаления было бы враньём.
-            AppIconButton(
-              icon: Icons.delete_forever_rounded,
-              tooltip: l10n.purgeAction,
-              onPressed: onPurge,
-            ),
-          ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                info,
+                const SizedBox(height: AppDimens.space8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: actions,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -10,6 +10,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
+import '../entry/entry_context_menu.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 import '../wishlist/wishlist_screen.dart';
@@ -152,17 +153,22 @@ class _MainColumn extends ConsumerWidget {
                 : 2;
             return _grid(
               [
+                // Правый клик и долгое нажатие открывают то же меню, что и в
+                // каталоге: раньше на этих карточках они не делали ничего.
                 for (final e in recent.take(cols * 2))
-                  CoverProgress(
-                    title: e.title,
-                    imagePath: e.coverPath,
-                    seedColor: c.profileColorFor(e.objectId),
-                    progress: e.rating == null ? null : e.rating! / 10,
-                    leftLabel: e.categoryPath.isEmpty
-                        ? e.typeName
-                        : e.categoryPath.last,
-                    rightLabel: e.rating?.toStringAsFixed(1),
-                    onTap: () => EntryDetailSheet.show(context, e.entryId),
+                  EntryMenuTarget(
+                    entry: e,
+                    child: CoverProgress(
+                      title: e.title,
+                      imagePath: e.coverPath,
+                      seedColor: c.profileColorFor(e.objectId),
+                      progress: e.rating == null ? null : e.rating! / 10,
+                      leftLabel: e.categoryPath.isEmpty
+                          ? e.typeName
+                          : e.categoryPath.last,
+                      rightLabel: e.rating?.toStringAsFixed(1),
+                      onTap: () => EntryDetailSheet.show(context, e.entryId),
+                    ),
                   ),
               ],
               cols,

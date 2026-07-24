@@ -552,7 +552,7 @@
   "updateSkip": "Пропустить эту версию",
   "updateInstallNow": "Установить",
   "updateInstallHint": "Приложение закроется, обновится и запустится снова.",
-  "updateInstallHintAndroid": "Приложение скачает обновление и передаст его системе — останется подтвердить установку.",
+  "updateInstallHintAndroid": "Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.",
   "updateInstalling": "Открываем установщик…",
   "updateDownloading": "Скачивание: {percent}%",
   "@updateDownloading": { "placeholders": { "percent": { "type": "int" } } },

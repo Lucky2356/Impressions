@@ -139,31 +139,40 @@ class _AppearanceSection extends ConsumerWidget {
       children: [
         SettingsRow(
           label: l10n.settingsTheme,
-          control: SegmentedToggle<ThemeMode>(
-            value: mode,
-            onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
-            segments: [
-              SegmentData(
-                value: ThemeMode.light,
-                icon: Icons.light_mode_rounded,
-                tooltip: l10n.themeLight,
-                label: l10n.themeLight,
-              ),
-              SegmentData(
-                value: ThemeMode.dark,
-                icon: Icons.dark_mode_rounded,
-                tooltip: l10n.themeDark,
-                label: l10n.themeDark,
-              ),
-              SegmentData(
-                value: ThemeMode.system,
-                icon: Icons.brightness_auto_rounded,
-                tooltip: l10n.themeSystem,
-                label: l10n.themeSystem,
-              ),
-            ],
+          // Переключатель занимает ровно отведённую ширину и делит её поровну.
+          // Раньше он держал свою естественную ширину и на телефоне вылезал
+          // за края карточки; совсем узкой строке подписи не нужны — остаются
+          // значки с подсказками.
+          control: LayoutBuilder(
+            builder: (context, cns) {
+              final withLabels = cns.maxWidth >= 300;
+              return SegmentedToggle<ThemeMode>(
+                value: mode,
+                expand: true,
+                onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
+                segments: [
+                  SegmentData(
+                    value: ThemeMode.light,
+                    icon: Icons.light_mode_rounded,
+                    tooltip: l10n.themeLight,
+                    label: withLabels ? l10n.themeLight : null,
+                  ),
+                  SegmentData(
+                    value: ThemeMode.dark,
+                    icon: Icons.dark_mode_rounded,
+                    tooltip: l10n.themeDark,
+                    label: withLabels ? l10n.themeDark : null,
+                  ),
+                  SegmentData(
+                    value: ThemeMode.system,
+                    icon: Icons.brightness_auto_rounded,
+                    tooltip: l10n.themeSystem,
+                    label: withLabels ? l10n.themeSystem : null,
+                  ),
+                ],
+              );
+            },
           ),
-          // Переключатель занимает всю ширину, когда стоит на своей строке.
           minControlWidth: 330,
         ),
         Divider(height: AppDimens.space24, color: c.divider),
@@ -370,56 +379,110 @@ class _BackupsSection extends ConsumerWidget {
           )
         else
           for (var i = 0; i < backups.length; i++) ...[
-            Row(
-              children: [
-                Icon(Icons.inventory_2_outlined, size: 18, color: c.textMuted),
-                const SizedBox(width: AppDimens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        DateFormat(
-                          'd MMMM y, HH:mm',
-                          'ru',
-                        ).format(backups[i].createdAt),
-                        style: context.text.bodySmall,
-                      ),
-                      Text(
-                        '${reasonLabel(backups[i].reason)} · '
-                        '${(backups[i].byteSize / 1024).toStringAsFixed(0)} КБ',
-                        style: context.text.labelSmall?.copyWith(
-                          color: c.textMuted,
-                        ),
-                      ),
-                    ],
+            _BackupRow(
+              backup: backups[i],
+              reasonLabel: reasonLabel(backups[i].reason),
+              onVerify: () async {
+                final db = ref.read(appDatabaseProvider);
+                final ok = await BackupService(db).verify(backups[i].path);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ok ? l10n.backupVerifyOk : l10n.backupVerifyFailed,
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    final db = ref.read(appDatabaseProvider);
-                    final ok = await BackupService(db).verify(backups[i].path);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok ? l10n.backupVerifyOk : l10n.backupVerifyFailed,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Text(l10n.backupVerify),
-                ),
-                TextButton(
-                  onPressed: () => _restore(context, ref, backups[i]),
-                  child: Text(l10n.backupRestore),
-                ),
-              ],
+                );
+              },
+              onRestore: () => _restore(context, ref, backups[i]),
             ),
             if (i != backups.length - 1)
               Divider(height: AppDimens.space20, color: c.divider),
           ],
       ],
+    );
+  }
+}
+
+/// Строка резервной копии: когда сделана, чем и сколько весит, плюс действия.
+///
+/// «Проверить целостность» и «Восстановить» вместе занимают больше трёхсот
+/// точек. На телефоне они выдавливали дату в колонку шириной в один символ, и
+/// она печаталась по букве в строку. Поэтому на узкой ширине кнопки уходят под
+/// текст, а не встают рядом с ним.
+class _BackupRow extends StatelessWidget {
+  const _BackupRow({
+    required this.backup,
+    required this.reasonLabel,
+    required this.onVerify,
+    required this.onRestore,
+  });
+
+  final BackupInfo backup;
+  final String reasonLabel;
+  final VoidCallback onVerify;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = AppLocalizations.of(context);
+
+    final info = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.inventory_2_outlined, size: 18, color: c.textMuted),
+        const SizedBox(width: AppDimens.space12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                DateFormat('d MMMM y, HH:mm', 'ru').format(backup.createdAt),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.bodySmall,
+              ),
+              Text(
+                '$reasonLabel · '
+                '${(backup.byteSize / 1024).toStringAsFixed(0)} КБ',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.labelSmall?.copyWith(color: c.textMuted),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final actions = [
+      TextButton(onPressed: onVerify, child: Text(l10n.backupVerify)),
+      TextButton(onPressed: onRestore, child: Text(l10n.backupRestore)),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, cns) {
+        // Кнопкам нужно около 330 точек; тексту — хотя бы 160, иначе дата
+        // всё равно превратится в лесенку.
+        if (cns.maxWidth >= 500) {
+          return Row(
+            children: [
+              Expanded(child: info),
+              ...actions,
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            info,
+            Wrap(spacing: AppDimens.space8, children: actions),
+          ],
+        );
+      },
     );
   }
 }

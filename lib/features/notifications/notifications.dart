@@ -77,7 +77,10 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
         body: '',
         icon: Icons.inbox_rounded,
         at: latest,
-        unread: true,
+        // Считается прочитанным вместе со всеми: раньше здесь стояло жёсткое
+        // `true`, и «Отметить всё прочитанным» на это уведомление не влияло —
+        // точка и счётчик висели навсегда.
+        unread: unread(latest),
         target: NavIds.incoming,
       ),
     );
@@ -90,13 +93,17 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
       latestVersion.isNotEmpty &&
       latestVersion != dismissed) {
     final checkedRaw = await settings.get(SettingKeys.appUpdateCheckedAt);
+    final checkedAt = DateTime.tryParse(checkedRaw ?? '') ?? DateTime.now();
     result.add(
       AppNotification(
         kind: NotificationKind.appUpdate,
         title: latestVersion,
         body: '',
         icon: Icons.system_update_rounded,
-        at: DateTime.tryParse(checkedRaw ?? '') ?? DateTime.now(),
+        at: checkedAt,
+        // Тоже гасится общей отметкой: по умолчанию было «непрочитано», и
+        // уведомление об обновлении не убиралось ничем, кроме установки.
+        unread: unread(checkedAt),
         target: NavIds.settings,
       ),
     );
@@ -165,25 +172,43 @@ final unreadNotificationsProvider = Provider<int>((ref) {
 
 /// Панель уведомлений, раскрывающаяся из шапки.
 class NotificationPanel extends ConsumerWidget {
-  const NotificationPanel({super.key});
+  const NotificationPanel({super.key, this.width = 380});
+
+  /// Ширина панели. На телефоне экран уже её обычных 380 точек.
+  final double width;
 
   /// Показывает панель рядом с кнопкой в шапке.
+  ///
+  /// Панель прижимается правым краем к кнопке, но не вылезает за экран: на
+  /// телефоне она уходила левым краем за границу и заголовок «Уведомления»
+  /// обрезался.
   static Future<void> show(BuildContext context, {required Offset anchor}) {
+    const margin = AppDimens.space12;
     return showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (ctx) => Stack(
-        children: [
-          Positioned(
-            top: anchor.dy,
-            right: MediaQuery.sizeOf(ctx).width - anchor.dx,
-            child: const Material(
-              color: Colors.transparent,
-              child: NotificationPanel(),
+      builder: (ctx) {
+        final screen = MediaQuery.sizeOf(ctx).width;
+        final width = screen - margin * 2 < 380.0 ? screen - margin * 2 : 380.0;
+        final preferred = screen - anchor.dx;
+        final maxRight = screen - width - margin;
+        final right = preferred.clamp(
+          margin,
+          maxRight < margin ? margin : maxRight,
+        );
+        return Stack(
+          children: [
+            Positioned(
+              top: anchor.dy,
+              right: right,
+              child: Material(
+                color: Colors.transparent,
+                child: NotificationPanel(width: width),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -220,7 +245,7 @@ class NotificationPanel extends ConsumerWidget {
     };
 
     return Container(
-      width: 380,
+      width: width,
       constraints: const BoxConstraints(maxHeight: 460),
       decoration: BoxDecoration(
         color: c.surface,

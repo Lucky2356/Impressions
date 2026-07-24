@@ -1641,7 +1641,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get updateInstallHintAndroid =>
-      'Приложение скачает обновление и передаст его системе — останется подтвердить установку.';
+      'Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.';
 
   @override
   String get updateInstalling => 'Открываем установщик…';

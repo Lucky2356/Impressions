@@ -2917,7 +2917,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateInstallHintAndroid.
   ///
   /// In ru, this message translates to:
-  /// **'Приложение скачает обновление и передаст его системе — останется подтвердить установку.'**
+  /// **'Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.'**
   String get updateInstallHintAndroid;
 
   /// No description provided for @updateInstalling.

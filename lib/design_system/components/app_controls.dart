@@ -307,10 +307,18 @@ class SegmentedToggle<T> extends StatelessWidget {
                   ),
                   if (s.label != null) ...[
                     const SizedBox(width: AppDimens.space8),
-                    Text(
-                      s.label!,
-                      style: context.text.labelMedium?.copyWith(
-                        color: active ? c.textPrimary : c.textMuted,
+                    // Подпись ужимается, а не выталкивает сегмент за край:
+                    // «Светлая · Тёмная · Системная» не помещались в ширину
+                    // телефона и вылезали за карточку настроек.
+                    Flexible(
+                      child: Text(
+                        s.label!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        style: context.text.labelMedium?.copyWith(
+                          color: active ? c.textPrimary : c.textMuted,
+                        ),
                       ),
                     ),
                   ],
