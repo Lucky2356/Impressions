@@ -1009,6 +1009,44 @@ class AppLocalizationsRu extends AppLocalizations {
       'Тип задаёт набор полей записи, категория — вашу полку в дереве.';
 
   @override
+  String get errorLogTitle => 'Журнал ошибок';
+
+  @override
+  String get errorLogHint =>
+      'Сбои записываются на этом устройстве и никуда не отправляются. Если приложение повело себя странно, скопируйте журнал и приложите к сообщению об ошибке.';
+
+  @override
+  String get errorLogEmpty => 'Сбоев не было';
+
+  @override
+  String errorLogCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записи',
+      many: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get errorLogShow => 'Показать';
+
+  @override
+  String get errorLogCopy => 'Скопировать';
+
+  @override
+  String get errorLogCopied => 'Журнал скопирован в буфер обмена';
+
+  @override
+  String get errorLogClear => 'Очистить';
+
+  @override
+  String get errorLogCleared => 'Журнал очищен';
+
+  @override
   String get settingsAdvanced => 'Дополнительно';
 
   @override

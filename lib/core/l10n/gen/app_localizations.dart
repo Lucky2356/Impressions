@@ -1846,6 +1846,60 @@ abstract class AppLocalizations {
   /// **'Тип задаёт набор полей записи, категория — вашу полку в дереве.'**
   String get quickAddTypeVsCategory;
 
+  /// No description provided for @errorLogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал ошибок'**
+  String get errorLogTitle;
+
+  /// No description provided for @errorLogHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбои записываются на этом устройстве и никуда не отправляются. Если приложение повело себя странно, скопируйте журнал и приложите к сообщению об ошибке.'**
+  String get errorLogHint;
+
+  /// No description provided for @errorLogEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбоев не было'**
+  String get errorLogEmpty;
+
+  /// No description provided for @errorLogCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записи}}'**
+  String errorLogCount(num count);
+
+  /// No description provided for @errorLogShow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать'**
+  String get errorLogShow;
+
+  /// No description provided for @errorLogCopy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать'**
+  String get errorLogCopy;
+
+  /// No description provided for @errorLogCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал скопирован в буфер обмена'**
+  String get errorLogCopied;
+
+  /// No description provided for @errorLogClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get errorLogClear;
+
+  /// No description provided for @errorLogCleared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал очищен'**
+  String get errorLogCleared;
+
   /// No description provided for @settingsAdvanced.
   ///
   /// In ru, this message translates to:

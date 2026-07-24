@@ -1,0 +1,9 @@
+# Образец. Скопируйте в android/key.properties и подставьте свои значения.
+# Настоящий key.properties и файл .jks в репозиторий не попадают (.gitignore).
+# Как создать ключ — README, раздел «Ключ подписи Android».
+
+# Путь к хранилищу относительно каталога android/
+storeFile=impressions.jks
+storePassword=ЗАМЕНИТЕ
+keyAlias=impressions
+keyPassword=ЗАМЕНИТЕ

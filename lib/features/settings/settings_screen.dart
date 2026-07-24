@@ -18,6 +18,7 @@ import '../../data/services/backup_service.dart';
 import '../../design_system/design_system.dart';
 import '../onboarding/app_tour.dart';
 import 'devices_section.dart';
+import 'error_log_section.dart';
 import 'network_section.dart';
 import 'types_section.dart';
 
@@ -90,6 +91,8 @@ class SettingsScreen extends ConsumerWidget {
           DevicesSection(),
           SizedBox(height: AppDimens.space24),
           KeyStorageSection(),
+          SizedBox(height: AppDimens.space24),
+          ErrorLogSection(),
           SizedBox(height: AppDimens.space24),
           _AboutSection(),
           SizedBox(height: AppDimens.space40),

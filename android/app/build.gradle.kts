@@ -1,7 +1,32 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Ключ подписи и пароли лежат вне репозитория: android/key.properties.
+// Как его завести — в README, раздел «Ключ подписи Android».
+val keystorePropertiesFile = rootProject.file("key.properties")
+val hasKeystore = keystorePropertiesFile.exists()
+val keystoreProperties = Properties().apply {
+    if (hasKeystore) FileInputStream(keystorePropertiesFile).use { load(it) }
+}
+
+// Собирать релиз отладочным ключом нельзя. Такой ключ одинаков у всех и лежит
+// с общеизвестным паролем: пересборка на другой машине даёт другую подпись,
+// Android отказывается обновлять приложение, и данные приходится терять
+// вместе с ним. Поэтому отсутствие ключа — ошибка сборки, а не тихий откат.
+gradle.taskGraph.whenReady {
+    if (!hasKeystore && allTasks.any { it.name.contains("Release") }) {
+        throw GradleException(
+            "Нет android/key.properties — релизную сборку нечем подписать. " +
+                "Отладочный ключ для выпуска не годится: см. README, " +
+                "раздел «Ключ подписи Android»."
+        )
+    }
 }
 
 android {
@@ -15,21 +40,27 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "club.impressions.impressions"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasKeystore) signingConfigs.getByName("release") else null
         }
     }
 }

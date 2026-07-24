@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:drift/drift.dart';
@@ -230,9 +231,11 @@ class KeyService {
     List<int> data,
     String password,
   ) async {
-    final secret = await _keyFromPassword(password);
+    final salt = _newSalt();
+    final secret = await _keyFromPassword(password, salt);
     final box = await _aes.encrypt(data, secretKey: secret);
     final payload = jsonEncode({
+      'salt': base64Encode(salt),
       'nonce': base64Encode(box.nonce),
       'cipher': base64Encode(box.cipherText),
       'mac': base64Encode(box.mac.bytes),
@@ -252,7 +255,10 @@ class KeyService {
         nonce: base64Decode(map['nonce']! as String),
         mac: Mac(base64Decode(map['mac']! as String)),
       );
-      final secret = await _keyFromPassword(password);
+      // Пакеты, выгруженные до появления соли в формате, читаются по-старому.
+      final rawSalt = map['salt'];
+      final salt = rawSalt is String ? base64Decode(rawSalt) : _legacySalt;
+      final secret = await _keyFromPassword(password, salt);
       final clear = await _aes.decrypt(box, secretKey: secret);
       return Uint8List.fromList(clear);
     } on Object {
@@ -260,18 +266,30 @@ class KeyService {
     }
   }
 
-  /// Производный ключ из пароля (PBKDF2-HMAC-SHA256).
-  static Future<SecretKey> _keyFromPassword(String password) async {
+  /// Соль пакетов, выгруженных до версии 1.9.0.
+  ///
+  /// Она была одна на всех, и это ошибка: число итераций поднимает цену одной
+  /// попытки подбора, но общая соль позволяет посчитать таблицу один раз и
+  /// применить её сразу ко всем пакетам всех пользователей. Оставлена только
+  /// для чтения старых файлов — новые получают случайную.
+  static final List<int> _legacySalt = utf8.encode('impressions.package.v1');
+
+  /// Случайная соль пакета: 16 байт из криптографического источника.
+  static List<int> _newSalt() {
+    final random = Random.secure();
+    return List<int>.generate(16, (_) => random.nextInt(256));
+  }
+
+  /// Производный ключ из пароля (PBKDF2-HMAC-SHA256) на заданной соли.
+  static Future<SecretKey> _keyFromPassword(
+    String password,
+    List<int> salt,
+  ) async {
     final kdf = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
       iterations: 120000,
       bits: 256,
     );
-    return kdf.deriveKeyFromPassword(
-      password: password,
-      // Соль фиксирована в рамках формата: пакет самодостаточен, а пароль
-      // передаётся отдельно. Стойкость обеспечивается числом итераций.
-      nonce: utf8.encode('impressions.package.v1'),
-    );
+    return kdf.deriveKeyFromPassword(password: password, nonce: salt);
   }
 }
