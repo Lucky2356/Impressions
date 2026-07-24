@@ -19,6 +19,7 @@ import 'package:impressions/features/exchange/incoming_screen.dart';
 import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/insights/insights_screen.dart';
 import 'package:impressions/features/profiles/profiles_screen.dart';
+import 'package:impressions/features/quick_add/category_picker.dart';
 import 'package:impressions/features/settings/settings_screen.dart';
 import 'package:impressions/features/wishlist/wishlist_screen.dart';
 
@@ -301,6 +302,43 @@ void main() {
     );
 
     expectTitleReadable(tester, 'Профили');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('выбор категории помещается на телефоне с клавиатурой', (
+    tester,
+  ) async {
+    // Поле поиска в выборе категории получает фокус само, так что на телефоне
+    // клавиатура открыта всегда — и окну остаётся заметно меньше высоты.
+    // Вставки задаются самому окну: `MediaQuery` поверх `MaterialApp` тот
+    // перекрыл бы своим, собранным из окна.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 340);
+    addTearDown(tester.view.resetViewInsets);
+
+    await pumpPhone(
+      tester,
+      ProviderScope(
+        overrides: [
+          ...base(),
+          allCategoriesProvider.overrideWith(
+            (ref) async => [category('c1', 'Продукты')],
+          ),
+        ],
+        child: app(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => CategoryPicker.show(context),
+              child: const Text('открыть'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('открыть'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CategoryPicker), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
