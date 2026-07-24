@@ -55,12 +55,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.dispose();
   }
 
+  /// Разделы в нижней панели телефона. Пятое место занимает «Ещё»: остальные
+  /// разделы раньше на телефоне были недоступны вовсе — до «Хочу попробовать»,
+  /// «Архива», «Статистики» и «Профилей» просто нельзя было добраться.
   static const _bottomOrder = [
     NavIds.home,
     NavIds.categories,
     NavIds.catalog,
     NavIds.collections,
-    NavIds.settings,
   ];
 
   void _go(String id) => ref.read(navProvider.notifier).go(id);
@@ -222,6 +224,94 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (query.trim().isNotEmpty) _go(NavIds.catalog);
   }
 
+  /// Разделы, не поместившиеся в нижнюю панель телефона.
+  ///
+  /// Панель вмещает четыре пункта, а разделов больше десятка. Раньше лишние
+  /// просто отсутствовали на телефоне — открыть «Архив» или «Статистику» с него
+  /// было нельзя. Здесь они все, теми же названиями и значками, что и на
+  /// компьютере.
+  Future<void> _showMore(AppLocalizations l10n) async {
+    final incoming = ref.read(incomingCountProvider).value ?? 0;
+    final groups = _groups(l10n, incoming);
+    final activeId = ref.read(navProvider);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final c = sheetContext.colors;
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.space8,
+              0,
+              AppDimens.space8,
+              AppDimens.space24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimens.space16,
+                    0,
+                    AppDimens.space16,
+                    AppDimens.space8,
+                  ),
+                  child: Text(
+                    l10n.navAllSections,
+                    style: sheetContext.text.titleLarge,
+                  ),
+                ),
+                for (final group in groups) ...[
+                  if (group.title != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimens.space16,
+                        AppDimens.space12,
+                        AppDimens.space16,
+                        AppDimens.space4,
+                      ),
+                      child: Text(
+                        group.title!,
+                        style: sheetContext.text.labelSmall?.copyWith(
+                          color: c.textMuted,
+                        ),
+                      ),
+                    ),
+                  for (final item in group.items)
+                    ListTile(
+                      leading: Icon(
+                        item.icon,
+                        color: item.id == activeId
+                            ? c.accentPrimary
+                            : c.textSecondary,
+                      ),
+                      title: Text(item.label),
+                      selected: item.id == activeId,
+                      trailing: item.badge > 0
+                          ? Badge(label: Text('${item.badge}'))
+                          : null,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppDimens.brSm,
+                      ),
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        _go(item.id);
+                      },
+                    ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _scanBarcode() async {
     final scanned = await BarcodeScanSheet.show(context);
     if (scanned == null || !mounted) return;
@@ -306,9 +396,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   // ---- Компактная раскладка (Android) ----
   Widget _compactLayout(AppLocalizations l10n) {
     final activeId = ref.watch(navProvider);
-    final selectedIndex = _bottomOrder
-        .indexOf(activeId)
-        .clamp(0, _bottomOrder.length - 1);
+    final incoming = ref.watch(incomingCountProvider).value ?? 0;
+    // Раздела нет в панели — значит, он открыт из «Ещё», и подсвечивать надо
+    // именно её.
+    final inBottom = _bottomOrder.indexOf(activeId);
+    final selectedIndex = inBottom < 0 ? _bottomOrder.length : inBottom;
     // Высота статус-бара (на телефонах с вырезом — вместе с ним). Без этого
     // заголовок уезжал под часы и значок сети.
     final topInset = MediaQuery.paddingOf(context).top;
@@ -337,7 +429,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       body: SafeArea(top: false, child: _animatedBody(activeId)),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
-        onDestinationSelected: (i) => _go(_bottomOrder[i]),
+        onDestinationSelected: (i) =>
+            i < _bottomOrder.length ? _go(_bottomOrder[i]) : _showMore(l10n),
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
@@ -360,9 +453,13 @@ class _AppShellState extends ConsumerState<AppShell> {
             label: l10n.navCollections,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings_rounded),
-            label: l10n.navSettings,
+            icon: Badge(
+              isLabelVisible: incoming > 0,
+              label: Text('$incoming'),
+              child: const Icon(Icons.more_horiz_rounded),
+            ),
+            selectedIcon: const Icon(Icons.more_horiz_rounded),
+            label: l10n.navMore,
           ),
         ],
       ),

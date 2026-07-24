@@ -298,6 +298,18 @@ abstract class AppLocalizations {
   /// **'Ещё'**
   String get navSectionOther;
 
+  /// No description provided for @navMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё'**
+  String get navMore;
+
+  /// No description provided for @navAllSections.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все разделы'**
+  String get navAllSections;
+
   /// No description provided for @headerHelp.
   ///
   /// In ru, this message translates to:
@@ -1021,7 +1033,7 @@ abstract class AppLocalizations {
   /// No description provided for @tourAddBody.
   ///
   /// In ru, this message translates to:
-  /// **'Для новой записи хватает названия. Отношение, оценку, заметку, фотографии, теги и подборку можно задать сразу же — кнопкой «Добавить подробности».'**
+  /// **'Для новой записи хватает названия. Отношение, оценка и фотографии — сразу в форме; заметка, дата, теги и подборка прячутся за «Добавить подробности».'**
   String get tourAddBody;
 
   /// No description provided for @tourAddHintDesktop.
@@ -1827,6 +1839,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.'**
   String get backupRestoreTooNew;
+
+  /// No description provided for @quickAddTypeVsCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип задаёт набор полей записи, категория — вашу полку в дереве.'**
+  String get quickAddTypeVsCategory;
+
+  /// No description provided for @settingsAdvanced.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительно'**
+  String get settingsAdvanced;
+
+  /// No description provided for @settingsAdvancedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настраивают один раз или не трогают вовсе'**
+  String get settingsAdvancedHint;
 
   /// No description provided for @settingsAppearance.
   ///
@@ -2883,6 +2913,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Приложение закроется, обновится и запустится снова.'**
   String get updateInstallHint;
+
+  /// No description provided for @updateInstallHintAndroid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение скачает обновление и передаст его системе — останется подтвердить установку.'**
+  String get updateInstallHintAndroid;
+
+  /// No description provided for @updateInstalling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открываем установщик…'**
+  String get updateInstalling;
 
   /// No description provided for @updateDownloading.
   ///

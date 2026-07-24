@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/config/app_config.dart';
@@ -196,7 +197,8 @@ class UpdateService {
       return null;
     }
 
-    // Ищем установщик среди приложенных файлов.
+    // Ищем файл для текущей платформы. Раньше искали только `.exe`, поэтому
+    // на телефоне обновление предлагало скачать установщик для Windows.
     String? installer;
     final assets = json['assets'];
     if (assets is List) {
@@ -206,7 +208,7 @@ class UpdateService {
         final url = a['browser_download_url'];
         if (name is String &&
             url is String &&
-            name.toLowerCase().endsWith('.exe')) {
+            name.toLowerCase().endsWith(installerExtension)) {
           installer = url;
           break;
         }
@@ -227,6 +229,15 @@ class UpdateService {
 
   // ---- Скачивание и установка обновления ----
 
+  /// Расширение файла обновления для текущей платформы.
+  ///
+  /// Windows ставится установщиком, Android — пакетом приложения. Файл выпуска
+  /// выбирается по этому расширению, и по нему же проверяется ссылка.
+  static String get installerExtension => Platform.isAndroid ? '.apk' : '.exe';
+
+  /// Умеет ли платформа поставить обновление сама, без браузера.
+  static bool get canInstallInPlace => Platform.isWindows || Platform.isAndroid;
+
   /// Ссылка ведёт на выпуск нашего же репозитория.
   ///
   /// Проверка обязательна: файл после скачивания запускается, поэтому адрес,
@@ -240,7 +251,9 @@ class UpdateService {
       'release-assets.githubusercontent.com',
     };
     if (!hosts.contains(uri.host)) return false;
-    if (!uri.path.toLowerCase().endsWith('.exe')) return false;
+    // Только файл для своей платформы: подсунутый .exe на телефоне бесполезен,
+    // а .apk на Windows — тем более.
+    if (!uri.path.toLowerCase().endsWith(installerExtension)) return false;
     // Прямые ссылки на файлы выпуска идут через redirect на CDN, поэтому
     // проверяем принадлежность репозиторию только там, где путь её содержит.
     if (uri.host == 'github.com' &&
@@ -270,7 +283,7 @@ class UpdateService {
     }
 
     final dir = await Directory.systemTemp.createTemp('impressions_update');
-    final file = File(p.join(dir.path, 'Impressions-setup.exe'));
+    final file = File(p.join(dir.path, 'Impressions-setup$installerExtension'));
     final sink = file.openWrite();
     final total = response.contentLength ?? 0;
     var received = 0;
@@ -287,11 +300,24 @@ class UpdateService {
     return file;
   }
 
-  /// Запускает установщик и завершает приложение.
+  /// Ставит скачанное обновление.
   ///
-  /// Установщик закрывает работающую копию сам (`/CLOSEAPPLICATIONS`) и
-  /// запускает её обратно после обновления.
+  /// Windows: установщик запускается тихо, сам закрывает работающую копию
+  /// (`/CLOSEAPPLICATIONS`) и поднимает её обратно — от человека не требуется
+  /// ничего. Android: пакет отдаётся системному установщику, который спросит
+  /// одно подтверждение; тише поставить приложение, установленное не из
+  /// магазина, нельзя в принципе.
   Future<void> runInstaller(File installer) async {
+    if (Platform.isAndroid) {
+      final result = await OpenFilex.open(
+        installer.path,
+        type: 'application/vnd.android.package-archive',
+      );
+      if (result.type != ResultType.done) {
+        throw StateError(result.message);
+      }
+      return;
+    }
     await Process.start(installer.path, const [
       '/SILENT',
       '/CLOSEAPPLICATIONS',

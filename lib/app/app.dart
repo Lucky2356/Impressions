@@ -8,9 +8,11 @@ import '../core/l10n/gen/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../data/providers.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/services/update_service.dart';
 import '../design_system/design_system.dart';
 import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/settings/network_section.dart';
 import '../features/shell/app_shell.dart';
 import 'app_state.dart';
 import 'data_refresh.dart';
@@ -114,12 +116,30 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
     await AppTour.show(context);
   }
 
+  /// Предлагает обновиться сразу при запуске.
+  ///
+  /// Раньше найденная версия только оседала в колокольчике уведомлений: чтобы
+  /// обновиться, надо было догадаться зайти в настройки и нажать «Проверить».
+  /// Теперь предложение приходит само, а «Пропустить эту версию» запоминается,
+  /// чтобы не спрашивать про неё при каждом запуске.
+  Future<void> _offerUpdate(AppRelease release) async {
+    final settings = ref.read(settingsRepositoryProvider);
+    final dismissed = await settings.get(SettingKeys.appUpdateDismissed);
+    if (dismissed == release.version || !mounted) return;
+    await showUpdateDialog(
+      context,
+      release.version,
+      release.installerUrl ?? release.url,
+    );
+  }
+
   Future<void> _run() async {
     await _showTourIfNeeded();
     try {
       final service = ref.read(updateServiceProvider);
       final version = (await PackageInfo.fromPlatform()).version;
-      await service.checkAppUpdate(currentVersion: version);
+      final release = await service.checkAppUpdate(currentVersion: version);
+      if (release != null && mounted) await _offerUpdate(release);
 
       final report = await service.refreshProducts();
       if (report.updated > 0) {

@@ -155,6 +155,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.icon,
     this.showLabel = true,
     this.active = false,
+    this.expand = false,
   });
 
   final String label;
@@ -170,10 +171,50 @@ class AppDropdown<T> extends StatelessWidget {
   /// не дают понять, что список сужен.
   final bool active;
 
+  /// Занимать всю ширину родителя, а не сжиматься под содержимое. В панели
+  /// фильтров так все списки одной ширины, а не «короткий-длинный вперемешку».
+  final bool expand;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final tint = active ? c.accentPrimary : c.textMuted;
+
+    final dropdown = DropdownButtonHideUnderline(
+      child: DropdownButton<T>(
+        value: value,
+        items: items,
+        // В самой таблетке значение всегда в одну строку с многоточием: длинное
+        // «Недавно добавленные» переносилось на вторую строку и обрезалось по
+        // высоте. В раскрытом списке названия по-прежнему видны целиком.
+        selectedItemBuilder: (context) => [
+          for (final item in items)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: DefaultTextStyle.merge(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                child: item.child,
+              ),
+            ),
+        ],
+        onChanged: onChanged,
+        isDense: true,
+        isExpanded: expand,
+        borderRadius: AppDimens.brMd,
+        style: context.text.labelMedium?.copyWith(
+          color: c.textPrimary,
+          fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+        ),
+        dropdownColor: c.surface,
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 18,
+          color: active ? c.accentPrimary : c.textSecondary,
+        ),
+      ),
+    );
+
     return Container(
       height: AppDimens.controlHeightSm,
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.space12),
@@ -183,7 +224,7 @@ class AppDropdown<T> extends StatelessWidget {
         border: Border.all(color: active ? c.accentPrimary : c.border),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         children: [
           if (icon != null) ...[
             Icon(icon, size: 16, color: tint),
@@ -193,25 +234,9 @@ class AppDropdown<T> extends StatelessWidget {
             Text(label, style: context.text.labelSmall?.copyWith(color: tint)),
             const SizedBox(width: AppDimens.space8),
           ],
-          DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              value: value,
-              items: items,
-              onChanged: onChanged,
-              isDense: true,
-              borderRadius: AppDimens.brMd,
-              style: context.text.labelMedium?.copyWith(
-                color: c.textPrimary,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              ),
-              dropdownColor: c.surface,
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: active ? c.accentPrimary : c.textSecondary,
-              ),
-            ),
-          ),
+          // В растянутом режиме список забирает остаток строки, стрелка встаёт
+          // у правого края — все фильтры выглядят одинаково.
+          expand ? Expanded(child: dropdown) : dropdown,
         ],
       ),
     );

@@ -9,6 +9,12 @@
          обновлений; и то и другое отключается в настройках. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Приложение ставится не из магазина, поэтому обновление оно скачивает
+         само и отдаёт системному установщику. Без этого разрешения обновиться
+         можно было бы только вручную через браузер и «Проводник». Установку всё
+         равно подтверждает человек — система спрашивает сама. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+
     <application
         android:label="Впечатления"
         android:name="${applicationName}"

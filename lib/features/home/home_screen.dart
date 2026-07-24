@@ -39,21 +39,24 @@ class HomeScreen extends ConsumerWidget {
       );
     }
 
+    // Боковая колонка занимала свои 360 точек даже пустой: справа оставалась
+    // мёртвая полоса, и содержимое главной стояло не по центру окна.
+    final hasWishlist =
+        (ref.watch(wantToTryProvider).value ?? const <EntryView>[]).isNotEmpty;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final layout = AppLayout.resolve(constraints.maxWidth);
-        final showSide = constraints.maxWidth >= 1080;
+        final showSide = hasWishlist && constraints.maxWidth >= 1080;
         final horizontal = layout.gutter;
 
         return SingleChildScrollView(
           child: Center(
             child: ConstrainedBox(
-              // Сводка шире обычной колонки текста: это плитки, а не чтение.
-              constraints: BoxConstraints(
-                maxWidth: layout.isUltra
-                    ? AppDimens.maxContentWidthUltra * 1.4
-                    : 1440,
-              ),
+              // Та же колонка, что и у остальных разделов. Своя, более широкая
+              // мерка делала главную единственным экраном с другим краем: на
+              // 2K содержимое начиналось и заканчивалось не там, где в каталоге.
+              constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   horizontal,

@@ -371,9 +371,11 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
   bool _downloading = false;
   String? _error;
 
-  /// Установить одним нажатием можно только там, где есть наш установщик.
+  /// Поставить прямо из приложения можно там, где есть подходящий файл выпуска:
+  /// установщик на Windows, пакет приложения на Android.
   bool get _canInstall =>
-      Platform.isWindows && UpdateService.isTrustedInstallerUrl(widget.url);
+      UpdateService.canInstallInPlace &&
+      UpdateService.isTrustedInstallerUrl(widget.url);
 
   Future<void> _installNow() async {
     final l10n = AppLocalizations.of(context);
@@ -402,6 +404,15 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
         });
       }
     }
+  }
+
+  /// Больше не предлагать именно эту версию.
+  Future<void> _skipVersion() async {
+    await ref
+        .read(settingsRepositoryProvider)
+        .set(SettingKeys.appUpdateDismissed, widget.version);
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   Future<void> _openPage() => _openExternally(AppConfig.releasesPageUrl);
@@ -433,7 +444,12 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
             if (_canInstall && !_downloading) ...[
               const SizedBox(height: AppDimens.space8),
               Text(
-                l10n.updateInstallHint,
+                // На Android приложение не может поставить себя молча:
+                // установку подтверждает система. Обещать «закроется и
+                // обновится само» там было бы неправдой.
+                Platform.isAndroid
+                    ? l10n.updateInstallHintAndroid
+                    : l10n.updateInstallHint,
                 style: context.text.labelSmall?.copyWith(color: c.textMuted),
               ),
             ],
@@ -469,6 +485,9 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(l10n.updateLater),
               ),
+              // Предложение приходит само при запуске, поэтому должен быть
+              // способ сказать «эту версию не предлагай».
+              TextButton(onPressed: _skipVersion, child: Text(l10n.updateSkip)),
               TextButton(
                 onPressed: _openPage,
                 child: Text(l10n.updateOpenPage),

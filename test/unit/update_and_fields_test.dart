@@ -42,6 +42,40 @@ void main() {
     });
   });
 
+  group('Файл обновления выбирается под платформу', () {
+    // Тесты идут на Windows, поэтому «своё» расширение здесь — .exe. Смысл
+    // проверки в том, что чужое отвергается: на телефоне обновление скачивало
+    // установщик для Windows, который там бесполезен.
+    test('своё расширение принимается, чужое — нет', () {
+      const base = 'https://github.com/Lucky2356/Impressions/releases/download';
+      expect(
+        UpdateService.isTrustedInstallerUrl('$base/v1.8.0/Setup.exe'),
+        isTrue,
+      );
+      expect(
+        UpdateService.isTrustedInstallerUrl('$base/v1.8.0/Impressions.apk'),
+        isFalse,
+      );
+    });
+
+    test('расширение совпадает с тем, по которому ищут файл выпуска', () {
+      expect(UpdateService.installerExtension, '.exe');
+    });
+
+    test('чужой домен и http отвергаются при любом расширении', () {
+      expect(
+        UpdateService.isTrustedInstallerUrl('https://evil.example/Setup.exe'),
+        isFalse,
+      );
+      expect(
+        UpdateService.isTrustedInstallerUrl(
+          'http://github.com/Lucky2356/Impressions/releases/download/x/S.exe',
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('Ручная проверка обновлений', () {
     UpdateService service(int status, [String body = '']) {
       driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;

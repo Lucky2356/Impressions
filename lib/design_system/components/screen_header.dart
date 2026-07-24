@@ -58,14 +58,8 @@ class ScreenHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: layout.gutter),
       child: _content(context),
     );
-    final limit = maxWidth ?? layout.contentMaxWidth;
-    if (!constrain || !limit.isFinite) return content;
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: limit),
-        child: content,
-      ),
-    );
+    if (!constrain) return content;
+    return alignNarrowColumn(layout, content, maxWidth, Alignment.centerLeft);
   }
 
   Widget _content(BuildContext context) {
@@ -124,6 +118,41 @@ class ScreenHeader extends StatelessWidget {
   }
 }
 
+/// Ставит содержимое в общую колонку раздела.
+///
+/// Разделы с более узкой собственной колонкой (настройки) прижимаются к её
+/// левому краю, а не центрируются сами по себе. Иначе при переходе из каталога
+/// в настройки содержимое заметно прыгало вправо: у каждого раздела был свой
+/// отступ слева.
+Widget alignNarrowColumn(
+  AppLayout layout,
+  Widget content,
+  double? narrowWidth,
+  Alignment alignment,
+) {
+  var body = content;
+  if (narrowWidth != null && narrowWidth.isFinite) {
+    body = Align(
+      alignment: alignment,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: narrowWidth),
+        child: content,
+      ),
+    );
+  }
+  final outer = layout.contentMaxWidth;
+  if (!outer.isFinite) return body;
+  return Align(
+    alignment: alignment == Alignment.topLeft
+        ? Alignment.topCenter
+        : Alignment.center,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: outer),
+      child: body,
+    ),
+  );
+}
+
 /// Каркас раздела: шапка, разделитель и содержимое с ограничением ширины.
 ///
 /// Ограничение ширины — часть поддержки 4K: на очень широком мониторе списки
@@ -149,15 +178,8 @@ class ScreenScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final layout = context.layout;
-    final limit = maxWidth ?? layout.contentMaxWidth;
-    final body = constrain && limit.isFinite
-        ? Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: limit),
-              child: child,
-            ),
-          )
+    final body = constrain
+        ? alignNarrowColumn(layout, child, maxWidth, Alignment.topLeft)
         : child;
 
     return Column(

@@ -64,35 +64,60 @@ class SettingsScreen extends ConsumerWidget {
         title: l10n.navSettings,
         maxWidth: _settingsMaxWidth,
       ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _settingsMaxWidth),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.space24,
-              vertical: AppDimens.space16,
-            ),
-            children: const [
-              _AppearanceSection(),
-              SizedBox(height: AppDimens.space24),
-              _BehaviourSection(),
-              SizedBox(height: AppDimens.space24),
-              NetworkSection(),
-              SizedBox(height: AppDimens.space24),
-              TypesSection(),
-              SizedBox(height: AppDimens.space24),
-              DevicesSection(),
-              SizedBox(height: AppDimens.space24),
-              _BackupsSection(),
-              SizedBox(height: AppDimens.space24),
-              KeyStorageSection(),
-              SizedBox(height: AppDimens.space24),
-              _AboutSection(),
-              SizedBox(height: AppDimens.space40),
-            ],
-          ),
+      // Ширину задаёт сам каркас: он же ставит колонку по общему левому краю.
+      child: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.space24,
+          vertical: AppDimens.space16,
         ),
+        // Порядок — по тому, как часто настройку меняют. Сверху то, за чем
+        // сюда заходят: вид, поведение списков, сохранность данных и
+        // обновления. Ниже — то, что настраивают один раз или никогда:
+        // типы объектов, устройства, хранение ключа. Сведения в конце.
+        children: const [
+          _AppearanceSection(),
+          SizedBox(height: AppDimens.space24),
+          _BehaviourSection(),
+          SizedBox(height: AppDimens.space24),
+          _BackupsSection(),
+          SizedBox(height: AppDimens.space24),
+          NetworkSection(),
+          SizedBox(height: AppDimens.space32),
+          _AdvancedHeader(),
+          SizedBox(height: AppDimens.space16),
+          TypesSection(),
+          SizedBox(height: AppDimens.space24),
+          DevicesSection(),
+          SizedBox(height: AppDimens.space24),
+          KeyStorageSection(),
+          SizedBox(height: AppDimens.space24),
+          _AboutSection(),
+          SizedBox(height: AppDimens.space40),
+        ],
       ),
+    );
+  }
+}
+
+/// Граница между тем, что настраивают, и тем, что настраивать не приходится.
+class _AdvancedHeader extends StatelessWidget {
+  const _AdvancedHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Divider(height: AppDimens.space24, color: c.divider),
+        Text(l10n.settingsAdvanced, style: context.text.titleMedium),
+        const SizedBox(height: AppDimens.space2),
+        Text(
+          l10n.settingsAdvancedHint,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        ),
+      ],
     );
   }
 }

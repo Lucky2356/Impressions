@@ -54,9 +54,12 @@ class AppLayout {
   final double scale;
 
   /// Ширина панели дерева категорий на широком экране.
+  ///
+  /// В шапке панели теперь стоит и переключатель «полки/дерево», поэтому
+  /// прежних 320 точек не хватало: заголовок «Категории» переносился по слогам.
   double get treePaneWidth => switch (size) {
-    LayoutSize.ultra => 380,
-    _ => 320,
+    LayoutSize.ultra => 420,
+    _ => 366,
   };
 
   bool get isCompact => size == LayoutSize.compact;

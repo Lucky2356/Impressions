@@ -95,6 +95,38 @@ void main() {
   ];
 
   group('Каталог', () {
+    testWidgets('на телефоне поле поиска занимает всю ширину', (tester) async {
+      // Ширина телефона. Раньше поиск делил строку с кнопкой фильтров и
+      // переключателем вида и схлопывался до одного значка.
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...baseOverrides(),
+            catalogResultsProvider.overrideWith(
+              (ref) async => CatalogResults.of([
+                entryView(id: 'e1', title: 'Папа может', path: ['Продукты']),
+              ]),
+            ),
+            objectTypesProvider.overrideWith((ref) async => []),
+            allCategoriesProvider.overrideWith((ref) async => []),
+          ],
+          child: app(const CatalogScreen()),
+        ),
+      );
+      await tester.pump();
+
+      final field = find.byType(AppSearchField);
+      expect(field, findsOneWidget);
+      // Поле должно занимать почти всю строку, а не сжиматься под значок.
+      final width = tester.getSize(field).width;
+      expect(width, greaterThan(300));
+    });
+
     testWidgets('показывает записи с путём категорий', (tester) async {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1.0;
@@ -268,6 +300,24 @@ void main() {
       expect(find.byType(CategoryTreeRow), findsNWidgets(2));
       expect(find.text('Продукты'), findsWidgets);
       expect(find.text('Колбасы'), findsOneWidget);
+    });
+
+    testWidgets('из дерева можно вернуться на полки', (tester) async {
+      await pumpTwoLevels(tester);
+
+      await tester.tap(find.byTooltip('Деревом'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CategoryTreeRow), findsNWidgets(2));
+
+      // Переключатель обязан остаться на экране: раньше он был только в полках,
+      // и уйдя в дерево, вернуться было нечем.
+      expect(find.byType(CategoryModeToggle), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Полками'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CategoryShelfCard), findsOneWidget);
+      expect(find.byType(CategoryTreeRow), findsNothing);
     });
 
     testWidgets('пустое дерево предлагает создать категорию', (tester) async {

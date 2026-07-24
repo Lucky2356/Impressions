@@ -111,6 +111,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navSectionOther => 'Ещё';
 
   @override
+  String get navMore => 'Ещё';
+
+  @override
+  String get navAllSections => 'Все разделы';
+
+  @override
   String get headerHelp => 'Помощь';
 
   @override
@@ -543,7 +549,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tourAddBody =>
-      'Для новой записи хватает названия. Отношение, оценку, заметку, фотографии, теги и подборку можно задать сразу же — кнопкой «Добавить подробности».';
+      'Для новой записи хватает названия. Отношение, оценка и фотографии — сразу в форме; заметка, дата, теги и подборка прячутся за «Добавить подробности».';
 
   @override
   String get tourAddHintDesktop =>
@@ -997,6 +1003,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get backupRestoreTooNew =>
       'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.';
+
+  @override
+  String get quickAddTypeVsCategory =>
+      'Тип задаёт набор полей записи, категория — вашу полку в дереве.';
+
+  @override
+  String get settingsAdvanced => 'Дополнительно';
+
+  @override
+  String get settingsAdvancedHint =>
+      'Настраивают один раз или не трогают вовсе';
 
   @override
   String get settingsAppearance => 'Оформление';
@@ -1621,6 +1638,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get updateInstallHint =>
       'Приложение закроется, обновится и запустится снова.';
+
+  @override
+  String get updateInstallHintAndroid =>
+      'Приложение скачает обновление и передаст его системе — останется подтвердить установку.';
+
+  @override
+  String get updateInstalling => 'Открываем установщик…';
 
   @override
   String updateDownloading(int percent) {

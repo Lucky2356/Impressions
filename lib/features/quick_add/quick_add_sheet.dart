@@ -449,49 +449,89 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   ),
                 ],
                 const SizedBox(height: AppDimens.space16),
-                DropdownButtonFormField<String>(
-                  initialValue: _typeId,
-                  // Без общего значка слева: у каждого типа он свой, и два
-                  // значка подряд в свёрнутом поле выглядели как ошибка.
-                  decoration: InputDecoration(
-                    labelText: l10n.quickAddTypeLabel,
-                  ),
-                  // Без ограничения список типов раскрывался на всю высоту
-                  // экрана и перекрывал форму.
-                  menuMaxHeight: 320,
-                  borderRadius: AppDimens.brMd,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
-                  items: [
-                    for (final t in typeList)
-                      DropdownMenuItem(
-                        value: t.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              AppIcons.byKey(t.icon),
-                              size: 18,
-                              color: c.textSecondary,
-                            ),
-                            const SizedBox(width: AppDimens.space12),
-                            Text(t.name),
-                          ],
-                        ),
+                // Тип и категорию принимают за одно и то же: два одинаковых
+                // поля друг под другом читались как повтор. Теперь они стоят
+                // рядом, а под ними написано, чем отличаются.
+                LayoutBuilder(
+                  builder: (context, cns) {
+                    final typeField = DropdownButtonFormField<String>(
+                      initialValue: _typeId,
+                      // Без общего значка слева: у каждого типа он свой, и два
+                      // значка подряд в свёрнутом поле выглядели как ошибка.
+                      decoration: InputDecoration(
+                        labelText: l10n.quickAddTypeLabel,
                       ),
-                  ],
-                  onChanged: (v) => setState(() => _typeId = v),
-                ),
-                const SizedBox(height: AppDimens.space16),
-                _CategoryField(
-                  category: _category,
-                  onPick: () async {
-                    final picked = await CategoryPicker.show(context);
-                    if (picked != null) {
-                      setState(
-                        () =>
-                            _category = picked.cleared ? null : picked.category,
+                      // Без ограничения список типов раскрывался на всю высоту
+                      // экрана и перекрывал форму.
+                      menuMaxHeight: 320,
+                      borderRadius: AppDimens.brMd,
+                      isExpanded: true,
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                      ),
+                      items: [
+                        for (final t in typeList)
+                          DropdownMenuItem(
+                            value: t.id,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.byKey(t.icon),
+                                  size: 18,
+                                  color: c.textSecondary,
+                                ),
+                                const SizedBox(width: AppDimens.space12),
+                                Flexible(
+                                  child: Text(
+                                    t.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) => setState(() => _typeId = v),
+                    );
+                    final categoryField = _CategoryField(
+                      category: _category,
+                      onPick: () async {
+                        final picked = await CategoryPicker.show(context);
+                        if (picked != null) {
+                          setState(
+                            () => _category = picked.cleared
+                                ? null
+                                : picked.category,
+                          );
+                        }
+                      },
+                    );
+                    if (cns.maxWidth < 420) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          typeField,
+                          const SizedBox(height: AppDimens.space12),
+                          categoryField,
+                        ],
                       );
                     }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: typeField),
+                        const SizedBox(width: AppDimens.space12),
+                        Expanded(child: categoryField),
+                      ],
+                    );
                   },
+                ),
+                const SizedBox(height: AppDimens.space8),
+                Text(
+                  l10n.quickAddTypeVsCategory,
+                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
                 ),
                 const SizedBox(height: AppDimens.space16),
                 Text(
@@ -520,6 +560,49 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   ],
                 ),
                 const SizedBox(height: AppDimens.space16),
+                // Оценка и фотографии — на виду, а не за кнопкой «Подробности»:
+                // это то, ради чего запись и заводят. Под кнопкой осталось
+                // остальное — заметка, дата, теги, подборка, поля типа.
+                Row(
+                  children: [
+                    Text(
+                      l10n.quickAddRatingLabel,
+                      style: context.text.labelSmall?.copyWith(
+                        color: c.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _rating == null
+                          ? l10n.quickAddRatingNone
+                          : _rating!.toStringAsFixed(1),
+                      style: context.text.labelMedium,
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: _rating ?? 0,
+                  min: 0,
+                  max: 10,
+                  divisions: 20,
+                  label: (_rating ?? 0).toStringAsFixed(1),
+                  onChanged: (v) => setState(() => _rating = v),
+                ),
+                if (_rating != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () => setState(() => _rating = null),
+                      child: Text(l10n.quickAddRatingNone),
+                    ),
+                  ),
+                const SizedBox(height: AppDimens.space16),
+                PendingPhotosField(
+                  photos: _photos,
+                  enabled: !_busy,
+                  onChanged: (list) => setState(() => _photos = list),
+                ),
+                const SizedBox(height: AppDimens.space16),
                 if (!_showDetails)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -530,40 +613,6 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     ),
                   ),
                 if (_showDetails) ...[
-                  Row(
-                    children: [
-                      Text(
-                        l10n.quickAddRatingLabel,
-                        style: context.text.labelSmall?.copyWith(
-                          color: c.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _rating == null
-                            ? l10n.quickAddRatingNone
-                            : _rating!.toStringAsFixed(1),
-                        style: context.text.labelMedium,
-                      ),
-                    ],
-                  ),
-                  Slider(
-                    value: _rating ?? 0,
-                    min: 0,
-                    max: 10,
-                    divisions: 20,
-                    label: (_rating ?? 0).toStringAsFixed(1),
-                    onChanged: (v) => setState(() => _rating = v),
-                  ),
-                  if (_rating != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () => setState(() => _rating = null),
-                        child: Text(l10n.quickAddRatingNone),
-                      ),
-                    ),
-                  const SizedBox(height: AppDimens.space8),
                   TextFormField(
                     controller: _note,
                     minLines: 2,
@@ -579,14 +628,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     onClear: () => setState(() => _impressionDate = null),
                   ),
                   const SizedBox(height: AppDimens.space20),
-                  // Фотографии, теги и подборка — прямо здесь. Раньше за
-                  // каждым из них приходилось открывать сохранённую запись.
-                  PendingPhotosField(
-                    photos: _photos,
-                    enabled: !_busy,
-                    onChanged: (list) => setState(() => _photos = list),
-                  ),
-                  const SizedBox(height: AppDimens.space20),
+                  // Теги и подборка — прямо здесь. Раньше за каждым из них
+                  // приходилось открывать уже сохранённую запись.
                   _TagsField(
                     tags: _tags,
                     onAdd: _addTag,

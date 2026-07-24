@@ -15,11 +15,17 @@ void showUndoSnackBar(
   final l10n = AppLocalizations.of(context);
   final messenger = ScaffoldMessenger.of(context);
   messenger
-    ..hideCurrentSnackBar()
+    ..clearSnackBars()
     ..showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 6),
+        // Плавающий снек не привязан к геометрии Scaffold: на телефоне с нижней
+        // навигацией и кнопкой действия обычный снек мог зависать, пока его
+        // анимация появления не завершится, — а она срывалась при подмене тела
+        // экрана после архивирования. Плавающий вариант показывается поверх и
+        // сам закрывается по таймеру.
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
         action: SnackBarAction(label: l10n.commonUndo, onPressed: onUndo),
       ),
     );

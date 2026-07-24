@@ -34,6 +34,40 @@ class CategoriesScreen extends ConsumerStatefulWidget {
 /// Как показывать категории: полками или деревом.
 enum CategoryViewMode { shelves, tree }
 
+/// Переключатель «полки / дерево». Один виджет на оба режима: он должен быть
+/// виден и в полках, и в дереве, иначе из дерева не вернуться.
+class CategoryModeToggle extends StatelessWidget {
+  const CategoryModeToggle({
+    super.key,
+    required this.mode,
+    required this.onChanged,
+  });
+
+  final CategoryViewMode mode;
+  final ValueChanged<CategoryViewMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SegmentedToggle<CategoryViewMode>(
+      value: mode,
+      onChanged: onChanged,
+      segments: [
+        SegmentData(
+          value: CategoryViewMode.shelves,
+          icon: Icons.grid_view_rounded,
+          tooltip: l10n.categoryViewShelves,
+        ),
+        SegmentData(
+          value: CategoryViewMode.tree,
+          icon: Icons.account_tree_rounded,
+          tooltip: l10n.categoryViewTree,
+        ),
+      ],
+    );
+  }
+}
+
 class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   final Set<String> _collapsed = {};
   final _searchController = TextEditingController();
@@ -272,6 +306,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           query: _query,
           selectedId: selected?.id,
           searchController: _searchController,
+          mode: _mode,
+          onModeChanged: (m) => setState(() => _mode = m),
           onQuery: (v) => setState(() => _query = v),
           onToggle: (id) => setState(() {
             if (!_collapsed.remove(id)) _collapsed.add(id);
@@ -445,22 +481,7 @@ class _ShelfPane extends StatelessWidget {
                         style: context.text.headlineSmall,
                       ),
                     ),
-                    SegmentedToggle<CategoryViewMode>(
-                      value: mode,
-                      onChanged: onModeChanged,
-                      segments: [
-                        SegmentData(
-                          value: CategoryViewMode.shelves,
-                          icon: Icons.grid_view_rounded,
-                          tooltip: l10n.categoryViewShelves,
-                        ),
-                        SegmentData(
-                          value: CategoryViewMode.tree,
-                          icon: Icons.account_tree_rounded,
-                          tooltip: l10n.categoryViewTree,
-                        ),
-                      ],
-                    ),
+                    CategoryModeToggle(mode: mode, onChanged: onModeChanged),
                     const SizedBox(width: AppDimens.space8),
                     AppIconButton(
                       icon: Icons.add_rounded,
@@ -571,6 +592,8 @@ class _TreePane extends StatelessWidget {
     required this.query,
     required this.selectedId,
     required this.searchController,
+    required this.mode,
+    required this.onModeChanged,
     required this.onQuery,
     required this.onToggle,
     required this.onSelect,
@@ -588,6 +611,8 @@ class _TreePane extends StatelessWidget {
   final String query;
   final String? selectedId;
   final TextEditingController searchController;
+  final CategoryViewMode mode;
+  final ValueChanged<CategoryViewMode> onModeChanged;
   final ValueChanged<String> onQuery;
   final ValueChanged<String> onToggle;
   final ValueChanged<CategoryRow> onSelect;
@@ -655,9 +680,15 @@ class _TreePane extends StatelessWidget {
                     Expanded(
                       child: Text(
                         l10n.categoriesTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: context.text.headlineSmall,
                       ),
                     ),
+                    // Переключатель режима есть и здесь: без него, уйдя в дерево,
+                    // нельзя было вернуться на полки — сам переключатель исчезал.
+                    CategoryModeToggle(mode: mode, onChanged: onModeChanged),
+                    const SizedBox(width: AppDimens.space8),
                     AppIconButton(
                       icon: Icons.unfold_more_rounded,
                       tooltip: l10n.categoryExpandAll,
