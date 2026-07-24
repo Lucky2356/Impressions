@@ -17,6 +17,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
 import '../../design_system/design_system.dart';
 import '../onboarding/app_tour.dart';
+import 'backup_password_dialog.dart';
 import 'devices_section.dart';
 import 'error_log_section.dart';
 import 'network_section.dart';
@@ -43,6 +44,12 @@ final includeSubcategoriesProvider = FutureProvider<bool>((ref) async {
 final backupsProvider = FutureProvider<List<BackupInfo>>((ref) async {
   ref.watch(dataRefreshProvider);
   return BackupService(ref.watch(appDatabaseProvider)).list();
+});
+
+/// Защищены ли новые копии паролем.
+final backupEncryptionProvider = FutureProvider<bool>((ref) async {
+  ref.watch(dataRefreshProvider);
+  return BackupService(ref.watch(appDatabaseProvider)).encryptionEnabled();
 });
 
 /// Ширина колонки настроек: формы шире читать неудобно.
@@ -282,6 +289,43 @@ class _BehaviourSection extends ConsumerWidget {
 class _BackupsSection extends ConsumerWidget {
   const _BackupsSection();
 
+  /// Проверка целостности копии (§28).
+  ///
+  /// Если копия сделана на другом устройстве, ключа к ней здесь нет — тогда
+  /// спрашиваем пароль и пробуем ещё раз.
+  Future<void> _verify(
+    BuildContext context,
+    WidgetRef ref,
+    BackupInfo backup,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final service = BackupService(ref.read(appDatabaseProvider));
+
+    var check = await service.verify(backup.path);
+    if (check == BackupCheck.passwordRequired) {
+      if (!context.mounted) return;
+      final password = await BackupPasswordDialog.show(
+        context,
+        title: l10n.backupUnlockTitle,
+        message: l10n.backupUnlockMessage,
+      );
+      if (password == null) return;
+      check = await service.verify(backup.path, password: password);
+    }
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(switch (check) {
+          BackupCheck.ok => l10n.backupVerifyOk,
+          BackupCheck.wrongPassword => l10n.backupWrongPassword,
+          BackupCheck.notFound => l10n.backupRestoreNotFound,
+          _ => l10n.backupVerifyFailed,
+        }),
+      ),
+    );
+  }
+
   /// Восстановление из копии (§28).
   ///
   /// База закрывается прямо посреди работы приложения, поэтому дальше можно
@@ -304,9 +348,23 @@ class _BackupsSection extends ConsumerWidget {
     if (!ok || !context.mounted) return;
 
     final db = ref.read(appDatabaseProvider);
-    final result = await BackupService(
+    var result = await BackupService(
       db,
     ).restore(backup.path, closeDatabase: db.close);
+
+    // Копия с другого устройства: ключа здесь нет, но пароль знает владелец.
+    if (result.status == RestoreStatus.passwordRequired) {
+      if (!context.mounted) return;
+      final password = await BackupPasswordDialog.show(
+        context,
+        title: l10n.backupUnlockTitle,
+        message: l10n.backupUnlockMessage,
+      );
+      if (password == null) return;
+      result = await BackupService(
+        db,
+      ).restore(backup.path, closeDatabase: db.close, password: password);
+    }
     if (!context.mounted) return;
 
     if (!result.isOk) {
@@ -315,6 +373,7 @@ class _BackupsSection extends ConsumerWidget {
           content: Text(switch (result.status) {
             RestoreStatus.notFound => l10n.backupRestoreNotFound,
             RestoreStatus.tooNew => l10n.backupRestoreTooNew,
+            RestoreStatus.wrongPassword => l10n.backupWrongPassword,
             _ => l10n.backupVerifyFailed,
           }),
         ),
@@ -370,6 +429,8 @@ class _BackupsSection extends ConsumerWidget {
           l10n.backupRetentionHint,
           style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
+        const SizedBox(height: AppDimens.space16),
+        const _BackupEncryptionRow(),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
         if (backups.isEmpty)
@@ -385,23 +446,113 @@ class _BackupsSection extends ConsumerWidget {
             _BackupRow(
               backup: backups[i],
               reasonLabel: reasonLabel(backups[i].reason),
-              onVerify: () async {
-                final db = ref.read(appDatabaseProvider);
-                final ok = await BackupService(db).verify(backups[i].path);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? l10n.backupVerifyOk : l10n.backupVerifyFailed,
-                    ),
-                  ),
-                );
-              },
+              onVerify: () => _verify(context, ref, backups[i]),
               onRestore: () => _restore(context, ref, backups[i]),
             ),
             if (i != backups.length - 1)
               Divider(height: AppDimens.space20, color: c.divider),
           ],
+      ],
+    );
+  }
+}
+
+/// Переключатель защиты копий паролем.
+///
+/// Пароль защищает не содержимое напрямую, а ключ копий, который лежит в
+/// хранилище ОС. Иначе копию нельзя было бы создать перед импортом или
+/// восстановлением — там спросить пароль негде.
+class _BackupEncryptionRow extends ConsumerWidget {
+  const _BackupEncryptionRow();
+
+  Future<void> _enable(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final enabled = ref.read(backupEncryptionProvider).value ?? false;
+
+    final password = await BackupPasswordDialog.show(
+      context,
+      title: l10n.backupPasswordTitle,
+      message: l10n.backupPasswordMessage,
+      note: enabled ? l10n.backupPasswordChangedNote : null,
+      confirmPassword: true,
+    );
+    if (password == null || !context.mounted) return;
+
+    final ok = await BackupService(
+      ref.read(appDatabaseProvider),
+    ).enableEncryption(password);
+    ref.read(dataRefreshProvider.notifier).bump();
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? l10n.backupEncryptionOn : l10n.backupEncryptionUnavailable,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _disable(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await ConfirmDialog.show(
+      context,
+      title: l10n.backupDisableTitle,
+      message: l10n.backupDisableMessage,
+    );
+    if (!ok || !context.mounted) return;
+
+    await BackupService(ref.read(appDatabaseProvider)).disableEncryption();
+    ref.read(dataRefreshProvider.notifier).bump();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.backupEncryptionOff)));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final enabled = ref.watch(backupEncryptionProvider).value ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(
+              enabled ? Icons.lock_rounded : Icons.lock_open_rounded,
+              size: 18,
+              color: enabled ? c.accentPrimary : c.textMuted,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Text(
+                l10n.backupEncryptionTitle,
+                style: context.text.bodySmall,
+              ),
+            ),
+            if (enabled)
+              TextButton(
+                onPressed: () => _enable(context, ref),
+                child: Text(l10n.backupEncryptionChange),
+              ),
+            Switch(
+              value: enabled,
+              onChanged: (value) =>
+                  value ? _enable(context, ref) : _disable(context, ref),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: AppDimens.space4),
+          child: Text(
+            l10n.backupEncryptionHint,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
+        ),
       ],
     );
   }
@@ -434,7 +585,11 @@ class _BackupRow extends StatelessWidget {
     final info = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.inventory_2_outlined, size: 18, color: c.textMuted),
+        Icon(
+          backup.encrypted ? Icons.lock_rounded : Icons.inventory_2_outlined,
+          size: 18,
+          color: backup.encrypted ? c.accentPrimary : c.textMuted,
+        ),
         const SizedBox(width: AppDimens.space12),
         Expanded(
           child: Column(
@@ -449,7 +604,8 @@ class _BackupRow extends StatelessWidget {
               ),
               Text(
                 '$reasonLabel · '
-                '${(backup.byteSize / 1024).toStringAsFixed(0)} КБ',
+                '${(backup.byteSize / 1024).toStringAsFixed(0)} КБ'
+                '${backup.encrypted ? ' · ${l10n.backupEncryptedBadge}' : ''}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.text.labelSmall?.copyWith(color: c.textMuted),

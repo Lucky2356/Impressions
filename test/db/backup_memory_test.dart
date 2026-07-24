@@ -68,6 +68,6 @@ void main() {
     final info = await service.create(reason: 'manual');
 
     // Контрольные суммы считаются потоково — важно, что они по-прежнему верны.
-    expect(await service.verify(info.path), isTrue);
+    expect(await service.verify(info.path), BackupCheck.ok);
   });
 }

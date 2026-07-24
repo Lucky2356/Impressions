@@ -1840,6 +1840,120 @@ abstract class AppLocalizations {
   /// **'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.'**
   String get backupRestoreTooNew;
 
+  /// No description provided for @backupEncryptionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Защищать копии паролем'**
+  String get backupEncryptionTitle;
+
+  /// No description provided for @backupEncryptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия, унесённая с устройства, без пароля не читается. На этом устройстве копии открываются сами — пароль спрашивают только чужие.'**
+  String get backupEncryptionHint;
+
+  /// No description provided for @backupEncryptionOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии защищены паролем'**
+  String get backupEncryptionOn;
+
+  /// No description provided for @backupEncryptionOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Защита копий выключена'**
+  String get backupEncryptionOff;
+
+  /// No description provided for @backupEncryptionChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить пароль'**
+  String get backupEncryptionChange;
+
+  /// No description provided for @backupEncryptionUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хранилище ключей операционной системы недоступно — защитить копии нечем.'**
+  String get backupEncryptionUnavailable;
+
+  /// No description provided for @backupPasswordTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль для копий'**
+  String get backupPasswordTitle;
+
+  /// No description provided for @backupPasswordMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забытый пароль означает потерю копий: восстановить их будет нечем. Запишите его там же, где остальные важные пароли.'**
+  String get backupPasswordMessage;
+
+  /// No description provided for @backupPasswordField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль'**
+  String get backupPasswordField;
+
+  /// No description provided for @backupPasswordRepeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё раз'**
+  String get backupPasswordRepeat;
+
+  /// No description provided for @backupPasswordMismatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароли не совпадают'**
+  String get backupPasswordMismatch;
+
+  /// No description provided for @backupPasswordShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не короче восьми знаков'**
+  String get backupPasswordShort;
+
+  /// No description provided for @backupPasswordChangedNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уже созданные копии продолжат открываться прежним паролем: он записан в каждом файле и задним числом не меняется.'**
+  String get backupPasswordChangedNote;
+
+  /// No description provided for @backupDisableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить защиту копий?'**
+  String get backupDisableTitle;
+
+  /// No description provided for @backupDisableMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новые копии будут создаваться без пароля. Уже созданные по-прежнему потребуют старый пароль.'**
+  String get backupDisableMessage;
+
+  /// No description provided for @backupUnlockTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия защищена паролем'**
+  String get backupUnlockTitle;
+
+  /// No description provided for @backupUnlockMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта копия сделана на другом устройстве или до переустановки, поэтому ключа к ней здесь нет.'**
+  String get backupUnlockMessage;
+
+  /// No description provided for @backupWrongPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверный пароль'**
+  String get backupWrongPassword;
+
+  /// No description provided for @backupEncryptedBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'под паролем'**
+  String get backupEncryptedBadge;
+
   /// No description provided for @quickAddTypeVsCategory.
   ///
   /// In ru, this message translates to:

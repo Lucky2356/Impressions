@@ -44,6 +44,16 @@ class SettingKeys {
 
   /// Версия, о которой пользователь попросил больше не напоминать.
   static const appUpdateDismissed = 'app_update_dismissed';
+
+  // ---- Резервные копии ----
+
+  /// Новые копии шифруются.
+  static const backupsEncrypted = 'backups_encrypted';
+
+  /// Ключ копий, завёрнутый в пароль. Сам ключ здесь не хранится: база
+  /// целиком попадает в копию, и ключ рядом с тем, что он защищает, ничего
+  /// не защищает.
+  static const backupKeyWrapped = 'backup_key_wrapped';
 }
 
 /// Репозиторий настроек (таблица ключ-значение).

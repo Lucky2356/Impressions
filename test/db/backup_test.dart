@@ -34,7 +34,7 @@ void main() {
 
     expect(File(info.path).existsSync(), isTrue);
     expect(info.byteSize, greaterThan(0));
-    expect(await service.verify(info.path), isTrue);
+    expect(await service.verify(info.path), BackupCheck.ok);
   });
 
   test('повреждённая копия не проходит проверку', () async {
@@ -45,7 +45,7 @@ void main() {
 
     // Портим файл.
     await File(info.path).writeAsBytes([1, 2, 3, 4, 5]);
-    expect(await service.verify(info.path), isFalse);
+    expect(await service.verify(info.path), BackupCheck.corrupted);
   });
 
   test('хранятся только последние N автоматических копий (§28)', () async {
@@ -82,7 +82,10 @@ void main() {
     final db = openTestDb();
     addTearDown(db.close);
     final service = BackupService(db, rootOverride: root);
-    expect(await service.verify('${root.path}/нет-такого.zip'), isFalse);
+    expect(
+      await service.verify('${root.path}/нет-такого.zip'),
+      BackupCheck.notFound,
+    );
   });
 
   group('Восстановление (§28)', () {

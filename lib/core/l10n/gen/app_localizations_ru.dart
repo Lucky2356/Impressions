@@ -1005,6 +1005,69 @@ class AppLocalizationsRu extends AppLocalizations {
       'Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.';
 
   @override
+  String get backupEncryptionTitle => 'Защищать копии паролем';
+
+  @override
+  String get backupEncryptionHint =>
+      'Копия, унесённая с устройства, без пароля не читается. На этом устройстве копии открываются сами — пароль спрашивают только чужие.';
+
+  @override
+  String get backupEncryptionOn => 'Копии защищены паролем';
+
+  @override
+  String get backupEncryptionOff => 'Защита копий выключена';
+
+  @override
+  String get backupEncryptionChange => 'Сменить пароль';
+
+  @override
+  String get backupEncryptionUnavailable =>
+      'Хранилище ключей операционной системы недоступно — защитить копии нечем.';
+
+  @override
+  String get backupPasswordTitle => 'Пароль для копий';
+
+  @override
+  String get backupPasswordMessage =>
+      'Забытый пароль означает потерю копий: восстановить их будет нечем. Запишите его там же, где остальные важные пароли.';
+
+  @override
+  String get backupPasswordField => 'Пароль';
+
+  @override
+  String get backupPasswordRepeat => 'Ещё раз';
+
+  @override
+  String get backupPasswordMismatch => 'Пароли не совпадают';
+
+  @override
+  String get backupPasswordShort => 'Не короче восьми знаков';
+
+  @override
+  String get backupPasswordChangedNote =>
+      'Уже созданные копии продолжат открываться прежним паролем: он записан в каждом файле и задним числом не меняется.';
+
+  @override
+  String get backupDisableTitle => 'Выключить защиту копий?';
+
+  @override
+  String get backupDisableMessage =>
+      'Новые копии будут создаваться без пароля. Уже созданные по-прежнему потребуют старый пароль.';
+
+  @override
+  String get backupUnlockTitle => 'Копия защищена паролем';
+
+  @override
+  String get backupUnlockMessage =>
+      'Эта копия сделана на другом устройстве или до переустановки, поэтому ключа к ней здесь нет.';
+
+  @override
+  String get backupWrongPassword => 'Неверный пароль';
+
+  @override
+  String get backupEncryptedBadge => 'под паролем';
+
+  @override
   String get quickAddTypeVsCategory =>
       'Тип задаёт набор полей записи, категория — вашу полку в дереве.';
 
