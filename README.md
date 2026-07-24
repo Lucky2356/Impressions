@@ -108,11 +108,13 @@ Flutter · Dart · Material 3 · Riverpod · Drift/SQLite (FTS5) · cryptography
 
 Релизный APK подписывается собственным ключом. Без него сборка релиза не начнётся — это намеренно: отладочный ключ одинаков у всех и лежит с общеизвестным паролем.
 
-Ключ создаётся один раз:
+Ключ создаётся один раз. `keytool` входит в JDK и обычно не прописан в PATH — он лежит рядом с Java, которую использует Flutter (путь показывает `flutter doctor --verbose`, строка «Java binary at»). Для Android Studio это:
 
 ```powershell
-keytool -genkey -v -keystore android/impressions.jks -storetype JKS -keyalg RSA -keysize 4096 -validity 10000 -alias impressions
+& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkeypair -v -keystore android\impressions.jks -keyalg RSA -keysize 4096 -validity 10000 -alias impressions
 ```
+
+Формат по умолчанию — PKCS12; пароль хранилища и пароль ключа делаются одинаковыми. Команда спросит пароль, затем имя и организацию (можно оставить пустыми) и подтверждение — на последний вопрос ответить `да`.
 
 Рядом кладётся `android/key.properties`:
 

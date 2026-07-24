@@ -6,4 +6,5 @@
 storeFile=impressions.jks
 storePassword=ЗАМЕНИТЕ
 keyAlias=impressions
+# В формате PKCS12 пароль ключа совпадает с паролем хранилища.
 keyPassword=ЗАМЕНИТЕ
