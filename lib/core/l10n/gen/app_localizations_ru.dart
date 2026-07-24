@@ -1930,8 +1930,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get incomingTitle => 'Входящие изменения';
 
   @override
-  String get incomingSubtitle =>
-      'Что изменилось в импортированных профилях (§23)';
+  String get incomingSubtitle => 'Что изменилось в импортированных профилях';
 
   @override
   String get incomingEmptyTitle => 'Изменений нет';

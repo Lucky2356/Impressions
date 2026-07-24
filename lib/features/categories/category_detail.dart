@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/app_state.dart';
-import '../../app/data_refresh.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -10,40 +8,17 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
-import '../../data/models/entry_view.dart';
-import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'category_providers.dart';
 
-/// Записи выбранной ветки категорий.
+/// С какой ширины шапка ветки помещается в одну строку.
 ///
-/// Живут прямо на экране категорий, а не через фильтр каталога: подстановка
-/// фильтра в другой раздел незаметно меняла его состояние, и добавленные потом
-/// записи «пропадали» из каталога.
-final categoryEntriesProvider = FutureProvider.family<List<EntryView>, String>((
-  ref,
-  categoryId,
-) async {
-  ref.watch(dataRefreshProvider);
-  final profile = ref.watch(activeProfileProvider);
-  if (profile == null) return const [];
-
-  final all = await ref.watch(allCategoriesProvider.future);
-  final selected = all.where((c) => c.id == categoryId).firstOrNull;
-  if (selected == null) return const [];
-
-  final prefix = '${selected.path}/';
-  final ids = [
-    selected.id,
-    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-  ];
-
-  return ref
-      .watch(entryRepositoryProvider)
-      .entryViews(profile.id, categoryIds: ids);
-});
+/// Считается по содержимому: возврат, значок, название, «Добавить
+/// подкатегорию», «Добавить» и меню. Ниже этого кнопки переносятся под
+/// название.
+const double _wideHeaderWidth = 660;
 
 /// Правая панель экрана категорий: что лежит в выбранной ветке.
 class CategoryDetail extends ConsumerWidget {
@@ -118,66 +93,76 @@ class CategoryDetail extends ConsumerWidget {
                     ),
                   ),
                 ),
-              Row(
-                children: [
-                  if (onBack != null) ...[
-                    AppIconButton(
-                      icon: Icons.arrow_back_rounded,
-                      tooltip: l10n.commonBack,
-                      onPressed: onBack!,
+              LayoutBuilder(
+                builder: (context, cns) {
+                  final title = [
+                    if (onBack != null) ...[
+                      AppIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        tooltip: l10n.commonBack,
+                        onPressed: onBack!,
+                      ),
+                      const SizedBox(width: AppDimens.space8),
+                    ],
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: tone.withValues(alpha: 0.14),
+                        borderRadius: AppDimens.brMd,
+                      ),
+                      child: Icon(
+                        AppIcons.byKey(category.icon),
+                        size: 26,
+                        color: tone,
+                      ),
                     ),
-                    const SizedBox(width: AppDimens.space8),
-                  ],
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: tone.withValues(alpha: 0.14),
-                      borderRadius: AppDimens.brMd,
-                    ),
-                    child: Icon(
-                      AppIcons.byKey(category.icon),
-                      size: 26,
-                      color: tone,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.space16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          category.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.text.headlineMedium,
-                        ),
-                        const SizedBox(height: AppDimens.space2),
-                        Text(
-                          _summary(l10n, direct, branch, children.length),
-                          style: context.text.bodySmall?.copyWith(
-                            color: c.textSecondary,
+                    const SizedBox(width: AppDimens.space16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            category.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.text.headlineMedium,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: AppDimens.space2),
+                          Text(
+                            _summary(l10n, direct, branch, children.length),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.text.bodySmall?.copyWith(
+                              color: c.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppDimens.space12),
-                  OutlinedButton.icon(
+                  ];
+
+                  final addChild = OutlinedButton.icon(
                     onPressed: onAddChild,
                     icon: const Icon(Icons.create_new_folder_rounded, size: 18),
-                    label: Text(l10n.categoryAddChild),
-                  ),
-                  const SizedBox(width: AppDimens.space8),
-                  FilledButton.icon(
+                    label: Text(
+                      l10n.categoryAddChild,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                  final addEntry = FilledButton.icon(
                     onPressed: () =>
                         QuickAddSheet.show(context, initialCategory: category),
                     icon: const Icon(Icons.add_rounded, size: 20),
-                    label: Text(l10n.commonAdd),
-                  ),
-                  const SizedBox(width: AppDimens.space4),
-                  PopupMenuButton<String>(
+                    label: Text(
+                      l10n.commonAdd,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                  final menu = PopupMenuButton<String>(
                     tooltip: '',
                     icon: Icon(
                       Icons.more_horiz_rounded,
@@ -210,8 +195,38 @@ class CategoryDetail extends ConsumerWidget {
                         danger: true,
                       ),
                     ],
-                  ),
-                ],
+                  );
+
+                  // На телефоне название, счётчик и обе кнопки в одну строку
+                  // не помещаются: Expanded сжимался до нуля, и счётчик
+                  // рисовался по букве в столбик. Кнопки уходят под название.
+                  if (cns.maxWidth < _wideHeaderWidth) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [...title, menu]),
+                        const SizedBox(height: AppDimens.space12),
+                        Wrap(
+                          spacing: AppDimens.space8,
+                          runSpacing: AppDimens.space8,
+                          children: [addChild, addEntry],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      ...title,
+                      const SizedBox(width: AppDimens.space12),
+                      addChild,
+                      const SizedBox(width: AppDimens.space8),
+                      addEntry,
+                      const SizedBox(width: AppDimens.space4),
+                      menu,
+                    ],
+                  );
+                },
               ),
             ],
           ),

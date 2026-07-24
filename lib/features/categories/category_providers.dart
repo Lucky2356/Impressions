@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
+import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 
 /// Ветка, открытая на экране категорий.
@@ -96,6 +97,34 @@ final categoryBranchCountsProvider = FutureProvider<Map<String, int>>((
     }
   }
   return result;
+});
+
+/// Записи выбранной ветки категорий.
+///
+/// Живут прямо на экране категорий, а не через фильтр каталога: подстановка
+/// фильтра в другой раздел незаметно меняла его состояние, и добавленные потом
+/// записи «пропадали» из каталога.
+final categoryEntriesProvider = FutureProvider.family<List<EntryView>, String>((
+  ref,
+  categoryId,
+) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+
+  final all = await ref.watch(allCategoriesProvider.future);
+  final selected = all.where((c) => c.id == categoryId).firstOrNull;
+  if (selected == null) return const [];
+
+  final prefix = '${selected.path}/';
+  final ids = [
+    selected.id,
+    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
+  ];
+
+  return ref
+      .watch(entryRepositoryProvider)
+      .entryViews(profile.id, categoryIds: ids);
 });
 
 /// По несколько обложек на категорию — для карточек-полок.

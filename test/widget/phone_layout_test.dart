@@ -8,11 +8,17 @@ import 'package:impressions/core/theme/app_theme.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/data/providers.dart';
+import 'package:impressions/data/repositories/collection_repository.dart';
 import 'package:impressions/features/archive/archive_screen.dart';
+import 'package:impressions/features/categories/category_detail.dart';
 import 'package:impressions/features/categories/category_providers.dart';
+import 'package:impressions/features/collections/collection_providers.dart';
+import 'package:impressions/features/collections/collections_screen.dart';
 import 'package:impressions/features/compare/compare_screen.dart';
+import 'package:impressions/features/exchange/incoming_screen.dart';
 import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/insights/insights_screen.dart';
+import 'package:impressions/features/profiles/profiles_screen.dart';
 import 'package:impressions/features/settings/settings_screen.dart';
 import 'package:impressions/features/wishlist/wishlist_screen.dart';
 
@@ -181,11 +187,156 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('шапка ветки на телефоне не сжимает подпись в столбик', (
+    tester,
+  ) async {
+    // Название, счётчик, «Добавить подкатегорию» и «Добавить» в одну строку на
+    // телефоне не помещались. Переполнения при этом не возникало: Expanded
+    // честно сжимался до нуля, и подпись печаталась по букве в строку.
+    await pumpPhone(
+      tester,
+      ProviderScope(
+        overrides: [
+          ...base(),
+          allCategoriesProvider.overrideWith(
+            (ref) async => [category('c1', 'Фильмы')],
+          ),
+          categoryDirectCountsProvider.overrideWith((ref) async => const {}),
+          categoryEntriesProvider.overrideWith((ref, id) async => const []),
+        ],
+        child: app(
+          CategoryDetail(
+            category: category('c1', 'Фильмы'),
+            onOpenChild: (_) {},
+            onAddChild: () {},
+            onRename: () {},
+            onIcon: () {},
+            onMove: () {},
+            onArchive: () {},
+            onBack: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+
+    // Подпись занимает нормальную строку, а не колонку в одну букву.
+    final summary = find.text('0 записей в ветке');
+    expect(summary, findsOneWidget);
+    final size = tester.getSize(summary);
+    expect(size.width, greaterThan(120));
+    expect(size.height, lessThan(40));
+
+    // Обе кнопки шапки при этом остаются на экране целиком. «Добавить» ищем
+    // первой: такая же кнопка есть в пустом состоянии ветки ниже.
+    final buttons = [
+      find.widgetWithText(OutlinedButton, 'Добавить подкатегорию'),
+      find.widgetWithText(FilledButton, 'Добавить').first,
+    ];
+    for (final button in buttons) {
+      final rect = tester.getRect(button);
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(400));
+      expect(rect.width, greaterThan(0));
+    }
+  });
+
   testWidgets('статистика на телефоне помещается в ширину', (tester) async {
     await pumpPhone(
       tester,
       ProviderScope(overrides: [...base()], child: app(const InsightsScreen())),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  /// Заголовки разделов не должны сжиматься кнопками до нечитаемого.
+  ///
+  /// Проверяется именно ширина: переполнения в этом месте не бывает — шапка
+  /// честно отдаёт всё место кнопкам, а заголовку остаётся сколько осталось.
+  /// Ровно так и сломалась ветка категорий, где кнопок было две.
+  void expectTitleReadable(WidgetTester tester, String title) {
+    final finder = find.text(title);
+    expect(finder, findsOneWidget);
+    expect(tester.getSize(finder).width, greaterThan(90));
+  }
+
+  testWidgets('подборки на телефоне: заголовок не съеден кнопкой', (
+    tester,
+  ) async {
+    await pumpPhone(
+      tester,
+      ProviderScope(
+        overrides: [
+          ...base(),
+          collectionsProvider.overrideWith(
+            (ref) async => [
+              CollectionView(
+                collection: CollectionRow(
+                  id: 'k1',
+                  profileId: 'p1',
+                  name: 'На выходные',
+                  sortOrder: 0,
+                  createdAt: DateTime(2026, 7, 24),
+                ),
+                entryCount: 3,
+              ),
+            ],
+          ),
+        ],
+        child: app(const CollectionsScreen()),
+      ),
+    );
+
+    expectTitleReadable(tester, 'Подборки');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('профили на телефоне: заголовок не съеден кнопкой', (
+    tester,
+  ) async {
+    await pumpPhone(
+      tester,
+      ProviderScope(overrides: [...base()], child: app(const ProfilesScreen())),
+    );
+
+    expectTitleReadable(tester, 'Профили');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('входящие изменения на телефоне: заголовок не съеден кнопкой', (
+    tester,
+  ) async {
+    await pumpPhone(
+      tester,
+      ProviderScope(
+        overrides: [
+          ...base(),
+          incomingChangesProvider.overrideWith(
+            (ref) async => [
+              IncomingItem(
+                change: IncomingChangeRow(
+                  id: 'i1',
+                  profileId: 'p1',
+                  entityKind: 'entry',
+                  entityId: 'e1',
+                  revisionId: 'r1',
+                  receivedAt: DateTime(2026, 7, 24),
+                  seen: false,
+                ),
+                label: 'Папа может',
+                profileName: 'Лариса',
+              ),
+            ],
+          ),
+        ],
+        child: app(const IncomingScreen()),
+      ),
+    );
+
+    expectTitleReadable(tester, 'Входящие изменения');
+    // Ссылок на разделы задания в интерфейсе быть не должно.
+    expect(find.textContaining('§'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

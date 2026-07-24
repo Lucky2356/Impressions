@@ -64,50 +64,91 @@ class ScreenHeader extends StatelessWidget {
 
   Widget _content(BuildContext context) {
     final c = context.colors;
+
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: context.text.headlineSmall,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: AppDimens.space2),
+          Text(
+            subtitle!,
+            style: context.text.bodySmall?.copyWith(color: c.textSecondary),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
+    );
+
+    final actionsRow = Wrap(
+      spacing: AppDimens.space8,
+      runSpacing: AppDimens.space8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: actions,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (leading != null) ...[
-              leading!,
-              const SizedBox(width: AppDimens.space12),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+        // Кнопки стоят в `Wrap`, а `Wrap` в строке получает неограниченную
+        // ширину и забирает сколько нужно. На телефоне «Отметить все
+        // просмотренными» съедало строку целиком, и от заголовка оставалось
+        // ровно ноль точек — без всякого переполнения, молча.
+        LayoutBuilder(
+          builder: (context, cns) {
+            if (actions.isEmpty) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    title,
-                    style: context.text.headlineSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: AppDimens.space2),
-                    Text(
-                      subtitle!,
-                      style: context.text.bodySmall?.copyWith(
-                        color: c.textSecondary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  if (leading != null) ...[
+                    leading!,
+                    const SizedBox(width: AppDimens.space12),
                   ],
+                  Expanded(child: heading),
                 ],
-              ),
-            ),
-            if (actions.isNotEmpty) ...[
-              const SizedBox(width: AppDimens.space16),
-              Wrap(
-                spacing: AppDimens.space8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: actions,
-              ),
-            ],
-          ],
+              );
+            }
+
+            if (cns.maxWidth < AppDimens.breakpointCompact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (leading != null) ...[
+                        leading!,
+                        const SizedBox(width: AppDimens.space12),
+                      ],
+                      Expanded(child: heading),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  actionsRow,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: AppDimens.space12),
+                ],
+                Expanded(child: heading),
+                const SizedBox(width: AppDimens.space16),
+                actionsRow,
+              ],
+            );
+          },
         ),
         if (bottom != null) ...[
           const SizedBox(height: AppDimens.space16),

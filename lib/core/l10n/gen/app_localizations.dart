@@ -3367,7 +3367,7 @@ abstract class AppLocalizations {
   /// No description provided for @incomingSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Что изменилось в импортированных профилях (§23)'**
+  /// **'Что изменилось в импортированных профилях'**
   String get incomingSubtitle;
 
   /// No description provided for @incomingEmptyTitle.

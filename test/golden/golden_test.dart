@@ -12,6 +12,7 @@ import 'package:impressions/design_system/design_system.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
+import 'package:impressions/features/categories/category_detail.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/home/home_providers.dart';
 
@@ -169,6 +170,49 @@ void main() {
       await expectLater(
         find.byType(CategoriesScreen),
         matchesGoldenFile('goldens/categories_$suffix.png'),
+      );
+    });
+
+    testWidgets('golden: ветка категорий на телефоне ($suffix)', (
+      tester,
+    ) async {
+      // Именно телефонная ширина: в одну строку заголовок ветки, счётчик и
+      // обе кнопки не помещаются, и раньше подпись сжималась в столбик.
+      tester.view.physicalSize = const Size(400, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final films = categoryRow(id: 'c3', profileId: 'p1', name: 'Фильмы');
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...baseOverrides(),
+            allCategoriesProvider.overrideWith((ref) async => [films]),
+            categoryDirectCountsProvider.overrideWith((ref) async => const {}),
+            categoryEntriesProvider.overrideWith((ref, id) async => const []),
+          ],
+          child: golden(
+            CategoryDetail(
+              category: films,
+              onOpenChild: (_) {},
+              onAddChild: () {},
+              onRename: () {},
+              onIcon: () {},
+              onMove: () {},
+              onArchive: () {},
+              onBack: () {},
+            ),
+            brightness: brightness,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await expectLater(
+        find.byType(CategoryDetail),
+        matchesGoldenFile('goldens/category_branch_phone_$suffix.png'),
       );
     });
 

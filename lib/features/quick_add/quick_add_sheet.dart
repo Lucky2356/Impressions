@@ -13,14 +13,17 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
 import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
+import '../categories/category_providers.dart';
 import '../collections/collection_providers.dart';
 import '../entry/pending_photos_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
+import 'type_for_category.dart';
 
 /// Быстрое добавление записи (§11).
 ///
@@ -80,6 +83,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   final _note = TextEditingController();
 
   String? _typeId;
+
+  /// Тип выбран человеком, а не подставлен по категории.
+  ///
+  /// Пока этого не случилось, смена категории меняет и тип: иначе угаданное
+  /// один раз значение застревало бы после того, как категорию поправили.
+  bool _typePicked = false;
+
   CategoryRow? _category;
   Relation? _relation;
   double? _rating;
@@ -370,16 +380,44 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     return result ?? _DuplicateChoice.cancelled;
   }
 
+  /// Тип, подсказанный выбранной категорией; null — подсказки нет.
+  String? _guessType(List<ObjectTypeRow> types) {
+    final category = _category;
+    if (category == null) return null;
+    final categories = ref.watch(allCategoriesProvider).value ?? const [];
+
+    // Сначала по имени ветки: это попадает почти всегда и ничего не читает.
+    final byName = typeForCategory(
+      category: category,
+      categories: categories,
+      types: types,
+    );
+    if (byName != null) return byName;
+
+    // И только если имя ничего не сказало — смотрим, что в ветке уже лежит.
+    final entries =
+        ref.watch(categoryEntriesProvider(category.id)).value ??
+        const <EntryView>[];
+    if (entries.isEmpty) return null;
+    return typeForCategory(
+      category: category,
+      categories: categories,
+      types: types,
+      branchTypeNames: [for (final e in entries) e.typeName],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final types = ref.watch(objectTypesProvider);
-
-    // Подставляем первый тип по умолчанию.
     final typeList = types.value ?? const <ObjectTypeRow>[];
-    if (_typeId == null && typeList.isNotEmpty) {
-      _typeId = typeList.first.id;
+
+    // Тип по категории, а не первый из списка: форма, открытая из «Мест ›
+    // Парков», предлагала «Продукты» просто потому, что этот тип идёт первым.
+    if (!_typePicked && typeList.isNotEmpty) {
+      _typeId = _guessType(typeList) ?? _typeId ?? typeList.first.id;
     }
 
     return SafeArea(
@@ -455,6 +493,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 LayoutBuilder(
                   builder: (context, cns) {
                     final typeField = DropdownButtonFormField<String>(
+                      // Ключ по значению: `initialValue` у поля формы
+                      // применяется только при создании, а тип приходит
+                      // позже — вместе с ответом на запрос категорий.
+                      key: ValueKey(_typeId),
                       initialValue: _typeId,
                       // Без общего значка слева: у каждого типа он свой, и два
                       // значка подряд в свёрнутом поле выглядели как ошибка.
@@ -493,7 +535,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                             ),
                           ),
                       ],
-                      onChanged: (v) => setState(() => _typeId = v),
+                      onChanged: (v) => setState(() {
+                        _typeId = v;
+                        _typePicked = true;
+                      }),
                     );
                     final categoryField = _CategoryField(
                       category: _category,
