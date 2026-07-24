@@ -105,26 +105,26 @@ class AppDatabase extends _$AppDatabase {
   /// оставался недоступен.
   Future<void> _createEntrySearch() async {
     await customStatement(
-      "CREATE VIRTUAL TABLE IF NOT EXISTS entry_search USING fts5("
-      "short_note, detailed_note, "
+      'CREATE VIRTUAL TABLE IF NOT EXISTS entry_search USING fts5('
+      'short_note, detailed_note, '
       "content='profile_entries', content_rowid='rowid')",
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON profile_entries "
-      "BEGIN INSERT INTO entry_search(rowid, short_note, detailed_note) "
-      "VALUES (new.rowid, new.short_note, new.detailed_note); END",
+      'CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON profile_entries '
+      'BEGIN INSERT INTO entry_search(rowid, short_note, detailed_note) '
+      'VALUES (new.rowid, new.short_note, new.detailed_note); END',
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON profile_entries "
-      "BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) "
+      'CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON profile_entries '
+      'BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) '
       "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); END",
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON profile_entries "
-      "BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) "
+      'CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON profile_entries '
+      'BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) '
       "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); "
-      "INSERT INTO entry_search(rowid, short_note, detailed_note) "
-      "VALUES (new.rowid, new.short_note, new.detailed_note); END",
+      'INSERT INTO entry_search(rowid, short_note, detailed_note) '
+      'VALUES (new.rowid, new.short_note, new.detailed_note); END',
     );
   }
 
@@ -142,25 +142,25 @@ class AppDatabase extends _$AppDatabase {
   /// Полнотекстовый поиск объектов (FTS5) + триггеры синхронизации.
   Future<void> _createSearch() async {
     await customStatement(
-      "CREATE VIRTUAL TABLE IF NOT EXISTS object_search USING fts5("
+      'CREATE VIRTUAL TABLE IF NOT EXISTS object_search USING fts5('
       "title, alt_title, creator, content='objects', content_rowid='rowid')",
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS objects_ai AFTER INSERT ON objects BEGIN "
-      "INSERT INTO object_search(rowid, title, alt_title, creator) "
-      "VALUES (new.rowid, new.title, new.alt_title, new.creator); END",
+      'CREATE TRIGGER IF NOT EXISTS objects_ai AFTER INSERT ON objects BEGIN '
+      'INSERT INTO object_search(rowid, title, alt_title, creator) '
+      'VALUES (new.rowid, new.title, new.alt_title, new.creator); END',
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS objects_ad AFTER DELETE ON objects BEGIN "
-      "INSERT INTO object_search(object_search, rowid, title, alt_title, creator) "
+      'CREATE TRIGGER IF NOT EXISTS objects_ad AFTER DELETE ON objects BEGIN '
+      'INSERT INTO object_search(object_search, rowid, title, alt_title, creator) '
       "VALUES ('delete', old.rowid, old.title, old.alt_title, old.creator); END",
     );
     await customStatement(
-      "CREATE TRIGGER IF NOT EXISTS objects_au AFTER UPDATE ON objects BEGIN "
-      "INSERT INTO object_search(object_search, rowid, title, alt_title, creator) "
+      'CREATE TRIGGER IF NOT EXISTS objects_au AFTER UPDATE ON objects BEGIN '
+      'INSERT INTO object_search(object_search, rowid, title, alt_title, creator) '
       "VALUES ('delete', old.rowid, old.title, old.alt_title, old.creator); "
-      "INSERT INTO object_search(rowid, title, alt_title, creator) "
-      "VALUES (new.rowid, new.title, new.alt_title, new.creator); END",
+      'INSERT INTO object_search(rowid, title, alt_title, creator) '
+      'VALUES (new.rowid, new.title, new.alt_title, new.creator); END',
     );
     await _createEntrySearch();
   }

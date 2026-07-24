@@ -86,7 +86,7 @@ class EntryContextMenu {
 
     switch (chosen) {
       case 'open':
-        EntryDetailSheet.show(context, entry.entryId);
+        await EntryDetailSheet.show(context, entry.entryId);
       case 'select':
         onSelect?.call();
       case 'category':

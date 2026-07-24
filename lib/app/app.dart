@@ -34,6 +34,11 @@ class ImpressionsApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
+      // Крупный системный шрифт приложение держит: карточки и поля растут
+      // вместе с ним. Но Android разрешает увеличивать текст вдвое, а такой
+      // размер не выдержит ни одна плотная раскладка — выше 1.5 не идём.
+      builder: (context, child) =>
+          MediaQuery.withClampedTextScaling(maxScaleFactor: 1.5, child: child!),
       home: const _SystemBars(child: _RootGate()),
     );
   }
@@ -130,6 +135,7 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
       context,
       release.version,
       release.installerUrl ?? release.url,
+      sha256: release.installerSha256,
     );
   }
 

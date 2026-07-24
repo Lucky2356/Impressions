@@ -1846,6 +1846,24 @@ abstract class AppLocalizations {
   /// **'Тип задаёт набор полей записи, категория — вашу полку в дереве.'**
   String get quickAddTypeVsCategory;
 
+  /// No description provided for @entryRatingOf.
+  ///
+  /// In ru, this message translates to:
+  /// **'оценка {value}'**
+  String entryRatingOf(Object value);
+
+  /// No description provided for @a11yCategoryShelf.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name}, {count}'**
+  String a11yCategoryShelf(Object count, Object name);
+
+  /// No description provided for @a11ySummaryItem.
+  ///
+  /// In ru, this message translates to:
+  /// **'{label}: {value}'**
+  String a11ySummaryItem(Object label, Object value);
+
   /// No description provided for @errorLogTitle.
   ///
   /// In ru, this message translates to:
@@ -3415,13 +3433,13 @@ abstract class AppLocalizations {
   /// No description provided for @keyStorageDb.
   ///
   /// In ru, this message translates to:
-  /// **'В базе приложения, зашифровано'**
+  /// **'В базе приложения — без защиты на диске'**
   String get keyStorageDb;
 
   /// No description provided for @keyStorageDbHint.
   ///
   /// In ru, this message translates to:
-  /// **'Секрет лежит рядом с зашифрованным ключом. Перенесите его, чтобы копия базы стала бесполезной без вашей учётной записи.'**
+  /// **'Секрет лежит в той же базе, что и зашифрованный им ключ, поэтому шифрование ключа сейчас ничего не даёт: скопировав файл базы, его можно прочитать. Перенесите секрет в хранилище системы.'**
   String get keyStorageDbHint;
 
   /// No description provided for @keyStorageMove.

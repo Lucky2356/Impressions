@@ -528,10 +528,14 @@ class _ShelfPane extends StatelessWidget {
                           crossAxisCount: cols,
                           mainAxisSpacing: AppDimens.space12,
                           crossAxisSpacing: AppDimens.space12,
-                          // Высота фиксирована: содержимое карточки не
+                          // Высота задаётся напрямую: содержимое карточки не
                           // зависит от ширины, а соотношение сторон при
-                          // другом числе колонок ломало вёрстку.
-                          mainAxisExtent: categoryShelfHeight,
+                          // другом числе колонок ломало вёрстку. Поправка на
+                          // системный шрифт — чтобы подписи помещались и при
+                          // «Крупном шрифте».
+                          mainAxisExtent: categoryShelfHeightFor(
+                            MediaQuery.textScalerOf(context).scale(1),
+                          ),
                         ),
                         itemCount: shown.length,
                         itemBuilder: (context, i) {

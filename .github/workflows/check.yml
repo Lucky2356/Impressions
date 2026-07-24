@@ -1,0 +1,50 @@
+name: Проверки
+
+# Раньше формат, анализ и тесты запускались только вручную через
+# scripts/check.ps1 — сломанную ветку ничто не останавливало.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Формат, анализ, тесты
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.x
+          cache: true
+
+      - name: Зависимости
+        run: flutter pub get
+
+      - name: Кодогенерация
+        # Сгенерированные файлы лежат в репозитории, но собрать их заново —
+        # единственный способ убедиться, что они не разошлись с исходниками.
+        run: |
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Формат
+        run: dart format --set-exit-if-changed lib test
+
+      - name: Анализ
+        run: flutter analyze
+
+      - name: Тесты
+        run: flutter test
+
+      - name: Артефакты неудачных golden-тестов
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/golden/failures/
+          if-no-files-found: ignore

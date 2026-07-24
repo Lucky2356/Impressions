@@ -308,6 +308,7 @@ class _Results extends ConsumerWidget {
                 columns: cols,
                 outerPadding: layout.gutter * 2,
                 dense: dense,
+                textScale: MediaQuery.textScalerOf(context).scale(1),
               ),
             ),
             itemCount: entries.length,

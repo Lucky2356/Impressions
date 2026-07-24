@@ -98,6 +98,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
             context,
             release.version,
             release.installerUrl ?? release.url,
+            sha256: release.installerSha256,
           );
         case UpdateCheckStatus.upToDate:
           _notify(l10n.settingsUpToDate);
@@ -347,20 +348,24 @@ class _SwitchRow extends StatelessWidget {
 Future<void> showUpdateDialog(
   BuildContext context,
   String version,
-  String url,
-) {
+  String url, {
+  String? sha256,
+}) {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _UpdateDialog(version: version, url: url),
+    builder: (_) => _UpdateDialog(version: version, url: url, sha256: sha256),
   );
 }
 
 class _UpdateDialog extends ConsumerStatefulWidget {
-  const _UpdateDialog({required this.version, required this.url});
+  const _UpdateDialog({required this.version, required this.url, this.sha256});
 
   final String version;
   final String url;
+
+  /// Контрольная сумма файла по данным GitHub — сверяется после скачивания.
+  final String? sha256;
 
   @override
   ConsumerState<_UpdateDialog> createState() => _UpdateDialogState();
@@ -388,6 +393,7 @@ class _UpdateDialogState extends ConsumerState<_UpdateDialog> {
       final service = ref.read(updateServiceProvider);
       final file = await service.downloadInstaller(
         widget.url,
+        expectedSha256: widget.sha256,
         onProgress: (p) {
           if (mounted) setState(() => _progress = p);
         },

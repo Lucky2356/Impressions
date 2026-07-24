@@ -68,50 +68,59 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return AppCard(
-      onTap: item.onTap,
-      padding: const EdgeInsets.all(AppDimens.space12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(item.icon, size: 16, color: item.color),
-              const SizedBox(width: AppDimens.space8),
-              Expanded(
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.space4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                item.value,
-                style: context.text.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (!compact && item.trend.length > 1) ...[
-                const SizedBox(width: AppDimens.space12),
+    // «Записей» и «7» стоят в разных строках и читались диктором порознь,
+    // без связи друг с другом.
+    return Semantics(
+      button: item.onTap != null,
+      label: '${item.label}: ${item.value}',
+      excludeSemantics: true,
+      child: AppCard(
+        onTap: item.onTap,
+        padding: const EdgeInsets.all(AppDimens.space12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(item.icon, size: 16, color: item.color),
+                const SizedBox(width: AppDimens.space8),
                 Expanded(
-                  child: Sparkline(
-                    values: item.trend,
-                    color: item.color,
-                    height: 24,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textMuted,
+                    ),
                   ),
                 ),
               ],
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: AppDimens.space4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  item.value,
+                  style: context.text.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (!compact && item.trend.length > 1) ...[
+                  const SizedBox(width: AppDimens.space12),
+                  Expanded(
+                    child: Sparkline(
+                      values: item.trend,
+                      color: item.color,
+                      height: 24,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

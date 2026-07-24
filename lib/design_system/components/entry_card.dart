@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/domain/relation.dart';
+import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import 'app_card.dart';
@@ -30,6 +31,23 @@ class EntryCardData {
   final String? statusLabel;
   final String? imagePath;
   final Color? seedColor;
+
+  /// Как карточка называет себя экранному диктору.
+  ///
+  /// Одной фразой вместо россыпи отдельных строк: название, где лежит,
+  /// отношение и оценка. Отношение и оценка нарисованы значками и числом —
+  /// без подписи диктор прочитал бы их бессмысленно.
+  String semanticsLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final parts = <String>[
+      title,
+      if (categoryPath.isNotEmpty) categoryPath.last,
+      if (relation != null) relation!.label(l10n),
+      if (rating != null) l10n.entryRatingOf(rating!.toStringAsFixed(1)),
+      ?statusLabel,
+    ];
+    return parts.join(', ');
+  }
 }
 
 /// Высота текстового блока карточки: путь категории, название в две строки и
@@ -53,9 +71,16 @@ double entryCardAspectRatio({
   double cardPadding = _cardPadding * 2,
   bool dense = false,
   double? contentHeight,
+  double textScale = 1.0,
 }) {
+  // Под текстом отведено фиксированное число точек, а его размер задаёт
+  // система: при «Крупном шрифте» подписи не помещались и карточка
+  // переполнялась. Обложка от размера шрифта не зависит, поэтому растёт
+  // только текстовая часть.
   final content =
-      contentHeight ?? (dense ? _cardContentHeightDense : _cardContentHeight);
+      (contentHeight ??
+          (dense ? _cardContentHeightDense : _cardContentHeight)) *
+      textScale.clamp(1.0, 3.0);
   final usable = availableWidth - outerPadding - spacing * (columns - 1);
   final cellWidth = (usable / columns).clamp(80.0, double.infinity);
   final coverHeight = (cellWidth - cardPadding) * 4 / 3;
@@ -86,55 +111,66 @@ class EntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final showPath = !dense && data.categoryPath.isNotEmpty;
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(_cardPadding),
-      borderRadius: AppDimens.brMd,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CoverImage(
-            title: data.title,
-            imagePath: data.imagePath,
-            seedColor: data.seedColor,
-            borderRadius: AppDimens.brSm,
-          ),
-          const SizedBox(height: AppDimens.space8),
-          if (showPath)
+    // Экранный диктор читал карточку как набор несвязанных строк: путь,
+    // название, значок отношения и число по отдельности. Здесь она называет
+    // себя одной фразой.
+    return Semantics(
+      button: onTap != null,
+      label: data.semanticsLabel(context),
+      excludeSemantics: true,
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(_cardPadding),
+        borderRadius: AppDimens.brMd,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CoverImage(
+              title: data.title,
+              imagePath: data.imagePath,
+              seedColor: data.seedColor,
+              borderRadius: AppDimens.brSm,
+            ),
+            const SizedBox(height: AppDimens.space8),
+            if (showPath)
+              Text(
+                data.categoryPath.last,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.labelSmall?.copyWith(
+                  color: c.textMuted,
+                  fontSize: 11,
+                ),
+              ),
             Text(
-              data.categoryPath.last,
-              maxLines: 1,
+              data.title,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: context.text.labelSmall?.copyWith(
-                color: c.textMuted,
-                fontSize: 11,
+              style: context.text.titleMedium?.copyWith(
+                fontSize: 14,
+                height: 1.2,
               ),
             ),
-          Text(
-            data.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.text.titleMedium?.copyWith(
-              fontSize: 14,
-              height: 1.2,
-            ),
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              if (data.relation != null)
-                Flexible(
-                  child: RelationChip(relation: data.relation!, compact: true),
-                ),
-              if (data.rating != null) ...[
+            const Spacer(),
+            Row(
+              children: [
                 if (data.relation != null)
-                  const SizedBox(width: AppDimens.space4),
-                RatingView(value: data.rating, compact: true),
+                  Flexible(
+                    child: RelationChip(
+                      relation: data.relation!,
+                      compact: true,
+                    ),
+                  ),
+                if (data.rating != null) ...[
+                  if (data.relation != null)
+                    const SizedBox(width: AppDimens.space4),
+                  RatingView(value: data.rating, compact: true),
+                ],
               ],
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -158,58 +194,63 @@ class EntryCardCompact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppDimens.space12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 56,
-            child: CoverImage(
-              title: data.title,
-              imagePath: data.imagePath,
-              seedColor: data.seedColor,
-              aspectRatio: 3 / 4,
-              borderRadius: AppDimens.brSm,
+    return Semantics(
+      button: onTap != null,
+      label: data.semanticsLabel(context),
+      excludeSemantics: true,
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(AppDimens.space12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 56,
+              child: CoverImage(
+                title: data.title,
+                imagePath: data.imagePath,
+                seedColor: data.seedColor,
+                aspectRatio: 3 / 4,
+                borderRadius: AppDimens.brSm,
+              ),
             ),
-          ),
-          const SizedBox(width: AppDimens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (data.categoryPath.isNotEmpty)
-                  Text(
-                    data.categoryPath.join(' / '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.labelSmall?.copyWith(
-                      color: c.textMuted,
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (data.categoryPath.isNotEmpty)
+                    Text(
+                      data.categoryPath.join(' / '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.labelSmall?.copyWith(
+                        color: c.textMuted,
+                      ),
                     ),
+                  Text(
+                    data.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.titleMedium,
                   ),
-                Text(
-                  data.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.titleMedium,
-                ),
-                const SizedBox(height: AppDimens.space8),
-                Wrap(
-                  spacing: AppDimens.space8,
-                  runSpacing: AppDimens.space4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (data.relation != null)
-                      RelationChip(relation: data.relation!, compact: true),
-                    if (data.rating != null)
-                      RatingView(value: data.rating, compact: true),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: AppDimens.space8),
+                  Wrap(
+                    spacing: AppDimens.space8,
+                    runSpacing: AppDimens.space4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (data.relation != null)
+                        RelationChip(relation: data.relation!, compact: true),
+                      if (data.rating != null)
+                        RatingView(value: data.rating, compact: true),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

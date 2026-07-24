@@ -10,6 +10,15 @@ import '../../core/theme/theme_context.dart';
 /// режимов вручную — высоты, радиусы и цвета расходились. Здесь единственная
 /// реализация каждого элемента; экраны только передают данные.
 
+/// Во сколько раз система увеличила текст.
+///
+/// Высоты элементов заданы в точках, а размер текста задаёт система: без этой
+/// поправки при «Крупном шрифте» подписи переставали помещаться в свои коробки.
+/// Сверху ограничиваем: вдвое увеличенный текст не выдержит ни одна плотная
+/// раскладка, и растягивать под него элементы бессмысленно.
+double _textScaleOf(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.6);
+
 /// Поле поиска с иконкой и кнопкой очистки.
 class AppSearchField extends StatefulWidget {
   const AppSearchField({
@@ -80,8 +89,10 @@ class _AppSearchFieldState extends State<AppSearchField> {
         ? c.accentPrimary
         : c.textMuted.withValues(alpha: 0.30);
 
+    // Высота растёт вместе с системным шрифтом: при обычном она ровно та, что
+    // задана, при «Крупном» — больше, иначе строка не помещается.
     return SizedBox(
-      height: widget.height,
+      height: widget.height * _textScaleOf(context),
       child: TextField(
         controller: _controller,
         focusNode: _focus,
@@ -216,7 +227,7 @@ class AppDropdown<T> extends StatelessWidget {
     );
 
     return Container(
-      height: AppDimens.controlHeightSm,
+      height: AppDimens.controlHeightSm * _textScaleOf(context),
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.space12),
       decoration: BoxDecoration(
         color: active ? c.accentSoft : c.surfaceMuted,
@@ -290,7 +301,7 @@ class SegmentedToggle<T> extends StatelessWidget {
           borderRadius: AppDimens.brSm,
           onTap: () => onChanged(s.value),
           child: SizedBox(
-            height: AppDimens.controlHeightSm - 6,
+            height: (AppDimens.controlHeightSm - 6) * _textScaleOf(context),
             width: expand ? null : (s.label == null ? 40 : null),
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -333,7 +344,7 @@ class SegmentedToggle<T> extends StatelessWidget {
     }
 
     return Container(
-      height: AppDimens.controlHeightSm,
+      height: AppDimens.controlHeightSm * _textScaleOf(context),
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: c.surfaceMuted,

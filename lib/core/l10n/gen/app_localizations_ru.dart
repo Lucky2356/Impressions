@@ -1009,6 +1009,21 @@ class AppLocalizationsRu extends AppLocalizations {
       'Тип задаёт набор полей записи, категория — вашу полку в дереве.';
 
   @override
+  String entryRatingOf(Object value) {
+    return 'оценка $value';
+  }
+
+  @override
+  String a11yCategoryShelf(Object count, Object name) {
+    return '$name, $count';
+  }
+
+  @override
+  String a11ySummaryItem(Object label, Object value) {
+    return '$label: $value';
+  }
+
+  @override
   String get errorLogTitle => 'Журнал ошибок';
 
   @override
@@ -1953,11 +1968,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Файл лежит в защищённом каталоге приложения и не попадает в резервные копии.';
 
   @override
-  String get keyStorageDb => 'В базе приложения, зашифровано';
+  String get keyStorageDb => 'В базе приложения — без защиты на диске';
 
   @override
   String get keyStorageDbHint =>
-      'Секрет лежит рядом с зашифрованным ключом. Перенесите его, чтобы копия базы стала бесполезной без вашей учётной записи.';
+      'Секрет лежит в той же базе, что и зашифрованный им ключ, поэтому шифрование ключа сейчас ничего не даёт: скопировав файл базы, его можно прочитать. Перенесите секрет в хранилище системы.';
 
   @override
   String get keyStorageMove => 'Перенести в хранилище ОС';

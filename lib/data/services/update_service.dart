@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
@@ -19,6 +20,7 @@ class AppRelease {
     required this.url,
     this.notes,
     this.installerUrl,
+    this.installerSha256,
   });
 
   final String version;
@@ -29,6 +31,10 @@ class AppRelease {
 
   /// Прямая ссылка на установщик для текущей платформы.
   final String? installerUrl;
+
+  /// Контрольная сумма файла, как её сообщает GitHub. Скачанный файл
+  /// запускается, поэтому перед запуском сверяется с ней.
+  final String? installerSha256;
 }
 
 /// Чем закончилась ручная проверка обновлений.
@@ -200,6 +206,7 @@ class UpdateService {
     // Ищем файл для текущей платформы. Раньше искали только `.exe`, поэтому
     // на телефоне обновление предлагало скачать установщик для Windows.
     String? installer;
+    String? digest;
     final assets = json['assets'];
     if (assets is List) {
       for (final a in assets) {
@@ -210,6 +217,11 @@ class UpdateService {
             url is String &&
             name.toLowerCase().endsWith(installerExtension)) {
           installer = url;
+          // GitHub отдаёт сумму в виде `sha256:<hex>`.
+          final raw = a['digest'];
+          if (raw is String && raw.startsWith('sha256:')) {
+            digest = raw.substring('sha256:'.length).toLowerCase();
+          }
           break;
         }
       }
@@ -224,6 +236,7 @@ class UpdateService {
       url: pageUrl,
       notes: json['body'] as String?,
       installerUrl: installer,
+      installerSha256: digest,
     );
   }
 
@@ -270,6 +283,7 @@ class UpdateService {
   Future<File> downloadInstaller(
     String url, {
     void Function(double progress)? onProgress,
+    String? expectedSha256,
   }) async {
     if (!isTrustedInstallerUrl(url)) {
       throw ArgumentError('Недоверенный адрес установщика: $url');
@@ -297,7 +311,26 @@ class UpdateService {
     } finally {
       await sink.close();
     }
+
+    // Файл сейчас будет запущен, поэтому мало доверять адресу: сверяем с
+    // контрольной суммой, которую сообщил GitHub. Не сошлось — удаляем, не
+    // оставляя на диске исполняемый файл неизвестного происхождения.
+    if (expectedSha256 != null && expectedSha256.isNotEmpty) {
+      final actual = await _sha256OfFile(file);
+      if (actual != expectedSha256.toLowerCase()) {
+        await file.delete();
+        throw StateError(
+          'Контрольная сумма скачанного файла не совпала с заявленной',
+        );
+      }
+    }
     return file;
+  }
+
+  /// SHA-256 файла без чтения его целиком в память.
+  static Future<String> _sha256OfFile(File file) async {
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString().toLowerCase();
   }
 
   /// Ставит скачанное обновление.
