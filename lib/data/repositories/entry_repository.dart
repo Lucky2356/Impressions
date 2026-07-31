@@ -138,21 +138,58 @@ class EntryRepository {
         .getSingleOrNull();
   }
 
+  /// С какой длины название считается похожим по вхождению.
+  ///
+  /// Короткое слово входит почти во всё: заводя «Чай», человек получал диалог
+  /// со списком всех чаёв, а «Сок» — со всеми соками. Совпадение целиком
+  /// проверяется всегда, вхождение — только для названий подлиннее.
+  static const int _minLengthForPartialMatch = 6;
+
   /// Поиск возможных дублей объекта (§26): по нормализованному названию в рамках
   /// типа. Не объединяет автоматически — только предлагает кандидатов.
+  ///
+  /// Отбор идёт запросом по `idx_objects_norm_title` и по штрихкоду, а не
+  /// чтением всех объектов типа: при полном каталоге это был проход по всей
+  /// таблице на каждое сохранение.
   Future<List<ObjectRow>> findDuplicateCandidates(
     String typeId,
     String title, {
     String? barcode,
   }) async {
     final norm = Normalize.forMatch(title);
-    final q = db.select(db.objects)..where((o) => o.typeId.equals(typeId));
-    final rows = await q.get();
+    if (norm.isEmpty) return const [];
+
+    // Сужаем выборку в базе: точное совпадение ловится индексом
+    // `idx_objects_norm_title`, а похожие — по первому слову. Раньше сюда
+    // поднимались все объекты типа и каждый нормализовался в Dart: при полном
+    // каталоге это проход по всей таблице на каждое сохранение.
+    final firstWord = norm.split(' ').first;
+    final rows =
+        await (db.select(db.objects)
+              ..where((o) => o.typeId.equals(typeId))
+              ..where(
+                (o) =>
+                    o.normalizedTitle.equals(norm) |
+                    o.normalizedAltTitle.equals(norm) |
+                    o.normalizedTitle.like('%$firstWord%') |
+                    (barcode == null
+                        ? const Constant(false)
+                        : o.barcode.equals(barcode)),
+              ))
+            .get();
+
+    // Точное правило — здесь: в колонке лежит название с пунктуацией, а
+    // сравниваем мы очищенные.
     return rows.where((o) {
       if (barcode != null && o.barcode == barcode) return true;
       final on = Normalize.forMatch(o.title);
       final oa = o.altTitle == null ? '' : Normalize.forMatch(o.altTitle!);
-      return on == norm || oa == norm || on.contains(norm) || norm.contains(on);
+      if (on == norm || oa == norm) return true;
+      // Короткое название входит почти во всё, поэтому вхождением его не
+      // проверяем — иначе «Чай» предлагал бы объединить со всеми чаями.
+      if (norm.length < _minLengthForPartialMatch) return false;
+      if (on.contains(norm)) return true;
+      return on.length >= _minLengthForPartialMatch && norm.contains(on);
     }).toList();
   }
 
@@ -382,13 +419,14 @@ class EntryRepository {
 
   // ---- Представления для UI ----
 
-  /// Записи профиля с названием объекта, типом и путём основной категории.
+  /// Отбор записей под фильтрами — общий для списка карточек и для счёта.
   ///
-  /// [categoryIds] — ограничить выбранными категориями (обычно вся ветка).
-  Future<List<EntryView>> entryViews(
+  /// Возвращает `null`, когда заведомо ничего не подходит: пустой список
+  /// идентификаторов, ненайденный поисковый запрос, ни одной помеченной
+  /// записи. Так вызывающий отличает «нечего искать» от «ничего не нашлось
+  /// после запроса».
+  Future<JoinedSelectStatement?> _matching(
     String profileId, {
-
-    /// Только эти записи — например, состав подборки.
     List<String>? entryIds,
     List<String>? categoryIds,
     List<String>? tagIds,
@@ -397,8 +435,6 @@ class EntryRepository {
     String? search,
     EntrySort sort = EntrySort.recent,
     bool archived = false,
-    int? limit,
-    int offset = 0,
   }) async {
     final query =
         db.select(db.profileEntries).join([
@@ -442,7 +478,7 @@ class EntryRepository {
           });
 
     if (entryIds != null) {
-      if (entryIds.isEmpty) return const [];
+      if (entryIds.isEmpty) return null;
       query.where(db.profileEntries.id.isIn(entryIds));
     }
     if (relation != null) {
@@ -460,7 +496,7 @@ class EntryRepository {
       if (byTitle.isEmpty && byNote.isEmpty) {
         // Запрос из одних служебных символов FTS ничего не найдёт, но и
         // отдавать весь каталог нельзя — считаем, что совпадений нет.
-        return const [];
+        return null;
       }
       final conditions = <Expression<bool>>[
         if (byTitle.isNotEmpty) db.objects.id.isIn(byTitle),
@@ -474,40 +510,98 @@ class EntryRepository {
         db.entryTags,
       )..where((t) => t.tagId.isIn(tagIds))).get();
       final ids = tagged.map((t) => t.entryId).toSet();
-      if (ids.isEmpty) return const [];
+      if (ids.isEmpty) return null;
       query.where(db.profileEntries.id.isIn(ids));
     }
-    // Пагинация применяется только когда не требуется постфильтрация по
-    // категориям (иначе limit исказил бы результат).
-    if (limit != null && categoryIds == null) {
-      query.limit(limit, offset: offset);
+    if (categoryIds != null) {
+      // Ветка отбирается запросом, а не после выборки. Раньше это была
+      // постфильтрация уже собранных строк, из-за неё `LIMIT` был неточен и
+      // каталог поднимал в память весь профиль на каждое изменение фильтра.
+      if (categoryIds.isEmpty) return null;
+      final links = await (db.select(
+        db.entryCategories,
+      )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
+      final ids = links.map((l) => l.entryId).toSet();
+      if (ids.isEmpty) return null;
+      query.where(db.profileEntries.id.isIn(ids));
     }
 
-    var rows = await query.get();
+    return query;
+  }
 
-    // Основные категории записей.
+  /// Идентификаторы записей под фильтрами, в порядке сортировки.
+  ///
+  /// Каталогу этого хватает, чтобы узнать, сколько всего нашлось, и отрезать
+  /// страницу. Карточки собираются отдельно и только для видимого куска.
+  Future<List<String>> matchingEntryIds(
+    String profileId, {
+    List<String>? entryIds,
+    List<String>? categoryIds,
+    List<String>? tagIds,
+    String? relation,
+    String? typeId,
+    String? search,
+    EntrySort sort = EntrySort.recent,
+    bool archived = false,
+  }) async {
+    final query = await _matching(
+      profileId,
+      entryIds: entryIds,
+      categoryIds: categoryIds,
+      tagIds: tagIds,
+      relation: relation,
+      typeId: typeId,
+      search: search,
+      sort: sort,
+      archived: archived,
+    );
+    if (query == null) return const [];
+    final rows = await query.get();
+    return [for (final r in rows) r.readTable(db.profileEntries).id];
+  }
+
+  /// Записи профиля с названием объекта, типом и путём основной категории.
+  ///
+  /// [categoryIds] — ограничить выбранными категориями (обычно вся ветка).
+  Future<List<EntryView>> entryViews(
+    String profileId, {
+
+    /// Только эти записи — например, состав подборки.
+    List<String>? entryIds,
+    List<String>? categoryIds,
+    List<String>? tagIds,
+    String? relation,
+    String? typeId,
+    String? search,
+    EntrySort sort = EntrySort.recent,
+    bool archived = false,
+    int? limit,
+    int offset = 0,
+  }) async {
+    final query = await _matching(
+      profileId,
+      entryIds: entryIds,
+      categoryIds: categoryIds,
+      tagIds: tagIds,
+      relation: relation,
+      typeId: typeId,
+      search: search,
+      sort: sort,
+      archived: archived,
+    );
+    if (query == null) return const [];
+    if (limit != null) query.limit(limit, offset: offset);
+
+    final rows = await query.get();
+    if (rows.isEmpty) return const [];
+
+    // Основные категории записей — только для выбранных строк.
     final pageEntryIds = rows
         .map((r) => r.readTable(db.profileEntries).id)
         .toList();
-    final links = pageEntryIds.isEmpty
-        ? <EntryCategoryRow>[]
-        : await (db.select(
-            db.entryCategories,
-          )..where((ec) => ec.entryId.isIn(pageEntryIds))).get();
-
-    if (categoryIds != null) {
-      final allowed = categoryIds.toSet();
-      final matching = links
-          .where((l) => allowed.contains(l.categoryId))
-          .map((l) => l.entryId)
-          .toSet();
-      rows = rows
-          .where((r) => matching.contains(r.readTable(db.profileEntries).id))
-          .toList();
-      if (limit != null) {
-        rows = rows.skip(offset).take(limit).toList();
-      }
-    }
+    final links = await (db.select(
+      db.entryCategories,
+    )..where((ec) => ec.entryId.isIn(pageEntryIds))).get();
 
     final primaryByEntry = <String, String>{};
     for (final l in links) {

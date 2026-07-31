@@ -181,20 +181,32 @@ class CatalogResults {
 }
 
 /// Видимая часть результатов вместе с общим числом.
+///
+/// Сначала берутся только идентификаторы всего найденного — по ним считается
+/// «сколько всего» и отрезается страница. Карточки собираются лишь для этой
+/// страницы: обложки и пути категорий — самая дорогая часть выборки, и делать
+/// их для всего профиля на каждую букву в поиске незачем.
 final catalogResultsProvider = FutureProvider<CatalogResults>((ref) async {
-  final all = await ref.watch(_catalogAllResultsProvider.future);
+  final all = await ref.watch(catalogMatchingIdsProvider.future);
   final limit = ref.watch(catalogPageProvider);
-  return CatalogResults(
-    items: all.length <= limit ? all : all.sublist(0, limit),
-    total: all.length,
-  );
+  if (all.isEmpty) return const CatalogResults(items: [], total: 0);
+
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const CatalogResults(items: [], total: 0);
+
+  final pageIds = all.length <= limit ? all : all.sublist(0, limit);
+  final items = await ref
+      .watch(entryRepositoryProvider)
+      .entryViews(
+        profile.id,
+        entryIds: pageIds,
+        sort: ref.watch(catalogStateProvider).sort,
+      );
+  return CatalogResults(items: items, total: all.length);
 });
 
-/// Полный результат под текущими фильтрами.
-///
-/// Отбор идёт в базе, а срез по странице — уже в памяти: постфильтрация по
-/// категориям и тегам делает `LIMIT` в запросе неточным.
-final _catalogAllResultsProvider = FutureProvider<List<EntryView>>((ref) async {
+/// Идентификаторы всего, что подходит под текущие фильтры.
+final catalogMatchingIdsProvider = FutureProvider<List<String>>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
@@ -221,7 +233,7 @@ final _catalogAllResultsProvider = FutureProvider<List<EntryView>>((ref) async {
 
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(
+      .matchingEntryIds(
         profile.id,
         categoryIds: categoryIds,
         tagIds: s.tagIds.isEmpty ? null : s.tagIds,
