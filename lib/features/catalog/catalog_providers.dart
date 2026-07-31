@@ -122,6 +122,23 @@ final catalogStateProvider = NotifierProvider<CatalogController, CatalogState>(
   CatalogController.new,
 );
 
+/// Просьба поставить курсор в поле поиска каталога.
+///
+/// На телефоне поля поиска в шапке нет — там значок, который переводит в
+/// каталог. Без этого человек попадал в каталог и должен был сам догадаться
+/// нажать на поле. Считаем нажатия, а не храним признак: два обращения подряд
+/// должны сработать оба.
+class CatalogSearchFocus extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void request() => state++;
+}
+
+final catalogSearchFocusProvider = NotifierProvider<CatalogSearchFocus, int>(
+  CatalogSearchFocus.new,
+);
+
 /// Сколько записей подгружается за один шаг прокрутки.
 ///
 /// Каталог рассчитан на десятки тысяч записей, а строил разом весь список:

@@ -19,6 +19,7 @@ import '../barcode/barcode_scan_sheet.dart';
 import '../catalog/catalog_providers.dart';
 import '../catalog/catalog_screen.dart';
 import '../categories/categories_screen.dart';
+import '../categories/category_providers.dart';
 import '../collections/collections_screen.dart';
 import '../compare/compare_screen.dart';
 import '../exchange/import_screen.dart';
@@ -312,6 +313,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
+  /// Поиск с телефона: в шапке поля нет, там значок.
+  ///
+  /// Переходим в каталог и ставим курсор в его поле — просьбу отправляем после
+  /// кадра, иначе каталог ещё не построен и слушать её некому.
+  void _searchOnPhone() {
+    _go(NavIds.catalog);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(catalogSearchFocusProvider.notifier).request();
+    });
+  }
+
   Future<void> _scanBarcode() async {
     final scanned = await BarcodeScanSheet.show(context);
     if (scanned == null || !mounted) return;
@@ -335,20 +347,50 @@ class _AppShellState extends ConsumerState<AppShell> {
         _go(NavIds.settings),
   };
 
+  /// Один шаг назад по системной кнопке Android.
+  ///
+  /// Разделы — ветки `switch`, а не маршруты, поэтому Navigator о них ничего
+  /// не знает: нажатие «Назад» в любом разделе просто закрывало приложение.
+  /// Теперь оно поднимается на шаг — из открытой ветки к дереву категорий, из
+  /// раздела на главную. Возвращает false, когда подниматься уже некуда.
+  bool _stepBack() {
+    final section = ref.read(navProvider);
+    if (section == NavIds.categories &&
+        ref.read(selectedCategoryProvider) != null) {
+      ref.read(selectedCategoryProvider.notifier).select(null);
+      return true;
+    }
+    if (section != NavIds.home) {
+      _go(NavIds.home);
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return CallbackShortcuts(
-      bindings: _shortcuts(),
-      child: Focus(
-        autofocus: true,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final layout = AppLayout.resolve(constraints.maxWidth);
-            return layout.isWide
-                ? _wideLayout(l10n, layout)
-                : _compactLayout(l10n);
-          },
+    // Диалоги и нижние листы — свои маршруты, и «Назад» закрывает сперва их:
+    // этот перехват стоит ниже них и получает нажатие последним.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || _stepBack()) return;
+        // С главной выходим — так ведут себя все приложения Android.
+        SystemNavigator.pop();
+      },
+      child: CallbackShortcuts(
+        bindings: _shortcuts(),
+        child: Focus(
+          autofocus: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final layout = AppLayout.resolve(constraints.maxWidth);
+              return layout.isWide
+                  ? _wideLayout(l10n, layout)
+                  : _compactLayout(l10n);
+            },
+          ),
         ),
       ),
     );
@@ -381,6 +423,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   searchFocus: _searchFocus,
                   onSearch: _search,
                   onSearchSubmitted: _searchSubmitted,
+                  onSearchRequested: _searchOnPhone,
                   onScan: _scanBarcode,
                 ),
                 Divider(height: 1, color: c.border),
@@ -421,6 +464,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               searchFocus: _searchFocus,
               onSearch: _search,
               onSearchSubmitted: _searchSubmitted,
+              onSearchRequested: _searchOnPhone,
               onScan: _scanBarcode,
             ),
           ),
@@ -478,6 +522,7 @@ class _TopHeader extends ConsumerWidget {
     required this.searchFocus,
     required this.onSearch,
     required this.onSearchSubmitted,
+    required this.onSearchRequested,
     required this.onScan,
   });
 
@@ -486,6 +531,9 @@ class _TopHeader extends ConsumerWidget {
   final FocusNode searchFocus;
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onSearchSubmitted;
+
+  /// Нажали значок поиска на телефоне.
+  final VoidCallback onSearchRequested;
   final VoidCallback onScan;
 
   @override
@@ -549,8 +597,17 @@ class _TopHeader extends ConsumerWidget {
             ),
             const SizedBox(width: AppDimens.space8),
           ] else ...[
-            // На телефоне поиска в шапке нет — распорка отжимает значки вправо.
+            // На телефоне поле поиска в шапку не помещается, поэтому здесь
+            // значок: он переводит в каталог и сразу ставит курсор в поиск.
+            // Раньше искать можно было, только догадавшись зайти в каталог.
             const Spacer(),
+            IconActionButton(
+              icon: Icons.search_rounded,
+              tooltip: l10n.commonSearch,
+              onPressed: onSearchRequested,
+              size: AppDimens.controlHeightSm,
+            ),
+            const SizedBox(width: AppDimens.space8),
             IconActionButton(
               icon: Icons.qr_code_scanner_rounded,
               tooltip: l10n.barcodeScanAction,

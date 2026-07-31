@@ -41,6 +41,7 @@ class CatalogScreen extends ConsumerStatefulWidget {
 
 class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   Timer? _debounce;
 
   /// Развёрнута ли панель фильтров. На широком окне она открыта сразу, на
@@ -56,6 +57,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchFocus.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -108,6 +110,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     // Общее число под фильтрами, а не размер загруженной страницы.
     final count = results.value?.total;
 
+    // На телефоне в каталог приходят по значку поиска: курсор ставим сразу,
+    // иначе человек попадает сюда и снова ищет, куда нажать.
+    ref.listen(
+      catalogSearchFocusProvider,
+      (_, _) => _searchFocus.requestFocus(),
+    );
+
     // Строку поиска мог заполнить глобальный поиск в шапке — синхронизируем.
     if (_searchController.text != state.search &&
         (_debounce == null || !_debounce!.isActive)) {
@@ -130,6 +139,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ],
         bottom: _FilterBar(
           searchController: _searchController,
+          searchFocus: _searchFocus,
           onSearchChanged: _onSearchChanged,
           expanded: _filtersExpanded ?? context.layout.isWide,
           onToggleFilters: () => setState(
@@ -355,12 +365,14 @@ class _Results extends ConsumerWidget {
 class _FilterBar extends ConsumerWidget {
   const _FilterBar({
     required this.searchController,
+    required this.searchFocus,
     required this.onSearchChanged,
     required this.expanded,
     required this.onToggleFilters,
   });
 
   final TextEditingController searchController;
+  final FocusNode searchFocus;
   final ValueChanged<String> onSearchChanged;
 
   /// Показаны ли списки фильтров.
@@ -394,6 +406,7 @@ class _FilterBar extends ConsumerWidget {
     final search = AppSearchField(
       hint: l10n.catalogSearchHint,
       controller: searchController,
+      focusNode: searchFocus,
       onChanged: onSearchChanged,
     );
     // Фильтры прячутся за одну кнопку: четыре списка подряд занимали на
