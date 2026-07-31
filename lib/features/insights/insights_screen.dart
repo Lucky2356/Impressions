@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../app/navigation.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
@@ -12,6 +13,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
+import '../catalog/catalog_providers.dart';
 
 /// Развёрнутая статистика активного профиля.
 final profileInsightsProvider = FutureProvider<ProfileInsights>((ref) async {
@@ -79,13 +81,20 @@ class InsightsScreen extends ConsumerWidget {
           if (data.byRelation.isNotEmpty) ...[
             SectionHeader(title: l10n.insightsRelations),
             const SizedBox(height: AppDimens.space12),
-            _RelationBars(byRelation: data.byRelation, total: data.total),
+            _RelationBars(
+              byRelation: data.byRelation,
+              total: data.total,
+              onTap: (relation) => _openCatalog(ref, relation: relation),
+            ),
             const SizedBox(height: AppDimens.space32),
           ],
           if (data.topCategories.isNotEmpty) ...[
             SectionHeader(title: l10n.insightsCategories),
             const SizedBox(height: AppDimens.space12),
-            _TopCategories(items: data.topCategories),
+            _TopCategories(
+              items: data.topCategories,
+              onTap: (categoryId) => _openCatalog(ref, categoryId: categoryId),
+            ),
             const SizedBox(height: AppDimens.space32),
           ],
           if (data.byMonth.length > 1) ...[
@@ -97,6 +106,18 @@ class InsightsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Переход из статистики в каталог с подставленным фильтром.
+///
+/// Экран показывал числа и никуда не вёл: увидев «Продукты — 42», к этим сорока
+/// двум записям перейти было нельзя. Прежний отбор сбрасывается — иначе строка
+/// «Продукты» показала бы продукты, оставшиеся от прошлого фильтра.
+void _openCatalog(WidgetRef ref, {String? categoryId, String? relation}) {
+  final catalog = ref.read(catalogStateProvider.notifier)..reset();
+  if (categoryId != null) catalog.setCategory(categoryId);
+  if (relation != null) catalog.setRelation(relation);
+  ref.read(navProvider.notifier).go(NavIds.catalog);
 }
 
 /// Четыре числа сверху: сколько всего, средняя оценка, с фото, с заметками.
@@ -244,10 +265,15 @@ class _RatingHistogram extends StatelessWidget {
 
 /// Доли отношений полосами.
 class _RelationBars extends StatelessWidget {
-  const _RelationBars({required this.byRelation, required this.total});
+  const _RelationBars({
+    required this.byRelation,
+    required this.total,
+    required this.onTap,
+  });
 
   final Map<String, int> byRelation;
   final int total;
+  final ValueChanged<String> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -266,46 +292,13 @@ class _RelationBars extends StatelessWidget {
         children: [
           for (var i = 0; i < rows.length; i++) ...[
             if (i > 0) const SizedBox(height: AppDimens.space12),
-            Row(
-              children: [
-                Icon(
-                  rows[i].relation.icon,
-                  size: 16,
-                  color: rows[i].relation.accent(c),
-                ),
-                const SizedBox(width: AppDimens.space8),
-                SizedBox(
-                  width: 130,
-                  child: Text(
-                    rows[i].relation.label(l10n),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.bodySmall,
-                  ),
-                ),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: AppDimens.brPill,
-                    child: LinearProgressIndicator(
-                      value: total == 0 ? 0 : rows[i].count / total,
-                      minHeight: 10,
-                      backgroundColor: c.surfaceMuted,
-                      valueColor: AlwaysStoppedAnimation(
-                        rows[i].relation.accent(c),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppDimens.space12),
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    '${rows[i].count}',
-                    textAlign: TextAlign.right,
-                    style: context.text.labelMedium,
-                  ),
-                ),
-              ],
+            _StatBar(
+              label: rows[i].relation.label(l10n),
+              icon: rows[i].relation.icon,
+              color: rows[i].relation.accent(c),
+              value: total == 0 ? 0 : rows[i].count / total,
+              count: rows[i].count,
+              onTap: () => onTap(rows[i].relation.name),
             ),
           ],
         ],
@@ -315,8 +308,10 @@ class _RelationBars extends StatelessWidget {
 }
 
 class _TopCategories extends StatelessWidget {
-  const _TopCategories({required this.items});
-  final List<({String name, int count})> items;
+  const _TopCategories({required this.items, required this.onTap});
+
+  final List<({String id, String name, int count})> items;
+  final ValueChanged<String> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -328,43 +323,87 @@ class _TopCategories extends StatelessWidget {
         children: [
           for (var i = 0; i < items.length; i++) ...[
             if (i > 0) const SizedBox(height: AppDimens.space12),
-            Row(
-              children: [
-                SizedBox(
-                  width: 180,
-                  child: Text(
-                    items[i].name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.bodySmall,
-                  ),
-                ),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: AppDimens.brPill,
-                    child: LinearProgressIndicator(
-                      value: items[i].count / max,
-                      minHeight: 10,
-                      backgroundColor: c.surfaceMuted,
-                      valueColor: AlwaysStoppedAnimation(
-                        c.profileColorFor(items[i].name),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppDimens.space12),
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    '${items[i].count}',
-                    textAlign: TextAlign.right,
-                    style: context.text.labelMedium,
-                  ),
-                ),
-              ],
+            _StatBar(
+              label: items[i].name,
+              color: c.profileColorFor(items[i].name),
+              value: items[i].count / max,
+              count: items[i].count,
+              labelWidth: 180,
+              onTap: () => onTap(items[i].id),
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Строка статистики: подпись, полоса и число. Нажатие открывает каталог с
+/// подставленным отбором.
+class _StatBar extends StatelessWidget {
+  const _StatBar({
+    required this.label,
+    required this.color,
+    required this.value,
+    required this.count,
+    required this.onTap,
+    this.icon,
+    this.labelWidth = 130,
+  });
+
+  final String label;
+  final Color color;
+  final double value;
+  final int count;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final double labelWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppDimens.brSm,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimens.space4),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: AppDimens.space8),
+            ],
+            SizedBox(
+              width: labelWidth,
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.bodySmall,
+              ),
+            ),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: AppDimens.brPill,
+                child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 10,
+                  backgroundColor: c.surfaceMuted,
+                  valueColor: AlwaysStoppedAnimation(color),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimens.space12),
+            SizedBox(
+              width: 36,
+              child: Text(
+                '$count',
+                textAlign: TextAlign.right,
+                style: context.text.labelMedium,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

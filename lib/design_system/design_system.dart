@@ -21,6 +21,7 @@ export 'components/nav_sidebar.dart';
 export 'components/profile_avatar.dart';
 export 'components/profile_card.dart';
 export 'components/profile_switcher.dart';
+export 'components/rating_dialog.dart';
 export 'components/rating_view.dart';
 export 'components/relation_chip.dart';
 export 'components/screen_header.dart';

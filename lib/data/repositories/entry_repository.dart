@@ -434,8 +434,19 @@ class EntryRepository {
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
+    bool reverseSort = false,
+    bool withoutRating = false,
+    bool withoutCategory = false,
+    bool withoutPhoto = false,
     bool archived = false,
   }) async {
+    // Обычный порядок у каждой сортировки свой: названия от А, оценки и даты
+    // от больших. Переключатель разворачивает именно его, а не приписывает
+    // всем одно направление.
+    OrderingMode flip(OrderingMode natural) => reverseSort
+        ? (natural == OrderingMode.asc ? OrderingMode.desc : OrderingMode.asc)
+        : natural;
+
     final query =
         db.select(db.profileEntries).join([
             innerJoin(
@@ -457,22 +468,25 @@ class EntryRepository {
             EntrySort.recent => [
               OrderingTerm(
                 expression: db.profileEntries.createdAt,
-                mode: OrderingMode.desc,
+                mode: flip(OrderingMode.desc),
               ),
             ],
             EntrySort.title => [
-              OrderingTerm(expression: db.objects.normalizedTitle),
+              OrderingTerm(
+                expression: db.objects.normalizedTitle,
+                mode: flip(OrderingMode.asc),
+              ),
             ],
             EntrySort.rating => [
               OrderingTerm(
                 expression: db.profileEntries.rating,
-                mode: OrderingMode.desc,
+                mode: flip(OrderingMode.desc),
               ),
             ],
             EntrySort.impressionDate => [
               OrderingTerm(
                 expression: db.profileEntries.impressionDate,
-                mode: OrderingMode.desc,
+                mode: flip(OrderingMode.desc),
               ),
             ],
           });
@@ -526,6 +540,32 @@ class EntryRepository {
       query.where(db.profileEntries.id.isIn(ids));
     }
 
+    // «Что я не доделал»: без оценки, мимо категорий, без фотографии. Отвечать
+    // на такие вопросы фильтрами «покажи вот такие» было нельзя вовсе.
+    if (withoutRating) {
+      query.where(db.profileEntries.rating.isNull());
+    }
+    if (withoutCategory) {
+      query.where(
+        notExistsQuery(
+          db.select(db.entryCategories)
+            ..where((ec) => ec.entryId.equalsExp(db.profileEntries.id)),
+        ),
+      );
+    }
+    if (withoutPhoto) {
+      // Снимки привязаны к версии записи, поэтому смотрим её текущую.
+      query.where(
+        notExistsQuery(
+          db.select(db.revisionAttachments)..where(
+            (ra) =>
+                ra.entityKind.equals('entry') &
+                ra.revisionId.equalsExp(db.profileEntries.currentRevisionId),
+          ),
+        ),
+      );
+    }
+
     return query;
   }
 
@@ -542,6 +582,10 @@ class EntryRepository {
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
+    bool reverseSort = false,
+    bool withoutRating = false,
+    bool withoutCategory = false,
+    bool withoutPhoto = false,
     bool archived = false,
   }) async {
     final query = await _matching(
@@ -553,6 +597,10 @@ class EntryRepository {
       typeId: typeId,
       search: search,
       sort: sort,
+      reverseSort: reverseSort,
+      withoutRating: withoutRating,
+      withoutCategory: withoutCategory,
+      withoutPhoto: withoutPhoto,
       archived: archived,
     );
     if (query == null) return const [];
@@ -574,6 +622,10 @@ class EntryRepository {
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
+    bool reverseSort = false,
+    bool withoutRating = false,
+    bool withoutCategory = false,
+    bool withoutPhoto = false,
     bool archived = false,
     int? limit,
     int offset = 0,
@@ -587,6 +639,10 @@ class EntryRepository {
       typeId: typeId,
       search: search,
       sort: sort,
+      reverseSort: reverseSort,
+      withoutRating: withoutRating,
+      withoutCategory: withoutCategory,
+      withoutPhoto: withoutPhoto,
       archived: archived,
     );
     if (query == null) return const [];
@@ -845,8 +901,10 @@ class EntryRepository {
       if (rating != null) {
         rated++;
         ratingSum += rating;
-        // 10 попадает в последнюю корзину, а не в одиннадцатую.
-        buckets[rating.floor().clamp(0, 9)]++;
+        // Корзина — ближайший целый балл, как человек оценку и читает.
+        // Раньше брался пол, а подписывалась корзина на балл больше: оценка
+        // 1.0 показывалась в столбике «2», а 0 — в столбике «1».
+        buckets[(rating.round() - 1).clamp(0, 9)]++;
       }
       final relation = e.relation;
       if (relation != null) {
@@ -880,7 +938,7 @@ class EntryRepository {
     final top =
         perCategory.entries
             .where((e) => catById[e.key] != null)
-            .map((e) => (name: catById[e.key]!.name, count: e.value))
+            .map((e) => (id: e.key, name: catById[e.key]!.name, count: e.value))
             .toList()
           ..sort((a, b) => b.count.compareTo(a.count));
 

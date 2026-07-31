@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
@@ -20,6 +22,10 @@ class CatalogState {
     this.relation,
     this.search = '',
     this.sort = EntrySort.recent,
+    this.reverseSort = false,
+    this.withoutRating = false,
+    this.withoutCategory = false,
+    this.withoutPhoto = false,
     this.view = CatalogViewMode.grid,
   });
 
@@ -32,7 +38,28 @@ class CatalogState {
   final String? relation;
   final String search;
   final EntrySort sort;
+
+  /// Порядок развёрнут: «худшие сначала», «Я → А», «самые старые».
+  final bool reverseSort;
+
+  /// «Что я не доделал»: без оценки, мимо категорий, без фотографии.
+  final bool withoutRating;
+  final bool withoutCategory;
+  final bool withoutPhoto;
+
   final CatalogViewMode view;
+
+  /// Включён ли хоть один отбор — от него зависит и подсказка про пустой
+  /// список, и кнопка «Сбросить фильтры».
+  bool get hasFilters =>
+      search.isNotEmpty ||
+      typeId != null ||
+      relation != null ||
+      categoryId != null ||
+      tagIds.isNotEmpty ||
+      withoutRating ||
+      withoutCategory ||
+      withoutPhoto;
 
   CatalogState copyWith({
     Object? typeId = _unset,
@@ -42,6 +69,10 @@ class CatalogState {
     Object? relation = _unset,
     String? search,
     EntrySort? sort,
+    bool? reverseSort,
+    bool? withoutRating,
+    bool? withoutCategory,
+    bool? withoutPhoto,
     CatalogViewMode? view,
   }) {
     return CatalogState(
@@ -56,6 +87,10 @@ class CatalogState {
           : relation as String?,
       search: search ?? this.search,
       sort: sort ?? this.sort,
+      reverseSort: reverseSort ?? this.reverseSort,
+      withoutRating: withoutRating ?? this.withoutRating,
+      withoutCategory: withoutCategory ?? this.withoutCategory,
+      withoutPhoto: withoutPhoto ?? this.withoutPhoto,
       view: view ?? this.view,
     );
   }
@@ -70,7 +105,11 @@ class CatalogController extends Notifier<CatalogState> {
     return const CatalogState();
   }
 
-  /// Подтягивает сохранённые режим и переключатель подкатегорий (§15).
+  /// Подтягивает сохранённые режим, фильтры и сортировку (§15).
+  ///
+  /// Сохранялись только режим отображения и переключатель подкатегорий: тип,
+  /// категория, отношение и теги сбрасывались при каждом запуске, и человек,
+  /// который ведёт одну ветку, каждый раз выставлял их заново.
   Future<void> _restore() async {
     final settings = ref.read(settingsRepositoryProvider);
     final viewRaw = await settings.get(SettingKeys.catalogViewMode);
@@ -81,25 +120,127 @@ class CatalogController extends Notifier<CatalogState> {
     final view = CatalogViewMode.values
         .where((v) => v.name == viewRaw)
         .firstOrNull;
-    state = state.copyWith(
+
+    final filtersRaw = await settings.get(SettingKeys.catalogFilters);
+    // Настройки могли дочитаться уже после того, как провайдер выбросили.
+    if (!ref.mounted) return;
+    var restored = state.copyWith(
       view: view ?? state.view,
       includeSubcategories: includeSub,
     );
+    if (filtersRaw != null) {
+      try {
+        final json = jsonDecode(filtersRaw);
+        if (json is Map<String, Object?>) {
+          restored = _fromJson(json, restored);
+        }
+      } on FormatException {
+        // Настройка записана прошлой версией — просто начинаем с чистых
+        // фильтров, ронять запуск из-за этого нельзя.
+      }
+    }
+    // Запрос в поиске не восстанавливаем: он приходит из строки в шапке и
+    // сохранённым выглядел бы как «каталог сам себя отфильтровал».
+    state = restored.copyWith(search: '');
   }
 
-  void setType(String? id) => state = state.copyWith(typeId: id);
-  void setRelation(String? r) => state = state.copyWith(relation: r);
-  void setCategory(String? id) => state = state.copyWith(categoryId: id);
+  CatalogState _fromJson(Map<String, Object?> json, CatalogState base) {
+    String? text(String key) {
+      final value = json[key];
+      return value is String && value.isNotEmpty ? value : null;
+    }
+
+    return base.copyWith(
+      typeId: text('typeId'),
+      categoryId: text('categoryId'),
+      relation: text('relation'),
+      tagIds: switch (json['tagIds']) {
+        final List<Object?> list => [
+          for (final id in list)
+            if (id is String) id,
+        ],
+        _ => const <String>[],
+      },
+      sort:
+          EntrySort.values.where((s) => s.name == json['sort']).firstOrNull ??
+          base.sort,
+      reverseSort: json['reverseSort'] == true,
+      withoutRating: json['withoutRating'] == true,
+      withoutCategory: json['withoutCategory'] == true,
+      withoutPhoto: json['withoutPhoto'] == true,
+    );
+  }
+
+  /// Сохраняет отбор, чтобы он пережил перезапуск.
+  Future<void> _persist() async {
+    await ref
+        .read(settingsRepositoryProvider)
+        .set(
+          SettingKeys.catalogFilters,
+          jsonEncode({
+            'typeId': state.typeId,
+            'categoryId': state.categoryId,
+            'relation': state.relation,
+            'tagIds': state.tagIds,
+            'sort': state.sort.name,
+            'reverseSort': state.reverseSort,
+            'withoutRating': state.withoutRating,
+            'withoutCategory': state.withoutCategory,
+            'withoutPhoto': state.withoutPhoto,
+          }),
+        );
+  }
+
+  void setType(String? id) {
+    state = state.copyWith(typeId: id);
+    _persist();
+  }
+
+  void setRelation(String? r) {
+    state = state.copyWith(relation: r);
+    _persist();
+  }
+
+  void setCategory(String? id) {
+    state = state.copyWith(categoryId: id);
+    _persist();
+  }
 
   /// Переключает тег в фильтре.
   void toggleTag(String tagId) {
     final next = [...state.tagIds];
     if (!next.remove(tagId)) next.add(tagId);
     state = state.copyWith(tagIds: next);
+    _persist();
   }
 
   void setSearch(String q) => state = state.copyWith(search: q);
-  void setSort(EntrySort s) => state = state.copyWith(sort: s);
+
+  void setSort(EntrySort s) {
+    state = state.copyWith(sort: s);
+    _persist();
+  }
+
+  /// Разворачивает порядок: «худшие сначала», «Я → А», «самые старые».
+  void toggleSortDirection() {
+    state = state.copyWith(reverseSort: !state.reverseSort);
+    _persist();
+  }
+
+  void setWithoutRating(bool value) {
+    state = state.copyWith(withoutRating: value);
+    _persist();
+  }
+
+  void setWithoutCategory(bool value) {
+    state = state.copyWith(withoutCategory: value);
+    _persist();
+  }
+
+  void setWithoutPhoto(bool value) {
+    state = state.copyWith(withoutPhoto: value);
+    _persist();
+  }
 
   Future<void> setView(CatalogViewMode v) async {
     state = state.copyWith(view: v);
@@ -115,7 +256,13 @@ class CatalogController extends Notifier<CatalogState> {
         .setBool(SettingKeys.catalogIncludeSubcategories, value);
   }
 
-  void reset() => state = CatalogState(view: state.view);
+  void reset() {
+    state = CatalogState(
+      view: state.view,
+      includeSubcategories: state.includeSubcategories,
+    );
+    _persist();
+  }
 }
 
 final catalogStateProvider = NotifierProvider<CatalogController, CatalogState>(
@@ -201,6 +348,7 @@ final catalogResultsProvider = FutureProvider<CatalogResults>((ref) async {
         profile.id,
         entryIds: pageIds,
         sort: ref.watch(catalogStateProvider).sort,
+        reverseSort: ref.watch(catalogStateProvider).reverseSort,
       );
   return CatalogResults(items: items, total: all.length);
 });
@@ -241,5 +389,9 @@ final catalogMatchingIdsProvider = FutureProvider<List<String>>((ref) async {
         typeId: s.typeId,
         search: s.search,
         sort: s.sort,
+        reverseSort: s.reverseSort,
+        withoutRating: s.withoutRating,
+        withoutCategory: s.withoutCategory,
+        withoutPhoto: s.withoutPhoto,
       );
 });

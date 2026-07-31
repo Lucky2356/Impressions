@@ -7,6 +7,12 @@ class SettingKeys {
   static const themeMode = 'theme_mode';
   static const catalogViewMode = 'catalog_view_mode';
   static const catalogIncludeSubcategories = 'catalog_include_subcategories';
+
+  /// Отбор каталога: тип, категория, отношение, теги, сортировка.
+  static const catalogFilters = 'catalog_filters';
+
+  /// Раздел, открытый в прошлый раз.
+  static const lastSection = 'last_section';
   static const onboardingDone = 'onboarding_done';
 
   /// Обучение по разделам пройдено или пропущено.

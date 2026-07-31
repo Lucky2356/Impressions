@@ -14,6 +14,7 @@ import '../../data/providers.dart';
 import '../../data/services/revision_service.dart';
 import '../../data/services/transfer_service.dart';
 import '../../design_system/design_system.dart';
+import '../quick_add/category_picker.dart';
 import 'entry_photos.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
@@ -171,12 +172,33 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
               child: ListView(
                 padding: const EdgeInsets.all(AppDimens.space20),
                 children: [
-                  // Хлебные крошки: Продукты / Колбасы / Папа может (§7.6)
-                  Breadcrumbs(
-                    crumbs: [
-                      for (final name in d.categoryPath) Crumb(name),
-                      Crumb(d.object.title),
-                    ],
+                  // Хлебные крошки: Продукты / Колбасы / Папа может (§7.6).
+                  // Нажатие меняет категорию: раньше переложить запись можно
+                  // было только правой кнопкой в каталоге, о чём догадаться
+                  // неоткуда.
+                  InkWell(
+                    onTap: isOwn ? () => _pickCategory(d.entry.id) : null,
+                    borderRadius: AppDimens.brSm,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Breadcrumbs(
+                            crumbs: [
+                              for (final name in d.categoryPath) Crumb(name),
+                              if (d.categoryPath.isEmpty)
+                                Crumb(l10n.quickAddNoCategory),
+                              Crumb(d.object.title),
+                            ],
+                          ),
+                        ),
+                        if (isOwn)
+                          Icon(
+                            Icons.drive_file_move_outline,
+                            size: 16,
+                            color: c.textMuted,
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppDimens.space12),
                   Row(
@@ -438,6 +460,17 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
 
   Future<void> _setRating(String entryId, double? value) async {
     await ref.read(entryRepositoryProvider).updateEntry(entryId, rating: value);
+    _bump();
+  }
+
+  /// Переложить запись в другую категорию прямо из карточки.
+  Future<void> _pickCategory(String entryId) async {
+    final picked = await CategoryPicker.show(context);
+    final category = picked?.category;
+    if (picked == null || picked.cleared || category == null) return;
+    await ref
+        .read(entryRepositoryProvider)
+        .setPrimaryCategory(entryId, category.id);
     _bump();
   }
 

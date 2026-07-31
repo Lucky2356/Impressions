@@ -484,6 +484,12 @@ abstract class AppLocalizations {
   /// **'Начать заново'**
   String get quickAddDraftDiscard;
 
+  /// No description provided for @entryRateAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить оценку'**
+  String get entryRateAction;
+
   /// No description provided for @quickAddRatingLabel.
   ///
   /// In ru, this message translates to:
@@ -795,6 +801,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сортировка'**
   String get catalogSortLabel;
+
+  /// No description provided for @catalogSortNatural.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обычный порядок'**
+  String get catalogSortNatural;
+
+  /// No description provided for @catalogSortReversed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обратный порядок'**
+  String get catalogSortReversed;
+
+  /// No description provided for @catalogWithoutRating.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без оценки'**
+  String get catalogWithoutRating;
+
+  /// No description provided for @catalogWithoutCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без категории'**
+  String get catalogWithoutCategory;
+
+  /// No description provided for @catalogWithoutPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без фотографии'**
+  String get catalogWithoutPhoto;
 
   /// No description provided for @catalogFound.
   ///

@@ -206,6 +206,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddDraftDiscard => 'Начать заново';
 
   @override
+  String get entryRateAction => 'Поставить оценку';
+
+  @override
   String get quickAddRatingLabel => 'Оценка';
 
   @override
@@ -405,6 +408,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogSortLabel => 'Сортировка';
+
+  @override
+  String get catalogSortNatural => 'Обычный порядок';
+
+  @override
+  String get catalogSortReversed => 'Обратный порядок';
+
+  @override
+  String get catalogWithoutRating => 'Без оценки';
+
+  @override
+  String get catalogWithoutCategory => 'Без категории';
+
+  @override
+  String get catalogWithoutPhoto => 'Без фотографии';
 
   @override
   String catalogFound(int count) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/data_refresh.dart';
+import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -48,10 +49,20 @@ class EntryContextMenu {
         value: value,
         height: 40,
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 18, color: danger ? c.coral : c.textSecondary),
             const SizedBox(width: AppDimens.space12),
-            Text(label, style: danger ? TextStyle(color: c.coral) : null),
+            // Меню Material не бывает шире 280 точек: длинные названия должны
+            // ужиматься, а не вылезать за край.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: danger ? TextStyle(color: c.coral) : null,
+              ),
+            ),
           ],
         ),
       );
@@ -75,6 +86,44 @@ class EntryContextMenu {
             l10n.bulkSelectOne,
           ),
         const PopupMenuDivider(),
+        // Самое частое действие — «понравилось / не понравилось» и оценка.
+        // Раньше ради них приходилось открывать карточку записи.
+        for (final r in Relation.values)
+          PopupMenuItem(
+            value: 'relation:${r.name}',
+            height: 40,
+            // Ширину меню задаёт самый широкий пункт, поэтому строки здесь
+            // такие же по устройству, как у `item`: `Expanded` лишает пункт
+            // собственной ширины, и меню становится уже соседних строк.
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  r.icon,
+                  size: 18,
+                  color: entry.relation == r.name
+                      ? r.accent(c)
+                      : c.textSecondary,
+                ),
+                const SizedBox(width: AppDimens.space12),
+                // Меню Material шире 280 точек не бывает, а «Хочу попробовать»
+                // с галочкой в эту ширину не помещается.
+                Flexible(
+                  child: Text(
+                    r.label(l10n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (entry.relation == r.name) ...[
+                  const SizedBox(width: AppDimens.space8),
+                  Icon(Icons.check_rounded, size: 16, color: c.accentPrimary),
+                ],
+              ],
+            ),
+          ),
+        item('rating', Icons.star_border_rounded, l10n.entryRateAction),
+        const PopupMenuDivider(),
         item('category', Icons.account_tree_rounded, l10n.bulkSetCategory),
         if (hasCollections)
           item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
@@ -84,11 +133,36 @@ class EntryContextMenu {
     );
     if (chosen == null || !context.mounted) return;
 
+    if (chosen.startsWith('relation:')) {
+      final name = chosen.substring('relation:'.length);
+      await ref
+          .read(entryRepositoryProvider)
+          .updateEntry(
+            entry.entryId,
+            // Повторный выбор того же отношения снимает его — как у чипов в
+            // карточке записи.
+            relation: entry.relation == name ? null : name,
+          );
+      ref.read(dataRefreshProvider.notifier).bump();
+      return;
+    }
+
     switch (chosen) {
       case 'open':
         await EntryDetailSheet.show(context, entry.entryId);
       case 'select':
         onSelect?.call();
+      case 'rating':
+        final rating = await RatingDialog.show(
+          context,
+          title: entry.title,
+          initial: entry.rating ?? 7,
+        );
+        if (rating == null) return;
+        await ref
+            .read(entryRepositoryProvider)
+            .updateEntry(entry.entryId, rating: rating);
+        ref.read(dataRefreshProvider.notifier).bump();
       case 'category':
         final picked = await CategoryPicker.show(context);
         final category = picked?.category;

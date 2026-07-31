@@ -40,9 +40,9 @@ ProfileInsights _rich() => ProfileInsights(
     'wantToTry': 18,
   },
   topCategories: const [
-    (name: 'Продукты питания и напитки', count: 120),
-    (name: 'Колбасные изделия', count: 64),
-    (name: 'Места', count: 30),
+    (id: 'c1', name: 'Продукты питания и напитки', count: 120),
+    (id: 'c2', name: 'Колбасные изделия', count: 64),
+    (id: 'c3', name: 'Места', count: 30),
   ],
   byMonth: [
     for (var i = 0; i < 30; i++)

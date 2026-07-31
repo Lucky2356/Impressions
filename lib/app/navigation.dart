@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/repositories/settings_repository.dart';
+import 'app_state.dart';
+
 /// Идентификаторы разделов навигации.
 class NavIds {
   const NavIds._();
@@ -15,16 +18,53 @@ class NavIds {
   static const insights = 'insights';
   static const archive = 'archive';
   static const settings = 'settings';
+
+  /// Все разделы — для проверки сохранённого значения.
+  static const all = [
+    home,
+    categories,
+    catalog,
+    collections,
+    wishlist,
+    compare,
+    profiles,
+    import,
+    incoming,
+    insights,
+    archive,
+    settings,
+  ];
 }
 
 /// Активный раздел. Вынесен в провайдер, чтобы любой экран мог перевести
 /// пользователя в другой раздел (например, из категории — в каталог с
 /// подставленным фильтром), не пробрасывая колбэки через дерево виджетов.
+///
+/// Раздел запоминается между запусками: приложение всегда открывалось на
+/// главной, даже если человек не выходил из каталога неделю.
 class NavController extends Notifier<String> {
   @override
-  String build() => NavIds.home;
+  String build() {
+    _restore();
+    return NavIds.home;
+  }
 
-  void go(String id) => state = id;
+  Future<void> _restore() async {
+    final saved = await ref
+        .read(settingsRepositoryProvider)
+        .get(SettingKeys.lastSection);
+    // Настройку могли дочитать уже после того, как провайдер выбросили —
+    // например, при смене профиля.
+    if (!ref.mounted) return;
+    // Сохранённое значение сверяем со списком: раздел мог исчезнуть, и
+    // открывать пустой экран из-за старой настройки незачем.
+    if (saved != null && NavIds.all.contains(saved)) state = saved;
+  }
+
+  void go(String id) {
+    state = id;
+    ref.read(settingsRepositoryProvider).set(SettingKeys.lastSection, id);
+  }
 }
 
 final navProvider = NotifierProvider<NavController, String>(NavController.new);

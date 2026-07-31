@@ -89,10 +89,7 @@ class WishlistTile extends ConsumerWidget {
   /// Отмечает попробованное и сразу спрашивает оценку: без неё запись просто
   /// исчезла бы из списка, не оставив следа.
   Future<void> _markTried(BuildContext context, WidgetRef ref) async {
-    final rating = await showDialog<double?>(
-      context: context,
-      builder: (_) => _RatingDialog(title: entry.title),
-    );
+    final rating = await RatingDialog.show(context, title: entry.title);
     if (rating == null) return;
 
     await ref
@@ -153,73 +150,6 @@ class WishlistTile extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Оценка попробованного одним движением.
-class _RatingDialog extends StatefulWidget {
-  const _RatingDialog({required this.title});
-  final String title;
-
-  @override
-  State<_RatingDialog> createState() => _RatingDialogState();
-}
-
-class _RatingDialogState extends State<_RatingDialog> {
-  double _rating = 7;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final c = context.colors;
-    return AlertDialog(
-      title: Text(l10n.wishlistRatingTitle),
-      content: SizedBox(
-        width: 380,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.title, style: context.text.titleMedium),
-            const SizedBox(height: AppDimens.space16),
-            Row(
-              children: [
-                Text(
-                  l10n.quickAddRatingLabel,
-                  style: context.text.labelSmall?.copyWith(
-                    color: c.textSecondary,
-                  ),
-                ),
-                const Spacer(),
-                RatingView(value: _rating, compact: true),
-              ],
-            ),
-            Slider(
-              value: _rating,
-              min: 0,
-              max: 10,
-              divisions: 20,
-              label: _rating.toStringAsFixed(1),
-              onChanged: (v) => setState(() => _rating = v),
-            ),
-            Text(
-              l10n.wishlistRatingHint,
-              style: context.text.labelSmall?.copyWith(color: c.textMuted),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_rating),
-          child: Text(l10n.commonSave),
-        ),
-      ],
     );
   }
 }

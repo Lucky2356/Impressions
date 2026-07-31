@@ -79,14 +79,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final added = await QuickAddSheet.show(context);
     if (!added || !mounted) return;
 
-    final state = ref.read(catalogStateProvider);
-    final filtered =
-        state.search.isNotEmpty ||
-        state.typeId != null ||
-        state.relation != null ||
-        state.categoryId != null ||
-        state.tagIds.isNotEmpty;
-    if (!filtered) return;
+    if (!ref.read(catalogStateProvider).hasFilters) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -154,12 +147,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         data: (found) {
           final list = found.items;
           if (list.isEmpty) {
-            final filtered =
-                state.search.isNotEmpty ||
-                state.typeId != null ||
-                state.relation != null ||
-                state.categoryId != null ||
-                state.tagIds.isNotEmpty;
+            final filtered = state.hasFilters;
             return EmptyState(
               icon: filtered
                   ? Icons.search_off_rounded
@@ -388,12 +376,7 @@ class _FilterBar extends ConsumerWidget {
     final categories = ref.watch(allCategoriesProvider).value ?? const [];
 
     final tags = ref.watch(profileTagsProvider).value ?? const <TagRow>[];
-    final hasFilters =
-        state.search.isNotEmpty ||
-        state.typeId != null ||
-        state.relation != null ||
-        state.categoryId != null ||
-        state.tagIds.isNotEmpty;
+    final hasFilters = state.hasFilters;
 
     // Сколько фильтров включено — число на кнопке, когда панель свёрнута.
     final activeCount = [
@@ -401,6 +384,9 @@ class _FilterBar extends ConsumerWidget {
       state.categoryId != null,
       state.relation != null,
       state.tagIds.isNotEmpty,
+      state.withoutRating,
+      state.withoutCategory,
+      state.withoutPhoto,
     ].where((x) => x).length;
 
     final search = AppSearchField(
@@ -509,6 +495,26 @@ class _FilterBar extends ConsumerWidget {
       ),
     ];
 
+    // Кнопка направления стоит вплотную к сортировке: порядок был задан
+    // жёстко, и «худшие сначала», «Я → А» и «самые старые» не получались никак.
+    final sortCell = Row(
+      children: [
+        Expanded(child: dropdowns.removeLast()),
+        const SizedBox(width: AppDimens.space8),
+        IconActionButton(
+          icon: state.reverseSort
+              ? Icons.arrow_upward_rounded
+              : Icons.arrow_downward_rounded,
+          tooltip: state.reverseSort
+              ? l10n.catalogSortReversed
+              : l10n.catalogSortNatural,
+          onPressed: controller.toggleSortDirection,
+          size: AppDimens.controlHeightSm,
+        ),
+      ],
+    );
+    dropdowns.add(sortCell);
+
     // Списки одной ширины: в ряд по два (широкий экран) или столбцом на всю
     // ширину (телефон). Так фильтры выглядят единообразно, а не «короткий —
     // длинный — короткий».
@@ -555,6 +561,42 @@ class _FilterBar extends ConsumerWidget {
             size: 16,
           ),
         ),
+      // «Что я не доделал». Фильтры отвечали только на «покажи вот такие»:
+      // найти записи без оценки или сложенные мимо категорий было нельзя.
+      FilterChip(
+        selected: state.withoutRating,
+        onSelected: controller.setWithoutRating,
+        label: Text(l10n.catalogWithoutRating),
+        showCheckmark: false,
+        avatar: Icon(
+          state.withoutRating ? Icons.check_rounded : Icons.star_border_rounded,
+          size: 16,
+        ),
+      ),
+      FilterChip(
+        selected: state.withoutCategory,
+        onSelected: controller.setWithoutCategory,
+        label: Text(l10n.catalogWithoutCategory),
+        showCheckmark: false,
+        avatar: Icon(
+          state.withoutCategory
+              ? Icons.check_rounded
+              : Icons.folder_off_outlined,
+          size: 16,
+        ),
+      ),
+      FilterChip(
+        selected: state.withoutPhoto,
+        onSelected: controller.setWithoutPhoto,
+        label: Text(l10n.catalogWithoutPhoto),
+        showCheckmark: false,
+        avatar: Icon(
+          state.withoutPhoto
+              ? Icons.check_rounded
+              : Icons.image_not_supported_outlined,
+          size: 16,
+        ),
+      ),
       // Теги — плоские метки, поэтому выбираются чипами, а не списком: их можно
       // выбрать несколько сразу.
       for (final tag in tags)
