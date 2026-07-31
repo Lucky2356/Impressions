@@ -6,6 +6,7 @@ import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
@@ -57,11 +58,28 @@ class EntryDetailSheet extends ConsumerStatefulWidget {
 
 class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   final _note = TextEditingController();
+  final _noteFocus = FocusNode();
   bool _noteInitialised = false;
   bool _showHistory = false;
 
+  /// Текст заметки, который уже лежит в базе.
+  ///
+  /// Заметка сохранялась только по кнопке: закрыли карточку крестиком, свайпом
+  /// вниз или нажатием мимо — набранное пропадало молча. Отношение, оценка и
+  /// дата рядом сохраняются сразу, поэтому и ожидание было такое же.
+  String _savedNote = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _noteFocus.addListener(() {
+      if (!_noteFocus.hasFocus) _saveNoteIfChanged();
+    });
+  }
+
   @override
   void dispose() {
+    _noteFocus.dispose();
     _note.dispose();
     super.dispose();
   }
@@ -74,6 +92,23 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     final c = context.colors;
     final detail = ref.watch(entryDetailProvider(widget.entryId));
 
+    // Карточку закрывают четырьмя способами: крестиком, нажатием мимо, свайпом
+    // вниз и кнопкой «Назад». Все четыре снимают маршрут, поэтому дописывать
+    // заметку надёжнее всего здесь, а не в каждом обработчике.
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _saveNoteIfChanged();
+      },
+      child: _content(context, l10n, c, detail),
+    );
+  }
+
+  Widget _content(
+    BuildContext context,
+    AppLocalizations l10n,
+    AppColors c,
+    AsyncValue<EntryDetail?> detail,
+  ) {
     return detail.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => ErrorState(error: e),
@@ -83,6 +118,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         }
         if (!_noteInitialised) {
           _note.text = d.entry.detailedNote ?? '';
+          _savedNote = _note.text;
           _noteInitialised = true;
         }
         final relation = _relationOf(d.entry.relation);
@@ -282,6 +318,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                   // Заметка
                   TextField(
                     controller: _note,
+                    focusNode: _noteFocus,
                     minLines: 3,
                     maxLines: 8,
                     readOnly: !isOwn,
@@ -413,10 +450,22 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
 
   Future<void> _saveNote(String entryId) async {
     final text = _note.text.trim();
-    await ref
-        .read(entryRepositoryProvider)
-        .updateEntry(entryId, detailedNote: text.isEmpty ? null : text);
-    _bump();
+    _savedNote = text;
+    // Репозиторий берём до `await`: карточку могли уже закрыть, и после
+    // ожидания `ref` обращаться некуда.
+    final repo = ref.read(entryRepositoryProvider);
+    await repo.updateEntry(entryId, detailedNote: text.isEmpty ? null : text);
+    if (mounted) _bump();
+  }
+
+  /// Дописывает заметку, если её меняли.
+  ///
+  /// Без сравнения с сохранённым каждое закрытие карточки заводило бы новую
+  /// версию записи (§18) — история заросла бы пустыми правками.
+  void _saveNoteIfChanged() {
+    if (!_noteInitialised) return;
+    if (_note.text.trim() == _savedNote.trim()) return;
+    _saveNote(widget.entryId);
   }
 
   /// Правка описания объекта. Фиксируется новой версией (§18), поэтому

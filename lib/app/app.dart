@@ -8,6 +8,7 @@ import '../core/l10n/gen/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../data/providers.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/services/backup_service.dart';
 import '../data/services/update_service.dart';
 import '../design_system/design_system.dart';
 import '../features/onboarding/app_tour.dart';
@@ -139,8 +140,28 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
     );
   }
 
+  /// Копия по расписанию.
+  ///
+  /// Стоит до сетевых проверок и в своём `try`: копия — единственное, что
+  /// спасает записи при поломке диска, и она не должна зависеть от того,
+  /// доступен ли GitHub.
+  Future<void> _backupIfDue() async {
+    try {
+      final created = await BackupService(
+        ref.read(appDatabaseProvider),
+      ).createScheduled();
+      if (created != null && mounted) {
+        ref.read(dataRefreshProvider.notifier).bump();
+      }
+    } catch (_) {
+      // Нет места или каталог недоступен — работе это мешать не должно,
+      // следующий запуск попробует снова.
+    }
+  }
+
   Future<void> _run() async {
     await _showTourIfNeeded();
+    await _backupIfDue();
     try {
       final service = ref.read(updateServiceProvider);
       final version = (await PackageInfo.fromPlatform()).version;

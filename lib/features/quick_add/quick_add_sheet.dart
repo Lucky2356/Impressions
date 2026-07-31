@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/draft_repository.dart';
 import '../../data/services/image_service.dart';
 import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
@@ -23,6 +25,7 @@ import '../collections/collection_providers.dart';
 import '../entry/pending_photos_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
+import 'quick_add_draft.dart';
 import 'type_for_category.dart';
 
 /// Быстрое добавление записи (§11).
@@ -116,11 +119,33 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Подборка, в которую запись попадёт сразу (§27).
   String? _collectionId;
 
+  /// Черновик восстановлен — над формой висит полоска с «Очистить».
+  bool _draftRestored = false;
+
+  /// Черновик прочитан: до этого сохранять нечего и нельзя — можно затереть
+  /// то, что ещё не успели подставить.
+  bool _draftLoaded = false;
+
+  /// Черновик больше не ведём.
+  ///
+  /// После сохранения записи форма ещё раз дёргает `setState` — гасит кружок
+  /// на кнопке. Без этого признака черновик, только что удалённый, тут же
+  /// записывался обратно, и следующее добавление предлагало продолжить то,
+  /// что уже сохранено.
+  bool _draftOff = false;
+
+  Timer? _draftTimer;
+
   @override
   void initState() {
     super.initState();
     _category = widget.initialCategory;
     _applyPrefill(widget.prefill);
+    // Набор в полях сам по себе не вызывает setState, поэтому черновик
+    // отмечается изменённым отдельно.
+    _title.addListener(_scheduleDraftSave);
+    _note.addListener(_scheduleDraftSave);
+    _restoreDraft();
   }
 
   void _applyPrefill(ScannedProduct? scanned) {
@@ -133,9 +158,167 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _title.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  /// Любое изменение формы откладывает запись черновика.
+  ///
+  /// Через `setState`, потому что через него проходят все изменения формы:
+  /// иначе пришлось бы дописывать вызов в каждый обработчик и однажды забыть.
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    _scheduleDraftSave();
+  }
+
+  /// Подставляет незаконченную форму с прошлого раза.
+  ///
+  /// Форма живёт в модальном окне и до «Сохранить» не хранится нигде: Android
+  /// выгружает приложение, пока человек выбирает фотографию в галерее, и всё
+  /// набранное пропадает. Со сканированием черновик не подставляется — там
+  /// поля заполнены осознанно и подмена сбила бы с толку.
+  Future<void> _restoreDraft() async {
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null || widget.prefill != null) {
+      _draftLoaded = true;
+      return;
+    }
+
+    final saved = await ref
+        .read(draftRepositoryProvider)
+        .read(profile.id, DraftRepository.quickAddKind);
+    if (!mounted) return;
+    if (saved == null) {
+      _draftLoaded = true;
+      return;
+    }
+
+    final draft = QuickAddDraft.fromJson(saved);
+    if (draft.isEmpty) {
+      _draftLoaded = true;
+      return;
+    }
+
+    // Категорию черновик хранит идентификатором: её надо найти в дереве.
+    // Открытая из ветки форма свою категорию не отдаёт — человек только что
+    // указал её нажатием.
+    CategoryRow? category = widget.initialCategory;
+    if (category == null && draft.categoryId != null) {
+      final categories = await ref.read(allCategoriesProvider.future);
+      if (!mounted) return;
+      category = categories.where((c) => c.id == draft.categoryId).firstOrNull;
+    }
+
+    // Слушатели полей сняты на время подстановки: иначе первое же присвоение
+    // запустило бы запись наполовину восстановленного черновика.
+    _title.removeListener(_scheduleDraftSave);
+    _note.removeListener(_scheduleDraftSave);
+    _title.text = draft.title;
+    _note.text = draft.note;
+    _title.addListener(_scheduleDraftSave);
+    _note.addListener(_scheduleDraftSave);
+
+    super.setState(() {
+      _typeId = draft.typeId;
+      _typePicked = draft.typePicked;
+      _category = category;
+      _relation = Relation.values
+          .where((r) => r.name == draft.relation)
+          .firstOrNull;
+      _rating = draft.rating;
+      _showDetails = draft.showDetails || _showDetails;
+      _barcode = draft.barcode;
+      _creator = draft.creator;
+      _customValues
+        ..clear()
+        ..addAll(draft.customValues);
+      _impressionDate = draft.impressionDate;
+      _tags
+        ..clear()
+        ..addAll(draft.tags);
+      _collectionId = draft.collectionId;
+      _draftRestored = true;
+      _draftLoaded = true;
+    });
+  }
+
+  QuickAddDraft _draft() => QuickAddDraft(
+    title: _title.text,
+    note: _note.text,
+    typeId: _typeId,
+    typePicked: _typePicked,
+    categoryId: _category?.id,
+    relation: _relation?.name,
+    rating: _rating,
+    showDetails: _showDetails,
+    barcode: _barcode,
+    creator: _creator,
+    customValues: Map.of(_customValues),
+    impressionDate: _impressionDate,
+    tags: List.of(_tags),
+    collectionId: _collectionId,
+  );
+
+  /// Пишет черновик с задержкой: на каждую букву в базу ходить незачем.
+  void _scheduleDraftSave() {
+    if (!_draftLoaded || _draftOff) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 600), _saveDraft);
+  }
+
+  Future<void> _saveDraft() async {
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null || !mounted) return;
+    final drafts = ref.read(draftRepositoryProvider);
+    final draft = _draft();
+    // Пустой черновик не хранится и стирает прежний: иначе форма предлагала бы
+    // продолжить то, что человек уже очистил.
+    if (draft.isEmpty) {
+      await drafts.clear(profile.id, DraftRepository.quickAddKind);
+      return;
+    }
+    await drafts.write(
+      profile.id,
+      DraftRepository.quickAddKind,
+      draft.toJson(),
+    );
+  }
+
+  /// Убирает черновик — после сохранения записи и по кнопке «Очистить».
+  Future<void> _clearDraft() async {
+    _draftTimer?.cancel();
+    _draftOff = true;
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+    await ref
+        .read(draftRepositoryProvider)
+        .clear(profile.id, DraftRepository.quickAddKind);
+  }
+
+  /// Сбрасывает форму к пустой по кнопке в полоске черновика.
+  void _discardDraft() {
+    _clearDraft();
+    _title.clear();
+    _note.clear();
+    // Форма остаётся открытой: то, что человек наберёт дальше, снова надо
+    // беречь.
+    _draftOff = false;
+    super.setState(() {
+      _typePicked = false;
+      _category = widget.initialCategory;
+      _relation = null;
+      _rating = null;
+      _barcode = null;
+      _creator = null;
+      _customValues.clear();
+      _impressionDate = null;
+      _tags.clear();
+      _collectionId = null;
+      _draftRestored = false;
+    });
   }
 
   Future<void> _scan() async {
@@ -206,6 +389,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       }
 
       await _attachPhotos(entry);
+
+      // Запись создана — черновику больше нечего беречь.
+      await _clearDraft();
 
       ref.read(dataRefreshProvider.notifier).bump();
       if (mounted) Navigator.of(context).pop(true);
@@ -331,7 +517,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 ? TextInputType.number
                 : TextInputType.text,
             decoration: InputDecoration(labelText: field.name),
-            onChanged: (v) => _customValues[field.key] = v,
+            onChanged: (v) {
+              _customValues[field.key] = v;
+              _scheduleDraftSave();
+            },
           ),
       ],
     ];
@@ -453,6 +642,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     ),
                   ],
                 ),
+                if (_draftRestored) ...[
+                  const SizedBox(height: AppDimens.space12),
+                  _DraftBanner(onDiscard: _discardDraft),
+                ],
                 const SizedBox(height: AppDimens.space16),
                 TextFormField(
                   controller: _title,
@@ -721,6 +914,58 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Полоска о восстановленном черновике.
+///
+/// Не диалог: продолжить недописанное человек хочет почти всегда, а спрашивать
+/// об этом до того, как он увидел форму, — лишний шаг. Полоска говорит, что
+/// произошло, и даёт начать с чистого листа.
+class _DraftBanner extends StatelessWidget {
+  const _DraftBanner({required this.onDiscard});
+
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.space12,
+        AppDimens.space8,
+        AppDimens.space8,
+        AppDimens.space8,
+      ),
+      decoration: BoxDecoration(
+        color: c.accentSoft,
+        borderRadius: AppDimens.brMd,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.history_rounded, size: 18, color: c.accentPrimary),
+          const SizedBox(width: AppDimens.space12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.quickAddDraftRestored, style: context.text.bodySmall),
+                Text(
+                  l10n.quickAddDraftNoPhotos,
+                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onDiscard,
+            child: Text(l10n.quickAddDraftDiscard),
+          ),
+        ],
       ),
     );
   }

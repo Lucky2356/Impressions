@@ -42,6 +42,12 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1280, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    // Пустое дерево между открытиями. Без него `pumpWidget` с той же формой
+    // не создаёт её заново, а обновляет прежнюю: состояние остаётся жить, и
+    // повторное открытие в тесте перестаёт быть повторным.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -187,5 +193,64 @@ void main() {
     final saved = await entries.entryViews(me.id);
     expect(saved.single.title, 'Молоко');
     expect(await entries.tagsOfEntry(saved.single.entryId), isEmpty);
+  });
+
+  group('черновик формы', () {
+    /// Форма живёт в модальном окне и до «Сохранить» не хранилась нигде:
+    /// Android выгружает приложение, пока человек выбирает фотографию, и всё
+    /// набранное пропадало. Здесь закрытие формы играет роль такой выгрузки.
+    testWidgets('недописанная форма возвращается при следующем открытии', (
+      tester,
+    ) async {
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextFormField).first, 'Хлеб бородин');
+      // Черновик пишется с задержкой — ждём её.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+
+      expect(find.text('Хлеб бородин'), findsOneWidget);
+      expect(find.text('Продолжаем недописанное'), findsOneWidget);
+    });
+
+    testWidgets('«Начать заново» очищает форму и черновик', (tester) async {
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextFormField).first, 'Хлеб бородин');
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+      await tapVisible(tester, find.text('Начать заново'));
+      expect(find.text('Хлеб бородин'), findsNothing);
+
+      // И в следующий раз предлагать уже нечего.
+      await openSheet(tester);
+      expect(find.text('Продолжаем недописанное'), findsNothing);
+    });
+
+    testWidgets('сохранённая запись не оставляет черновика', (tester) async {
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextFormField).first, 'Молоко');
+      await tester.pump(const Duration(seconds: 1));
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Сохранить'));
+
+      await openSheet(tester);
+
+      expect(find.text('Продолжаем недописанное'), findsNothing);
+      expect(find.text('Молоко'), findsNothing);
+    });
+
+    testWidgets('пустая форма черновика не заводит', (tester) async {
+      await openSheet(tester);
+      // Ничего не набирали — только раскрыли подробности.
+      await tapVisible(tester, find.text('Добавить подробности'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+
+      expect(find.text('Продолжаем недописанное'), findsNothing);
+    });
   });
 }

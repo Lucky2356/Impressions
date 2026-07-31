@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/utils/normalize.dart';
 import 'connection.dart';
 import 'tables/attachment_tables.dart';
 import 'tables/category_tables.dart';
@@ -53,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -67,6 +68,15 @@ class AppDatabase extends _$AppDatabase {
       // достаточно завести недостающие виртуальные таблицы и наполнить их.
       if (from < 2) {
         await _createSearch();
+      }
+      // 3: «ё» и «е» считаются одной буквой. Триггеры кладут в индекс уже
+      // свёрнутый текст, поэтому их надо пересоздать, а индекс — набрать
+      // заново. Заодно приводятся нормализованные поля уже заведённых строк:
+      // иначе старая «ёлка» перестала бы находиться по новому правилу.
+      if (from < 3) {
+        await _dropSearchTriggers();
+        await _createSearch();
+        await _foldYoInNormalizedColumns();
         await _rebuildSearchIndex();
       }
       await _createIndexes();
@@ -104,6 +114,11 @@ class AppDatabase extends _$AppDatabase {
   /// Без этого поиск находил только по названию объекта, а текст впечатления
   /// оставался недоступен.
   Future<void> _createEntrySearch() async {
+    final oldNote = _yo('old.short_note');
+    final oldDetailed = _yo('old.detailed_note');
+    final newNote = _yo('new.short_note');
+    final newDetailed = _yo('new.detailed_note');
+
     await customStatement(
       'CREATE VIRTUAL TABLE IF NOT EXISTS entry_search USING fts5('
       'short_note, detailed_note, '
@@ -112,35 +127,92 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON profile_entries '
       'BEGIN INSERT INTO entry_search(rowid, short_note, detailed_note) '
-      'VALUES (new.rowid, new.short_note, new.detailed_note); END',
+      'VALUES (new.rowid, $newNote, $newDetailed); END',
     );
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON profile_entries '
       'BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) '
-      "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); END",
+      "VALUES ('delete', old.rowid, $oldNote, $oldDetailed); END",
     );
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON profile_entries '
       'BEGIN INSERT INTO entry_search(entry_search, rowid, short_note, detailed_note) '
-      "VALUES ('delete', old.rowid, old.short_note, old.detailed_note); "
+      "VALUES ('delete', old.rowid, $oldNote, $oldDetailed); "
       'INSERT INTO entry_search(rowid, short_note, detailed_note) '
-      'VALUES (new.rowid, new.short_note, new.detailed_note); END',
+      'VALUES (new.rowid, $newNote, $newDetailed); END',
     );
   }
 
   /// Наполняет индексы по уже существующим строкам — нужно после обновления
   /// схемы, когда триггеры ещё не видели старые данные.
+  ///
+  /// Строки набираются запросом, а не командой FTS5 `rebuild`: та читает
+  /// таблицу-источник напрямую, минуя триггеры, и вернула бы в индекс сырой
+  /// текст — со всеми «ё», ради которых индекс и пересобирается.
   Future<void> _rebuildSearchIndex() async {
     await customStatement(
-      "INSERT INTO object_search(object_search) VALUES('rebuild')",
+      "INSERT INTO object_search(object_search) VALUES('delete-all')",
     );
     await customStatement(
-      "INSERT INTO entry_search(entry_search) VALUES('rebuild')",
+      'INSERT INTO object_search(rowid, title, alt_title, creator) '
+      "SELECT rowid, ${_yo('title')}, ${_yo('alt_title')}, ${_yo('creator')} "
+      'FROM objects',
     );
+    await customStatement(
+      "INSERT INTO entry_search(entry_search) VALUES('delete-all')",
+    );
+    await customStatement(
+      'INSERT INTO entry_search(rowid, short_note, detailed_note) '
+      "SELECT rowid, ${_yo('short_note')}, ${_yo('detailed_note')} "
+      'FROM profile_entries',
+    );
+  }
+
+  /// Убирает триггеры поиска, чтобы пересоздать их с новым правилом.
+  Future<void> _dropSearchTriggers() async {
+    const names = [
+      'objects_ai',
+      'objects_ad',
+      'objects_au',
+      'entries_ai',
+      'entries_ad',
+      'entries_au',
+    ];
+    for (final name in names) {
+      await customStatement('DROP TRIGGER IF EXISTS $name');
+    }
+  }
+
+  /// Приводит нормализованные поля уже заведённых строк к правилу со «ё».
+  ///
+  /// По этим полям ищутся дубли, теги и категории: если их не поправить,
+  /// заведённая раньше «ёлка» перестанет совпадать с новой «елкой», и вместо
+  /// одной метки получится две.
+  Future<void> _foldYoInNormalizedColumns() async {
+    const columns = [
+      ('categories', 'normalized_name'),
+      ('tags', 'normalized_name'),
+      ('object_types', 'normalized_name'),
+      ('objects', 'normalized_title'),
+      ('objects', 'normalized_alt_title'),
+    ];
+    for (final (table, column) in columns) {
+      await customStatement(
+        'UPDATE $table SET $column = ${_yo(column)} '
+        "WHERE $column LIKE '%ё%'",
+      );
+    }
   }
 
   /// Полнотекстовый поиск объектов (FTS5) + триггеры синхронизации.
   Future<void> _createSearch() async {
+    final oldTitle = _yo('old.title');
+    final oldAlt = _yo('old.alt_title');
+    final oldCreator = _yo('old.creator');
+    final newTitle = _yo('new.title');
+    final newAlt = _yo('new.alt_title');
+    final newCreator = _yo('new.creator');
+
     await customStatement(
       'CREATE VIRTUAL TABLE IF NOT EXISTS object_search USING fts5('
       "title, alt_title, creator, content='objects', content_rowid='rowid')",
@@ -148,27 +220,37 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS objects_ai AFTER INSERT ON objects BEGIN '
       'INSERT INTO object_search(rowid, title, alt_title, creator) '
-      'VALUES (new.rowid, new.title, new.alt_title, new.creator); END',
+      'VALUES (new.rowid, $newTitle, $newAlt, $newCreator); END',
     );
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS objects_ad AFTER DELETE ON objects BEGIN '
       'INSERT INTO object_search(object_search, rowid, title, alt_title, creator) '
-      "VALUES ('delete', old.rowid, old.title, old.alt_title, old.creator); END",
+      "VALUES ('delete', old.rowid, $oldTitle, $oldAlt, $oldCreator); END",
     );
     await customStatement(
       'CREATE TRIGGER IF NOT EXISTS objects_au AFTER UPDATE ON objects BEGIN '
       'INSERT INTO object_search(object_search, rowid, title, alt_title, creator) '
-      "VALUES ('delete', old.rowid, old.title, old.alt_title, old.creator); "
+      "VALUES ('delete', old.rowid, $oldTitle, $oldAlt, $oldCreator); "
       'INSERT INTO object_search(rowid, title, alt_title, creator) '
-      'VALUES (new.rowid, new.title, new.alt_title, new.creator); END',
+      'VALUES (new.rowid, $newTitle, $newAlt, $newCreator); END',
     );
     await _createEntrySearch();
   }
 
+  /// Сводит «ё» к «е» средствами SQL — тем же правилом, что и [Normalize.yo].
+  ///
+  /// Нужно и в триггерах, и в запросе: токенизатор `unicode61` эти буквы не
+  /// сближает, поэтому «елка» не находила «Ёлку», а «зелен» — «зелёную».
+  static String _yo(String expr) =>
+      "replace(replace($expr, 'ё', 'е'), 'Ё', 'Е')";
+
   /// Готовит запрос к FTS5: экранирует кавычки и разрешает поиск по началу
   /// слова, чтобы «колб» находило «колбасу».
+  ///
+  /// «ё» сводится к «е» так же, как при записи в индекс: там лежит уже
+  /// свёрнутый текст, и запрос с «ё» иначе не совпал бы ни с чем.
   static String _matchExpression(String query) {
-    final safe = query.trim().replaceAll('"', '""');
+    final safe = Normalize.yo(query.trim()).replaceAll('"', '""');
     return '"$safe"*';
   }
 

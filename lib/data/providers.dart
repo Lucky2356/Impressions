@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'db/database.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/collection_repository.dart';
+import 'repositories/draft_repository.dart';
 import 'repositories/entry_repository.dart';
 import 'repositories/profile_repository.dart';
 import 'services/barcode_decoder.dart';
@@ -31,6 +32,11 @@ final entryRepositoryProvider = Provider<EntryRepository>((ref) {
 
 final collectionRepositoryProvider = Provider<CollectionRepository>((ref) {
   return CollectionRepository(ref.watch(appDatabaseProvider));
+});
+
+/// Черновики форм (§11).
+final draftRepositoryProvider = Provider<DraftRepository>((ref) {
+  return DraftRepository(ref.watch(appDatabaseProvider));
 });
 
 /// Ключи и подпись профиля (§22).

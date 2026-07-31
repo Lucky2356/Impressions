@@ -196,6 +196,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddDetails => 'Добавить подробности';
 
   @override
+  String get quickAddDraftRestored => 'Продолжаем недописанное';
+
+  @override
+  String get quickAddDraftNoPhotos =>
+      'Фотографии в черновик не попадают — их нужно выбрать заново';
+
+  @override
+  String get quickAddDraftDiscard => 'Начать заново';
+
+  @override
   String get quickAddRatingLabel => 'Оценка';
 
   @override
@@ -956,10 +966,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupReasonManual => 'вручную';
 
   @override
+  String get backupReasonAuto => 'по расписанию';
+
+  @override
   String get backupReasonBeforeImport => 'перед импортом';
 
   @override
   String get backupReasonBeforeRestore => 'перед восстановлением';
+
+  @override
+  String get backupAutoTitle => 'Делать копию самому';
+
+  @override
+  String get backupAutoHint =>
+      'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — перенесите одну в другое место.';
+
+  @override
+  String get backupAutoOn => 'Копии будут создаваться сами';
+
+  @override
+  String get backupAutoOff => 'Копии создаются только вручную';
 
   @override
   String get backupEmpty => 'Резервных копий пока нет';
@@ -974,7 +1000,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupRetentionHint =>
-      'Автоматические копии создаются перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.';
+      'Автоматические копии создаются раз в неделю, а также перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.';
 
   @override
   String get backupRestore => 'Восстановить';

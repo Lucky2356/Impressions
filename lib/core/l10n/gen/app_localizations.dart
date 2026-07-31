@@ -466,6 +466,24 @@ abstract class AppLocalizations {
   /// **'Добавить подробности'**
   String get quickAddDetails;
 
+  /// No description provided for @quickAddDraftRestored.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжаем недописанное'**
+  String get quickAddDraftRestored;
+
+  /// No description provided for @quickAddDraftNoPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фотографии в черновик не попадают — их нужно выбрать заново'**
+  String get quickAddDraftNoPhotos;
+
+  /// No description provided for @quickAddDraftDiscard.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать заново'**
+  String get quickAddDraftDiscard;
+
   /// No description provided for @quickAddRatingLabel.
   ///
   /// In ru, this message translates to:
@@ -1756,6 +1774,12 @@ abstract class AppLocalizations {
   /// **'вручную'**
   String get backupReasonManual;
 
+  /// No description provided for @backupReasonAuto.
+  ///
+  /// In ru, this message translates to:
+  /// **'по расписанию'**
+  String get backupReasonAuto;
+
   /// No description provided for @backupReasonBeforeImport.
   ///
   /// In ru, this message translates to:
@@ -1767,6 +1791,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'перед восстановлением'**
   String get backupReasonBeforeRestore;
+
+  /// No description provided for @backupAutoTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Делать копию самому'**
+  String get backupAutoTitle;
+
+  /// No description provided for @backupAutoHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — перенесите одну в другое место.'**
+  String get backupAutoHint;
+
+  /// No description provided for @backupAutoOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии будут создаваться сами'**
+  String get backupAutoOn;
+
+  /// No description provided for @backupAutoOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии создаются только вручную'**
+  String get backupAutoOff;
 
   /// No description provided for @backupEmpty.
   ///
@@ -1789,7 +1837,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupRetentionHint.
   ///
   /// In ru, this message translates to:
-  /// **'Автоматические копии создаются перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.'**
+  /// **'Автоматические копии создаются раз в неделю, а также перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.'**
   String get backupRetentionHint;
 
   /// No description provided for @backupRestore.

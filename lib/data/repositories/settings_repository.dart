@@ -54,6 +54,12 @@ class SettingKeys {
   /// целиком попадает в копию, и ключ рядом с тем, что он защищает, ничего
   /// не защищает.
   static const backupKeyWrapped = 'backup_key_wrapped';
+
+  /// Копия делается сама, по расписанию.
+  static const autoBackupEnabled = 'auto_backup_enabled';
+
+  /// Когда расписание сработало в прошлый раз.
+  static const autoBackupAt = 'auto_backup_at';
 }
 
 /// Репозиторий настроек (таблица ключ-значение).

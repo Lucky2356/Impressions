@@ -52,6 +52,14 @@ final backupEncryptionProvider = FutureProvider<bool>((ref) async {
   return BackupService(ref.watch(appDatabaseProvider)).encryptionEnabled();
 });
 
+/// Делает ли приложение копию само.
+final backupAutoProvider = FutureProvider<bool>((ref) async {
+  ref.watch(dataRefreshProvider);
+  return ref
+      .watch(settingsRepositoryProvider)
+      .getBool(SettingKeys.autoBackupEnabled, defaultValue: true);
+});
+
 /// Ширина колонки настроек: формы шире читать неудобно.
 const double _settingsMaxWidth = 880;
 
@@ -404,6 +412,7 @@ class _BackupsSection extends ConsumerWidget {
     final backups = ref.watch(backupsProvider).value ?? const <BackupInfo>[];
 
     String reasonLabel(String reason) => switch (reason) {
+      'auto' => l10n.backupReasonAuto,
       'beforeImport' => l10n.backupReasonBeforeImport,
       'beforeRestore' => l10n.backupReasonBeforeRestore,
       _ => l10n.backupReasonManual,
@@ -430,6 +439,8 @@ class _BackupsSection extends ConsumerWidget {
           style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
         const SizedBox(height: AppDimens.space16),
+        const _BackupAutoRow(),
+        const SizedBox(height: AppDimens.space16),
         const _BackupEncryptionRow(),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
@@ -452,6 +463,61 @@ class _BackupsSection extends ConsumerWidget {
             if (i != backups.length - 1)
               Divider(height: AppDimens.space20, color: c.divider),
           ],
+      ],
+    );
+  }
+}
+
+/// Переключатель копий по расписанию.
+///
+/// До этого копия появлялась только перед импортом, перед восстановлением или
+/// по кнопке: у человека, который ничего из этого не делает, копий не было
+/// вовсе, хотя все записи лежат на одном устройстве.
+class _BackupAutoRow extends ConsumerWidget {
+  const _BackupAutoRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final enabled = ref.watch(backupAutoProvider).value ?? true;
+
+    Future<void> toggle(bool value) async {
+      await ref
+          .read(settingsRepositoryProvider)
+          .setBool(SettingKeys.autoBackupEnabled, value);
+      ref.read(dataRefreshProvider.notifier).bump();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(value ? l10n.backupAutoOn : l10n.backupAutoOff)),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.schedule_rounded,
+              size: 18,
+              color: enabled ? c.accentPrimary : c.textMuted,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Text(l10n.backupAutoTitle, style: context.text.bodySmall),
+            ),
+            Switch(value: enabled, onChanged: toggle),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: AppDimens.space4),
+          child: Text(
+            l10n.backupAutoHint,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
+        ),
       ],
     );
   }

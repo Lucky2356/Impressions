@@ -173,9 +173,35 @@ class BackupService {
   Future<void> disableEncryption() =>
       _settings.setBool(SettingKeys.backupsEncrypted, false);
 
+  /// Делает копию по расписанию, если пришёл срок; иначе возвращает null.
+  ///
+  /// Зовётся при запуске приложения. Отметка времени ставится только после
+  /// удачной копии: если места на диске не хватило, следующий запуск попробует
+  /// снова, а не будет считать, что копия есть.
+  Future<BackupInfo?> createScheduled({DateTime? now}) async {
+    final enabled = await _settings.getBool(
+      SettingKeys.autoBackupEnabled,
+      defaultValue: true,
+    );
+    if (!enabled) return null;
+
+    final current = now ?? DateTime.now();
+    final raw = await _settings.get(SettingKeys.autoBackupAt);
+    final last = raw == null ? null : DateTime.tryParse(raw);
+    if (last != null &&
+        current.difference(last) <
+            const Duration(days: AppConfig.autoBackupIntervalDays)) {
+      return null;
+    }
+
+    final info = await create(reason: 'auto');
+    await _settings.set(SettingKeys.autoBackupAt, current.toIso8601String());
+    return info;
+  }
+
   /// Создаёт резервную копию текущего состояния.
   ///
-  /// [reason] — почему копия создана: `beforeImport`, `beforeRestore`,
+  /// [reason] — почему копия создана: `auto`, `beforeImport`, `beforeRestore`,
   /// `manual`, `beforeMigration`.
   Future<BackupInfo> create({required String reason}) async {
     // Сбрасываем WAL, чтобы файл базы был самодостаточным.
