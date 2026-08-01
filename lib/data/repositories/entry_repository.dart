@@ -527,6 +527,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool recommendedOnly = false,
     bool archived = false,
   }) async {
     // Обычный порядок у каждой сортировки свой: названия от А, оценки и даты
@@ -655,6 +656,12 @@ class EntryRepository {
       );
     }
 
+    // Кто это посоветовал, приложение помнило с самого начала и нигде не
+    // показывало — заодно и отобрать такие записи было нельзя.
+    if (recommendedOnly) {
+      query.where(db.profileEntries.recommendedByProfileId.isNotNull());
+    }
+
     return query;
   }
 
@@ -675,6 +682,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool recommendedOnly = false,
     bool archived = false,
   }) async {
     final query = await _matching(
@@ -690,6 +698,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      recommendedOnly: recommendedOnly,
       archived: archived,
     );
     if (query == null) return const [];
@@ -715,6 +724,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool recommendedOnly = false,
     bool archived = false,
     int? limit,
     int offset = 0,
@@ -732,6 +742,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      recommendedOnly: recommendedOnly,
       archived: archived,
     );
     if (query == null) return const [];

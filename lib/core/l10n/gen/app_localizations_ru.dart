@@ -434,6 +434,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogWithoutPhoto => 'Без фотографии';
 
   @override
+  String get catalogRecommended => 'Мне посоветовали';
+
+  @override
   String catalogFound(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -469,6 +472,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get entryEditObject => 'Изменить описание';
+
+  @override
+  String entryRecommendedBy(String name) {
+    return 'Посоветовал: $name';
+  }
 
   @override
   String get entryEditObjectHint =>

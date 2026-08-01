@@ -142,6 +142,7 @@
   "catalogWithoutRating": "Без оценки",
   "catalogWithoutCategory": "Без категории",
   "catalogWithoutPhoto": "Без фотографии",
+  "catalogRecommended": "Мне посоветовали",
   "catalogFound": "{count, plural, one{Найдена {count} запись} few{Найдено {count} записи} many{Найдено {count} записей} other{Найдено {count} записей}}",
   "@catalogFound": { "placeholders": { "count": { "type": "int" } } },
 
@@ -153,6 +154,8 @@
   "entryRestored": "Версия восстановлена",
   "entryNoteLabel": "Заметка",
   "entryEditObject": "Изменить описание",
+  "entryRecommendedBy": "Посоветовал: {name}",
+  "@entryRecommendedBy": { "placeholders": { "name": { "type": "String" } } },
   "entryEditObjectHint": "Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.",
   "entryCreatorLabel": "Бренд, автор или режиссёр",
   "entryYearLabel": "Год",

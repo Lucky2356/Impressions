@@ -231,6 +231,31 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       color: c.textSecondary,
                     ),
                   ),
+                  // Откуда запись взялась. Приложение помечало перенесённые
+                  // записи с самого начала и нигде этого не показывало.
+                  if (d.recommendedBy != null) ...[
+                    const SizedBox(height: AppDimens.space8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline_rounded,
+                          size: 16,
+                          color: c.accentPrimary,
+                        ),
+                        const SizedBox(width: AppDimens.space8),
+                        Flexible(
+                          child: Text(
+                            l10n.entryRecommendedBy(d.recommendedBy!),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.text.bodySmall?.copyWith(
+                              color: c.accentPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: AppDimens.space16),
 
                   // Дата впечатления (§10): по ней можно сортировать каталог,

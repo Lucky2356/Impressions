@@ -24,7 +24,6 @@ part 'database.g.dart';
     ProfileDevices,
     ProfileLocalSettings,
     ProfileKeys,
-    ProfileRelationships,
     ObjectTypes,
     Objects,
     ObjectRevisions,
@@ -54,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +77,14 @@ class AppDatabase extends _$AppDatabase {
         await _createSearch();
         await _foldYoInNormalizedColumns();
         await _rebuildSearchIndex();
+      }
+      // 4: убрана таблица profile_relationships. Она была заведена под связи
+      // между профилями, за всё время не получила ни одной строки и ни одного
+      // обращения в коде — пустая таблица в схеме только сбивает с толку того,
+      // кто её читает. Кто кого посоветовал, хранится в самих записях
+      // (recommended_by_profile_id) и в recommendations.
+      if (from < 4) {
+        await customStatement('DROP TABLE IF EXISTS profile_relationships');
       }
       await _createIndexes();
     },

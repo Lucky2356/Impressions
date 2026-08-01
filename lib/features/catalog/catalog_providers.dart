@@ -26,6 +26,7 @@ class CatalogState {
     this.withoutRating = false,
     this.withoutCategory = false,
     this.withoutPhoto = false,
+    this.recommendedOnly = false,
     this.view = CatalogViewMode.grid,
   });
 
@@ -47,6 +48,9 @@ class CatalogState {
   final bool withoutCategory;
   final bool withoutPhoto;
 
+  /// Только записи, которые кто-то посоветовал.
+  final bool recommendedOnly;
+
   final CatalogViewMode view;
 
   /// Включён ли хоть один отбор — от него зависит и подсказка про пустой
@@ -59,7 +63,8 @@ class CatalogState {
       tagIds.isNotEmpty ||
       withoutRating ||
       withoutCategory ||
-      withoutPhoto;
+      withoutPhoto ||
+      recommendedOnly;
 
   CatalogState copyWith({
     Object? typeId = _unset,
@@ -73,6 +78,7 @@ class CatalogState {
     bool? withoutRating,
     bool? withoutCategory,
     bool? withoutPhoto,
+    bool? recommendedOnly,
     CatalogViewMode? view,
   }) {
     return CatalogState(
@@ -91,6 +97,7 @@ class CatalogState {
       withoutRating: withoutRating ?? this.withoutRating,
       withoutCategory: withoutCategory ?? this.withoutCategory,
       withoutPhoto: withoutPhoto ?? this.withoutPhoto,
+      recommendedOnly: recommendedOnly ?? this.recommendedOnly,
       view: view ?? this.view,
     );
   }
@@ -168,6 +175,7 @@ class CatalogController extends Notifier<CatalogState> {
       withoutRating: json['withoutRating'] == true,
       withoutCategory: json['withoutCategory'] == true,
       withoutPhoto: json['withoutPhoto'] == true,
+      recommendedOnly: json['recommendedOnly'] == true,
     );
   }
 
@@ -187,6 +195,7 @@ class CatalogController extends Notifier<CatalogState> {
             'withoutRating': state.withoutRating,
             'withoutCategory': state.withoutCategory,
             'withoutPhoto': state.withoutPhoto,
+            'recommendedOnly': state.recommendedOnly,
           }),
         );
   }
@@ -234,6 +243,11 @@ class CatalogController extends Notifier<CatalogState> {
 
   void setWithoutCategory(bool value) {
     state = state.copyWith(withoutCategory: value);
+    _persist();
+  }
+
+  void setRecommendedOnly(bool value) {
+    state = state.copyWith(recommendedOnly: value);
     _persist();
   }
 
@@ -393,5 +407,6 @@ final catalogMatchingIdsProvider = FutureProvider<List<String>>((ref) async {
         withoutRating: s.withoutRating,
         withoutCategory: s.withoutCategory,
         withoutPhoto: s.withoutPhoto,
+        recommendedOnly: s.recommendedOnly,
       );
 });

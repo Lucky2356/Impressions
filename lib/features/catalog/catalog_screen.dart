@@ -387,6 +387,7 @@ class _FilterBar extends ConsumerWidget {
       state.withoutRating,
       state.withoutCategory,
       state.withoutPhoto,
+      state.recommendedOnly,
     ].where((x) => x).length;
 
     final search = AppSearchField(
@@ -594,6 +595,19 @@ class _FilterBar extends ConsumerWidget {
           state.withoutPhoto
               ? Icons.check_rounded
               : Icons.image_not_supported_outlined,
+          size: 16,
+        ),
+      ),
+      // Кто что посоветовал, приложение помнило и не показывало.
+      FilterChip(
+        selected: state.recommendedOnly,
+        onSelected: controller.setRecommendedOnly,
+        label: Text(l10n.catalogRecommended),
+        showCheckmark: false,
+        avatar: Icon(
+          state.recommendedOnly
+              ? Icons.check_rounded
+              : Icons.person_outline_rounded,
           size: 16,
         ),
       ),

@@ -850,6 +850,12 @@ abstract class AppLocalizations {
   /// **'Без фотографии'**
   String get catalogWithoutPhoto;
 
+  /// No description provided for @catalogRecommended.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мне посоветовали'**
+  String get catalogRecommended;
+
   /// No description provided for @catalogFound.
   ///
   /// In ru, this message translates to:
@@ -903,6 +909,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Изменить описание'**
   String get entryEditObject;
+
+  /// No description provided for @entryRecommendedBy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посоветовал: {name}'**
+  String entryRecommendedBy(String name);
 
   /// No description provided for @entryEditObjectHint.
   ///

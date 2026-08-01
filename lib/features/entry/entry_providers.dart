@@ -14,6 +14,7 @@ class EntryDetail {
     required this.typeName,
     required this.categoryPath,
     required this.history,
+    this.recommendedBy,
   });
 
   final ProfileEntryRow entry;
@@ -21,6 +22,13 @@ class EntryDetail {
   final String typeName;
   final List<String> categoryPath;
   final List<ProfileEntryRevisionRow> history;
+
+  /// Имя того, кто посоветовал эту запись; null — завели сами.
+  ///
+  /// Приложение помечало перенесённые записи с самого начала, но нигде этого не
+  /// показывало: «медиатека предпочтений и рекомендаций» писала рекомендации
+  /// в стол.
+  final String? recommendedBy;
 }
 
 final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
@@ -65,11 +73,19 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
 
   final history = await RevisionService(db).entryHistory(entryId);
 
+  final source = entry.recommendedByProfileId;
+  final recommender = source == null
+      ? null
+      : await (db.select(
+          db.profiles,
+        )..where((p) => p.id.equals(source))).getSingleOrNull();
+
   return EntryDetail(
     entry: entry,
     object: object,
     typeName: type.name,
     categoryPath: path,
     history: history,
+    recommendedBy: recommender?.firstName,
   );
 });

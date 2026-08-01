@@ -87,21 +87,3 @@ class ProfileKeys extends Table {
   @override
   Set<Column> get primaryKey => {profileId};
 }
-
-/// Локальные связи/псевдонимы между профилями (§5.3).
-@DataClassName('ProfileRelationshipRow')
-class ProfileRelationships extends Table {
-  TextColumn get id => text()();
-  @ReferenceName('outgoingRelationships')
-  TextColumn get fromProfileId =>
-      text().references(Profiles, #id, onDelete: KeyAction.restrict)();
-  @ReferenceName('incomingRelationships')
-  TextColumn get toProfileId =>
-      text().references(Profiles, #id, onDelete: KeyAction.restrict)();
-  TextColumn get relation => text().nullable()();
-  TextColumn get note => text().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
