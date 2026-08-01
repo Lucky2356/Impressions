@@ -114,6 +114,10 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: c.textPrimary,
           backgroundColor: c.surface,
+          // Без этого Material берёт свой серый: отключённая обведённая кнопка
+          // выпадала из палитры, а рядом у заполненной цвета заданы.
+          disabledForegroundColor: c.textMuted,
+          disabledBackgroundColor: c.surfaceMuted,
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, AppDimens.controlHeight),
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20),

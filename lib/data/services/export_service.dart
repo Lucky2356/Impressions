@@ -9,8 +9,10 @@ import '../../core/config/app_config.dart';
 import '../../core/utils/hashing.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
+import '../repositories/entry_repository.dart';
 import 'image_service.dart';
 import 'key_service.dart';
+import 'readable_export_service.dart';
 
 /// Режим экспорта (§19).
 enum ExportMode { full, branch, collection, selection, backup }
@@ -233,29 +235,38 @@ class ExportService {
   List<int> _jsonl(List<Map<String, Object?>> rows) =>
       utf8.encode(rows.map(jsonEncode).join('\n'));
 
-  Future<_ExportData> _collect(String profileId, ExportOptions options) async {
-    final profile = await (db.select(
-      db.profiles,
-    )..where((p) => p.id.equals(profileId))).getSingle();
-
-    // Категории профиля (для ветки — только выбранное поддерево).
-    var categories = await (db.select(
+  /// Категории профиля в пределах выбранного объёма: для ветки — только её
+  /// поддерево, иначе все.
+  Future<List<CategoryRow>> scopedCategories(
+    String profileId,
+    ExportOptions options,
+  ) async {
+    final categories = await (db.select(
       db.categories,
     )..where((c) => c.profileId.equals(profileId))).get();
-    if (options.categoryId != null) {
-      final root = categories
-          .where((c) => c.id == options.categoryId)
-          .firstOrNull;
-      if (root != null) {
-        final prefix = '${root.path}/';
-        categories = categories
-            .where((c) => c.id == root.id || c.path.startsWith(prefix))
-            .toList();
-      }
-    }
-    final categoryIds = categories.map((c) => c.id).toSet();
+    if (options.categoryId == null) return categories;
 
-    // Записи с учётом режима и приватности (§25).
+    final root = categories
+        .where((c) => c.id == options.categoryId)
+        .firstOrNull;
+    if (root == null) return categories;
+
+    final prefix = '${root.path}/';
+    return categories
+        .where((c) => c.id == root.id || c.path.startsWith(prefix))
+        .toList();
+  }
+
+  /// Записи в пределах выбранного объёма, без приватных (§25).
+  ///
+  /// Правило отбора одно на все выгрузки: и подписанный контейнер, и таблица
+  /// «для чтения» берут отсюда. Иначе панель «что войдёт в файл» рассказывает
+  /// про один объём, а файл получается про другой — так и было до 1.11.0.
+  Future<({List<ProfileEntryRow> entries, int excludedPrivate})> scopedEntries(
+    String profileId,
+    ExportOptions options,
+    Set<String> categoryIds,
+  ) async {
     var entries = await (db.select(
       db.profileEntries,
     )..where((e) => e.profileId.equals(profileId))).get();
@@ -289,6 +300,58 @@ class ExportService {
       entries = entries.where((e) => allowed.contains(e.id)).toList();
     }
 
+    return (entries: entries, excludedPrivate: excludedPrivate);
+  }
+
+  /// Идентификаторы записей, которые попадут в выгрузку при этих условиях.
+  Future<List<String>> scopedEntryIds(
+    String profileId,
+    ExportOptions options,
+  ) async {
+    final categories = await scopedCategories(profileId, options);
+    final selected = await scopedEntries(
+      profileId,
+      options,
+      categories.map((c) => c.id).toSet(),
+    );
+    return selected.entries.map((e) => e.id).toList();
+  }
+
+  /// Выгрузка «для чтения»: таблица или текст вместо контейнера обмена.
+  ///
+  /// Без подписи и вложений — это не формат обмена, а способ открыть свои
+  /// записи в таблице или распечатать их. Объём при этом тот же, что у
+  /// контейнера: и то и другое идёт через [scopedEntryIds].
+  Future<String> readable(
+    String profileId,
+    ExportOptions options, {
+    required ReadableFormat format,
+    required String profileName,
+    required String Function(String? relation) relationLabel,
+  }) async {
+    final ids = await scopedEntryIds(profileId, options);
+    final entries = await EntryRepository(
+      db,
+    ).entryViews(profileId, entryIds: ids);
+    return const ReadableExportService().build(
+      entries: entries,
+      format: format,
+      profileName: profileName,
+      relationLabel: relationLabel,
+    );
+  }
+
+  Future<_ExportData> _collect(String profileId, ExportOptions options) async {
+    final profile = await (db.select(
+      db.profiles,
+    )..where((p) => p.id.equals(profileId))).getSingle();
+
+    final categories = await scopedCategories(profileId, options);
+    final categoryIds = categories.map((c) => c.id).toSet();
+
+    final selected = await scopedEntries(profileId, options, categoryIds);
+    final entries = selected.entries;
+    final excludedPrivate = selected.excludedPrivate;
     final entryIds = entries.map((e) => e.id).toSet();
 
     // Объекты, на которые ссылаются выбранные записи.

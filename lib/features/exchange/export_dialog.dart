@@ -98,17 +98,10 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   }
 
   /// Выгрузка в читаемый вид: таблица или текст вместо контейнера обмена.
-  ///
-  /// Без подписи и вложений — это не формат обмена, а способ открыть свои
-  /// записи в таблице или распечатать их.
   Future<void> _exportReadable(ReadableFormat format) async {
     final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
-      final entries = await ref
-          .read(entryRepositoryProvider)
-          .entryViews(widget.profile.id);
-
       String relationLabel(String? name) {
         if (name == null) return '';
         for (final r in Relation.values) {
@@ -117,14 +110,16 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
         return name;
       }
 
-      const service = ReadableExportService();
-      final text = service.build(
-        entries: entries,
+      // Объём тот же, что показан выше в «Что войдёт в файл»: выбрали ветку —
+      // в таблицу попадает ветка, а не весь профиль.
+      final text = await ExportService(ref.read(appDatabaseProvider)).readable(
+        widget.profile.id,
+        _options,
         format: format,
         profileName: widget.profile.firstName,
         relationLabel: relationLabel,
       );
-      final extension = service.extensionFor(format);
+      final extension = const ReadableExportService().extensionFor(format);
 
       final delivery = await ref
           .read(fileDeliveryProvider)
@@ -293,10 +288,17 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
                   ),
                 ),
               ],
-              child: OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.download_rounded, size: 18),
-                label: Text(l10n.exportReadable),
+              // Нажатие ловит PopupMenuButton снаружи, поэтому свой обработчик
+              // кнопке не нужен. Но `onPressed: null` красит её как
+              // отключённую — рабочая кнопка выглядела недоступной. Живой
+              // обработчик даёт нужный вид, а IgnorePointer пропускает нажатие
+              // наружу, к меню.
+              child: IgnorePointer(
+                child: OutlinedButton.icon(
+                  onPressed: _busy ? null : () {},
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: Text(l10n.exportReadable),
+                ),
               ),
             ),
             // Отступ между кнопками задавался шириной, хотя они стоят в
