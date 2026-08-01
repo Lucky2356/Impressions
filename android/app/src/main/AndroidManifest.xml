@@ -15,10 +15,19 @@
          равно подтверждает человек — система спрашивает сама. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
+    <!-- Всё хранится на устройстве, поэтому наружу не уходит ничего: ни в
+         облачную копию Google, ни при переносе на новый телефон. Одного
+         allowBackup мало — с Android 12 перенос устройство-в-устройство идёт
+         мимо него, для этого рядом лежит data_extraction_rules.xml.
+
+         Взамен облака копию делает сам человек: в настройках есть
+         «Сохранить копию к себе» и «Восстановить из файла». -->
     <application
         android:label="Впечатления"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ничего не отдавать наружу: ни в облачную копию Google, ни при переносе на
+  новое устройство.
+
+  Приложение хранит всё у себя — база записей, фотографии и файл секрета,
+  которым зашифрован закрытый ключ профиля, лежат в приватном каталоге. По
+  умолчанию Android копирует этот каталог в Google Drive, а с Android 12
+  ещё и передаёт на новый телефон мимо `allowBackup`, поэтому запрет нужен
+  здесь отдельно и для обоих случаев.
+
+  Домены перечислены поимённо: `root` закрывает только файлы в корне
+  каталога данных, а базы, настройки и внешние файлы адресуются своими
+  доменами и без них остались бы открытыми.
+
+  Копию человек делает сам — в настройках, кнопкой «Сохранить копию к себе».
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

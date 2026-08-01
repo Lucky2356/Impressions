@@ -1624,35 +1624,35 @@ abstract class AppLocalizations {
   /// **'Размер'**
   String get exportSize;
 
-  /// No description provided for @exportSaved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Файл сохранён: {path}'**
-  String exportSaved(String path);
-
-  /// No description provided for @exportCancelled.
-  ///
-  /// In ru, this message translates to:
-  /// **'Экспорт отменён'**
-  String get exportCancelled;
-
-  /// No description provided for @exportShared.
-  ///
-  /// In ru, this message translates to:
-  /// **'Файл готов и передан выбранному приложению'**
-  String get exportShared;
-
-  /// No description provided for @exportFailed.
-  ///
-  /// In ru, this message translates to:
-  /// **'Не удалось выгрузить: {error}'**
-  String exportFailed(String error);
-
   /// No description provided for @exportForbidden.
   ///
   /// In ru, this message translates to:
   /// **'Владелец запретил повторную передачу этого профиля'**
   String get exportForbidden;
+
+  /// No description provided for @fileSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл сохранён: {path}'**
+  String fileSaved(String path);
+
+  /// No description provided for @fileShared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл готов и передан выбранному приложению'**
+  String get fileShared;
+
+  /// No description provided for @fileSaveCancelled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранение отменено'**
+  String get fileSaveCancelled;
+
+  /// No description provided for @fileSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить: {error}'**
+  String fileSaveFailed(String error);
 
   /// No description provided for @importTitle.
   ///
@@ -1849,8 +1849,26 @@ abstract class AppLocalizations {
   /// No description provided for @backupAutoHint.
   ///
   /// In ru, this message translates to:
-  /// **'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — перенесите одну в другое место.'**
+  /// **'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — сохраните одну к себе кнопкой рядом с копией.'**
   String get backupAutoHint;
+
+  /// No description provided for @backupSaveToFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить к себе'**
+  String get backupSaveToFile;
+
+  /// No description provided for @backupRestoreFromFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановить из файла'**
+  String get backupRestoreFromFile;
+
+  /// No description provided for @backupOutsideHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия лежит внутри приложения: удалите его — и копии не станет. Кнопка «Сохранить к себе» кладёт её туда, где вы её найдёте: на компьютере в выбранную папку, на телефоне через «Поделиться».'**
+  String get backupOutsideHint;
 
   /// No description provided for @backupAutoOn.
   ///
@@ -1905,6 +1923,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Все записи, категории и фотографии будут заменены содержимым копии от {date}. Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.'**
   String backupRestoreConfirmMessage(String date);
+
+  /// No description provided for @backupRestoreFileConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все записи, категории и фотографии будут заменены содержимым файла «{name}». Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.'**
+  String backupRestoreFileConfirmMessage(String name);
 
   /// No description provided for @backupRestoreDoneTitle.
   ///

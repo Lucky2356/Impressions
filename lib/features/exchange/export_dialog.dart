@@ -13,6 +13,7 @@ import '../../data/services/readable_export_service.dart';
 import '../../data/services/export_service.dart';
 import '../categories/category_providers.dart';
 import '../collections/collection_providers.dart';
+import 'file_delivery_report.dart';
 
 /// Экспорт профиля (§19): состав пакета показывается до сохранения файла.
 class ExportDialog extends ConsumerStatefulWidget {
@@ -73,7 +74,6 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   }
 
   Future<void> _export() async {
-    final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
       final service = ExportService(ref.read(appDatabaseProvider));
@@ -88,12 +88,10 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             write: (file) => file.writeAsBytes(result.bytes, flush: true),
           );
       if (!mounted) return;
-      _report(l10n, delivery);
+      _report(delivery);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exportFailed('$error'))));
+      reportDeliveryFailure(context, error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -137,30 +135,18 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
             write: (file) => file.writeAsString(text, flush: true),
           );
       if (!mounted) return;
-      _report(l10n, delivery);
+      _report(delivery);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exportFailed('$error'))));
+      reportDeliveryFailure(context, error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   /// Сообщить, чем кончилась выгрузка, и закрыть диалог, если файл ушёл.
-  void _report(AppLocalizations l10n, FileDelivery delivery) {
-    final message = switch (delivery.status) {
-      FileDeliveryStatus.saved => l10n.exportSaved(delivery.path!),
-      FileDeliveryStatus.shared => l10n.exportShared,
-      FileDeliveryStatus.cancelled => l10n.exportCancelled,
-    };
-    if (delivery.status != FileDeliveryStatus.cancelled) {
-      Navigator.of(context).pop();
-    }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _report(FileDelivery delivery) {
+    if (reportDelivery(context, delivery)) Navigator.of(context).pop();
   }
 
   @override

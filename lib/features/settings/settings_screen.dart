@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
 import '../../design_system/design_system.dart';
+import '../exchange/file_delivery_report.dart';
 import '../onboarding/app_tour.dart';
 import 'backup_password_dialog.dart';
 import 'devices_section.dart';
@@ -334,6 +336,68 @@ class _BackupsSection extends ConsumerWidget {
     );
   }
 
+  /// Копии лежат в приватном каталоге приложения: снесли приложение — копий не
+  /// стало, а на телефоне их и не видно ниоткуда. Эта кнопка выкладывает копию
+  /// туда, где человек её найдёт.
+  ///
+  /// Файл копируется, а не читается в память: она бывает в сотни мегабайт.
+  Future<void> _saveToFile(
+    BuildContext context,
+    WidgetRef ref,
+    BackupInfo backup,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final delivery = await ref
+          .read(fileDeliveryProvider)
+          .deliver(
+            fileName: backup.fileName,
+            typeLabel: l10n.backupsTitle,
+            extension: backup.encrypted ? 'enc' : 'zip',
+            write: (destination) async =>
+                File(backup.path).copy(destination.path),
+          );
+      if (!context.mounted) return;
+      reportDelivery(context, delivery);
+    } catch (error) {
+      if (!context.mounted) return;
+      reportDeliveryFailure(context, error);
+    }
+  }
+
+  /// Восстановление из копии, сохранённой куда-то к себе.
+  ///
+  /// Отдельно от списка внутренних копий: после переустановки приложения или на
+  /// новом телефоне список пуст, и восстанавливаться было бы неоткуда.
+  Future<void> _restoreFromFile(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+
+    // Типы заданы и расширениями, и MIME: Android строит фильтр из MIME-типов,
+    // а `.zip.enc` ни в один не превращается — без явного `octet-stream`
+    // зашифрованную копию не было бы видно в списке файлов.
+    final file = await openFile(
+      acceptedTypeGroups: [
+        XTypeGroup(
+          label: l10n.backupsTitle,
+          extensions: const ['zip', 'enc'],
+          mimeTypes: const ['application/zip', 'application/octet-stream'],
+        ),
+      ],
+    );
+    if (file == null || !context.mounted) return;
+
+    final ok = await ConfirmDialog.show(
+      context,
+      title: l10n.backupRestoreConfirmTitle,
+      message: l10n.backupRestoreFileConfirmMessage(file.name),
+      confirmLabel: l10n.backupRestore,
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+
+    await _restorePath(context, ref, file.path);
+  }
+
   /// Восстановление из копии (§28).
   ///
   /// База закрывается прямо посреди работы приложения, поэтому дальше можно
@@ -355,10 +419,19 @@ class _BackupsSection extends ConsumerWidget {
     );
     if (!ok || !context.mounted) return;
 
+    await _restorePath(context, ref, backup.path);
+  }
+
+  /// Общая часть восстановления: подтверждение уже получено, дальше путь
+  /// неважно откуда — из списка своих копий или из выбранного файла.
+  Future<void> _restorePath(
+    BuildContext context,
+    WidgetRef ref,
+    String path,
+  ) async {
+    final l10n = AppLocalizations.of(context);
     final db = ref.read(appDatabaseProvider);
-    var result = await BackupService(
-      db,
-    ).restore(backup.path, closeDatabase: db.close);
+    var result = await BackupService(db).restore(path, closeDatabase: db.close);
 
     // Копия с другого устройства: ключа здесь нет, но пароль знает владелец.
     if (result.status == RestoreStatus.passwordRequired) {
@@ -371,7 +444,7 @@ class _BackupsSection extends ConsumerWidget {
       if (password == null) return;
       result = await BackupService(
         db,
-      ).restore(backup.path, closeDatabase: db.close, password: password);
+      ).restore(path, closeDatabase: db.close, password: password);
     }
     if (!context.mounted) return;
 
@@ -438,6 +511,20 @@ class _BackupsSection extends ConsumerWidget {
           l10n.backupRetentionHint,
           style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
+        const SizedBox(height: AppDimens.space8),
+        Text(
+          l10n.backupOutsideHint,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        ),
+        const SizedBox(height: AppDimens.space12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () => _restoreFromFile(context, ref),
+            icon: const Icon(Icons.folder_open_rounded, size: 18),
+            label: Text(l10n.backupRestoreFromFile),
+          ),
+        ),
         const SizedBox(height: AppDimens.space16),
         const _BackupAutoRow(),
         const SizedBox(height: AppDimens.space16),
@@ -458,6 +545,7 @@ class _BackupsSection extends ConsumerWidget {
               backup: backups[i],
               reasonLabel: reasonLabel(backups[i].reason),
               onVerify: () => _verify(context, ref, backups[i]),
+              onSave: () => _saveToFile(context, ref, backups[i]),
               onRestore: () => _restore(context, ref, backups[i]),
             ),
             if (i != backups.length - 1)
@@ -635,12 +723,14 @@ class _BackupRow extends StatelessWidget {
     required this.backup,
     required this.reasonLabel,
     required this.onVerify,
+    required this.onSave,
     required this.onRestore,
   });
 
   final BackupInfo backup;
   final String reasonLabel;
   final VoidCallback onVerify;
+  final VoidCallback onSave;
   final VoidCallback onRestore;
 
   @override
@@ -684,14 +774,15 @@ class _BackupRow extends StatelessWidget {
 
     final actions = [
       TextButton(onPressed: onVerify, child: Text(l10n.backupVerify)),
+      TextButton(onPressed: onSave, child: Text(l10n.backupSaveToFile)),
       TextButton(onPressed: onRestore, child: Text(l10n.backupRestore)),
     ];
 
     return LayoutBuilder(
       builder: (context, cns) {
-        // Кнопкам нужно около 330 точек; тексту — хотя бы 160, иначе дата
+        // Трём кнопкам нужно около 470 точек; тексту — хотя бы 160, иначе дата
         // всё равно превратится в лесенку.
-        if (cns.maxWidth >= 500) {
+        if (cns.maxWidth >= 640) {
           return Row(
             children: [
               Expanded(child: info),

@@ -103,7 +103,7 @@ void main() {
   testWidgets('отказ сохранять оставляет диалог открытым', (tester) async {
     await exportReadable(tester, const _Delivery(FileDelivery.cancelled()));
 
-    expect(find.text('Экспорт отменён'), findsOne);
+    expect(find.text('Сохранение отменено'), findsOne);
     expect(find.byType(ExportDialog), findsOne);
   });
 
@@ -111,7 +111,7 @@ void main() {
     // Раньше исключение никто не ловил и на телефоне не происходило ничего.
     await exportReadable(tester, const _Broken());
 
-    expect(find.textContaining('Не удалось выгрузить'), findsOne);
+    expect(find.textContaining('Не удалось сохранить'), findsOne);
     expect(find.byType(ExportDialog), findsOne);
   });
 }

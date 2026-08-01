@@ -883,24 +883,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exportSize => 'Размер';
 
   @override
-  String exportSaved(String path) {
+  String get exportForbidden =>
+      'Владелец запретил повторную передачу этого профиля';
+
+  @override
+  String fileSaved(String path) {
     return 'Файл сохранён: $path';
   }
 
   @override
-  String get exportCancelled => 'Экспорт отменён';
+  String get fileShared => 'Файл готов и передан выбранному приложению';
 
   @override
-  String get exportShared => 'Файл готов и передан выбранному приложению';
+  String get fileSaveCancelled => 'Сохранение отменено';
 
   @override
-  String exportFailed(String error) {
-    return 'Не удалось выгрузить: $error';
+  String fileSaveFailed(String error) {
+    return 'Не удалось сохранить: $error';
   }
-
-  @override
-  String get exportForbidden =>
-      'Владелец запретил повторную передачу этого профиля';
 
   @override
   String get importTitle => 'Импорт профиля';
@@ -1005,7 +1005,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get backupAutoHint =>
-      'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — перенесите одну в другое место.';
+      'Раз в неделю при запуске приложение сохраняет записи и фотографии в копию. Копии лежат на этом же устройстве, поэтому от его потери они не спасают — сохраните одну к себе кнопкой рядом с копией.';
+
+  @override
+  String get backupSaveToFile => 'Сохранить к себе';
+
+  @override
+  String get backupRestoreFromFile => 'Восстановить из файла';
+
+  @override
+  String get backupOutsideHint =>
+      'Копия лежит внутри приложения: удалите его — и копии не станет. Кнопка «Сохранить к себе» кладёт её туда, где вы её найдёте: на компьютере в выбранную папку, на телефоне через «Поделиться».';
 
   @override
   String get backupAutoOn => 'Копии будут создаваться сами';
@@ -1037,6 +1047,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String backupRestoreConfirmMessage(String date) {
     return 'Все записи, категории и фотографии будут заменены содержимым копии от $date. Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.';
+  }
+
+  @override
+  String backupRestoreFileConfirmMessage(String name) {
+    return 'Все записи, категории и фотографии будут заменены содержимым файла «$name». Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.';
   }
 
   @override
