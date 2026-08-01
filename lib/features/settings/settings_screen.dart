@@ -23,6 +23,7 @@ import 'backup_password_dialog.dart';
 import 'devices_section.dart';
 import 'error_log_section.dart';
 import 'network_section.dart';
+import 'tags_section.dart';
 import 'types_section.dart';
 
 /// Значение настройки «при переносе записей» (§7.4).
@@ -104,6 +105,8 @@ class SettingsScreen extends ConsumerWidget {
           _AdvancedHeader(),
           SizedBox(height: AppDimens.space16),
           TypesSection(),
+          SizedBox(height: AppDimens.space24),
+          TagsSection(),
           SizedBox(height: AppDimens.space24),
           DevicesSection(),
           SizedBox(height: AppDimens.space24),

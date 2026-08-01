@@ -34,7 +34,7 @@ class CategoryRepository {
     String? description,
     String? icon,
     int? color,
-    int sortOrder = 0,
+    int? sortOrder,
   }) async {
     final id = Ids.newId();
     final row = CategoriesCompanion.insert(
@@ -46,7 +46,7 @@ class CategoryRepository {
       description: Value(description),
       icon: Value(icon),
       color: Value(color),
-      sortOrder: Value(sortOrder),
+      sortOrder: Value(sortOrder ?? await _nextSortOrder(profileId, null)),
       level: const Value(0),
       path: id,
       createdAt: DateTime.now(),
@@ -62,7 +62,7 @@ class CategoryRepository {
     String? description,
     String? icon,
     int? color,
-    int sortOrder = 0,
+    int? sortOrder,
   }) async {
     final parent = await byId(parentId);
     if (parent == null) {
@@ -82,7 +82,9 @@ class CategoryRepository {
       description: Value(description),
       icon: Value(icon),
       color: Value(color),
-      sortOrder: Value(sortOrder),
+      sortOrder: Value(
+        sortOrder ?? await _nextSortOrder(parent.profileId, parent.id),
+      ),
       level: Value(childLevel),
       path: '${parent.path}$_sep$id',
       createdAt: DateTime.now(),
@@ -121,6 +123,16 @@ class CategoryRepository {
     );
   }
 
+  /// Порядок соседей: сначала заданный вручную, потом по алфавиту.
+  ///
+  /// Название вторым ключом не для красоты: у категорий, заведённых до 1.11.0,
+  /// `sortOrder` у всех нулевой, и без него SQLite возвращал бы их в порядке,
+  /// который меняется от запроса к запросу.
+  static List<OrderingTerm Function($CategoriesTable)> get _siblingOrder => [
+    (c) => OrderingTerm(expression: c.sortOrder),
+    (c) => OrderingTerm(expression: c.normalizedName),
+  ];
+
   /// Прямые дочерние категории (без архивных по умолчанию).
   Future<List<CategoryRow>> children(
     String parentId, {
@@ -128,7 +140,7 @@ class CategoryRepository {
   }) {
     final q = db.select(db.categories)
       ..where((c) => c.parentId.equals(parentId))
-      ..orderBy([(c) => OrderingTerm(expression: c.sortOrder)]);
+      ..orderBy(_siblingOrder);
     if (!includeArchived) {
       q.where((c) => c.archivedAt.isNull());
     }
@@ -142,11 +154,65 @@ class CategoryRepository {
   }) {
     final q = db.select(db.categories)
       ..where((c) => c.profileId.equals(profileId) & c.parentId.isNull())
-      ..orderBy([(c) => OrderingTerm(expression: c.sortOrder)]);
+      ..orderBy(_siblingOrder);
     if (!includeArchived) {
       q.where((c) => c.archivedAt.isNull());
     }
     return q.get();
+  }
+
+  /// Соседи категории — то, среди чего её можно двигать.
+  Future<List<CategoryRow>> siblingsOf(CategoryRow node) {
+    return node.parentId == null
+        ? roots(node.profileId)
+        : children(node.parentId!);
+  }
+
+  /// Переставляет категорию на шаг вверх или вниз среди соседей.
+  ///
+  /// Возвращает `false`, если двигать некуда — категория уже крайняя.
+  ///
+  /// Порядок перенумеровывается целиком, а не меняется местами у двух: до
+  /// 1.11.0 `sortOrder` никто не выставлял, у всех стоял ноль, и обмен нулями
+  /// не сдвинул бы ничего.
+  Future<bool> reorder(String id, {required bool up}) async {
+    final node = await byId(id);
+    if (node == null) return false;
+
+    final siblings = await siblingsOf(node);
+    final index = siblings.indexWhere((c) => c.id == id);
+    if (index < 0) return false;
+
+    final target = up ? index - 1 : index + 1;
+    if (target < 0 || target >= siblings.length) return false;
+
+    final reordered = [...siblings];
+    reordered.insert(target, reordered.removeAt(index));
+
+    await db.transaction(() async {
+      for (var i = 0; i < reordered.length; i++) {
+        await (db.update(db.categories)
+              ..where((c) => c.id.equals(reordered[i].id)))
+            .write(CategoriesCompanion(sortOrder: Value(i)));
+      }
+    });
+    return true;
+  }
+
+  /// Номер, с которым новая категория встанет последней среди соседей.
+  Future<int> _nextSortOrder(String profileId, String? parentId) async {
+    final q = db.select(db.categories)
+      ..where(
+        (c) => parentId == null
+            ? c.profileId.equals(profileId) & c.parentId.isNull()
+            : c.parentId.equals(parentId),
+      )
+      ..orderBy([
+        (c) => OrderingTerm(expression: c.sortOrder, mode: OrderingMode.desc),
+      ])
+      ..limit(1);
+    final last = await q.get();
+    return last.isEmpty ? 0 : last.first.sortOrder + 1;
   }
 
   /// Все потомки категории (по префиксу материализованного пути), без самой

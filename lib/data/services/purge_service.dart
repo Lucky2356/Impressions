@@ -56,9 +56,17 @@ class PurgeService {
 
       orphanedAttachments.addAll(await _detachRevisions(revisionIds));
 
+      final tagIds =
+          (await (db.select(
+                db.entryTags,
+              )..where((t) => t.entryId.equals(entryId))).get())
+              .map((t) => t.tagId)
+              .toList();
       await (db.delete(
         db.entryTags,
       )..where((t) => t.entryId.equals(entryId))).go();
+      await _purgeTagsIfUnused(tagIds);
+
       await (db.delete(
         db.entryCategories,
       )..where((ec) => ec.entryId.equals(entryId))).go();
@@ -151,16 +159,41 @@ class PurgeService {
     return orphaned;
   }
 
-  Future<Set<String>> _purgeObjectIfUnused(String objectId) async {
-    final used = await (db.select(
-      db.profileEntries,
-    )..where((e) => e.objectId.equals(objectId))).getSingleOrNull();
-    if (used != null) return const {};
+  /// Убирает теги, на которых после удаления записи никого не осталось.
+  ///
+  /// Иначе метка, поставленная однажды и по ошибке, навсегда остаётся в списке
+  /// фильтров каталога — записи давно нет, а тег есть.
+  Future<void> _purgeTagsIfUnused(List<String> tagIds) async {
+    for (final id in tagIds) {
+      // Строк на тег может быть много, поэтому limit(1) и get(): у
+      // getSingleOrNull на нескольких строках падение, а не ответ.
+      final stillUsed =
+          await (db.select(db.entryTags)
+                ..where((et) => et.tagId.equals(id))
+                ..limit(1))
+              .get();
+      if (stillUsed.isNotEmpty) continue;
+      await (db.delete(db.tags)..where((t) => t.id.equals(id))).go();
+    }
+  }
 
-    final recommended = await (db.select(
-      db.recommendations,
-    )..where((r) => r.objectId.equals(objectId))).getSingleOrNull();
-    if (recommended != null) return const {};
+  Future<Set<String>> _purgeObjectIfUnused(String objectId) async {
+    // Ссылок на объект может быть сколько угодно — им пользуются разные
+    // профили. getSingleOrNull на двух и более строках падает, а не отвечает
+    // «занято», поэтому limit(1) и get().
+    final used =
+        await (db.select(db.profileEntries)
+              ..where((e) => e.objectId.equals(objectId))
+              ..limit(1))
+            .get();
+    if (used.isNotEmpty) return const {};
+
+    final recommended =
+        await (db.select(db.recommendations)
+              ..where((r) => r.objectId.equals(objectId))
+              ..limit(1))
+            .get();
+    if (recommended.isNotEmpty) return const {};
 
     final revisionIds =
         (await (db.select(

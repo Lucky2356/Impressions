@@ -213,6 +213,7 @@ void main() {
             onRename: () {},
             onIcon: () {},
             onMove: () {},
+            onReorder: ({required up}) {},
             onArchive: () {},
             onBack: () {},
           ),

@@ -556,6 +556,24 @@ abstract class AppLocalizations {
   /// **'Переместить'**
   String get categoryMove;
 
+  /// No description provided for @categoryMoveUp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выше'**
+  String get categoryMoveUp;
+
+  /// No description provided for @categoryMoveDown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ниже'**
+  String get categoryMoveDown;
+
+  /// No description provided for @categoryMoveEdge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дальше двигать некуда'**
+  String get categoryMoveEdge;
+
   /// No description provided for @categoryArchive.
   ///
   /// In ru, this message translates to:
@@ -2272,6 +2290,66 @@ abstract class AppLocalizations {
   /// **'Русский'**
   String get settingsLanguageRu;
 
+  /// No description provided for @tagsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теги'**
+  String get tagsTitle;
+
+  /// No description provided for @tagsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теги — свободные метки без вложенности, они не заменяют категории.'**
+  String get tagsHint;
+
+  /// No description provided for @tagsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тегов пока нет'**
+  String get tagsEmpty;
+
+  /// No description provided for @tagNameLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название тега'**
+  String get tagNameLabel;
+
+  /// No description provided for @tagRename.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переименовать тег'**
+  String get tagRename;
+
+  /// No description provided for @tagDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить тег'**
+  String get tagDelete;
+
+  /// No description provided for @tagUsage.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, =0{нет записей} one{{count} запись} few{{count} записи} other{{count} записей}}'**
+  String tagUsage(int count);
+
+  /// No description provided for @tagDeleteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить тег?'**
+  String get tagDeleteTitle;
+
+  /// No description provided for @tagDeleteMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тег «{name}» будет снят со всех записей и удалён. Записи останутся на месте. Сейчас им помечено {count, plural, =0{ничего} one{{count} запись} few{{count} записи} other{{count} записей}}.'**
+  String tagDeleteMessage(String name, int count);
+
+  /// No description provided for @tagMerged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теги объединены в «{name}»'**
+  String tagMerged(String name);
+
   /// No description provided for @typesTitle.
   ///
   /// In ru, this message translates to:
@@ -2368,23 +2446,11 @@ abstract class AppLocalizations {
   /// **'Добавить тег'**
   String get tagAdd;
 
-  /// No description provided for @tagNameLabel.
-  ///
-  /// In ru, this message translates to:
-  /// **'Название тега'**
-  String get tagNameLabel;
-
   /// No description provided for @tagRemove.
   ///
   /// In ru, this message translates to:
   /// **'Убрать тег'**
   String get tagRemove;
-
-  /// No description provided for @tagsHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Теги — свободные метки без вложенности, они не заменяют категории.'**
-  String get tagsHint;
 
   /// No description provided for @privacyLabel.
   ///

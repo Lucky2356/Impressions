@@ -242,6 +242,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryMove => 'Переместить';
 
   @override
+  String get categoryMoveUp => 'Выше';
+
+  @override
+  String get categoryMoveDown => 'Ниже';
+
+  @override
+  String get categoryMoveEdge => 'Дальше двигать некуда';
+
+  @override
   String get categoryArchive => 'Архивировать';
 
   @override
@@ -1256,6 +1265,59 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsLanguageRu => 'Русский';
 
   @override
+  String get tagsTitle => 'Теги';
+
+  @override
+  String get tagsHint =>
+      'Теги — свободные метки без вложенности, они не заменяют категории.';
+
+  @override
+  String get tagsEmpty => 'Тегов пока нет';
+
+  @override
+  String get tagNameLabel => 'Название тега';
+
+  @override
+  String get tagRename => 'Переименовать тег';
+
+  @override
+  String get tagDelete => 'Удалить тег';
+
+  @override
+  String tagUsage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+      zero: 'нет записей',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagDeleteTitle => 'Удалить тег?';
+
+  @override
+  String tagDeleteMessage(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей',
+      few: '$count записи',
+      one: '$count запись',
+      zero: 'ничего',
+    );
+    return 'Тег «$name» будет снят со всех записей и удалён. Записи останутся на месте. Сейчас им помечено $_temp0.';
+  }
+
+  @override
+  String tagMerged(String name) {
+    return 'Теги объединены в «$name»';
+  }
+
+  @override
   String get typesTitle => 'Типы объектов';
 
   @override
@@ -1306,14 +1368,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tagAdd => 'Добавить тег';
 
   @override
-  String get tagNameLabel => 'Название тега';
-
-  @override
   String get tagRemove => 'Убрать тег';
-
-  @override
-  String get tagsHint =>
-      'Теги — свободные метки без вложенности, они не заменяют категории.';
 
   @override
   String get privacyLabel => 'Доступность';

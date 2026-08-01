@@ -405,6 +405,95 @@ class EntryRepository {
     )..where((et) => et.entryId.equals(entryId) & et.tagId.equals(tagId))).go();
   }
 
+  /// Сколько записей помечено каждым тегом профиля.
+  ///
+  /// Нужно, чтобы человек понимал, что удаляет: тег на сорока записях и тег с
+  /// опечаткой на одной выглядят в списке одинаково.
+  Future<Map<String, int>> tagUsage(String profileId) async {
+    final tag = db.alias(db.tags, 't');
+    final link = db.alias(db.entryTags, 'et');
+    final count = link.entryId.count();
+
+    final rows =
+        await (db.selectOnly(tag)
+              ..addColumns([tag.id, count])
+              ..join([
+                leftOuterJoin(
+                  link,
+                  link.tagId.equalsExp(tag.id),
+                  useColumns: false,
+                ),
+              ])
+              ..where(tag.profileId.equals(profileId))
+              ..groupBy([tag.id]))
+            .get();
+
+    return {for (final row in rows) row.read(tag.id)!: row.read(count) ?? 0};
+  }
+
+  /// Переименовывает тег, а при совпадении имени — сливает с существующим.
+  ///
+  /// Совпадение считается по [Normalize.name], который сворачивает регистр и
+  /// «ё»: «Чай», «чай» и «чaй» — один тег, иначе список фильтров зарастает
+  /// близнецами. При слиянии связи переезжают на уцелевший тег, а опустевший
+  /// удаляется; `insertOrIgnore` не даёт появиться дублю на записи, помеченной
+  /// обоими.
+  ///
+  /// Возвращает тег, который остался.
+  Future<TagRow> renameTag(String tagId, String name) async {
+    final tag = await (db.select(
+      db.tags,
+    )..where((t) => t.id.equals(tagId))).getSingle();
+    final normalized = Normalize.name(name);
+
+    final twin =
+        await (db.select(db.tags)..where(
+              (t) =>
+                  t.profileId.equals(tag.profileId) &
+                  t.normalizedName.equals(normalized) &
+                  t.id.equals(tagId).not(),
+            ))
+            .getSingleOrNull();
+
+    return db.transaction(() async {
+      if (twin == null) {
+        await (db.update(db.tags)..where((t) => t.id.equals(tagId))).write(
+          TagsCompanion(name: Value(name), normalizedName: Value(normalized)),
+        );
+        return (db.select(
+          db.tags,
+        )..where((t) => t.id.equals(tagId))).getSingle();
+      }
+
+      final links = await (db.select(
+        db.entryTags,
+      )..where((et) => et.tagId.equals(tagId))).get();
+      for (final link in links) {
+        await db
+            .into(db.entryTags)
+            .insert(
+              EntryTagsCompanion.insert(entryId: link.entryId, tagId: twin.id),
+              mode: InsertMode.insertOrIgnore,
+            );
+      }
+      await (db.delete(
+        db.entryTags,
+      )..where((et) => et.tagId.equals(tagId))).go();
+      await (db.delete(db.tags)..where((t) => t.id.equals(tagId))).go();
+      return twin;
+    });
+  }
+
+  /// Убирает тег отовсюду и удаляет его самого.
+  Future<void> deleteTag(String tagId) async {
+    await db.transaction(() async {
+      await (db.delete(
+        db.entryTags,
+      )..where((et) => et.tagId.equals(tagId))).go();
+      await (db.delete(db.tags)..where((t) => t.id.equals(tagId))).go();
+    });
+  }
+
   Future<void> archiveEntry(String entryId) async {
     await (db.update(db.profileEntries)..where((e) => e.id.equals(entryId)))
         .write(ProfileEntriesCompanion(archivedAt: Value(DateTime.now())));

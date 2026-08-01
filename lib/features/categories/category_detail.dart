@@ -30,6 +30,7 @@ class CategoryDetail extends ConsumerWidget {
     required this.onRename,
     required this.onIcon,
     required this.onMove,
+    required this.onReorder,
     required this.onArchive,
     this.onBack,
   });
@@ -40,6 +41,10 @@ class CategoryDetail extends ConsumerWidget {
   final VoidCallback onRename;
   final VoidCallback onIcon;
   final VoidCallback onMove;
+
+  /// Переставить категорию среди соседей: `true` — выше, `false` — ниже.
+  final void Function({required bool up}) onReorder;
+
   final VoidCallback onArchive;
 
   /// Возврат к списку — только в узкой раскладке.
@@ -172,6 +177,8 @@ class CategoryDetail extends ConsumerWidget {
                       'rename' => onRename(),
                       'icon' => onIcon(),
                       'move' => onMove(),
+                      'up' => onReorder(up: true),
+                      'down' => onReorder(up: false),
                       'archive' => onArchive(),
                       _ => null,
                     },
@@ -186,6 +193,16 @@ class CategoryDetail extends ConsumerWidget {
                         'move',
                         Icons.drive_file_move_rounded,
                         l10n.categoryMove,
+                      ),
+                      _item(
+                        'up',
+                        Icons.arrow_upward_rounded,
+                        l10n.categoryMoveUp,
+                      ),
+                      _item(
+                        'down',
+                        Icons.arrow_downward_rounded,
+                        l10n.categoryMoveDown,
                       ),
                       const PopupMenuDivider(),
                       _item(

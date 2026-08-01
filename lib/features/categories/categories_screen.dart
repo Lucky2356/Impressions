@@ -103,6 +103,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         PopupMenuItem(value: 'rename', child: Text(l10n.categoryRename)),
         PopupMenuItem(value: 'icon', child: Text(l10n.categoryIcon)),
         PopupMenuItem(value: 'move', child: Text(l10n.categoryMove)),
+        // Порядок задавался только полем в базе, которое никто не выставлял.
+        PopupMenuItem(value: 'up', child: Text(l10n.categoryMoveUp)),
+        PopupMenuItem(value: 'down', child: Text(l10n.categoryMoveDown)),
         PopupMenuItem(value: 'archive', child: Text(l10n.categoryArchive)),
       ],
     );
@@ -116,9 +119,30 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
         await _pickIcon(cat);
       case 'move':
         await _move(cat);
+      case 'up':
+        await _reorder(cat, up: true);
+      case 'down':
+        await _reorder(cat, up: false);
       case 'archive':
         await _archive(cat);
     }
+  }
+
+  /// Переставить категорию на шаг среди соседей.
+  Future<void> _reorder(CategoryRow cat, {required bool up}) async {
+    final l10n = AppLocalizations.of(context);
+    final moved = await ref
+        .read(categoryRepositoryProvider)
+        .reorder(cat.id, up: up);
+    if (!mounted) return;
+    if (!moved) {
+      // Молча ничего не делать нельзя: нажатие выглядит как поломка.
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.categoryMoveEdge)));
+      return;
+    }
+    _bump();
   }
 
   // Выбранная ветка живёт в провайдере: на категорию нажимают и с главной.
@@ -333,6 +357,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               onRename: () => _rename(cat),
               onIcon: () => _pickIcon(cat),
               onMove: () => _move(cat),
+              onReorder: ({required up}) => _reorder(cat, up: up),
               onArchive: () => _archive(cat),
             );
 
