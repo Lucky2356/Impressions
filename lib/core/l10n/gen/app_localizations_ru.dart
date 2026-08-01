@@ -891,6 +891,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exportCancelled => 'Экспорт отменён';
 
   @override
+  String get exportShared => 'Файл готов и передан выбранному приложению';
+
+  @override
+  String exportFailed(String error) {
+    return 'Не удалось выгрузить: $error';
+  }
+
+  @override
   String get exportForbidden =>
       'Владелец запретил повторную передачу этого профиля';
 

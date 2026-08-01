@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,6 +8,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../core/domain/relation.dart';
 import '../../data/providers.dart';
+import '../../data/services/file_delivery_service.dart';
 import '../../data/services/readable_export_service.dart';
 import '../../data/services/export_service.dart';
 import '../categories/category_providers.dart';
@@ -81,29 +79,21 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       final service = ExportService(ref.read(appDatabaseProvider));
       final result = await service.export(widget.profile.id, _options);
 
-      final location = await getSaveLocation(
-        suggestedName: ExportService.suggestFileName(widget.profile.firstName),
-        acceptedTypeGroups: [
-          XTypeGroup(
-            label: AppConfig.appName,
-            extensions: [AppConfig.profileFileExtension],
-          ),
-        ],
-      );
+      final delivery = await ref
+          .read(fileDeliveryProvider)
+          .deliver(
+            fileName: ExportService.suggestFileName(widget.profile.firstName),
+            typeLabel: AppConfig.appName,
+            extension: AppConfig.profileFileExtension,
+            write: (file) => file.writeAsBytes(result.bytes, flush: true),
+          );
       if (!mounted) return;
-      if (location == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.exportCancelled)));
-        return;
-      }
-
-      await File(location.path).writeAsBytes(result.bytes, flush: true);
+      _report(l10n, delivery);
+    } catch (error) {
       if (!mounted) return;
-      Navigator.of(context).pop();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exportSaved(location.path))));
+      ).showSnackBar(SnackBar(content: Text(l10n.exportFailed('$error'))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -138,29 +128,39 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       );
       final extension = service.extensionFor(format);
 
-      final location = await getSaveLocation(
-        suggestedName: 'Впечатления-${widget.profile.firstName}.$extension',
-        acceptedTypeGroups: [
-          XTypeGroup(label: extension.toUpperCase(), extensions: [extension]),
-        ],
-      );
+      final delivery = await ref
+          .read(fileDeliveryProvider)
+          .deliver(
+            fileName: 'Впечатления-${widget.profile.firstName}.$extension',
+            typeLabel: extension.toUpperCase(),
+            extension: extension,
+            write: (file) => file.writeAsString(text, flush: true),
+          );
       if (!mounted) return;
-      if (location == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.exportCancelled)));
-        return;
-      }
-
-      await File(location.path).writeAsString(text, flush: true);
+      _report(l10n, delivery);
+    } catch (error) {
       if (!mounted) return;
-      Navigator.of(context).pop();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exportSaved(location.path))));
+      ).showSnackBar(SnackBar(content: Text(l10n.exportFailed('$error'))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Сообщить, чем кончилась выгрузка, и закрыть диалог, если файл ушёл.
+  void _report(AppLocalizations l10n, FileDelivery delivery) {
+    final message = switch (delivery.status) {
+      FileDeliveryStatus.saved => l10n.exportSaved(delivery.path!),
+      FileDeliveryStatus.shared => l10n.exportShared,
+      FileDeliveryStatus.cancelled => l10n.exportCancelled,
+    };
+    if (delivery.status != FileDeliveryStatus.cancelled) {
+      Navigator.of(context).pop();
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

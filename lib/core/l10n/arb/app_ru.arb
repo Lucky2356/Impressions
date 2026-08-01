@@ -290,6 +290,9 @@
   "exportSaved": "Файл сохранён: {path}",
   "@exportSaved": { "placeholders": { "path": { "type": "String" } } },
   "exportCancelled": "Экспорт отменён",
+  "exportShared": "Файл готов и передан выбранному приложению",
+  "exportFailed": "Не удалось выгрузить: {error}",
+  "@exportFailed": { "placeholders": { "error": { "type": "String" } } },
   "exportForbidden": "Владелец запретил повторную передачу этого профиля",
 
   "importTitle": "Импорт профиля",

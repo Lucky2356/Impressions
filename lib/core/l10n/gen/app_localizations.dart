@@ -1636,6 +1636,18 @@ abstract class AppLocalizations {
   /// **'Экспорт отменён'**
   String get exportCancelled;
 
+  /// No description provided for @exportShared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл готов и передан выбранному приложению'**
+  String get exportShared;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выгрузить: {error}'**
+  String exportFailed(String error);
+
   /// No description provided for @exportForbidden.
   ///
   /// In ru, this message translates to:

@@ -7,6 +7,7 @@ import 'repositories/draft_repository.dart';
 import 'repositories/entry_repository.dart';
 import 'repositories/profile_repository.dart';
 import 'services/barcode_decoder.dart';
+import 'services/file_delivery_service.dart';
 import 'services/key_service.dart';
 import 'services/product_lookup_service.dart';
 import 'services/update_service.dart';
@@ -54,6 +55,11 @@ final productLookupProvider = Provider<ProductLookupService>((ref) {
   final service = ProductLookupService();
   ref.onDispose(service.dispose);
   return service;
+});
+
+/// Выдача готового файла: диалог сохранения или «Поделиться» (§19).
+final fileDeliveryProvider = Provider<FileDeliveryService>((ref) {
+  return const FileDeliveryService();
 });
 
 /// Проверка обновлений приложения и сведений о товарах.
