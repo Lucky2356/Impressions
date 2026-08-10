@@ -253,4 +253,118 @@ void main() {
       expect(find.text('Продолжаем недописанное'), findsNothing);
     });
   });
+
+  /// Enter в названии сохраняет запись.
+  ///
+  /// Поле автофокусится, но не отвечало ни на что: на телефоне после набора
+  /// надо было убирать клавиатуру и тянуться к кнопке внизу, на компьютере
+  /// Enter не делал ничего — в самой частой форме приложения.
+  testWidgets('Enter в названии сохраняет запись', (tester) async {
+    await openSheet(tester);
+
+    await tester.enterText(find.byType(TextFormField).first, 'Кефир');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final saved = await entries.entryViews(me.id);
+    expect(saved.single.title, 'Кефир');
+  });
+
+  group('форма помнит, куда клали', () {
+    testWidgets('категория подставляется из прошлой записи', (tester) async {
+      final categories = CategoryRepository(db);
+      final food = await categories.createRoot(me.id, 'Еда');
+      final sausages = await categories.createChild(food.id, 'Колбасы');
+
+      await openSheet(tester, initial: sausages);
+      await tester.enterText(find.byType(TextFormField).first, 'Докторская');
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Сохранить'));
+
+      // Вторая запись подряд обычно ложится туда же — а форма, открытая не из
+      // ветки, каждый раз спрашивала категорию заново.
+      await openSheet(tester);
+      expect(find.text('Колбасы'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField).first, 'Краковская');
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Сохранить'));
+
+      final saved = await entries.entryViews(me.id);
+      final krakow = saved.firstWhere((e) => e.title == 'Краковская');
+      expect(krakow.categoryPath.last, 'Колбасы');
+    });
+
+    testWidgets('черновик важнее привычки', (tester) async {
+      final categories = CategoryRepository(db);
+      final sausages = await categories.createRoot(me.id, 'Колбасы');
+
+      await openSheet(tester, initial: sausages);
+      await tester.enterText(find.byType(TextFormField).first, 'Докторская');
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Сохранить'));
+
+      // Незаконченная работа — не привычка: начатую без категории запись
+      // подстановка перебивать не должна.
+      await openSheet(tester);
+      await tapVisible(tester, find.text('Колбасы'));
+      await tester.tap(find.text('Без категории').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'Сулугуни');
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await openSheet(tester);
+
+      expect(find.text('Продолжаем недописанное'), findsOneWidget);
+      expect(find.text('Колбасы'), findsNothing);
+    });
+  });
+
+  /// Диалог дублей показывал список, а брал первого из него.
+  ///
+  /// «Чай зелёный» от двух производителей — человек имел в виду второй, а
+  /// запись молча привязывалась к первому, и заметить это можно было только
+  /// потом, в карточке.
+  testWidgets('дубль берётся выбранный, а не первый', (tester) async {
+    final type = (await entries.objectTypes(me.id)).single;
+    final ahmad = await entries.createObject(
+      typeId: type.id,
+      title: 'Чай зелёный',
+      creator: 'Ахмад',
+    );
+    final lipton = await entries.createObject(
+      typeId: type.id,
+      title: 'Чай зелёный',
+      creator: 'Липтон',
+    );
+
+    await openSheet(tester);
+    await tester.enterText(find.byType(TextFormField).first, 'Чай зелёный');
+
+    // Пока форма ждёт ответа про дубли, кнопка «Сохранить» крутит индикатор:
+    // `pumpAndSettle` такого не дожидается, поэтому кадры отсчитываем сами.
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Возможные дубли'), findsOneWidget);
+    // Без выбора связывать не с чем: кнопка неактивна.
+    final button = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Использовать существующий'),
+    );
+    expect(button.onPressed, isNull);
+
+    await tester.tap(find.widgetWithText(RadioListTile<String>, 'Липтон'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Использовать существующий'),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final saved = await entries.entryViews(me.id);
+    expect(saved.single.objectId, lipton.id);
+    expect(saved.single.objectId, isNot(ahmad.id));
+  });
 }

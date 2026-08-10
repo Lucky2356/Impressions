@@ -13,6 +13,11 @@ class SettingKeys {
 
   /// Раздел, открытый в прошлый раз.
   static const lastSection = 'last_section';
+
+  /// Куда клали в прошлый раз: подряд обычно заводят записи в одно место, а
+  /// форма подставляла категорию только при входе из ветки.
+  static const quickAddLastCategory = 'quick_add_last_category';
+  static const quickAddLastType = 'quick_add_last_type';
   static const onboardingDone = 'onboarding_done';
 
   /// Обучение по разделам пройдено или пропущено.

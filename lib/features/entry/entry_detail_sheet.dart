@@ -680,16 +680,20 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     ).showSnackBar(SnackBar(content: Text(l10n.transferDone)));
   }
 
+  /// Архивирование без вопроса «точно?»: рядом сразу появляется «Вернуть».
+  ///
+  /// Диалог здесь ничего не защищал — действие обратимо, — а разбор каталога
+  /// это десятки таких движений подряд. Подтверждение осталось там, где вернуть
+  /// нечем: удаление насовсем, восстановление из копии, удаление тега.
   Future<void> _archive(String entryId) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await ConfirmDialog.show(
-      context,
-      title: l10n.entryArchive,
-      message: l10n.categoryArchiveConfirm,
-      confirmLabel: l10n.commonArchive,
-      destructive: true,
-    );
-    if (!ok) return;
+
+    // «Вернуть» нажимают, когда карточки уже нет: её `ref` к этому времени
+    // отвязан от дерева и падает с «Using "ref" when a widget is about to or
+    // has been unmounted». Поэтому берём хранилище провайдеров заранее — оно
+    // живёт выше карточки и переживает её закрытие.
+    final container = ProviderScope.containerOf(context, listen: false);
+
     await ref.read(entryRepositoryProvider).archiveEntry(entryId);
     _bump();
     if (!mounted) return;
@@ -701,8 +705,8 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
       context,
       message: l10n.entryArchived,
       onUndo: () async {
-        await ref.read(entryRepositoryProvider).restoreEntry(entryId);
-        _bump();
+        await container.read(entryRepositoryProvider).restoreEntry(entryId);
+        container.read(dataRefreshProvider.notifier).bump();
       },
     );
   }

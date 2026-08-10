@@ -253,16 +253,10 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     }
   }
 
+  /// Архивирование ветки без вопроса «точно?»: записи не удаляются, а рядом
+  /// сразу появляется «Вернуть».
   Future<void> _archive(CategoryRow cat) async {
     final l10n = AppLocalizations.of(context);
-    final ok = await ConfirmDialog.show(
-      context,
-      title: l10n.categoryArchive,
-      message: l10n.categoryArchiveConfirm,
-      confirmLabel: l10n.categoryArchive,
-      destructive: true,
-    );
-    if (!ok) return;
     await ref.read(categoryRepositoryProvider).archive(cat.id);
     if (_selectedId == cat.id) _setSelected(null);
     _bump();

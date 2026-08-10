@@ -128,17 +128,11 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     });
   }
 
+  /// Архивирование пачки без вопроса «точно?»: следом появляется «Вернуть»,
+  /// которое возвращает ровно те же записи.
   Future<void> _archive() async {
     final l10n = AppLocalizations.of(context);
     final ids = ref.read(catalogSelectionProvider).toList();
-    final ok = await ConfirmDialog.show(
-      context,
-      title: l10n.bulkArchive,
-      message: l10n.bulkArchiveConfirm(ids.length),
-      confirmLabel: l10n.commonArchive,
-      destructive: true,
-    );
-    if (!ok) return;
 
     await _run((selected) async {
       final repo = ref.read(entryRepositoryProvider);

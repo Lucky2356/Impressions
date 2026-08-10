@@ -17,6 +17,7 @@ import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/draft_repository.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../data/services/image_service.dart';
 import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
@@ -192,12 +193,14 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         .read(profile.id, DraftRepository.quickAddKind);
     if (!mounted) return;
     if (saved == null) {
+      await _restoreLastPlace();
       _draftLoaded = true;
       return;
     }
 
     final draft = QuickAddDraft.fromJson(saved);
     if (draft.isEmpty) {
+      await _restoreLastPlace();
       _draftLoaded = true;
       return;
     }
@@ -243,6 +246,43 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _draftRestored = true;
       _draftLoaded = true;
     });
+  }
+
+  /// Подставляет категорию и тип из прошлой записи.
+  ///
+  /// Записи подряд обычно кладут в одно место, а форма помнила категорию
+  /// только при входе из ветки: с главной и из каталога её выбирали каждый
+  /// раз заново. Черновик важнее — это незаконченная работа, а не привычка,
+  /// поэтому подстановка идёт только когда черновика нет.
+  Future<void> _restoreLastPlace() async {
+    if (widget.initialCategory != null) return;
+
+    final settings = ref.read(settingsRepositoryProvider);
+    final categoryId = await settings.get(SettingKeys.quickAddLastCategory);
+    final typeId = await settings.get(SettingKeys.quickAddLastType);
+    if (!mounted) return;
+
+    CategoryRow? category;
+    if (categoryId != null && categoryId.isNotEmpty) {
+      final categories = await ref.read(allCategoriesProvider.future);
+      if (!mounted) return;
+      category = categories.where((c) => c.id == categoryId).firstOrNull;
+    }
+    if (category == null && (typeId == null || typeId.isEmpty)) return;
+
+    // Через super.setState: обычный setState записал бы черновик, и следующее
+    // открытие формы предложило бы «продолжить» пустую подстановку.
+    super.setState(() {
+      _category ??= category;
+      if (typeId != null && typeId.isNotEmpty) _typeId ??= typeId;
+    });
+  }
+
+  /// Запоминает, куда положили, — чтобы следующая запись открылась там же.
+  Future<void> _rememberLastPlace() async {
+    final settings = ref.read(settingsRepositoryProvider);
+    await settings.set(SettingKeys.quickAddLastCategory, _category?.id ?? '');
+    await settings.set(SettingKeys.quickAddLastType, _typeId ?? '');
   }
 
   QuickAddDraft _draft() => QuickAddDraft(
@@ -349,11 +389,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         // только предлагаем использовать существующий объект.
         final candidates = await repo.findDuplicateCandidates(typeId, title);
         if (candidates.isNotEmpty && mounted) {
-          final chosen = await _askDuplicate(candidates);
-          if (chosen == _DuplicateChoice.cancelled) return;
-          if (chosen == _DuplicateChoice.useExisting) {
-            object = candidates.first;
-          }
+          final answer = await _askDuplicate(candidates);
+          if (answer.cancelled) return;
+          object = answer.chosen;
         }
       }
 
@@ -392,6 +430,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
       // Запись создана — черновику больше нечего беречь.
       await _clearDraft();
+      await _rememberLastPlace();
 
       ref.read(dataRefreshProvider.notifier).bump();
       if (mounted) Navigator.of(context).pop(true);
@@ -527,46 +566,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   }
 
   /// Спрашивает, что делать с найденными похожими объектами (§26).
-  Future<_DuplicateChoice> _askDuplicate(List<ObjectRow> candidates) async {
-    final l10n = AppLocalizations.of(context);
-    final result = await showDialog<_DuplicateChoice>(
+  ///
+  /// Похожих бывает несколько, и раньше диалог их показывал, а привязывал
+  /// всегда к первому: увидели «Чай зелёный», «Чай чёрный», «Чай с бергамотом»,
+  /// нажали «Использовать существующий» — и запись молча уходила к первому.
+  /// Теперь строку выбирают, и кнопка без выбора не работает.
+  Future<_DuplicateAnswer> _askDuplicate(List<ObjectRow> candidates) async {
+    final result = await showDialog<_DuplicateAnswer>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.duplicateTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.duplicateMessage),
-            const SizedBox(height: AppDimens.space12),
-            for (final o in candidates.take(5))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    const Icon(Icons.link_rounded, size: 16),
-                    const SizedBox(width: AppDimens.space8),
-                    Expanded(child: Text(o.title)),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(_DuplicateChoice.keepSeparate),
-            child: Text(l10n.duplicateKeepSeparate),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(_DuplicateChoice.useExisting),
-            child: Text(l10n.duplicateUseExisting),
-          ),
-        ],
-      ),
+      builder: (ctx) =>
+          _DuplicateDialog(candidates: candidates.take(5).toList()),
     );
-    return result ?? _DuplicateChoice.cancelled;
+    return result ?? const _DuplicateAnswer.cancelled();
   }
 
   /// Тип, подсказанный выбранной категорией; null — подсказки нет.
@@ -650,6 +661,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 TextFormField(
                   controller: _title,
                   autofocus: true,
+                  // Enter сохраняет: поле и так под курсором, а тянуться за
+                  // кнопкой вниз ради самой частой формы в приложении незачем.
+                  // Повторное нажатие безопасно — мешает `_busy`.
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    if (!_busy) _save();
+                  },
                   decoration: InputDecoration(
                     labelText: l10n.quickAddNameLabel,
                     hintText: l10n.quickAddNameHint,
@@ -1000,8 +1018,95 @@ class _CategoryField extends StatelessWidget {
   }
 }
 
-/// Что делать с найденными похожими объектами (§26).
-enum _DuplicateChoice { useExisting, keepSeparate, cancelled }
+/// Что решили насчёт найденных похожих объектов (§26).
+class _DuplicateAnswer {
+  const _DuplicateAnswer.useExisting(ObjectRow object)
+    : chosen = object,
+      cancelled = false;
+  const _DuplicateAnswer.keepSeparate() : chosen = null, cancelled = false;
+  const _DuplicateAnswer.cancelled() : chosen = null, cancelled = true;
+
+  /// Выбранный объект; null — заводим новый.
+  final ObjectRow? chosen;
+
+  /// Диалог закрыли, ничего не решив: сохранение отменяется.
+  final bool cancelled;
+}
+
+/// Выбор среди похожих объектов.
+class _DuplicateDialog extends StatefulWidget {
+  const _DuplicateDialog({required this.candidates});
+
+  final List<ObjectRow> candidates;
+
+  @override
+  State<_DuplicateDialog> createState() => _DuplicateDialogState();
+}
+
+class _DuplicateDialogState extends State<_DuplicateDialog> {
+  /// Ничего не выбрано заранее: подставленный выбор человек принимает не
+  /// глядя, а объединение объектов — не то, что стоит делать за него.
+  String? _selectedId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final selected = widget.candidates
+        .where((o) => o.id == _selectedId)
+        .firstOrNull;
+
+    return AlertDialog(
+      title: Text(l10n.duplicateTitle),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.duplicateMessage),
+            const SizedBox(height: AppDimens.space12),
+            RadioGroup<String>(
+              groupValue: _selectedId,
+              onChanged: (v) => setState(() => _selectedId = v),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final o in widget.candidates)
+                    RadioListTile<String>(
+                      value: o.id,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(
+                        o.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: o.creator == null ? null : Text(o.creator!),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.of(context).pop(const _DuplicateAnswer.keepSeparate()),
+          child: Text(l10n.duplicateKeepSeparate),
+        ),
+        FilledButton(
+          onPressed: selected == null
+              ? null
+              : () => Navigator.of(
+                  context,
+                ).pop(_DuplicateAnswer.useExisting(selected)),
+          child: Text(l10n.duplicateUseExisting),
+        ),
+      ],
+    );
+  }
+}
 
 /// Теги новой записи (§7.2).
 class _TagsField extends StatelessWidget {
