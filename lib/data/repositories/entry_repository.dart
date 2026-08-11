@@ -508,12 +508,179 @@ class EntryRepository {
 
   // ---- Представления для UI ----
 
-  /// Отбор записей под фильтрами — общий для списка карточек и для счёта.
+  /// Соединение записи с объектом и типом: нужно и выборке карточек, и счёту.
+  List<Join> get _entryJoins => [
+    innerJoin(db.objects, db.objects.id.equalsExp(db.profileEntries.objectId)),
+    innerJoin(db.objectTypes, db.objectTypes.id.equalsExp(db.objects.typeId)),
+  ];
+
+  /// Порядок записей: у каждой сортировки свой «обычный».
+  ///
+  /// Названия идут от А, оценки и даты — от больших. Переключатель
+  /// разворачивает именно его, а не приписывает всем одно направление.
+  List<OrderingTerm> _ordering(EntrySort sort, bool reverseSort) {
+    OrderingMode flip(OrderingMode natural) => reverseSort
+        ? (natural == OrderingMode.asc ? OrderingMode.desc : OrderingMode.asc)
+        : natural;
+
+    return switch (sort) {
+      EntrySort.recent => [
+        OrderingTerm(
+          expression: db.profileEntries.createdAt,
+          mode: flip(OrderingMode.desc),
+        ),
+      ],
+      EntrySort.title => [
+        OrderingTerm(
+          expression: db.objects.normalizedTitle,
+          mode: flip(OrderingMode.asc),
+        ),
+      ],
+      EntrySort.rating => [
+        OrderingTerm(
+          expression: db.profileEntries.rating,
+          mode: flip(OrderingMode.desc),
+        ),
+      ],
+      EntrySort.impressionDate => [
+        OrderingTerm(
+          expression: db.profileEntries.impressionDate,
+          mode: flip(OrderingMode.desc),
+        ),
+      ],
+    };
+  }
+
+  /// Условия отбора под фильтрами каталога.
   ///
   /// Возвращает `null`, когда заведомо ничего не подходит: пустой список
   /// идентификаторов, ненайденный поисковый запрос, ни одной помеченной
   /// записи. Так вызывающий отличает «нечего искать» от «ничего не нашлось
   /// после запроса».
+  ///
+  /// Живут отдельно от самого запроса: по одним и тем же условиям строится и
+  /// страница карточек, и счёт «сколько всего нашлось», — а поиск по тексту и
+  /// разбор ветки категорий делаются при этом один раз.
+  Future<List<Expression<bool>>?> _filters(
+    String profileId, {
+    List<String>? entryIds,
+    List<String>? categoryIds,
+    List<String>? tagIds,
+    String? relation,
+    String? typeId,
+    String? search,
+    bool withoutRating = false,
+    bool withoutCategory = false,
+    bool withoutPhoto = false,
+    bool recommendedOnly = false,
+    bool archived = false,
+  }) async {
+    final where = <Expression<bool>>[
+      db.profileEntries.profileId.equals(profileId),
+      archived
+          ? db.profileEntries.archivedAt.isNotNull()
+          : db.profileEntries.archivedAt.isNull(),
+    ];
+
+    if (entryIds != null) {
+      if (entryIds.isEmpty) return null;
+      where.add(db.profileEntries.id.isIn(entryIds));
+    }
+    if (relation != null) {
+      where.add(db.profileEntries.relation.equals(relation));
+    }
+    if (typeId != null) {
+      where.add(db.objects.typeId.equals(typeId));
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      // Полнотекстовый поиск по названиям и по тексту заметок (§29).
+      // Прежний `LIKE '%…%'` не мог опереться на индекс и не видел заметок.
+      final byTitle = await db.searchObjectIds(search);
+      final byNote = await db.searchEntryIdsByNote(search);
+
+      if (byTitle.isEmpty && byNote.isEmpty) {
+        // Запрос из одних служебных символов FTS ничего не найдёт, но и
+        // отдавать весь каталог нельзя — считаем, что совпадений нет.
+        return null;
+      }
+      final found = <Expression<bool>>[
+        if (byTitle.isNotEmpty) db.objects.id.isIn(byTitle),
+        if (byNote.isNotEmpty) db.profileEntries.id.isIn(byNote),
+      ];
+      where.add(found.reduce((a, b) => a | b));
+    }
+    if (tagIds != null && tagIds.isNotEmpty) {
+      // Запись подходит, если помечена хотя бы одним из выбранных тегов.
+      final tagged = await (db.select(
+        db.entryTags,
+      )..where((t) => t.tagId.isIn(tagIds))).get();
+      final ids = tagged.map((t) => t.entryId).toSet();
+      if (ids.isEmpty) return null;
+      where.add(db.profileEntries.id.isIn(ids));
+    }
+    if (categoryIds != null) {
+      // Ветка отбирается запросом, а не после выборки. Раньше это была
+      // постфильтрация уже собранных строк, из-за неё `LIMIT` был неточен и
+      // каталог поднимал в память весь профиль на каждое изменение фильтра.
+      if (categoryIds.isEmpty) return null;
+      final links = await (db.select(
+        db.entryCategories,
+      )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
+      final ids = links.map((l) => l.entryId).toSet();
+      if (ids.isEmpty) return null;
+      where.add(db.profileEntries.id.isIn(ids));
+    }
+
+    // «Что я не доделал»: без оценки, мимо категорий, без фотографии. Отвечать
+    // на такие вопросы фильтрами «покажи вот такие» было нельзя вовсе.
+    if (withoutRating) {
+      where.add(db.profileEntries.rating.isNull());
+    }
+    if (withoutCategory) {
+      where.add(
+        notExistsQuery(
+          db.select(db.entryCategories)
+            ..where((ec) => ec.entryId.equalsExp(db.profileEntries.id)),
+        ),
+      );
+    }
+    if (withoutPhoto) {
+      // Снимки привязаны к версии записи, поэтому смотрим её текущую.
+      where.add(
+        notExistsQuery(
+          db.select(db.revisionAttachments)..where(
+            (ra) =>
+                ra.entityKind.equals('entry') &
+                ra.revisionId.equalsExp(db.profileEntries.currentRevisionId),
+          ),
+        ),
+      );
+    }
+
+    // Кто это посоветовал, приложение помнило с самого начала и нигде не
+    // показывало — заодно и отобрать такие записи было нельзя.
+    if (recommendedOnly) {
+      where.add(db.profileEntries.recommendedByProfileId.isNotNull());
+    }
+
+    return where;
+  }
+
+  /// Запрос строк под готовыми условиями, в нужном порядке.
+  JoinedSelectStatement _selectMatching(
+    List<Expression<bool>> where,
+    EntrySort sort,
+    bool reverseSort,
+  ) {
+    final query = db.select(db.profileEntries).join(_entryJoins);
+    for (final condition in where) {
+      query.where(condition);
+    }
+    query.orderBy(_ordering(sort, reverseSort));
+    return query;
+  }
+
+  /// Отбор записей под фильтрами — общий для списка карточек и для счёта.
   Future<JoinedSelectStatement?> _matching(
     String profileId, {
     List<String>? entryIds,
@@ -530,139 +697,22 @@ class EntryRepository {
     bool recommendedOnly = false,
     bool archived = false,
   }) async {
-    // Обычный порядок у каждой сортировки свой: названия от А, оценки и даты
-    // от больших. Переключатель разворачивает именно его, а не приписывает
-    // всем одно направление.
-    OrderingMode flip(OrderingMode natural) => reverseSort
-        ? (natural == OrderingMode.asc ? OrderingMode.desc : OrderingMode.asc)
-        : natural;
-
-    final query =
-        db.select(db.profileEntries).join([
-            innerJoin(
-              db.objects,
-              db.objects.id.equalsExp(db.profileEntries.objectId),
-            ),
-            innerJoin(
-              db.objectTypes,
-              db.objectTypes.id.equalsExp(db.objects.typeId),
-            ),
-          ])
-          ..where(db.profileEntries.profileId.equals(profileId))
-          ..where(
-            archived
-                ? db.profileEntries.archivedAt.isNotNull()
-                : db.profileEntries.archivedAt.isNull(),
-          )
-          ..orderBy(switch (sort) {
-            EntrySort.recent => [
-              OrderingTerm(
-                expression: db.profileEntries.createdAt,
-                mode: flip(OrderingMode.desc),
-              ),
-            ],
-            EntrySort.title => [
-              OrderingTerm(
-                expression: db.objects.normalizedTitle,
-                mode: flip(OrderingMode.asc),
-              ),
-            ],
-            EntrySort.rating => [
-              OrderingTerm(
-                expression: db.profileEntries.rating,
-                mode: flip(OrderingMode.desc),
-              ),
-            ],
-            EntrySort.impressionDate => [
-              OrderingTerm(
-                expression: db.profileEntries.impressionDate,
-                mode: flip(OrderingMode.desc),
-              ),
-            ],
-          });
-
-    if (entryIds != null) {
-      if (entryIds.isEmpty) return null;
-      query.where(db.profileEntries.id.isIn(entryIds));
-    }
-    if (relation != null) {
-      query.where(db.profileEntries.relation.equals(relation));
-    }
-    if (typeId != null) {
-      query.where(db.objects.typeId.equals(typeId));
-    }
-    if (search != null && search.trim().isNotEmpty) {
-      // Полнотекстовый поиск по названиям и по тексту заметок (§29).
-      // Прежний `LIKE '%…%'` не мог опереться на индекс и не видел заметок.
-      final byTitle = await db.searchObjectIds(search);
-      final byNote = await db.searchEntryIdsByNote(search);
-
-      if (byTitle.isEmpty && byNote.isEmpty) {
-        // Запрос из одних служебных символов FTS ничего не найдёт, но и
-        // отдавать весь каталог нельзя — считаем, что совпадений нет.
-        return null;
-      }
-      final conditions = <Expression<bool>>[
-        if (byTitle.isNotEmpty) db.objects.id.isIn(byTitle),
-        if (byNote.isNotEmpty) db.profileEntries.id.isIn(byNote),
-      ];
-      query.where(conditions.reduce((a, b) => a | b));
-    }
-    if (tagIds != null && tagIds.isNotEmpty) {
-      // Запись подходит, если помечена хотя бы одним из выбранных тегов.
-      final tagged = await (db.select(
-        db.entryTags,
-      )..where((t) => t.tagId.isIn(tagIds))).get();
-      final ids = tagged.map((t) => t.entryId).toSet();
-      if (ids.isEmpty) return null;
-      query.where(db.profileEntries.id.isIn(ids));
-    }
-    if (categoryIds != null) {
-      // Ветка отбирается запросом, а не после выборки. Раньше это была
-      // постфильтрация уже собранных строк, из-за неё `LIMIT` был неточен и
-      // каталог поднимал в память весь профиль на каждое изменение фильтра.
-      if (categoryIds.isEmpty) return null;
-      final links = await (db.select(
-        db.entryCategories,
-      )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
-      final ids = links.map((l) => l.entryId).toSet();
-      if (ids.isEmpty) return null;
-      query.where(db.profileEntries.id.isIn(ids));
-    }
-
-    // «Что я не доделал»: без оценки, мимо категорий, без фотографии. Отвечать
-    // на такие вопросы фильтрами «покажи вот такие» было нельзя вовсе.
-    if (withoutRating) {
-      query.where(db.profileEntries.rating.isNull());
-    }
-    if (withoutCategory) {
-      query.where(
-        notExistsQuery(
-          db.select(db.entryCategories)
-            ..where((ec) => ec.entryId.equalsExp(db.profileEntries.id)),
-        ),
-      );
-    }
-    if (withoutPhoto) {
-      // Снимки привязаны к версии записи, поэтому смотрим её текущую.
-      query.where(
-        notExistsQuery(
-          db.select(db.revisionAttachments)..where(
-            (ra) =>
-                ra.entityKind.equals('entry') &
-                ra.revisionId.equalsExp(db.profileEntries.currentRevisionId),
-          ),
-        ),
-      );
-    }
-
-    // Кто это посоветовал, приложение помнило с самого начала и нигде не
-    // показывало — заодно и отобрать такие записи было нельзя.
-    if (recommendedOnly) {
-      query.where(db.profileEntries.recommendedByProfileId.isNotNull());
-    }
-
-    return query;
+    final where = await _filters(
+      profileId,
+      entryIds: entryIds,
+      categoryIds: categoryIds,
+      tagIds: tagIds,
+      relation: relation,
+      typeId: typeId,
+      search: search,
+      withoutRating: withoutRating,
+      withoutCategory: withoutCategory,
+      withoutPhoto: withoutPhoto,
+      recommendedOnly: recommendedOnly,
+      archived: archived,
+    );
+    if (where == null) return null;
+    return _selectMatching(where, sort, reverseSort);
   }
 
   /// Идентификаторы записей под фильтрами, в порядке сортировки.
@@ -748,7 +798,70 @@ class EntryRepository {
     if (query == null) return const [];
     if (limit != null) query.limit(limit, offset: offset);
 
-    final rows = await query.get();
+    return _viewsOf(profileId, await query.get());
+  }
+
+  /// Страница каталога вместе с общим числом найденного.
+  ///
+  /// Раньше каталог просил у базы **все** подходящие идентификаторы — только
+  /// ради двух чисел: сколько всего нашлось и где отрезать страницу. На каждую
+  /// букву в поиске и каждое переключение фильтра в память поднимался весь
+  /// профиль. Теперь это счёт в базе и окно из нужных строк, а условия отбора
+  /// считаются один раз на оба запроса.
+  Future<EntryPage> entryPage(
+    String profileId, {
+    List<String>? categoryIds,
+    List<String>? tagIds,
+    String? relation,
+    String? typeId,
+    String? search,
+    EntrySort sort = EntrySort.recent,
+    bool reverseSort = false,
+    bool withoutRating = false,
+    bool withoutCategory = false,
+    bool withoutPhoto = false,
+    bool recommendedOnly = false,
+    bool archived = false,
+    required int limit,
+    int offset = 0,
+  }) async {
+    final where = await _filters(
+      profileId,
+      categoryIds: categoryIds,
+      tagIds: tagIds,
+      relation: relation,
+      typeId: typeId,
+      search: search,
+      withoutRating: withoutRating,
+      withoutCategory: withoutCategory,
+      withoutPhoto: withoutPhoto,
+      recommendedOnly: recommendedOnly,
+      archived: archived,
+    );
+    if (where == null) return const EntryPage(items: [], total: 0);
+
+    final count = db.profileEntries.id.count();
+    final counting = db.selectOnly(db.profileEntries).join(_entryJoins)
+      ..addColumns([count]);
+    for (final condition in where) {
+      counting.where(condition);
+    }
+    final total = (await counting.getSingle()).read(count) ?? 0;
+    if (total == 0) return const EntryPage(items: [], total: 0);
+
+    final page = _selectMatching(where, sort, reverseSort)
+      ..limit(limit, offset: offset);
+    return EntryPage(
+      items: await _viewsOf(profileId, await page.get()),
+      total: total,
+    );
+  }
+
+  /// Собирает карточки по уже выбранным строкам.
+  Future<List<EntryView>> _viewsOf(
+    String profileId,
+    List<TypedResult> rows,
+  ) async {
     if (rows.isEmpty) return const [];
 
     // Основные категории записей — только для выбранных строк.
@@ -965,17 +1078,25 @@ class EntryRepository {
 
   /// Развёрнутая статистика профиля (§14).
   ///
-  /// Считается одним проходом по записям профиля: агрегировать это в SQL
-  /// пришлось бы полудюжиной отдельных запросов, а объёмы здесь — тысячи
-  /// строк, а не миллионы.
+  /// Считается агрегатами в базе. Раньше сюда поднимались все записи профиля
+  /// целиком, вместе с текстами заметок, и распределения складывались в Dart:
+  /// экран статистики стоил столько же, сколько выгрузка всего профиля.
   Future<ProfileInsights> insights(String profileId) async {
-    final entries =
-        await (db.select(db.profileEntries)
-              ..where((e) => e.profileId.equals(profileId))
-              ..where((e) => e.archivedAt.isNull()))
-            .get();
+    final e = db.profileEntries;
+    final live = e.profileId.equals(profileId) & e.archivedAt.isNull();
 
-    if (entries.isEmpty) {
+    // Итоги: сколько всего, скольким поставлена оценка и их сумма.
+    final total = e.id.count();
+    final ratedCount = e.rating.count();
+    final ratingSum = e.rating.sum();
+    final summary =
+        await (db.selectOnly(e)
+              ..addColumns([total, ratedCount, ratingSum])
+              ..where(live))
+            .getSingle();
+
+    final totalCount = summary.read(total) ?? 0;
+    if (totalCount == 0) {
       return const ProfileInsights(
         total: 0,
         rated: 0,
@@ -988,89 +1109,137 @@ class EntryRepository {
         withNotes: 0,
       );
     }
+    final rated = summary.read(ratedCount) ?? 0;
+    final sum = summary.read(ratingSum) ?? 0;
 
+    // Корзина — ближайший целый балл, как человек оценку и читает.
+    final bucket = CustomExpression<int>(
+      'CAST(ROUND(profile_entries.rating) AS INTEGER)',
+    );
     final buckets = List<int>.filled(10, 0);
-    final byRelation = <String, int>{};
-    final byMonth = <DateTime, int>{};
-    var ratingSum = 0.0;
-    var rated = 0;
-    var withNotes = 0;
-
-    for (final e in entries) {
-      final rating = e.rating;
-      if (rating != null) {
-        rated++;
-        ratingSum += rating;
-        // Корзина — ближайший целый балл, как человек оценку и читает.
-        // Раньше брался пол, а подписывалась корзина на балл больше: оценка
-        // 1.0 показывалась в столбике «2», а 0 — в столбике «1».
-        buckets[(rating.round() - 1).clamp(0, 9)]++;
-      }
-      final relation = e.relation;
-      if (relation != null) {
-        byRelation[relation] = (byRelation[relation] ?? 0) + 1;
-      }
-      if ((e.detailedNote ?? e.shortNote ?? '').trim().isNotEmpty) withNotes++;
-
-      final m = DateTime(e.createdAt.year, e.createdAt.month);
-      byMonth[m] = (byMonth[m] ?? 0) + 1;
+    final byBucket =
+        await (db.selectOnly(e)
+              ..addColumns([bucket, total])
+              ..where(live & e.rating.isNotNull())
+              ..groupBy([bucket]))
+            .get();
+    for (final row in byBucket) {
+      final value = row.read(bucket);
+      if (value == null) continue;
+      buckets[(value - 1).clamp(0, 9)] += row.read(total) ?? 0;
     }
 
+    final byRelation = <String, int>{};
+    final relations =
+        await (db.selectOnly(e)
+              ..addColumns([e.relation, total])
+              ..where(live & e.relation.isNotNull())
+              ..groupBy([e.relation]))
+            .get();
+    for (final row in relations) {
+      final name = row.read(e.relation);
+      if (name != null) byRelation[name] = row.read(total) ?? 0;
+    }
+
+    // Месяц считается в местном времени — так же, как его прочитал бы человек.
+    // Даты лежат секундами эпохи, отсюда `unixepoch`.
+    final month = CustomExpression<String>(
+      "strftime('%Y-%m', profile_entries.created_at, 'unixepoch', 'localtime')",
+    );
+    final monthly =
+        await (db.selectOnly(e)
+              ..addColumns([month, total])
+              ..where(live)
+              ..groupBy([month])
+              ..orderBy([OrderingTerm(expression: month)]))
+            .get();
+    final byMonth = <({DateTime month, int count})>[];
+    for (final row in monthly) {
+      final key = row.read(month);
+      if (key == null) continue;
+      final parts = key.split('-');
+      byMonth.add((
+        month: DateTime(int.parse(parts[0]), int.parse(parts[1])),
+        count: row.read(total) ?? 0,
+      ));
+    }
+
+    // Заметка есть, если в ней что-то кроме пробелов.
+    final withNotes =
+        (await (db.selectOnly(e)
+                  ..addColumns([total])
+                  ..where(
+                    live &
+                        CustomExpression<bool>(
+                          'TRIM(COALESCE(profile_entries.detailed_note, '
+                          "profile_entries.short_note, '')) <> ''",
+                        ),
+                  ))
+                .getSingle())
+            .read(total) ??
+        0;
+
+    // Вложения привязаны к версии записи, поэтому идём через текущую. Считаем
+    // записи, а не файлы: одна запись с пятью фотографиями — это одна запись
+    // с фотографиями.
+    final distinctEntries = e.id.count(distinct: true);
+    final withPhotos =
+        (await (db.selectOnly(e).join([
+                    innerJoin(
+                      db.revisionAttachments,
+                      db.revisionAttachments.revisionId.equalsExp(
+                            e.currentRevisionId,
+                          ) &
+                          db.revisionAttachments.entityKind.equals('entry'),
+                    ),
+                  ])
+                  ..addColumns([distinctEntries])
+                  ..where(live))
+                .getSingle())
+            .read(distinctEntries) ??
+        0;
+
     // Категории: считаем по ветке, чтобы корневые не выглядели пустыми.
-    final entryIds = entries.map((e) => e.id).toSet();
-    final links = await (db.select(
-      db.entryCategories,
-    )..where((ec) => ec.entryId.isIn(entryIds))).get();
+    final ec = db.entryCategories;
+    final perPrimary =
+        await (db.selectOnly(ec).join([
+                innerJoin(e, e.id.equalsExp(ec.entryId)),
+              ])
+              ..addColumns([ec.categoryId, ec.entryId.count()])
+              ..where(live & ec.isPrimary.equals(true))
+              ..groupBy([ec.categoryId]))
+            .get();
+
     final categories = await (db.select(
       db.categories,
     )..where((c) => c.profileId.equals(profileId))).get();
     final catById = {for (final c in categories) c.id: c};
 
     final perCategory = <String, int>{};
-    for (final link in links) {
-      if (!link.isPrimary) continue;
-      final cat = catById[link.categoryId];
+    for (final row in perPrimary) {
+      final cat = catById[row.read(ec.categoryId)];
       if (cat == null) continue;
+      final count = row.read(ec.entryId.count()) ?? 0;
       for (final ancestorId in cat.path.split('/')) {
-        perCategory[ancestorId] = (perCategory[ancestorId] ?? 0) + 1;
+        perCategory[ancestorId] = (perCategory[ancestorId] ?? 0) + count;
       }
     }
     final top =
         perCategory.entries
-            .where((e) => catById[e.key] != null)
-            .map((e) => (id: e.key, name: catById[e.key]!.name, count: e.value))
+            .where((c) => catById[c.key] != null)
+            .map((c) => (id: c.key, name: catById[c.key]!.name, count: c.value))
             .toList()
           ..sort((a, b) => b.count.compareTo(a.count));
 
-    // Вложения привязаны к версии записи, а не к самой записи, поэтому идём
-    // через текущую версию. Считаем записи, а не файлы: одна запись с пятью
-    // фотографиями — это одна запись с фотографиями.
-    final revisionByEntry = {
-      for (final e in entries)
-        if (e.currentRevisionId != null) e.currentRevisionId!: e.id,
-    };
-    final photoLinks = revisionByEntry.isEmpty
-        ? <RevisionAttachmentRow>[]
-        : await (db.select(db.revisionAttachments)
-                ..where((ra) => ra.entityKind.equals('entry'))
-                ..where((ra) => ra.revisionId.isIn(revisionByEntry.keys)))
-              .get();
-    final entriesWithPhotos = photoLinks
-        .map((ra) => revisionByEntry[ra.revisionId])
-        .nonNulls
-        .toSet();
-
-    final months = byMonth.keys.toList()..sort();
-
     return ProfileInsights(
-      total: entries.length,
+      total: totalCount,
       rated: rated,
-      averageRating: rated == 0 ? null : ratingSum / rated,
+      averageRating: rated == 0 ? null : sum / rated,
       ratingBuckets: buckets,
       byRelation: byRelation,
       topCategories: top.take(8).toList(),
-      byMonth: [for (final m in months) (month: m, count: byMonth[m]!)],
-      withPhotos: entriesWithPhotos.length,
+      byMonth: byMonth,
+      withPhotos: withPhotos,
       withNotes: withNotes,
     );
   }

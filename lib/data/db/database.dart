@@ -53,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,10 +86,25 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await customStatement('DROP TABLE IF EXISTS profile_relationships');
       }
+      // 5: индексы под теги, обложки и подборки. Сами индексы создаются ниже
+      // общим списком — здесь важно лишь то, что версия поднята и обновление
+      // вообще запускается.
       await _createIndexes();
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+
+      // Журнал с упреждающей записью: каждая запись перестаёт быть полной
+      // перезаписью журнала и `fsync`, а чтение не ждёт пишущего. Импорт
+      // профиля и раскладывание пачки записей упирались именно в это.
+      //
+      // `synchronous = NORMAL` — обычная пара к WAL: при аварии приложения
+      // данные целы, потерять последние транзакции можно только при внезапном
+      // отключении питания. Резервные копии к этому готовы и до перехода:
+      // перед копированием файла делается `wal_checkpoint(FULL)`, а после
+      // восстановления соседние `-wal` и `-shm` удаляются (BackupService).
+      await customStatement('PRAGMA journal_mode = WAL');
+      await customStatement('PRAGMA synchronous = NORMAL');
     },
   );
 
@@ -108,6 +123,13 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_objects_type ON objects (type_id)',
       'CREATE INDEX IF NOT EXISTS idx_objects_norm_title ON objects (normalized_title)',
       'CREATE INDEX IF NOT EXISTS idx_collection_entries_collection ON collection_entries (collection_id)',
+      // Ходят чаще всего: отбор по тегу, обложки страницы каталога и «в каких
+      // подборках эта запись». Поиск фотографии по хешу индекса не требует —
+      // у `attachments.sha256` есть ограничение уникальности, а под него
+      // SQLite держит свой индекс.
+      'CREATE INDEX IF NOT EXISTS idx_entry_tags_tag ON entry_tags (tag_id)',
+      'CREATE INDEX IF NOT EXISTS idx_revision_attachments_revision ON revision_attachments (revision_id)',
+      'CREATE INDEX IF NOT EXISTS idx_collection_entries_entry ON collection_entries (entry_id)',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_entry_primary_category ON entry_categories (entry_id) WHERE is_primary = 1',
     ];
     for (final s in stmts) {

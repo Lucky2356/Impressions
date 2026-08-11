@@ -53,7 +53,11 @@ class CategoryShelfCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final shown = covers.where((p) => File(p).existsSync()).take(3).toList();
+    // Пропавший файл рисуется пустым местом, а не отсеивается проверкой:
+    // `existsSync` здесь стоял до трёх раз на карточку, и вся сетка полок
+    // ходила на диск при каждой перерисовке.
+    final shown = covers.take(3).toList();
+    final pixels = (36 * MediaQuery.devicePixelRatioOf(context)).round();
 
     // Полка называет себя одной фразой: имя и сколько внутри. Иначе диктор
     // читал цвет, значок и число как несвязанные куски.
@@ -112,6 +116,9 @@ class CategoryShelfCard extends StatelessWidget {
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
+                          cacheWidth: pixels,
+                          errorBuilder: (_, _, _) =>
+                              const SizedBox(width: 36, height: 36),
                         ),
                       ),
                     ),

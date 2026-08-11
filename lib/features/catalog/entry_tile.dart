@@ -18,14 +18,12 @@ class EntryTile extends ConsumerWidget {
   const EntryTile({
     super.key,
     required this.entry,
-    required this.selected,
     required this.selectionActive,
     required this.order,
     required this.builder,
   });
 
   final EntryView entry;
-  final bool selected;
 
   /// Хотя бы одна запись уже выделена: обычное нажатие тоже выделяет.
   final bool selectionActive;
@@ -44,6 +42,13 @@ class EntryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final selection = ref.read(catalogSelectionProvider.notifier);
+
+    // Карточка следит только за собой. Раньше список смотрел на всё выделение
+    // целиком, и один Ctrl+клик перестраивал все карточки страницы — а с ними
+    // и все обложки.
+    final selected = ref.watch(
+      catalogSelectionProvider.select((s) => s.contains(entry.entryId)),
+    );
 
     void open() => EntryDetailSheet.show(context, entry.entryId);
     void toggle() => selection.toggle(entry.entryId);

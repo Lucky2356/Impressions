@@ -26,19 +26,33 @@ class EntryThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = imagePath;
-    final hasImage = path != null && File(path).existsSync();
+    // Снимок кладётся поверх значка, а не вместо него: так не нужно спрашивать
+    // у диска, есть ли файл, — а спрашивалось это на каждую перерисовку строки.
+    final pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: hasImage ? null : color.withValues(alpha: 0.14),
+        color: color.withValues(alpha: 0.14),
         borderRadius: AppDimens.brSm,
       ),
       clipBehavior: Clip.antiAlias,
-      child: hasImage
-          ? Image.file(File(path), fit: BoxFit.cover)
-          : Icon(icon, size: size * 0.5, color: color),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Icon(icon, size: size * 0.5, color: color),
+          if (path != null)
+            Image.file(
+              File(path),
+              fit: BoxFit.cover,
+              // Миниатюра на диске — 400 точек, в строке нужна сороковая часть
+              // экрана: декодировать её целиком незачем.
+              cacheWidth: pixels,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+        ],
+      ),
     );
   }
 }

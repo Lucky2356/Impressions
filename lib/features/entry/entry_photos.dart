@@ -289,9 +289,20 @@ class _PhotoThumb extends StatelessWidget {
             child: SizedBox(
               width: 108,
               height: 108,
-              child: path == null || !File(path!).existsSync()
-                  ? Container(color: c.surfaceMuted)
-                  : Image.file(File(path!), fit: BoxFit.cover),
+              // Ровная плитка лежит фоном: спрашивать диск о каждом снимке на
+              // каждую перерисовку карточки записи незачем.
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(color: c.surfaceMuted),
+                  if (path != null)
+                    Image.file(
+                      File(path!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

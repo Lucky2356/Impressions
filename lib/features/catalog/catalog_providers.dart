@@ -343,61 +343,23 @@ class CatalogResults {
 
 /// Видимая часть результатов вместе с общим числом.
 ///
-/// Сначала берутся только идентификаторы всего найденного — по ним считается
-/// «сколько всего» и отрезается страница. Карточки собираются лишь для этой
-/// страницы: обложки и пути категорий — самая дорогая часть выборки, и делать
-/// их для всего профиля на каждую букву в поиске незачем.
+/// База отдаёт ровно показанную страницу и число «сколько всего подходит».
+/// Раньше сюда поднимался список идентификаторов всего найденного — на каждую
+/// букву в поиске и каждое переключение фильтра, при том что нужны из него
+/// были только длина и первые шестьдесят строк.
 final catalogResultsProvider = FutureProvider<CatalogResults>((ref) async {
-  final all = await ref.watch(catalogMatchingIdsProvider.future);
-  final limit = ref.watch(catalogPageProvider);
-  if (all.isEmpty) return const CatalogResults(items: [], total: 0);
-
+  ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const CatalogResults(items: [], total: 0);
 
-  final pageIds = all.length <= limit ? all : all.sublist(0, limit);
-  final items = await ref
-      .watch(entryRepositoryProvider)
-      .entryViews(
-        profile.id,
-        entryIds: pageIds,
-        sort: ref.watch(catalogStateProvider).sort,
-        reverseSort: ref.watch(catalogStateProvider).reverseSort,
-      );
-  return CatalogResults(items: items, total: all.length);
-});
-
-/// Идентификаторы всего, что подходит под текущие фильтры.
-final catalogMatchingIdsProvider = FutureProvider<List<String>>((ref) async {
-  ref.watch(dataRefreshProvider);
-  final profile = ref.watch(activeProfileProvider);
-  if (profile == null) return const [];
   final s = ref.watch(catalogStateProvider);
+  final limit = ref.watch(catalogPageProvider);
 
-  List<String>? categoryIds;
-  if (s.categoryId != null) {
-    if (s.includeSubcategories) {
-      final all = await ref.watch(allCategoriesProvider.future);
-      final selected = all.where((c) => c.id == s.categoryId).firstOrNull;
-      if (selected != null) {
-        final prefix = '${selected.path}/';
-        categoryIds = [
-          selected.id,
-          ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-        ];
-      } else {
-        categoryIds = [s.categoryId!];
-      }
-    } else {
-      categoryIds = [s.categoryId!];
-    }
-  }
-
-  return ref
+  final page = await ref
       .watch(entryRepositoryProvider)
-      .matchingEntryIds(
+      .entryPage(
         profile.id,
-        categoryIds: categoryIds,
+        categoryIds: await _categoryScope(ref, s),
         tagIds: s.tagIds.isEmpty ? null : s.tagIds,
         relation: s.relation,
         typeId: s.typeId,
@@ -408,5 +370,24 @@ final catalogMatchingIdsProvider = FutureProvider<List<String>>((ref) async {
         withoutCategory: s.withoutCategory,
         withoutPhoto: s.withoutPhoto,
         recommendedOnly: s.recommendedOnly,
+        limit: limit,
       );
+  return CatalogResults(items: page.items, total: page.total);
 });
+
+/// Категории, попадающие под отбор: сама выбранная и, если попрошено, ветка.
+Future<List<String>?> _categoryScope(Ref ref, CatalogState s) async {
+  final selectedId = s.categoryId;
+  if (selectedId == null) return null;
+  if (!s.includeSubcategories) return [selectedId];
+
+  final all = await ref.watch(allCategoriesProvider.future);
+  final selected = all.where((c) => c.id == selectedId).firstOrNull;
+  if (selected == null) return [selectedId];
+
+  final prefix = '${selected.path}/';
+  return [
+    selected.id,
+    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
+  ];
+}

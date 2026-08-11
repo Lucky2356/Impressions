@@ -32,29 +32,29 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null && File(imagePath!).existsSync();
+    final path = imagePath;
     final border = selected
         ? Border.all(color: context.colors.accentPrimary, width: 2.5)
         : null;
+    final pixels = (size * MediaQuery.devicePixelRatioOf(context)).round();
 
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: hasImage ? 1 : 0.16),
+        color: color.withValues(alpha: 0.16),
         shape: BoxShape.circle,
         border: border,
-        image: hasImage
-            ? DecorationImage(
-                image: FileImage(File(imagePath!)),
-                fit: BoxFit.cover,
-              )
-            : null,
       ),
+      clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
-      child: hasImage
-          ? null
-          : Text(
+      // Инициалы лежат под фотографией: наличие файла больше не проверяется
+      // синхронным обращением к диску на каждую перерисовку.
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Center(
+            child: Text(
               _initials,
               style: TextStyle(
                 color: color,
@@ -62,6 +62,16 @@ class ProfileAvatar extends StatelessWidget {
                 fontSize: size * 0.38,
               ),
             ),
+          ),
+          if (path != null)
+            Image.file(
+              File(path),
+              fit: BoxFit.cover,
+              cacheWidth: pixels,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+        ],
+      ),
     );
   }
 }

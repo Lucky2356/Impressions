@@ -26,14 +26,30 @@ class CoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imagePath != null && File(imagePath!).existsSync();
+    final path = imagePath;
     return ClipRRect(
       borderRadius: borderRadius,
       child: AspectRatio(
         aspectRatio: aspectRatio,
-        child: hasImage
-            ? Image.file(File(imagePath!), fit: BoxFit.cover)
-            : _Placeholder(title: title, seedColor: seedColor),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Заглушка лежит фоном всегда, снимок кладётся поверх.
+            //
+            // Раньше наличие файла проверялось прямо здесь, синхронным
+            // `existsSync`: сетка каталога на широком мониторе — это сорок
+            // карточек, то есть сорок обращений к диску в потоке отрисовки на
+            // каждую перерисовку. Пропавший файл теперь просто не закрывает
+            // заглушку — и проверять ничего не нужно.
+            _Placeholder(title: title, seedColor: seedColor),
+            if (path != null)
+              Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+          ],
+        ),
       ),
     );
   }

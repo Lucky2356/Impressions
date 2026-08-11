@@ -46,6 +46,19 @@ class EntryView {
   String get fullPath => [...categoryPath, title].join(' / ');
 }
 
+/// Показанная часть каталога и сколько всего нашлось.
+///
+/// Каталог подгружается страницами, но подпись «найдено N» считает всё
+/// подходящее — иначе число росло бы по мере прокрутки.
+class EntryPage {
+  const EntryPage({required this.items, required this.total});
+
+  final List<EntryView> items;
+  final int total;
+
+  bool get hasMore => items.length < total;
+}
+
 /// Сводка по профилю для главной.
 class ProfileStats {
   const ProfileStats({

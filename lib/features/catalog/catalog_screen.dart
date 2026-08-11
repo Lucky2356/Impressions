@@ -177,7 +177,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             entries: list,
             child: Column(
               children: [
-                if (ref.watch(catalogSelectionProvider).isNotEmpty)
+                // Панель появляется по факту выделения, а не по его составу:
+                // иначе весь экран перестраивался на каждое нажатие.
+                if (ref.watch(
+                  catalogSelectionProvider.select((s) => s.isNotEmpty),
+                ))
                   BulkActionsBar(
                     onSelectAll: () => ref
                         .read(catalogSelectionProvider.notifier)
@@ -250,7 +254,11 @@ class _Results extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = context.layout;
-    final selected = ref.watch(catalogSelectionProvider);
+    // Списку хватает знать, что выделение вообще есть: сами отметки карточки
+    // читают по одной, иначе каждое нажатие перестраивало бы всю страницу.
+    final selectionActive = ref.watch(
+      catalogSelectionProvider.select((s) => s.isNotEmpty),
+    );
     // Порядок, в котором записи показаны: по нему Shift+клик берёт диапазон.
     final order = [for (final e in entries) e.entryId];
 
@@ -274,8 +282,7 @@ class _Results extends ConsumerWidget {
             index: i,
             child: EntryTile(
               entry: entries[i],
-              selected: selected.contains(entries[i].entryId),
-              selectionActive: selected.isNotEmpty,
+              selectionActive: selectionActive,
               order: order,
               builder: (onTap) => EntryCardCompact(
                 data: _toCardData(context, entries[i]),
@@ -322,8 +329,7 @@ class _Results extends ConsumerWidget {
               index: i,
               child: EntryTile(
                 entry: entries[i],
-                selected: selected.contains(entries[i].entryId),
-                selectionActive: selected.isNotEmpty,
+                selectionActive: selectionActive,
                 order: order,
                 builder: (onTap) => EntryCard(
                   dense: dense,
