@@ -1216,6 +1216,65 @@ class AppLocalizationsRu extends AppLocalizations {
       'Настраивают один раз или не трогают вовсе';
 
   @override
+  String get whatsNewTitle => 'Что нового';
+
+  @override
+  String whatsNewVersion(String version) {
+    return 'Версия $version';
+  }
+
+  @override
+  String get whatsNewOpen => 'Что нового в этой версии';
+
+  @override
+  String get whatsNewNothing => 'Для этой версии описания нет';
+
+  @override
+  String get settingsSearch => 'Поиск по настройкам';
+
+  @override
+  String get settingsSearchEmpty => 'Ничего не нашлось';
+
+  @override
+  String get settingsSearchEmptyHint =>
+      'Попробуйте другое слово: например, «копии» или «тема».';
+
+  @override
+  String get settingsWordsAppearance =>
+      'тема цвет вид тёмная светлая оформление плотность';
+
+  @override
+  String get settingsWordsBehaviour =>
+      'поведение подкатегории перенос записей обучение';
+
+  @override
+  String get settingsWordsBackups =>
+      'копии резервные восстановление пароль шифрование расписание';
+
+  @override
+  String get settingsWordsNetwork =>
+      'сеть интернет штрихкод источники обновления';
+
+  @override
+  String get settingsWordsTypes => 'типы объектов поля';
+
+  @override
+  String get settingsWordsTags => 'теги метки';
+
+  @override
+  String get settingsWordsDevices => 'устройства обмен';
+
+  @override
+  String get settingsWordsKeyStorage => 'ключ хранилище шифрование';
+
+  @override
+  String get settingsWordsErrorLog => 'ошибки журнал сбои';
+
+  @override
+  String get settingsWordsAbout =>
+      'о приложении версия лицензия горячие клавиши';
+
+  @override
   String get settingsAppearance => 'Оформление';
 
   @override

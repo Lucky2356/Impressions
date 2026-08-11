@@ -9,7 +9,7 @@ import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
-import '../collections/collection_providers.dart';
+import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
 
 /// Выделенные в каталоге записи.
@@ -127,30 +127,12 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     });
   }
 
+  /// Кладёт выделенное в подборку.
+  ///
+  /// Пустой список подборок больше не тупик: завести первую можно прямо
+  /// отсюда — раньше кнопка нажималась и не происходило ничего.
   Future<void> _addToCollection() async {
-    final l10n = AppLocalizations.of(context);
-    final collections = ref.read(collectionsProvider).value ?? const [];
-    if (collections.isEmpty) return;
-
-    final chosen = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.collectionAddTo),
-        children: [
-          for (final view in collections)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(view.collection.id),
-              child: Row(
-                children: [
-                  const Icon(Icons.collections_bookmark_rounded, size: 18),
-                  const SizedBox(width: AppDimens.space12),
-                  Expanded(child: Text(view.collection.name)),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
+    final chosen = await CollectionPicker.show(context, ref);
     if (chosen == null) return;
     await _run((ids) async {
       final repo = ref.read(collectionRepositoryProvider);
@@ -192,8 +174,6 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final selected = ref.watch(catalogSelectionProvider);
-    final hasCollections =
-        (ref.watch(collectionsProvider).value ?? const []).isNotEmpty;
 
     return Material(
       color: c.accentSoft,
@@ -229,32 +209,37 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-            Wrap(
-              spacing: AppDimens.space8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : _setCategory,
-                  icon: const Icon(Icons.account_tree_rounded, size: 18),
-                  label: Text(l10n.bulkSetCategory),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : _addTag,
-                  icon: const Icon(Icons.label_outline_rounded, size: 18),
-                  label: Text(l10n.bulkAddTag),
-                ),
-                if (hasCollections)
+            // Кнопок четыре и они всегда на месте: на узком окне ряд должен
+            // переноситься, а не выезжать за край.
+            Flexible(
+              child: Wrap(
+                spacing: AppDimens.space8,
+                runSpacing: AppDimens.space8,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _setCategory,
+                    icon: const Icon(Icons.account_tree_rounded, size: 18),
+                    label: Text(l10n.bulkSetCategory),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _addTag,
+                    icon: const Icon(Icons.label_outline_rounded, size: 18),
+                    label: Text(l10n.bulkAddTag),
+                  ),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _addToCollection,
                     icon: const Icon(Icons.playlist_add_rounded, size: 18),
                     label: Text(l10n.bulkAddToCollection),
                   ),
-                FilledButton.icon(
-                  onPressed: _busy ? null : _archive,
-                  icon: const Icon(Icons.archive_rounded, size: 18),
-                  label: Text(l10n.bulkArchive),
-                ),
-              ],
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _archive,
+                    icon: const Icon(Icons.archive_rounded, size: 18),
+                    label: Text(l10n.bulkArchive),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

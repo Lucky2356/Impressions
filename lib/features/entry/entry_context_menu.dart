@@ -9,7 +9,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
-import '../collections/collection_providers.dart';
+import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
 import 'entry_detail_sheet.dart';
 
@@ -68,9 +68,6 @@ class EntryContextMenu {
       );
     }
 
-    final hasCollections =
-        (ref.read(collectionsProvider).value ?? const []).isNotEmpty;
-
     final chosen = await showMenu<String>(
       context: context,
       position: RelativeRect.fromRect(
@@ -125,8 +122,9 @@ class EntryContextMenu {
         item('rating', Icons.star_border_rounded, l10n.entryRateAction),
         const PopupMenuDivider(),
         item('category', Icons.account_tree_rounded, l10n.bulkSetCategory),
-        if (hasCollections)
-          item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
+        // Пункт есть всегда: подборку можно завести прямо из него, а раньше
+        // при пустом списке он просто исчезал из меню.
+        item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
         const PopupMenuDivider(),
         item('archive', Icons.archive_rounded, l10n.entryArchive, danger: true),
       ],
@@ -193,27 +191,7 @@ class EntryContextMenu {
     WidgetRef ref,
     EntryView entry,
   ) async {
-    final l10n = AppLocalizations.of(context);
-    final collections = ref.read(collectionsProvider).value ?? const [];
-    final chosen = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.collectionAddTo),
-        children: [
-          for (final view in collections)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(view.collection.id),
-              child: Row(
-                children: [
-                  const Icon(Icons.collections_bookmark_rounded, size: 18),
-                  const SizedBox(width: AppDimens.space12),
-                  Expanded(child: Text(view.collection.name)),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
+    final chosen = await CollectionPicker.show(context, ref);
     if (chosen == null) return;
     await ref
         .read(collectionRepositoryProvider)

@@ -67,6 +67,14 @@ class SettingsRow extends StatelessWidget {
   /// Сколько места элементу нужно, чтобы остаться в одной строке с подписью.
   final double minControlWidth;
 
+  /// Шире этого элемент не растягивается.
+  ///
+  /// Ширину надо задать явно: в строке элемент стоял без ограничения, то есть
+  /// получал бесконечную ширину. Всё, что внутри делит место (переключатель
+  /// темы, списки), в отладке падало на этом с «unbounded width», а в сборке
+  /// раскладывалось как придётся.
+  static const double maxControlWidth = 360;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -91,12 +99,20 @@ class SettingsRow extends StatelessWidget {
         // Подписи нужно хотя бы немного места: иначе переносить бессмысленно.
         final fits = cns.maxWidth - minControlWidth >= 140;
         if (fits) {
+          // Место под элемент — остаток строки, но не больше предела: иначе
+          // трёхсегментный переключатель растягивался бы на полстраницы.
+          final room = cns.maxWidth - 140 - AppDimens.space12;
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(child: text()),
               const SizedBox(width: AppDimens.space12),
-              control,
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: room < maxControlWidth ? room : maxControlWidth,
+                ),
+                child: control,
+              ),
             ],
           );
         }

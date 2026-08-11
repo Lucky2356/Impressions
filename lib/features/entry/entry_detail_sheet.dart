@@ -14,6 +14,7 @@ import '../../data/providers.dart';
 import '../../data/services/revision_service.dart';
 import '../../data/services/transfer_service.dart';
 import '../../design_system/design_system.dart';
+import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
 import 'entry_photos.dart';
 import 'entry_providers.dart';
@@ -584,63 +585,18 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   /// Добавление записи в подборку с возможностью создать новую (§27).
   Future<void> _addToCollection(String entryId) async {
     final l10n = AppLocalizations.of(context);
-    final profile = ref.read(activeProfileProvider);
-    if (profile == null) return;
-
     final repo = ref.read(collectionRepositoryProvider);
-    final existing = await repo.listWithCounts(profile.id);
+    // Подборки, в которых запись уже лежит: они показаны с галочкой и не
+    // выбираются.
     final already = await repo.collectionsOfEntry(entryId);
     if (!mounted) return;
 
-    final chosen = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.collectionAddTo),
-        children: [
-          for (final v in existing)
-            SimpleDialogOption(
-              onPressed: already.contains(v.collection.id)
-                  ? null
-                  : () => Navigator.of(ctx).pop(v.collection.id),
-              child: Row(
-                children: [
-                  Icon(
-                    already.contains(v.collection.id)
-                        ? Icons.check_rounded
-                        : Icons.collections_bookmark_outlined,
-                    size: 18,
-                  ),
-                  const SizedBox(width: AppDimens.space12),
-                  Expanded(child: Text(v.collection.name)),
-                ],
-              ),
-            ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(ctx).pop('__new__'),
-            child: Row(
-              children: [
-                const Icon(Icons.add_rounded, size: 18),
-                const SizedBox(width: AppDimens.space12),
-                Expanded(child: Text(l10n.collectionCreate)),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final collectionId = await CollectionPicker.show(
+      context,
+      ref,
+      disabled: already.toSet(),
     );
-    if (chosen == null || !mounted) return;
-
-    var collectionId = chosen;
-    if (chosen == '__new__') {
-      final name = await TextInputDialog.show(
-        context,
-        title: l10n.collectionCreate,
-        label: l10n.collectionNameLabel,
-      );
-      if (name == null || !mounted) return;
-      final created = await repo.create(profile.id, name);
-      collectionId = created.id;
-    }
+    if (collectionId == null || !mounted) return;
 
     await repo.addEntry(collectionId, entryId);
     _bump();

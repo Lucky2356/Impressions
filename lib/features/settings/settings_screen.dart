@@ -13,9 +13,11 @@ import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/utils/normalize.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
+import '../../data/services/changelog_service.dart';
 import '../../design_system/design_system.dart';
 import '../exchange/file_delivery_report.dart';
 import '../onboarding/app_tour.dart';
@@ -25,6 +27,7 @@ import 'error_log_section.dart';
 import 'network_section.dart';
 import 'tags_section.dart';
 import 'types_section.dart';
+import 'whats_new_dialog.dart';
 
 /// Значение настройки «при переносе записей» (§7.4).
 final transferModeProvider = FutureProvider<String>((ref) async {
@@ -66,13 +69,116 @@ final backupAutoProvider = FutureProvider<bool>((ref) async {
 /// Ширина колонки настроек: формы шире читать неудобно.
 const double _settingsMaxWidth = 880;
 
+/// Раздел настроек: название, слова для поиска и сам виджет.
+///
+/// Названия и слова объявлены здесь, рядом со списком разделов, а не внутри
+/// каждого виджета: иначе список поиска расходится с показанным, как когда-то
+/// разошлись справка и настройки по горячим клавишам ([appHotkeys]).
+typedef _Section = ({String title, String words, Widget widget});
+
+/// Разделы в порядке показа.
+///
+/// Порядок — по тому, как часто настройку меняют. Сверху то, за чем сюда
+/// заходят: вид, поведение списков, сохранность данных и обновления. Ниже —
+/// то, что настраивают один раз или никогда. Сведения в конце.
+List<_Section> _mainSections(AppLocalizations l10n) => [
+  (
+    title: l10n.settingsAppearance,
+    words: l10n.settingsWordsAppearance,
+    widget: const _AppearanceSection(),
+  ),
+  (
+    title: l10n.settingsBehaviour,
+    words: l10n.settingsWordsBehaviour,
+    widget: const _BehaviourSection(),
+  ),
+  (
+    title: l10n.backupsTitle,
+    words: l10n.settingsWordsBackups,
+    widget: const _BackupsSection(),
+  ),
+  (
+    title: l10n.settingsNetworkTitle,
+    words: l10n.settingsWordsNetwork,
+    widget: const NetworkSection(),
+  ),
+];
+
+/// Разделы под чертой «Дополнительно».
+List<_Section> _advancedSections(AppLocalizations l10n) => [
+  (
+    title: l10n.typesTitle,
+    words: l10n.settingsWordsTypes,
+    widget: const TypesSection(),
+  ),
+  (
+    title: l10n.tagsTitle,
+    words: l10n.settingsWordsTags,
+    widget: const TagsSection(),
+  ),
+  (
+    title: l10n.devicesTitle,
+    words: l10n.settingsWordsDevices,
+    widget: const DevicesSection(),
+  ),
+  (
+    title: l10n.keyStorageTitle,
+    words: l10n.settingsWordsKeyStorage,
+    widget: const KeyStorageSection(),
+  ),
+  (
+    title: l10n.errorLogTitle,
+    words: l10n.settingsWordsErrorLog,
+    widget: const ErrorLogSection(),
+  ),
+  (
+    title: l10n.settingsAbout,
+    words: l10n.settingsWordsAbout,
+    widget: const _AboutSection(),
+  ),
+];
+
+/// Подходит ли раздел под запрос.
+///
+/// Слова запроса ищутся по названию и объявленным словам: «копи» находит
+/// резервные копии, «ёлк» и «елк» — одно и то же.
+bool _matches(_Section section, String query) {
+  final q = Normalize.forMatch(query);
+  if (q.isEmpty) return true;
+  final haystack = Normalize.forMatch('${section.title} ${section.words}');
+  return q.split(' ').every(haystack.contains);
+}
+
 /// Настройки приложения: оформление, поведение, данные, сведения.
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final query = _search.text;
+    final main = [
+      for (final s in _mainSections(l10n))
+        if (_matches(s, query)) s,
+    ];
+    final advanced = [
+      for (final s in _advancedSections(l10n))
+        if (_matches(s, query)) s,
+    ];
+    final searching = Normalize.forMatch(query).isNotEmpty;
 
     // Настройки — колонка форм, она уже общей ширины контента. Одна и та же
     // ширина задаётся шапке и содержимому, иначе заголовок и группы стоят с
@@ -82,6 +188,16 @@ class SettingsScreen extends ConsumerWidget {
       header: ScreenHeader(
         title: l10n.navSettings,
         maxWidth: _settingsMaxWidth,
+        // Разделов десять, и чтобы найти переключатель, надо было помнить, в
+        // каком он из них, и прокручивать всю ленту.
+        bottom: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+          child: AppSearchField(
+            controller: _search,
+            hint: l10n.settingsSearch,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
       ),
       // Ширину задаёт сам каркас: он же ставит колонку по общему левому краю.
       child: ListView(
@@ -89,33 +205,29 @@ class SettingsScreen extends ConsumerWidget {
           horizontal: AppDimens.space24,
           vertical: AppDimens.space16,
         ),
-        // Порядок — по тому, как часто настройку меняют. Сверху то, за чем
-        // сюда заходят: вид, поведение списков, сохранность данных и
-        // обновления. Ниже — то, что настраивают один раз или никогда:
-        // типы объектов, устройства, хранение ключа. Сведения в конце.
-        children: const [
-          _AppearanceSection(),
-          SizedBox(height: AppDimens.space24),
-          _BehaviourSection(),
-          SizedBox(height: AppDimens.space24),
-          _BackupsSection(),
-          SizedBox(height: AppDimens.space24),
-          NetworkSection(),
-          SizedBox(height: AppDimens.space32),
-          _AdvancedHeader(),
-          SizedBox(height: AppDimens.space16),
-          TypesSection(),
-          SizedBox(height: AppDimens.space24),
-          TagsSection(),
-          SizedBox(height: AppDimens.space24),
-          DevicesSection(),
-          SizedBox(height: AppDimens.space24),
-          KeyStorageSection(),
-          SizedBox(height: AppDimens.space24),
-          ErrorLogSection(),
-          SizedBox(height: AppDimens.space24),
-          _AboutSection(),
-          SizedBox(height: AppDimens.space40),
+        children: [
+          if (main.isEmpty && advanced.isEmpty)
+            EmptyState(
+              icon: Icons.search_off_rounded,
+              title: l10n.settingsSearchEmpty,
+              message: l10n.settingsSearchEmptyHint,
+            ),
+          for (final s in main) ...[
+            s.widget,
+            const SizedBox(height: AppDimens.space24),
+          ],
+          // При поиске черта «Дополнительно» только мешает: разделов на
+          // экране и так один-два.
+          if (advanced.isNotEmpty && !searching) ...[
+            const SizedBox(height: AppDimens.space8),
+            const _AdvancedHeader(),
+            const SizedBox(height: AppDimens.space16),
+          ],
+          for (final s in advanced) ...[
+            s.widget,
+            const SizedBox(height: AppDimens.space24),
+          ],
+          const SizedBox(height: AppDimens.space16),
         ],
       ),
     );
@@ -806,6 +918,24 @@ class _BackupRow extends StatelessWidget {
   }
 }
 
+/// Открывает «Что нового» для текущей версии.
+///
+/// Если раздела для этой версии в файле нет — сообщаем об этом строкой внизу,
+/// а не показываем пустое окно.
+Future<void> _openWhatsNew(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final version = await ref.read(appVersionProvider.future);
+  final entry = await const ChangelogService().forVersion(version);
+  if (!context.mounted) return;
+  if (entry == null) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.whatsNewNothing)));
+    return;
+  }
+  await WhatsNewDialog.show(context, entry);
+}
+
 class _AboutSection extends ConsumerWidget {
   const _AboutSection();
 
@@ -841,10 +971,23 @@ class _AboutSection extends ConsumerWidget {
         // содержание проще, чем найти, где оно было.
         Align(
           alignment: Alignment.centerLeft,
-          child: OutlinedButton.icon(
-            onPressed: () => AppTour.show(context),
-            icon: const Icon(Icons.school_outlined, size: 18),
-            label: Text(l10n.tourRepeat),
+          child: Wrap(
+            spacing: AppDimens.space8,
+            runSpacing: AppDimens.space8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => AppTour.show(context),
+                icon: const Icon(Icons.school_outlined, size: 18),
+                label: Text(l10n.tourRepeat),
+              ),
+              // То же окно, что показывается после обновления: перечитать его
+              // должно быть откуда.
+              OutlinedButton.icon(
+                onPressed: () => _openWhatsNew(context, ref),
+                icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                label: Text(l10n.whatsNewOpen),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppDimens.space16),

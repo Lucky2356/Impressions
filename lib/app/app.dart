@@ -9,11 +9,13 @@ import '../core/theme/app_theme.dart';
 import '../data/providers.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/services/backup_service.dart';
+import '../data/services/changelog_service.dart';
 import '../data/services/update_service.dart';
 import '../design_system/design_system.dart';
 import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/settings/network_section.dart';
+import '../features/settings/whats_new_dialog.dart';
 import '../features/shell/app_shell.dart';
 import 'app_state.dart';
 import 'data_refresh.dart';
@@ -159,8 +161,34 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
     }
   }
 
+  /// Рассказывает, что изменилось, — один раз после смены версии.
+  ///
+  /// Приложение обновляется само, и поведение меняется молча. Свежая
+  /// установка ничего не показывает: там только что прошло обучение, и
+  /// «новое» человеку не с чем сравнивать — версия просто запоминается.
+  Future<void> _showWhatsNewIfNeeded({required bool freshInstall}) async {
+    final settings = ref.read(settingsRepositoryProvider);
+    final version = (await PackageInfo.fromPlatform()).version;
+    final seen = await settings.get(SettingKeys.changelogSeenVersion);
+    if (seen == version) return;
+
+    await settings.set(SettingKeys.changelogSeenVersion, version);
+    if (freshInstall) return;
+
+    final entry = await const ChangelogService().forVersion(version);
+    if (entry == null || !mounted) return;
+    await WhatsNewDialog.show(context, entry);
+  }
+
   Future<void> _run() async {
+    // Считаем до показа обучения: после него отметка уже стоит, и первый
+    // запуск стал бы неотличим от обновления.
+    final freshInstall = !await ref
+        .read(settingsRepositoryProvider)
+        .getBool(SettingKeys.tourDone, defaultValue: false);
+
     await _showTourIfNeeded();
+    await _showWhatsNewIfNeeded(freshInstall: freshInstall);
     await _backupIfDue();
     try {
       final service = ref.read(updateServiceProvider);

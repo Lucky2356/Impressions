@@ -23,6 +23,9 @@ class SettingKeys {
   /// Обучение по разделам пройдено или пропущено.
   static const tourDone = 'tour_done';
 
+  /// Версия, о новшествах которой уже рассказали.
+  static const changelogSeenVersion = 'changelog_seen_version';
+
   /// Режим переноса записей между профилями (§7.4).
   static const transferMode = 'transfer_mode';
 

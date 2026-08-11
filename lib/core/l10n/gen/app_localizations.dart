@@ -2194,6 +2194,108 @@ abstract class AppLocalizations {
   /// **'Настраивают один раз или не трогают вовсе'**
   String get settingsAdvancedHint;
 
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что нового'**
+  String get whatsNewTitle;
+
+  /// No description provided for @whatsNewVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия {version}'**
+  String whatsNewVersion(String version);
+
+  /// No description provided for @whatsNewOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что нового в этой версии'**
+  String get whatsNewOpen;
+
+  /// No description provided for @whatsNewNothing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для этой версии описания нет'**
+  String get whatsNewNothing;
+
+  /// No description provided for @settingsSearch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск по настройкам'**
+  String get settingsSearch;
+
+  /// No description provided for @settingsSearchEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ничего не нашлось'**
+  String get settingsSearchEmpty;
+
+  /// No description provided for @settingsSearchEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуйте другое слово: например, «копии» или «тема».'**
+  String get settingsSearchEmptyHint;
+
+  /// No description provided for @settingsWordsAppearance.
+  ///
+  /// In ru, this message translates to:
+  /// **'тема цвет вид тёмная светлая оформление плотность'**
+  String get settingsWordsAppearance;
+
+  /// No description provided for @settingsWordsBehaviour.
+  ///
+  /// In ru, this message translates to:
+  /// **'поведение подкатегории перенос записей обучение'**
+  String get settingsWordsBehaviour;
+
+  /// No description provided for @settingsWordsBackups.
+  ///
+  /// In ru, this message translates to:
+  /// **'копии резервные восстановление пароль шифрование расписание'**
+  String get settingsWordsBackups;
+
+  /// No description provided for @settingsWordsNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'сеть интернет штрихкод источники обновления'**
+  String get settingsWordsNetwork;
+
+  /// No description provided for @settingsWordsTypes.
+  ///
+  /// In ru, this message translates to:
+  /// **'типы объектов поля'**
+  String get settingsWordsTypes;
+
+  /// No description provided for @settingsWordsTags.
+  ///
+  /// In ru, this message translates to:
+  /// **'теги метки'**
+  String get settingsWordsTags;
+
+  /// No description provided for @settingsWordsDevices.
+  ///
+  /// In ru, this message translates to:
+  /// **'устройства обмен'**
+  String get settingsWordsDevices;
+
+  /// No description provided for @settingsWordsKeyStorage.
+  ///
+  /// In ru, this message translates to:
+  /// **'ключ хранилище шифрование'**
+  String get settingsWordsKeyStorage;
+
+  /// No description provided for @settingsWordsErrorLog.
+  ///
+  /// In ru, this message translates to:
+  /// **'ошибки журнал сбои'**
+  String get settingsWordsErrorLog;
+
+  /// No description provided for @settingsWordsAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'о приложении версия лицензия горячие клавиши'**
+  String get settingsWordsAbout;
+
   /// No description provided for @settingsAppearance.
   ///
   /// In ru, this message translates to:
