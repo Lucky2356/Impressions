@@ -49,6 +49,36 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- Файл обмена: открыть из «Проводника» или прислать через
+                 «Поделиться». Раньше присланный файл нельзя было отдать
+                 приложению вовсе — приходилось искать его вручную в разделе
+                 «Импорт».
+
+                 Расширение нестандартное, поэтому фильтр смотрит на имя файла,
+                 а не на тип: MIME у таких файлов система обычно не знает. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:host="*"/>
+                <data android:mimeType="*/*"/>
+                <data android:pathPattern=".*\\.impressions"/>
+                <data android:pathPattern=".*\\..*\\.impressions"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="application/octet-stream"/>
+                <data android:mimeType="application/zip"/>
+            </intent-filter>
+
+            <!-- Быстрые действия по длинному нажатию на значок. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

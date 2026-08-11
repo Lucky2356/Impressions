@@ -91,6 +91,19 @@ class ProfileInsights {
     required this.withNotes,
   });
 
+  /// Считать нечего: пустой профиль или пустой срез.
+  static const empty = ProfileInsights(
+    total: 0,
+    rated: 0,
+    averageRating: null,
+    ratingBuckets: [],
+    byRelation: {},
+    topCategories: [],
+    byMonth: [],
+    withPhotos: 0,
+    withNotes: 0,
+  );
+
   /// Всего неархивных записей.
   final int total;
 

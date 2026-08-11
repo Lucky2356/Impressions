@@ -10,29 +10,81 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
+import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../catalog/catalog_providers.dart';
+import '../categories/category_providers.dart';
+import '../quick_add/category_picker.dart';
+
+/// Срез статистики: за какой срок и по какой ветке считать.
+///
+/// Экран показывал распределения по всему профилю: вопрос «а что было в этом
+/// году» задать было нечем, хотя данные для него есть.
+class InsightsScope {
+  const InsightsScope({this.yearOnly = false, this.category});
+
+  final bool yearOnly;
+  final CategoryRow? category;
+
+  InsightsScope copyWith({
+    bool? yearOnly,
+    CategoryRow? category,
+    bool clear = false,
+  }) {
+    return InsightsScope(
+      yearOnly: yearOnly ?? this.yearOnly,
+      category: clear ? null : (category ?? this.category),
+    );
+  }
+}
+
+class InsightsScopeNotifier extends Notifier<InsightsScope> {
+  @override
+  InsightsScope build() => const InsightsScope();
+
+  void setYearOnly(bool value) => state = state.copyWith(yearOnly: value);
+  void setCategory(CategoryRow? category) =>
+      state = state.copyWith(category: category, clear: category == null);
+}
+
+final insightsScopeProvider =
+    NotifierProvider<InsightsScopeNotifier, InsightsScope>(
+      InsightsScopeNotifier.new,
+    );
 
 /// Развёрнутая статистика активного профиля.
 final profileInsightsProvider = FutureProvider<ProfileInsights>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
-  if (profile == null) {
-    return const ProfileInsights(
-      total: 0,
-      rated: 0,
-      averageRating: null,
-      ratingBuckets: [],
-      byRelation: {},
-      topCategories: [],
-      byMonth: [],
-      withPhotos: 0,
-      withNotes: 0,
-    );
+  if (profile == null) return ProfileInsights.empty;
+
+  final scope = ref.watch(insightsScopeProvider);
+  final category = scope.category;
+
+  // Ветка целиком: подкатегории считаются вместе со своим корнем — иначе
+  // «Продукты» выглядели бы пустыми, а всё лежало бы в «Колбасах».
+  List<String>? categoryIds;
+  if (category != null) {
+    final all = await ref.watch(allCategoriesProvider.future);
+    final prefix = '${category.path}/';
+    categoryIds = [
+      category.id,
+      ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
+    ];
   }
-  return ref.watch(entryRepositoryProvider).insights(profile.id);
+
+  final now = DateTime.now();
+  return ref
+      .watch(entryRepositoryProvider)
+      .insights(
+        profile.id,
+        since: scope.yearOnly
+            ? DateTime(now.year - 1, now.month, now.day)
+            : null,
+        categoryIds: categoryIds,
+      );
 });
 
 /// Экран статистики (§14): каковы ваши вкусы, если посмотреть на всё сразу.
@@ -47,13 +99,23 @@ class InsightsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final layout = context.layout;
     final data = ref.watch(profileInsightsProvider).value;
+    final scope = ref.watch(insightsScopeProvider);
 
     if (data == null) return const SizedBox.shrink();
+    // Пустой профиль и пустой срез — разные вещи: в первом случае заводить
+    // нечего, во втором стоит поменять период или ветку.
     if (data.isEmpty) {
-      return EmptyState(
-        icon: Icons.insights_rounded,
-        title: l10n.insightsEmptyTitle,
-        message: l10n.insightsEmptyMessage,
+      final narrowed = scope.yearOnly || scope.category != null;
+      return ScreenScaffold(
+        header: ScreenHeader(
+          title: l10n.insightsTitle,
+          bottom: narrowed ? const _ScopeBar() : null,
+        ),
+        child: EmptyState(
+          icon: Icons.insights_rounded,
+          title: narrowed ? l10n.insightsScopeEmpty : l10n.insightsEmptyTitle,
+          message: narrowed ? '' : l10n.insightsEmptyMessage,
+        ),
       );
     }
 
@@ -61,6 +123,7 @@ class InsightsScreen extends ConsumerWidget {
       header: ScreenHeader(
         title: l10n.insightsTitle,
         subtitle: l10n.insightsSubtitle(data.total),
+        bottom: const _ScopeBar(),
       ),
       child: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -102,6 +165,56 @@ class InsightsScreen extends ConsumerWidget {
             const SizedBox(height: AppDimens.space12),
             _MonthlyChart(months: data.byMonth),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Строка среза: период и ветка категорий.
+class _ScopeBar extends ConsumerWidget {
+  const _ScopeBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final scope = ref.watch(insightsScopeProvider);
+    final notifier = ref.read(insightsScopeProvider.notifier);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: context.layout.gutter),
+      child: Wrap(
+        spacing: AppDimens.space8,
+        runSpacing: AppDimens.space8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SegmentedToggle<bool>(
+            value: scope.yearOnly,
+            onChanged: notifier.setYearOnly,
+            segments: [
+              SegmentData(
+                value: false,
+                icon: Icons.all_inclusive_rounded,
+                tooltip: l10n.insightsPeriodAll,
+                label: l10n.insightsPeriodAll,
+              ),
+              SegmentData(
+                value: true,
+                icon: Icons.event_rounded,
+                tooltip: l10n.insightsPeriodYear,
+                label: l10n.insightsPeriodYear,
+              ),
+            ],
+          ),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final picked = await CategoryPicker.show(context);
+              if (picked == null) return;
+              notifier.setCategory(picked.cleared ? null : picked.category);
+            },
+            icon: const Icon(Icons.account_tree_rounded, size: 18),
+            label: Text(scope.category?.name ?? l10n.insightsScopeAll),
+          ),
         ],
       ),
     );

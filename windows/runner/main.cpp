@@ -4,6 +4,7 @@
 
 #include "flutter_window.h"
 #include "utils.h"
+#include "window_state.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -35,6 +36,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   if (!window.Create(kWindowTitle, origin, size)) {
     return EXIT_FAILURE;
   }
+  // Прежние размер и положение окна. Значения выше — только запасные: до этого
+  // окно всегда открывалось 1280x720 в углу, сколько его ни разворачивай.
+  window_state::Restore(window.GetHandle());
   window.SetQuitOnClose(true);
 
   ::MSG msg;

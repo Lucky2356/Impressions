@@ -2100,6 +2100,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get insightsRelations => 'Отношение';
 
   @override
+  String get insightsPeriodYear => 'За год';
+
+  @override
+  String get insightsPeriodAll => 'Всё время';
+
+  @override
+  String get insightsScopeAll => 'Все категории';
+
+  @override
+  String get insightsScopeEmpty => 'В этом срезе записей нет';
+
+  @override
   String get insightsCategories => 'Самые заполненные категории';
 
   @override

@@ -7,7 +7,11 @@ import 'app/app.dart';
 import 'core/diagnostics/error_log.dart';
 import 'design_system/design_system.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  // Путь к файлу, по которому щёлкнули в «Проводнике», приходит аргументом:
+  // Flutter сам его никуда не отдаёт.
+  launchArguments = args;
+
   // Всё приложение работает под перехватом аварий: и дерево виджетов, и
   // асинхронный код. Записи ложатся в локальный журнал (настройки →
   // «Дополнительно» → «Журнал ошибок»), наружу не уходит ничего.

@@ -1081,9 +1081,30 @@ class EntryRepository {
   /// Считается агрегатами в базе. Раньше сюда поднимались все записи профиля
   /// целиком, вместе с текстами заметок, и распределения складывались в Dart:
   /// экран статистики стоил столько же, сколько выгрузка всего профиля.
-  Future<ProfileInsights> insights(String profileId) async {
+  /// [since] — считать только записи, заведённые не раньше этой даты.
+  /// [categoryIds] — только записи из этих категорий (обычно вся ветка).
+  Future<ProfileInsights> insights(
+    String profileId, {
+    DateTime? since,
+    List<String>? categoryIds,
+  }) async {
     final e = db.profileEntries;
-    final live = e.profileId.equals(profileId) & e.archivedAt.isNull();
+    var live = e.profileId.equals(profileId) & e.archivedAt.isNull();
+
+    // Разрезы: «что было за год» и «что в этой ветке». Данные для таких
+    // вопросов были, а задать их было нечем — экран считал по всему профилю.
+    if (since != null) {
+      live = live & e.createdAt.isBiggerOrEqualValue(since);
+    }
+    if (categoryIds != null) {
+      if (categoryIds.isEmpty) return ProfileInsights.empty;
+      final links = await (db.select(
+        db.entryCategories,
+      )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
+      final ids = links.map((l) => l.entryId).toSet();
+      if (ids.isEmpty) return ProfileInsights.empty;
+      live = live & e.id.isIn(ids);
+    }
 
     // Итоги: сколько всего, скольким поставлена оценка и их сумма.
     final total = e.id.count();
@@ -1096,19 +1117,7 @@ class EntryRepository {
             .getSingle();
 
     final totalCount = summary.read(total) ?? 0;
-    if (totalCount == 0) {
-      return const ProfileInsights(
-        total: 0,
-        rated: 0,
-        averageRating: null,
-        ratingBuckets: [],
-        byRelation: {},
-        topCategories: [],
-        byMonth: [],
-        withPhotos: 0,
-        withNotes: 0,
-      );
-    }
+    if (totalCount == 0) return ProfileInsights.empty;
     final rated = summary.read(ratedCount) ?? 0;
     final sum = summary.read(ratingSum) ?? 0;
 

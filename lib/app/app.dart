@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,14 +12,19 @@ import '../data/providers.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/services/backup_service.dart';
 import '../data/services/changelog_service.dart';
+import '../data/services/launch_service.dart';
 import '../data/services/update_service.dart';
 import '../design_system/design_system.dart';
+import '../features/barcode/barcode_scan_sheet.dart';
+import '../features/exchange/import_screen.dart';
 import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/quick_add/quick_add_sheet.dart';
 import '../features/settings/network_section.dart';
 import '../features/settings/whats_new_dialog.dart';
 import '../features/shell/app_shell.dart';
 import 'app_state.dart';
+import 'navigation.dart';
 import 'data_refresh.dart';
 import 'theme_controller.dart';
 
@@ -90,6 +97,12 @@ class _RootGate extends ConsumerWidget {
   }
 }
 
+/// Аргументы командной строки этого запуска.
+///
+/// Двойной щелчок по файлу обмена на Windows приходит именно так. Flutter не
+/// отдаёт их сам, поэтому их кладёт сюда `main`.
+List<String> launchArguments = const [];
+
 /// Фоновые проверки при запуске: обновление приложения и сведений о товарах.
 ///
 /// Обе выключаемы и сами ограничивают частоту, поэтому здесь достаточно один
@@ -104,10 +117,45 @@ class _StartupTasks extends ConsumerStatefulWidget {
 }
 
 class _StartupTasksState extends ConsumerState<_StartupTasks> {
+  StreamSubscription<LaunchRequest>? _launches;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _run());
+
+    // Файл, присланный в уже открытое приложение, и быстрое действие со
+    // значка приходят сюда же, что и при холодном старте.
+    _launches = const LaunchService().incoming.listen(_handleLaunch);
+  }
+
+  @override
+  void dispose() {
+    _launches?.cancel();
+    super.dispose();
+  }
+
+  /// Открывает то, ради чего приложение и запустили.
+  ///
+  /// Присланный файл ведёт на предпросмотр импорта — сам импорт не начинается:
+  /// решает человек. Быстрое действие со значка открывает форму записи или
+  /// сканер.
+  void _handleLaunch(LaunchRequest request) {
+    if (request.isEmpty || !mounted) return;
+
+    final file = request.file;
+    if (file != null) {
+      ref.read(pendingImportFileProvider.notifier).set(file);
+      ref.read(navProvider.notifier).go(NavIds.import);
+      return;
+    }
+
+    switch (request.action) {
+      case 'add':
+        QuickAddSheet.show(context);
+      case 'scan':
+        BarcodeScanSheet.show(context);
+    }
   }
 
   /// Обучение показывается один раз — сразу после первого запуска.
@@ -181,6 +229,15 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
   }
 
   Future<void> _run() async {
+    // Чем открыли приложение: файл обмена или ярлык со значка.
+    _handleLaunch(
+      await const LaunchService().initial(
+        // Аргументы командной строки Flutter не отдаёт напрямую; на Windows их
+        // подставляет `main`, а на телефоне их нет вовсе.
+        launchArguments,
+      ),
+    );
+
     // Считаем до показа обучения: после него отметка уже стоит, и первый
     // запуск стал бы неотличим от обновления.
     final freshInstall = !await ref

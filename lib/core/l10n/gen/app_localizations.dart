@@ -3634,6 +3634,30 @@ abstract class AppLocalizations {
   /// **'Отношение'**
   String get insightsRelations;
 
+  /// No description provided for @insightsPeriodYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'За год'**
+  String get insightsPeriodYear;
+
+  /// No description provided for @insightsPeriodAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё время'**
+  String get insightsPeriodAll;
+
+  /// No description provided for @insightsScopeAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все категории'**
+  String get insightsScopeAll;
+
+  /// No description provided for @insightsScopeEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этом срезе записей нет'**
+  String get insightsScopeEmpty;
+
   /// No description provided for @insightsCategories.
   ///
   /// In ru, this message translates to:

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Быстрые действия по длинному нажатию на значок.
+
+  На телефоне приложение открывают ради двух вещей: завести запись и
+  отсканировать штрихкод. Обе требовали запуска, ожидания главной и ещё одного
+  нажатия.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_add_short"
+        android:shortcutLongLabel="@string/shortcut_add_long">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="club.impressions.impressions"
+            android:targetClass="club.impressions.impressions.MainActivity">
+            <extra
+                android:name="club.impressions.action"
+                android:value="add"/>
+        </intent>
+        <categories android:name="android.shortcut.conversation"/>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="scan"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_scan_short"
+        android:shortcutLongLabel="@string/shortcut_scan_long">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="club.impressions.impressions"
+            android:targetClass="club.impressions.impressions.MainActivity">
+            <extra
+                android:name="club.impressions.action"
+                android:value="scan"/>
+        </intent>
+        <categories android:name="android.shortcut.conversation"/>
+    </shortcut>
+</shortcuts>

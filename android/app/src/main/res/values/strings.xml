@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Подписи быстрых действий на значке. Приложение русскоязычное, поэтому
+  отдельной локализации ресурсов здесь нет — как и у названия приложения.
+-->
+<resources>
+    <string name="shortcut_add_short">Запись</string>
+    <string name="shortcut_add_long">Добавить запись</string>
+    <string name="shortcut_scan_short">Штрихкод</string>
+    <string name="shortcut_scan_long">Сканировать штрихкод</string>
+</resources>

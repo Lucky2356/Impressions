@@ -1,5 +1,7 @@
 #include "flutter_window.h"
 
+#include "window_state.h"
+
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -40,6 +42,10 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  // Запоминаем окно, пока оно ещё существует: после цикла сообщений спрашивать
+  // его геометрию уже не у чего.
+  window_state::Save(GetHandle());
+
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

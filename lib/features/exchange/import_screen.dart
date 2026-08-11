@@ -17,6 +17,22 @@ import '../../data/services/backup_service.dart';
 import '../../data/services/import_service.dart';
 import '../../design_system/design_system.dart';
 
+/// Файл, с которым открыли приложение, — ждёт разбора на экране импорта.
+///
+/// Присланный файл раньше было некуда деть: приложение о нём не знало, и его
+/// приходилось искать вручную. Импорт при этом не начинается сам — открывается
+/// обычный предпросмотр, из которого человек и решает.
+class PendingImportFile extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? path) => state = path;
+}
+
+final pendingImportFileProvider = NotifierProvider<PendingImportFile, String?>(
+  PendingImportFile.new,
+);
+
 /// Импорт профиля (§20, §21): выбор файла → проверки → предпросмотр →
 /// резервная копия → применение → итог.
 class ImportScreen extends ConsumerStatefulWidget {
@@ -37,9 +53,27 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Uint8List? _pendingBytes;
 
   @override
+  void initState() {
+    super.initState();
+    // Экран мог открыться из-за присланного файла — разбираем его сразу.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takePendingFile());
+  }
+
+  @override
   void dispose() {
     _password.dispose();
     super.dispose();
+  }
+
+  /// Забирает файл, с которым открыли приложение.
+  Future<void> _takePendingFile() async {
+    final path = ref.read(pendingImportFileProvider);
+    if (path == null) return;
+    ref.read(pendingImportFileProvider.notifier).set(null);
+
+    final file = File(path);
+    if (!file.existsSync()) return;
+    await _inspect(await file.readAsBytes());
   }
 
   Future<void> _pickFile() async {

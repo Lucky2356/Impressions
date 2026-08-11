@@ -74,6 +74,16 @@ Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{group}\Удалить {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
+[Registry]
+; Файл обмена открывается двойным щелчком. Раньше присланный профиль
+; приходилось искать вручную в разделе «Импорт»: система про расширение ничего
+; не знала. Записи идут в ветку текущего пользователя — прав администратора
+; для установки по-прежнему не нужно.
+Root: HKCU; Subkey: "Software\Classes\.impressions"; ValueType: string; ValueName: ""; ValueData: "Impressions.Profile"; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\Impressions.Profile"; ValueType: string; ValueName: ""; ValueData: "Профиль «Впечатлений»"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Impressions.Profile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"
+Root: HKCU; Subkey: "Software\Classes\Impressions.Profile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""
+
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Запустить {#AppName}"; Flags: nowait postinstall skipifsilent
 

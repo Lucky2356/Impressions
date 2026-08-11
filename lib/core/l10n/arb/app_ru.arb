@@ -691,6 +691,10 @@
   "insightsWithNotes": "С заметками",
   "insightsRatings": "Распределение оценок",
   "insightsRelations": "Отношение",
+  "insightsPeriodYear": "За год",
+  "insightsPeriodAll": "Всё время",
+  "insightsScopeAll": "Все категории",
+  "insightsScopeEmpty": "В этом срезе записей нет",
   "insightsCategories": "Самые заполненные категории",
   "insightsTimeline": "Добавления по месяцам",
 
