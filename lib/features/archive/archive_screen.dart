@@ -84,11 +84,66 @@ Future<void> _confirmPurge(
 /// Приложение обещает, что ничего не пропадает молча, — архивирование заменяет
 /// удаление. Но вернуть убранное было нельзя: восстановление существовало в
 /// репозиториях и не было подключено ни к одному экрану.
-class ArchiveScreen extends ConsumerWidget {
+class ArchiveScreen extends ConsumerStatefulWidget {
   const ArchiveScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ArchiveScreen> createState() => _ArchiveScreenState();
+}
+
+class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
+  /// Отмеченные записи.
+  ///
+  /// Разбирать архив приходилось по одной: десять записей — десять нажатий
+  /// «Вернуть», а удаление насовсем спрашивало подтверждение на каждую.
+  final _selected = <String>{};
+
+  void _toggle(String entryId) => setState(() {
+    if (!_selected.remove(entryId)) _selected.add(entryId);
+  });
+
+  Future<void> _restoreSelected() async {
+    final l10n = AppLocalizations.of(context);
+    final ids = _selected.toList();
+    final repo = ref.read(entryRepositoryProvider);
+    for (final id in ids) {
+      await repo.restoreEntry(id);
+    }
+    ref.read(dataRefreshProvider.notifier).bump();
+    if (!mounted) return;
+    setState(_selected.clear);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.archiveRestoredMany(ids.length))),
+    );
+  }
+
+  /// Удаление насовсем: подтверждение одно на всю пачку, а не на каждую запись.
+  Future<void> _purgeSelected() async {
+    final l10n = AppLocalizations.of(context);
+    final ids = _selected.toList();
+    final ok = await ConfirmDialog.show(
+      context,
+      title: l10n.archivePurgeConfirmMany(ids.length),
+      message: l10n.purgeConfirmMessage,
+      confirmLabel: l10n.purgeAction,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+
+    final purge = PurgeService(ref.read(appDatabaseProvider));
+    for (final id in ids) {
+      await purge.purgeEntry(id);
+    }
+    ref.read(dataRefreshProvider.notifier).bump();
+    if (!mounted) return;
+    setState(_selected.clear);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.purgeDone)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final layout = context.layout;
 
@@ -121,7 +176,27 @@ class ArchiveScreen extends ConsumerWidget {
         ),
         children: [
           if (entries.isNotEmpty) ...[
-            SectionHeader(title: l10n.archiveEntries),
+            Row(
+              children: [
+                Expanded(child: SectionHeader(title: l10n.archiveEntries)),
+                if (_selected.isEmpty)
+                  TextButton(
+                    onPressed: () => setState(
+                      () => _selected.addAll(entries.map((e) => e.entryId)),
+                    ),
+                    child: Text(l10n.bulkSelectAll),
+                  ),
+              ],
+            ),
+            if (_selected.isNotEmpty) ...[
+              const SizedBox(height: AppDimens.space8),
+              _ArchiveSelectionBar(
+                count: _selected.length,
+                onClear: () => setState(_selected.clear),
+                onRestore: _restoreSelected,
+                onPurge: _purgeSelected,
+              ),
+            ],
             const SizedBox(height: AppDimens.space12),
             for (final entry in entries)
               _ArchivedTile(
@@ -130,6 +205,8 @@ class ArchiveScreen extends ConsumerWidget {
                 subtitle: entry.categoryPath.isEmpty
                     ? entry.typeName
                     : entry.categoryPath.join(' / '),
+                selected: _selected.contains(entry.entryId),
+                onSelect: () => _toggle(entry.entryId),
                 onRestore: () async {
                   await ref
                       .read(entryRepositoryProvider)
@@ -202,18 +279,17 @@ class ArchiveScreen extends ConsumerWidget {
   }
 }
 
-class _ArchivedTile extends StatelessWidget {
-  const _ArchivedTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
+/// Панель действий над отмеченными записями архива.
+class _ArchiveSelectionBar extends StatelessWidget {
+  const _ArchiveSelectionBar({
+    required this.count,
+    required this.onClear,
     required this.onRestore,
     required this.onPurge,
   });
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final int count;
+  final VoidCallback onClear;
   final VoidCallback onRestore;
   final VoidCallback onPurge;
 
@@ -222,8 +298,75 @@ class _ArchivedTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
 
+    return Material(
+      color: c.accentSoft,
+      borderRadius: AppDimens.brSm,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.space8),
+        child: Wrap(
+          spacing: AppDimens.space8,
+          runSpacing: AppDimens.space8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            AppIconButton(
+              icon: Icons.close_rounded,
+              tooltip: l10n.bulkCancel,
+              onPressed: onClear,
+            ),
+            Text(l10n.bulkSelected(count), style: context.text.labelLarge),
+            OutlinedButton.icon(
+              onPressed: onRestore,
+              icon: const Icon(Icons.restore_rounded, size: 18),
+              label: Text(l10n.commonRestore),
+            ),
+            // Подтверждение остаётся: после настоящего удаления возвращать
+            // нечем — но спрашивается один раз на всю пачку.
+            OutlinedButton.icon(
+              onPressed: onPurge,
+              icon: const Icon(Icons.delete_forever_rounded, size: 18),
+              label: Text(l10n.purgeAction),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchivedTile extends StatelessWidget {
+  const _ArchivedTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onRestore,
+    required this.onPurge,
+    this.selected = false,
+    this.onSelect,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onRestore;
+  final VoidCallback onPurge;
+
+  /// Отмечена ли строка. Отметки есть только у записей: категорию и подборку
+  /// возвращают поштучно, и у них свои правила удаления.
+  final bool selected;
+  final VoidCallback? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
     final info = Row(
       children: [
+        if (onSelect != null)
+          Padding(
+            padding: const EdgeInsets.only(right: AppDimens.space4),
+            child: Checkbox(value: selected, onChanged: (_) => onSelect!()),
+          ),
         Container(
           width: 38,
           height: 38,

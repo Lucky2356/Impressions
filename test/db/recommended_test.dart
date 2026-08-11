@@ -122,4 +122,43 @@ void main() {
         .map((r) => r['name'] as String);
     expect(tables, isNot(contains('profile_relationships')));
   });
+
+  test('миграция 4 → 5 убирает таблицу recommendations', () async {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+    // База, как её оставила версия 4: с таблицей recommendations и строкой в
+    // ней. Она дублировала «кто посоветовал» из самой записи и не читалась.
+    final raw = sqlite3.openInMemory();
+    var db = AppDatabase.forTesting(
+      NativeDatabase.opened(raw, closeUnderlyingOnClose: false),
+    );
+    await ProfileRepository(db).createOwnProfile(firstName: 'Я');
+    raw.execute('''
+      CREATE TABLE IF NOT EXISTS recommendations (
+        id TEXT NOT NULL PRIMARY KEY,
+        profile_id TEXT NOT NULL,
+        object_id TEXT NOT NULL,
+        from_profile_id TEXT,
+        note TEXT,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+    raw.execute(
+      "INSERT INTO recommendations VALUES ('r1', 'p1', 'o1', 'p2', null, 0)",
+    );
+    raw.execute('PRAGMA user_version = 4');
+    await db.close();
+
+    db = AppDatabase.forTesting(
+      NativeDatabase.opened(raw, closeUnderlyingOnClose: false),
+    );
+    addTearDown(db.close);
+    final profiles = await ProfileRepository(db).all();
+
+    expect(profiles.map((p) => p.firstName), ['Я'], reason: 'данные на месте');
+    final tables = raw
+        .select("SELECT name FROM sqlite_master WHERE type = 'table'")
+        .map((r) => r['name'] as String);
+    expect(tables, isNot(contains('recommendations')));
+  });
 }

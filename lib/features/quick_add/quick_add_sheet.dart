@@ -86,6 +86,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   final _title = TextEditingController();
   final _note = TextEditingController();
 
+  /// Курсор в названии: после «Сохранить и ещё» он должен вернуться сюда.
+  final _titleFocus = FocusNode();
+
   String? _typeId;
 
   /// Тип выбран человеком, а не подставлен по категории.
@@ -160,6 +163,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   @override
   void dispose() {
     _draftTimer?.cancel();
+    _titleFocus.dispose();
     _title.dispose();
     _note.dispose();
     super.dispose();
@@ -367,7 +371,39 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     setState(() => _applyPrefill(scanned));
   }
 
-  Future<void> _save() async {
+  /// Сколько записей заведено подряд, не закрывая форму.
+  int _savedInARow = 0;
+
+  /// Сохраняет и оставляет форму открытой для следующей записи.
+  ///
+  /// Заводя пять записей подряд, форму открывали пять раз, хотя категория и
+  /// тип уже подставляются сами. Место, тип и подборка остаются, остальное
+  /// очищается, курсор снова в названии.
+  Future<void> _saveAndContinue() async {
+    await _save(keepOpen: true);
+    if (!mounted) return;
+
+    _title.removeListener(_scheduleDraftSave);
+    _note.removeListener(_scheduleDraftSave);
+    _title.clear();
+    _note.clear();
+    _title.addListener(_scheduleDraftSave);
+    _note.addListener(_scheduleDraftSave);
+
+    super.setState(() {
+      _rating = null;
+      _relation = null;
+      _photos = const [];
+      _tags.clear();
+      _barcode = null;
+      _creator = null;
+      _customValues.clear();
+      _impressionDate = null;
+    });
+    _titleFocus.requestFocus();
+  }
+
+  Future<void> _save({bool keepOpen = false}) async {
     if (!_formKey.currentState!.validate()) return;
     final profile = ref.read(activeProfileProvider);
     final typeId = _typeId;
@@ -433,7 +469,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       await _rememberLastPlace();
 
       ref.read(dataRefreshProvider.notifier).bump();
-      if (mounted) Navigator.of(context).pop(true);
+      if (!mounted) return;
+      if (keepOpen) {
+        _savedInARow++;
+      } else {
+        Navigator.of(context).pop(true);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -660,6 +701,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 const SizedBox(height: AppDimens.space16),
                 TextFormField(
                   controller: _title,
+                  focusNode: _titleFocus,
                   autofocus: true,
                   // Enter сохраняет: поле и так под курсором, а тянуться за
                   // кнопкой вниз ради самой частой формы в приложении незачем.
@@ -896,12 +938,36 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   ..._customFieldInputs(typeList, l10n),
                 ],
                 const SizedBox(height: AppDimens.space24),
+                if (_savedInARow > 0) ...[
+                  Text(
+                    l10n.quickAddSavedInARow(_savedInARow),
+                    style: context.text.labelSmall?.copyWith(
+                      color: context.colors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space8),
+                ],
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text(l10n.commonCancel),
+                        onPressed: () =>
+                            Navigator.of(context).pop(_savedInARow > 0),
+                        child: Text(
+                          _savedInARow > 0
+                              ? l10n.commonClose
+                              : l10n.commonCancel,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.space12),
+                    // Записи заводят сериями, а форма закрывалась после каждой.
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _busy || typeList.isEmpty
+                            ? null
+                            : _saveAndContinue,
+                        child: Text(l10n.quickAddSaveAndMore),
                       ),
                     ),
                     const SizedBox(width: AppDimens.space12),

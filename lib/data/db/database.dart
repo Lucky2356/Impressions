@@ -34,7 +34,6 @@ part 'database.g.dart';
     ProfileEntryRevisions,
     EntryCategories,
     EntryTags,
-    Recommendations,
     Collections,
     CollectionEntries,
     Attachments,
@@ -82,13 +81,17 @@ class AppDatabase extends _$AppDatabase {
       // между профилями, за всё время не получила ни одной строки и ни одного
       // обращения в коде — пустая таблица в схеме только сбивает с толку того,
       // кто её читает. Кто кого посоветовал, хранится в самих записях
-      // (recommended_by_profile_id) и в recommendations.
+      // (recommended_by_profile_id).
       if (from < 4) {
         await customStatement('DROP TABLE IF EXISTS profile_relationships');
       }
-      // 5: индексы под теги, обложки и подборки. Сами индексы создаются ниже
-      // общим списком — здесь важно лишь то, что версия поднята и обновление
-      // вообще запускается.
+      // 5: индексы под теги, обложки и подборки (создаются ниже общим
+      // списком) и убрана таблица recommendations. Она дублировала то, что
+      // записано в самой записи — кто её посоветовал, — и читалась только
+      // затем, чтобы удалить: ни один экран её не показывал.
+      if (from < 5) {
+        await customStatement('DROP TABLE IF EXISTS recommendations');
+      }
       await _createIndexes();
     },
     beforeOpen: (details) async {

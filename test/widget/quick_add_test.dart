@@ -318,6 +318,38 @@ void main() {
     });
   });
 
+  /// Форма закрывалась после каждой записи.
+  ///
+  /// Заводя пять записей подряд, её открывали пять раз — при том что категория
+  /// и тип уже подставляются сами.
+  testWidgets('«И ещё» оставляет форму открытой для следующей записи', (
+    tester,
+  ) async {
+    final categories = CategoryRepository(db);
+    final sausages = await categories.createRoot(me.id, 'Колбасы');
+    await openSheet(tester, initial: sausages);
+
+    await tester.enterText(find.byType(TextFormField).first, 'Докторская');
+    await tapVisible(tester, find.widgetWithText(OutlinedButton, 'И ещё'));
+
+    // Форма на месте, название очищено, а место осталось прежним.
+    expect(find.text('Заведена 1 запись подряд'), findsOneWidget);
+    expect(find.text('Докторская'), findsNothing);
+    expect(find.text('Колбасы'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).first, 'Краковская');
+    await tapVisible(tester, find.widgetWithText(FilledButton, 'Сохранить'));
+
+    final saved = await entries.entryViews(me.id);
+    expect(
+      saved.map((e) => e.title),
+      containsAll(['Докторская', 'Краковская']),
+    );
+    for (final view in saved) {
+      expect(view.categoryPath.last, 'Колбасы');
+    }
+  });
+
   /// Диалог дублей показывал список, а брал первого из него.
   ///
   /// «Чай зелёный» от двух производителей — человек имел в виду второй, а

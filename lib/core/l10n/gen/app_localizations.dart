@@ -454,6 +454,18 @@ abstract class AppLocalizations {
   /// **'Без категории'**
   String get quickAddNoCategory;
 
+  /// No description provided for @quickAddSaveAndMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'И ещё'**
+  String get quickAddSaveAndMore;
+
+  /// No description provided for @quickAddSavedInARow.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Заведена {count} запись подряд} few{Заведено {count} записи подряд} many{Заведено {count} записей подряд} other{Заведено {count} записей подряд}}'**
+  String quickAddSavedInARow(int count);
+
   /// No description provided for @quickAddRelationLabel.
   ///
   /// In ru, this message translates to:
@@ -736,6 +748,42 @@ abstract class AppLocalizations {
   /// **'В подборку'**
   String get bulkAddToCollection;
 
+  /// No description provided for @bulkRelation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отношение'**
+  String get bulkRelation;
+
+  /// No description provided for @bulkRating.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оценка'**
+  String get bulkRating;
+
+  /// No description provided for @bulkRemoveTag.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снять тег'**
+  String get bulkRemoveTag;
+
+  /// No description provided for @bulkRemoveTagEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'У выделенных записей нет тегов'**
+  String get bulkRemoveTagEmpty;
+
+  /// No description provided for @bulkMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё'**
+  String get bulkMore;
+
+  /// No description provided for @bulkDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Изменена {count} запись} few{Изменено {count} записи} many{Изменено {count} записей} other{Изменено {count} записей}}'**
+  String bulkDone(int count);
+
   /// No description provided for @bulkArchive.
   ///
   /// In ru, this message translates to:
@@ -921,6 +969,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.'**
   String get entryEditObjectHint;
+
+  /// No description provided for @entryMerge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объединить с…'**
+  String get entryMerge;
+
+  /// No description provided for @entryMergeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'С чем объединить'**
+  String get entryMergeTitle;
+
+  /// No description provided for @entryMergeMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи этого объекта переедут на выбранный. Оценки, заметки, фотографии и история останутся при записях.'**
+  String get entryMergeMessage;
+
+  /// No description provided for @entryMergeEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похожих объектов не нашлось'**
+  String get entryMergeEmpty;
+
+  /// No description provided for @entryMergeDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объекты объединены'**
+  String get entryMergeDone;
+
+  /// No description provided for @entryMergeAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объединить'**
+  String get entryMergeAction;
 
   /// No description provided for @entryCreatorLabel.
   ///
@@ -3657,6 +3741,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Возвращено из архива'**
   String get archiveRestored;
+
+  /// No description provided for @archiveRestoredMany.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись возвращена} few{{count} записи возвращены} many{{count} записей возвращено} other{{count} записей возвращено}}'**
+  String archiveRestoredMany(int count);
+
+  /// No description provided for @archivePurgeConfirmMany.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Удалить {count} запись навсегда?} few{Удалить {count} записи навсегда?} many{Удалить {count} записей навсегда?} other{Удалить {count} записей навсегда?}}'**
+  String archivePurgeConfirmMany(int count);
 
   /// No description provided for @incomingTitle.
   ///

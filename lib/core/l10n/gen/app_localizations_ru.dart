@@ -190,6 +190,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddNoCategory => 'Без категории';
 
   @override
+  String get quickAddSaveAndMore => 'И ещё';
+
+  @override
+  String quickAddSavedInARow(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Заведено $count записей подряд',
+      many: 'Заведено $count записей подряд',
+      few: 'Заведено $count записи подряд',
+      one: 'Заведена $count запись подряд',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get quickAddRelationLabel => 'Отношение';
 
   @override
@@ -356,6 +372,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bulkAddToCollection => 'В подборку';
 
   @override
+  String get bulkRelation => 'Отношение';
+
+  @override
+  String get bulkRating => 'Оценка';
+
+  @override
+  String get bulkRemoveTag => 'Снять тег';
+
+  @override
+  String get bulkRemoveTagEmpty => 'У выделенных записей нет тегов';
+
+  @override
+  String get bulkMore => 'Ещё';
+
+  @override
+  String bulkDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Изменено $count записей',
+      many: 'Изменено $count записей',
+      few: 'Изменено $count записи',
+      one: 'Изменена $count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get bulkArchive => 'В архив';
 
   @override
@@ -481,6 +525,25 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get entryEditObjectHint =>
       'Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.';
+
+  @override
+  String get entryMerge => 'Объединить с…';
+
+  @override
+  String get entryMergeTitle => 'С чем объединить';
+
+  @override
+  String get entryMergeMessage =>
+      'Записи этого объекта переедут на выбранный. Оценки, заметки, фотографии и история останутся при записях.';
+
+  @override
+  String get entryMergeEmpty => 'Похожих объектов не нашлось';
+
+  @override
+  String get entryMergeDone => 'Объекты объединены';
+
+  @override
+  String get entryMergeAction => 'Объединить';
 
   @override
   String get entryCreatorLabel => 'Бренд, автор или режиссёр';
@@ -2114,6 +2177,32 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get archiveRestored => 'Возвращено из архива';
+
+  @override
+  String archiveRestoredMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей возвращено',
+      many: '$count записей возвращено',
+      few: '$count записи возвращены',
+      one: '$count запись возвращена',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String archivePurgeConfirmMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалить $count записей навсегда?',
+      many: 'Удалить $count записей навсегда?',
+      few: 'Удалить $count записи навсегда?',
+      one: 'Удалить $count запись навсегда?',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get incomingTitle => 'Входящие изменения';

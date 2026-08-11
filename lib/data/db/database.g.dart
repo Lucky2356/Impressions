@@ -9035,428 +9035,6 @@ class EntryTagsCompanion extends UpdateCompanion<EntryTagRow> {
   }
 }
 
-class $RecommendationsTable extends Recommendations
-    with TableInfo<$RecommendationsTable, RecommendationRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $RecommendationsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _profileIdMeta = const VerificationMeta(
-    'profileId',
-  );
-  @override
-  late final GeneratedColumn<String> profileId = GeneratedColumn<String>(
-    'profile_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES profiles (id) ON DELETE RESTRICT',
-    ),
-  );
-  static const VerificationMeta _objectIdMeta = const VerificationMeta(
-    'objectId',
-  );
-  @override
-  late final GeneratedColumn<String> objectId = GeneratedColumn<String>(
-    'object_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES objects (id) ON DELETE RESTRICT',
-    ),
-  );
-  static const VerificationMeta _fromProfileIdMeta = const VerificationMeta(
-    'fromProfileId',
-  );
-  @override
-  late final GeneratedColumn<String> fromProfileId = GeneratedColumn<String>(
-    'from_profile_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    profileId,
-    objectId,
-    fromProfileId,
-    note,
-    createdAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'recommendations';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<RecommendationRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('profile_id')) {
-      context.handle(
-        _profileIdMeta,
-        profileId.isAcceptableOrUnknown(data['profile_id']!, _profileIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_profileIdMeta);
-    }
-    if (data.containsKey('object_id')) {
-      context.handle(
-        _objectIdMeta,
-        objectId.isAcceptableOrUnknown(data['object_id']!, _objectIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_objectIdMeta);
-    }
-    if (data.containsKey('from_profile_id')) {
-      context.handle(
-        _fromProfileIdMeta,
-        fromProfileId.isAcceptableOrUnknown(
-          data['from_profile_id']!,
-          _fromProfileIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  RecommendationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return RecommendationRow(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      profileId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}profile_id'],
-      )!,
-      objectId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}object_id'],
-      )!,
-      fromProfileId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}from_profile_id'],
-      ),
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-    );
-  }
-
-  @override
-  $RecommendationsTable createAlias(String alias) {
-    return $RecommendationsTable(attachedDatabase, alias);
-  }
-}
-
-class RecommendationRow extends DataClass
-    implements Insertable<RecommendationRow> {
-  final String id;
-  final String profileId;
-  final String objectId;
-  final String? fromProfileId;
-  final String? note;
-  final DateTime createdAt;
-  const RecommendationRow({
-    required this.id,
-    required this.profileId,
-    required this.objectId,
-    this.fromProfileId,
-    this.note,
-    required this.createdAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['profile_id'] = Variable<String>(profileId);
-    map['object_id'] = Variable<String>(objectId);
-    if (!nullToAbsent || fromProfileId != null) {
-      map['from_profile_id'] = Variable<String>(fromProfileId);
-    }
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    return map;
-  }
-
-  RecommendationsCompanion toCompanion(bool nullToAbsent) {
-    return RecommendationsCompanion(
-      id: Value(id),
-      profileId: Value(profileId),
-      objectId: Value(objectId),
-      fromProfileId: fromProfileId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(fromProfileId),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      createdAt: Value(createdAt),
-    );
-  }
-
-  factory RecommendationRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return RecommendationRow(
-      id: serializer.fromJson<String>(json['id']),
-      profileId: serializer.fromJson<String>(json['profileId']),
-      objectId: serializer.fromJson<String>(json['objectId']),
-      fromProfileId: serializer.fromJson<String?>(json['fromProfileId']),
-      note: serializer.fromJson<String?>(json['note']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'profileId': serializer.toJson<String>(profileId),
-      'objectId': serializer.toJson<String>(objectId),
-      'fromProfileId': serializer.toJson<String?>(fromProfileId),
-      'note': serializer.toJson<String?>(note),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-    };
-  }
-
-  RecommendationRow copyWith({
-    String? id,
-    String? profileId,
-    String? objectId,
-    Value<String?> fromProfileId = const Value.absent(),
-    Value<String?> note = const Value.absent(),
-    DateTime? createdAt,
-  }) => RecommendationRow(
-    id: id ?? this.id,
-    profileId: profileId ?? this.profileId,
-    objectId: objectId ?? this.objectId,
-    fromProfileId: fromProfileId.present
-        ? fromProfileId.value
-        : this.fromProfileId,
-    note: note.present ? note.value : this.note,
-    createdAt: createdAt ?? this.createdAt,
-  );
-  RecommendationRow copyWithCompanion(RecommendationsCompanion data) {
-    return RecommendationRow(
-      id: data.id.present ? data.id.value : this.id,
-      profileId: data.profileId.present ? data.profileId.value : this.profileId,
-      objectId: data.objectId.present ? data.objectId.value : this.objectId,
-      fromProfileId: data.fromProfileId.present
-          ? data.fromProfileId.value
-          : this.fromProfileId,
-      note: data.note.present ? data.note.value : this.note,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('RecommendationRow(')
-          ..write('id: $id, ')
-          ..write('profileId: $profileId, ')
-          ..write('objectId: $objectId, ')
-          ..write('fromProfileId: $fromProfileId, ')
-          ..write('note: $note, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, profileId, objectId, fromProfileId, note, createdAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is RecommendationRow &&
-          other.id == this.id &&
-          other.profileId == this.profileId &&
-          other.objectId == this.objectId &&
-          other.fromProfileId == this.fromProfileId &&
-          other.note == this.note &&
-          other.createdAt == this.createdAt);
-}
-
-class RecommendationsCompanion extends UpdateCompanion<RecommendationRow> {
-  final Value<String> id;
-  final Value<String> profileId;
-  final Value<String> objectId;
-  final Value<String?> fromProfileId;
-  final Value<String?> note;
-  final Value<DateTime> createdAt;
-  final Value<int> rowid;
-  const RecommendationsCompanion({
-    this.id = const Value.absent(),
-    this.profileId = const Value.absent(),
-    this.objectId = const Value.absent(),
-    this.fromProfileId = const Value.absent(),
-    this.note = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  RecommendationsCompanion.insert({
-    required String id,
-    required String profileId,
-    required String objectId,
-    this.fromProfileId = const Value.absent(),
-    this.note = const Value.absent(),
-    required DateTime createdAt,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       profileId = Value(profileId),
-       objectId = Value(objectId),
-       createdAt = Value(createdAt);
-  static Insertable<RecommendationRow> custom({
-    Expression<String>? id,
-    Expression<String>? profileId,
-    Expression<String>? objectId,
-    Expression<String>? fromProfileId,
-    Expression<String>? note,
-    Expression<DateTime>? createdAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (profileId != null) 'profile_id': profileId,
-      if (objectId != null) 'object_id': objectId,
-      if (fromProfileId != null) 'from_profile_id': fromProfileId,
-      if (note != null) 'note': note,
-      if (createdAt != null) 'created_at': createdAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  RecommendationsCompanion copyWith({
-    Value<String>? id,
-    Value<String>? profileId,
-    Value<String>? objectId,
-    Value<String?>? fromProfileId,
-    Value<String?>? note,
-    Value<DateTime>? createdAt,
-    Value<int>? rowid,
-  }) {
-    return RecommendationsCompanion(
-      id: id ?? this.id,
-      profileId: profileId ?? this.profileId,
-      objectId: objectId ?? this.objectId,
-      fromProfileId: fromProfileId ?? this.fromProfileId,
-      note: note ?? this.note,
-      createdAt: createdAt ?? this.createdAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (profileId.present) {
-      map['profile_id'] = Variable<String>(profileId.value);
-    }
-    if (objectId.present) {
-      map['object_id'] = Variable<String>(objectId.value);
-    }
-    if (fromProfileId.present) {
-      map['from_profile_id'] = Variable<String>(fromProfileId.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('RecommendationsCompanion(')
-          ..write('id: $id, ')
-          ..write('profileId: $profileId, ')
-          ..write('objectId: $objectId, ')
-          ..write('fromProfileId: $fromProfileId, ')
-          ..write('note: $note, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $CollectionsTable extends Collections
     with TableInfo<$CollectionsTable, CollectionRow> {
   @override
@@ -13437,9 +13015,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $EntryTagsTable entryTags = $EntryTagsTable(this);
-  late final $RecommendationsTable recommendations = $RecommendationsTable(
-    this,
-  );
   late final $CollectionsTable collections = $CollectionsTable(this);
   late final $CollectionEntriesTable collectionEntries =
       $CollectionEntriesTable(this);
@@ -13472,7 +13047,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     profileEntryRevisions,
     entryCategories,
     entryTags,
-    recommendations,
     collections,
     collectionEntries,
     attachments,
@@ -13659,26 +13233,6 @@ final class $$ProfilesTableReferences
     ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_profileEntriesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$RecommendationsTable, List<RecommendationRow>>
-  _recommendationsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.recommendations,
-    aliasName: 'profiles__id__recommendations__profile_id',
-  );
-
-  $$RecommendationsTableProcessedTableManager get recommendationsRefs {
-    final manager = $$RecommendationsTableTableManager(
-      $_db,
-      $_db.recommendations,
-    ).filter((f) => f.profileId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _recommendationsRefsTable($_db),
-    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -13958,31 +13512,6 @@ class $$ProfilesTableFilterComposer
           }) => $$ProfileEntriesTableFilterComposer(
             $db: $db,
             $table: $db.profileEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> recommendationsRefs(
-    Expression<bool> Function($$RecommendationsTableFilterComposer f) f,
-  ) {
-    final $$RecommendationsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.recommendations,
-      getReferencedColumn: (t) => t.profileId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RecommendationsTableFilterComposer(
-            $db: $db,
-            $table: $db.recommendations,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -14353,31 +13882,6 @@ class $$ProfilesTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> recommendationsRefs<T extends Object>(
-    Expression<T> Function($$RecommendationsTableAnnotationComposer a) f,
-  ) {
-    final $$RecommendationsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.recommendations,
-      getReferencedColumn: (t) => t.profileId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RecommendationsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.recommendations,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> collectionsRefs<T extends Object>(
     Expression<T> Function($$CollectionsTableAnnotationComposer a) f,
   ) {
@@ -14425,7 +13929,6 @@ class $$ProfilesTableTableManager
             bool categoriesRefs,
             bool tagsRefs,
             bool profileEntriesRefs,
-            bool recommendationsRefs,
             bool collectionsRefs,
           })
         > {
@@ -14533,7 +14036,6 @@ class $$ProfilesTableTableManager
                 categoriesRefs = false,
                 tagsRefs = false,
                 profileEntriesRefs = false,
-                recommendationsRefs = false,
                 collectionsRefs = false,
               }) {
                 return PrefetchHooks(
@@ -14546,7 +14048,6 @@ class $$ProfilesTableTableManager
                     if (categoriesRefs) db.categories,
                     if (tagsRefs) db.tags,
                     if (profileEntriesRefs) db.profileEntries,
-                    if (recommendationsRefs) db.recommendations,
                     if (collectionsRefs) db.collections,
                   ],
                   addJoins: null,
@@ -14695,27 +14196,6 @@ class $$ProfilesTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (recommendationsRefs)
-                        await $_getPrefetchedData<
-                          ProfileRow,
-                          $ProfilesTable,
-                          RecommendationRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ProfilesTableReferences
-                              ._recommendationsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ProfilesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).recommendationsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.profileId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                       if (collectionsRefs)
                         await $_getPrefetchedData<
                           ProfileRow,
@@ -14765,7 +14245,6 @@ typedef $$ProfilesTableProcessedTableManager =
         bool categoriesRefs,
         bool tagsRefs,
         bool profileEntriesRefs,
-        bool recommendationsRefs,
         bool collectionsRefs,
       })
     >;
@@ -16616,26 +16095,6 @@ final class $$ObjectsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
-
-  static MultiTypedResultKey<$RecommendationsTable, List<RecommendationRow>>
-  _recommendationsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.recommendations,
-    aliasName: 'objects__id__recommendations__object_id',
-  );
-
-  $$RecommendationsTableProcessedTableManager get recommendationsRefs {
-    final manager = $$RecommendationsTableTableManager(
-      $_db,
-      $_db.recommendations,
-    ).filter((f) => f.objectId.id.sqlEquals($_itemColumn<String>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _recommendationsRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
 }
 
 class $$ObjectsTableFilterComposer
@@ -16771,31 +16230,6 @@ class $$ObjectsTableFilterComposer
           }) => $$ProfileEntriesTableFilterComposer(
             $db: $db,
             $table: $db.profileEntries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> recommendationsRefs(
-    Expression<bool> Function($$RecommendationsTableFilterComposer f) f,
-  ) {
-    final $$RecommendationsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.recommendations,
-      getReferencedColumn: (t) => t.objectId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RecommendationsTableFilterComposer(
-            $db: $db,
-            $table: $db.recommendations,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17024,31 +16458,6 @@ class $$ObjectsTableAnnotationComposer
     );
     return f(composer);
   }
-
-  Expression<T> recommendationsRefs<T extends Object>(
-    Expression<T> Function($$RecommendationsTableAnnotationComposer a) f,
-  ) {
-    final $$RecommendationsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.recommendations,
-      getReferencedColumn: (t) => t.objectId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$RecommendationsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.recommendations,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$ObjectsTableTableManager
@@ -17068,7 +16477,6 @@ class $$ObjectsTableTableManager
             bool typeId,
             bool objectRevisionsRefs,
             bool profileEntriesRefs,
-            bool recommendationsRefs,
           })
         > {
   $$ObjectsTableTableManager(_$AppDatabase db, $ObjectsTable table)
@@ -17159,14 +16567,12 @@ class $$ObjectsTableTableManager
                 typeId = false,
                 objectRevisionsRefs = false,
                 profileEntriesRefs = false,
-                recommendationsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (objectRevisionsRefs) db.objectRevisions,
                     if (profileEntriesRefs) db.profileEntries,
-                    if (recommendationsRefs) db.recommendations,
                   ],
                   addJoins:
                       <
@@ -17244,27 +16650,6 @@ class $$ObjectsTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (recommendationsRefs)
-                        await $_getPrefetchedData<
-                          ObjectRow,
-                          $ObjectsTable,
-                          RecommendationRow
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ObjectsTableReferences
-                              ._recommendationsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ObjectsTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).recommendationsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.objectId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
                     ];
                   },
                 );
@@ -17289,7 +16674,6 @@ typedef $$ObjectsTableProcessedTableManager =
         bool typeId,
         bool objectRevisionsRefs,
         bool profileEntriesRefs,
-        bool recommendationsRefs,
       })
     >;
 typedef $$ObjectRevisionsTableCreateCompanionBuilder =
@@ -21574,445 +20958,6 @@ typedef $$EntryTagsTableProcessedTableManager =
       EntryTagRow,
       PrefetchHooks Function({bool entryId, bool tagId})
     >;
-typedef $$RecommendationsTableCreateCompanionBuilder =
-    RecommendationsCompanion Function({
-      required String id,
-      required String profileId,
-      required String objectId,
-      Value<String?> fromProfileId,
-      Value<String?> note,
-      required DateTime createdAt,
-      Value<int> rowid,
-    });
-typedef $$RecommendationsTableUpdateCompanionBuilder =
-    RecommendationsCompanion Function({
-      Value<String> id,
-      Value<String> profileId,
-      Value<String> objectId,
-      Value<String?> fromProfileId,
-      Value<String?> note,
-      Value<DateTime> createdAt,
-      Value<int> rowid,
-    });
-
-final class $$RecommendationsTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $RecommendationsTable,
-          RecommendationRow
-        > {
-  $$RecommendationsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ProfilesTable _profileIdTable(_$AppDatabase db) =>
-      db.profiles.createAlias('recommendations__profile_id__profiles__id');
-
-  $$ProfilesTableProcessedTableManager get profileId {
-    final $_column = $_itemColumn<String>('profile_id')!;
-
-    final manager = $$ProfilesTableTableManager(
-      $_db,
-      $_db.profiles,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static $ObjectsTable _objectIdTable(_$AppDatabase db) =>
-      db.objects.createAlias('recommendations__object_id__objects__id');
-
-  $$ObjectsTableProcessedTableManager get objectId {
-    final $_column = $_itemColumn<String>('object_id')!;
-
-    final manager = $$ObjectsTableTableManager(
-      $_db,
-      $_db.objects,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_objectIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$RecommendationsTableFilterComposer
-    extends Composer<_$AppDatabase, $RecommendationsTable> {
-  $$RecommendationsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get fromProfileId => $composableBuilder(
-    column: $table.fromProfileId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ProfilesTableFilterComposer get profileId {
-    final $$ProfilesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.profileId,
-      referencedTable: $db.profiles,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProfilesTableFilterComposer(
-            $db: $db,
-            $table: $db.profiles,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$ObjectsTableFilterComposer get objectId {
-    final $$ObjectsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.objectId,
-      referencedTable: $db.objects,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ObjectsTableFilterComposer(
-            $db: $db,
-            $table: $db.objects,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$RecommendationsTableOrderingComposer
-    extends Composer<_$AppDatabase, $RecommendationsTable> {
-  $$RecommendationsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get fromProfileId => $composableBuilder(
-    column: $table.fromProfileId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ProfilesTableOrderingComposer get profileId {
-    final $$ProfilesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.profileId,
-      referencedTable: $db.profiles,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProfilesTableOrderingComposer(
-            $db: $db,
-            $table: $db.profiles,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$ObjectsTableOrderingComposer get objectId {
-    final $$ObjectsTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.objectId,
-      referencedTable: $db.objects,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ObjectsTableOrderingComposer(
-            $db: $db,
-            $table: $db.objects,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$RecommendationsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $RecommendationsTable> {
-  $$RecommendationsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get fromProfileId => $composableBuilder(
-    column: $table.fromProfileId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  $$ProfilesTableAnnotationComposer get profileId {
-    final $$ProfilesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.profileId,
-      referencedTable: $db.profiles,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ProfilesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.profiles,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-
-  $$ObjectsTableAnnotationComposer get objectId {
-    final $$ObjectsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.objectId,
-      referencedTable: $db.objects,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ObjectsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.objects,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$RecommendationsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $RecommendationsTable,
-          RecommendationRow,
-          $$RecommendationsTableFilterComposer,
-          $$RecommendationsTableOrderingComposer,
-          $$RecommendationsTableAnnotationComposer,
-          $$RecommendationsTableCreateCompanionBuilder,
-          $$RecommendationsTableUpdateCompanionBuilder,
-          (RecommendationRow, $$RecommendationsTableReferences),
-          RecommendationRow,
-          PrefetchHooks Function({bool profileId, bool objectId})
-        > {
-  $$RecommendationsTableTableManager(
-    _$AppDatabase db,
-    $RecommendationsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$RecommendationsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$RecommendationsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$RecommendationsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> profileId = const Value.absent(),
-                Value<String> objectId = const Value.absent(),
-                Value<String?> fromProfileId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => RecommendationsCompanion(
-                id: id,
-                profileId: profileId,
-                objectId: objectId,
-                fromProfileId: fromProfileId,
-                note: note,
-                createdAt: createdAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String profileId,
-                required String objectId,
-                Value<String?> fromProfileId = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                required DateTime createdAt,
-                Value<int> rowid = const Value.absent(),
-              }) => RecommendationsCompanion.insert(
-                id: id,
-                profileId: profileId,
-                objectId: objectId,
-                fromProfileId: fromProfileId,
-                note: note,
-                createdAt: createdAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$RecommendationsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({profileId = false, objectId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (profileId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.profileId,
-                                referencedTable:
-                                    $$RecommendationsTableReferences
-                                        ._profileIdTable(db),
-                                referencedColumn:
-                                    $$RecommendationsTableReferences
-                                        ._profileIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-                    if (objectId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.objectId,
-                                referencedTable:
-                                    $$RecommendationsTableReferences
-                                        ._objectIdTable(db),
-                                referencedColumn:
-                                    $$RecommendationsTableReferences
-                                        ._objectIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$RecommendationsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $RecommendationsTable,
-      RecommendationRow,
-      $$RecommendationsTableFilterComposer,
-      $$RecommendationsTableOrderingComposer,
-      $$RecommendationsTableAnnotationComposer,
-      $$RecommendationsTableCreateCompanionBuilder,
-      $$RecommendationsTableUpdateCompanionBuilder,
-      (RecommendationRow, $$RecommendationsTableReferences),
-      RecommendationRow,
-      PrefetchHooks Function({bool profileId, bool objectId})
-    >;
 typedef $$CollectionsTableCreateCompanionBuilder =
     CollectionsCompanion Function({
       required String id,
@@ -24785,8 +23730,6 @@ class $AppDatabaseManager {
       $$EntryCategoriesTableTableManager(_db, _db.entryCategories);
   $$EntryTagsTableTableManager get entryTags =>
       $$EntryTagsTableTableManager(_db, _db.entryTags);
-  $$RecommendationsTableTableManager get recommendations =>
-      $$RecommendationsTableTableManager(_db, _db.recommendations);
   $$CollectionsTableTableManager get collections =>
       $$CollectionsTableTableManager(_db, _db.collections);
   $$CollectionEntriesTableTableManager get collectionEntries =>

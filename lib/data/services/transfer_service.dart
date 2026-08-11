@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 
-import '../../core/utils/ids.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
 import '../repositories/category_repository.dart';
@@ -251,17 +250,8 @@ class TransferService {
       ),
     );
 
-    await db
-        .into(db.recommendations)
-        .insert(
-          RecommendationsCompanion.insert(
-            id: Ids.newId(),
-            profileId: targetProfileId,
-            objectId: source.objectId,
-            fromProfileId: Value(source.profileId),
-            createdAt: DateTime.now(),
-          ),
-        );
+    // Кто посоветовал — записано выше, в самой записи. Отдельная таблица
+    // `recommendations` дублировала это и нигде не читалась, поэтому убрана.
 
     return TransferResult(entryId: created.id, categoryId: resolvedCategoryId);
   }

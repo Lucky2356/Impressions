@@ -33,6 +33,33 @@ class PurgeService {
   final AppDatabase db;
   final ImageService _images;
 
+  /// Сводит два одинаковых объекта в один.
+  ///
+  /// Диалог похожих объектов помогает только в момент создания: если два
+  /// одинаковых уже заведены — а до 1.12.0 их плодило само приложение,
+  /// подставляя первого кандидата, — свести их было нечем.
+  ///
+  /// Записи всех профилей переезжают на [keepId], фотографии и история самих
+  /// записей остаются при них: они привязаны к записи, а не к объекту.
+  /// Опустевший объект убирается тем же правилом, что и при удалении записи, —
+  /// только если на него больше никто не смотрит.
+  Future<void> mergeObjects({
+    required String mergeId,
+    required String keepId,
+  }) async {
+    if (mergeId == keepId) return;
+
+    final orphanedAttachments = <String>{};
+    await db.transaction(() async {
+      await (db.update(db.profileEntries)
+            ..where((e) => e.objectId.equals(mergeId)))
+          .write(ProfileEntriesCompanion(objectId: Value(keepId)));
+      orphanedAttachments.addAll(await _purgeObjectIfUnused(mergeId));
+    });
+
+    await _deleteAttachmentFiles(orphanedAttachments);
+  }
+
   /// Удаляет запись профиля со всеми её версиями и связями.
   ///
   /// Объект (общее описание предмета) удаляется вместе с ней, только если на
@@ -187,13 +214,6 @@ class PurgeService {
               ..limit(1))
             .get();
     if (used.isNotEmpty) return const {};
-
-    final recommended =
-        await (db.select(db.recommendations)
-              ..where((r) => r.objectId.equals(objectId))
-              ..limit(1))
-            .get();
-    if (recommended.isNotEmpty) return const {};
 
     final revisionIds =
         (await (db.select(

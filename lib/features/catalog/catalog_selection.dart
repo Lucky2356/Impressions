@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
+import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
@@ -127,6 +129,105 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     });
   }
 
+  /// Снимает тег со всех выделенных записей.
+  ///
+  /// Повесить тег на пачку было можно, а снять — только по одной записи, через
+  /// карточку. Выбирать предлагаем из тех тегов, что на выделенном и стоят.
+  Future<void> _removeTag() async {
+    final l10n = AppLocalizations.of(context);
+    final repo = ref.read(entryRepositoryProvider);
+    final ids = ref.read(catalogSelectionProvider).toList();
+
+    final tags = <String, TagRow>{};
+    for (final id in ids) {
+      for (final tag in await repo.tagsOfEntry(id)) {
+        tags[tag.id] = tag;
+      }
+    }
+    if (!mounted) return;
+    if (tags.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.bulkRemoveTagEmpty)));
+      return;
+    }
+
+    final sorted = tags.values.toList()
+      ..sort((a, b) => a.normalizedName.compareTo(b.normalizedName));
+    final chosen = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.bulkRemoveTag),
+        children: [
+          for (final tag in sorted)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(tag.id),
+              child: Row(
+                children: [
+                  const Icon(Icons.label_outline_rounded, size: 18),
+                  const SizedBox(width: AppDimens.space12),
+                  Expanded(child: Text(tag.name)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (chosen == null) return;
+
+    await _run((selected) async {
+      for (final id in selected) {
+        await repo.removeTag(id, chosen);
+      }
+    });
+  }
+
+  /// Ставит отношение всей пачке.
+  ///
+  /// «Понравилось / не понравилось» — самое частое действие вообще, а в панели
+  /// выделения его не было: разбирая полсотни записей, отношение проставляли
+  /// по одной через меню карточки.
+  Future<void> _setRelation(Relation relation) async {
+    final l10n = AppLocalizations.of(context);
+    final count = ref.read(catalogSelectionProvider).length;
+
+    await _run((ids) async {
+      final repo = ref.read(entryRepositoryProvider);
+      for (final id in ids) {
+        await repo.updateEntry(id, relation: relation.name);
+      }
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.bulkDone(count))));
+  }
+
+  /// Ставит оценку всей пачке — тем же выбором, что и в карточке.
+  Future<void> _setRating() async {
+    final l10n = AppLocalizations.of(context);
+    final count = ref.read(catalogSelectionProvider).length;
+
+    final rating = await RatingDialog.show(
+      context,
+      title: l10n.bulkSelected(count),
+    );
+    if (rating == null) return;
+
+    await _run((ids) async {
+      final repo = ref.read(entryRepositoryProvider);
+      for (final id in ids) {
+        await repo.updateEntry(id, rating: rating);
+      }
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.bulkDone(count))));
+  }
+
   /// Кладёт выделенное в подборку.
   ///
   /// Пустой список подборок больше не тупик: завести первую можно прямо
@@ -209,8 +310,9 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-            // Кнопок четыре и они всегда на месте: на узком окне ряд должен
-            // переноситься, а не выезжать за край.
+            // Кнопками — то, что делают чаще всего; остальное в меню, иначе
+            // панель растёт в две строки. На узком окне ряд переносится, а не
+            // выезжает за край.
             Flexible(
               child: Wrap(
                 spacing: AppDimens.space8,
@@ -218,20 +320,40 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
                 alignment: WrapAlignment.end,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  _RelationButton(enabled: !_busy, onSelected: _setRelation),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _setRating,
+                    icon: const Icon(Icons.star_border_rounded, size: 18),
+                    label: Text(l10n.bulkRating),
+                  ),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _setCategory,
                     icon: const Icon(Icons.account_tree_rounded, size: 18),
                     label: Text(l10n.bulkSetCategory),
                   ),
                   OutlinedButton.icon(
-                    onPressed: _busy ? null : _addTag,
-                    icon: const Icon(Icons.label_outline_rounded, size: 18),
-                    label: Text(l10n.bulkAddTag),
-                  ),
-                  OutlinedButton.icon(
                     onPressed: _busy ? null : _addToCollection,
                     icon: const Icon(Icons.playlist_add_rounded, size: 18),
                     label: Text(l10n.bulkAddToCollection),
+                  ),
+                  // Теги — под «Ещё»: их вешают реже, чем ставят отношение и
+                  // оценку, а панель не должна расти в три строки.
+                  PopupMenuButton<String>(
+                    enabled: !_busy,
+                    tooltip: l10n.bulkMore,
+                    icon: const Icon(Icons.more_horiz_rounded, size: 20),
+                    onSelected: (value) =>
+                        value == 'addTag' ? _addTag() : _removeTag(),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'addTag',
+                        child: Text(l10n.bulkAddTag),
+                      ),
+                      PopupMenuItem(
+                        value: 'removeTag',
+                        child: Text(l10n.bulkRemoveTag),
+                      ),
+                    ],
                   ),
                   FilledButton.icon(
                     onPressed: _busy ? null : _archive,
@@ -242,6 +364,59 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Кнопка «Отношение» со списком из шести значений.
+class _RelationButton extends StatelessWidget {
+  const _RelationButton({required this.enabled, required this.onSelected});
+
+  final bool enabled;
+  final ValueChanged<Relation> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    return PopupMenuButton<Relation>(
+      enabled: enabled,
+      tooltip: l10n.bulkRelation,
+      onSelected: onSelected,
+      itemBuilder: (_) => [
+        for (final r in Relation.values)
+          PopupMenuItem(
+            value: r,
+            height: 40,
+            // Меню Material шире 280 точек не бывает, а «Хочу попробовать»
+            // со значком в эту ширину не помещается.
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(r.icon, size: 18, color: r.accent(c)),
+                const SizedBox(width: AppDimens.space12),
+                Flexible(
+                  child: Text(
+                    r.label(l10n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      // Нажатие ловит меню снаружи, поэтому кнопка пропускает его сквозь себя:
+      // с собственным обработчиком она бы его съедала, а с `onPressed: null`
+      // выглядела бы отключённой.
+      child: IgnorePointer(
+        child: OutlinedButton.icon(
+          onPressed: enabled ? () {} : null,
+          icon: const Icon(Icons.favorite_border_rounded, size: 18),
+          label: Text(l10n.bulkRelation),
         ),
       ),
     );

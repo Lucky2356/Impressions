@@ -11,6 +11,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/providers.dart';
+import '../../data/services/purge_service.dart';
 import '../../data/services/revision_service.dart';
 import '../../data/services/transfer_service.dart';
 import '../../design_system/design_system.dart';
@@ -213,12 +214,21 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       ),
                       // Правка описания самого объекта: название, бренд, год.
                       // Раньше их нельзя было изменить вовсе — даже опечатку.
-                      if (isOwn)
+                      if (isOwn) ...[
                         AppIconButton(
                           icon: Icons.edit_rounded,
                           tooltip: l10n.entryEditObject,
                           onPressed: () => _editObject(d),
                         ),
+                        // Свести два одинаковых объекта можно было только
+                        // заведя всё заново: диалог похожих работает лишь в
+                        // момент создания записи.
+                        AppIconButton(
+                          icon: Icons.merge_rounded,
+                          tooltip: l10n.entryMerge,
+                          onPressed: () => _mergeObject(d),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: AppDimens.space4),
@@ -546,6 +556,43 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     _bump();
   }
 
+  /// Сводит объект записи с другим таким же.
+  ///
+  /// Кандидатов ищем тем же правилом, что и при создании записи, — только без
+  /// самого объекта. Записи переезжают на выбранный, а опустевший объект
+  /// убирается, если на него больше никто не смотрит.
+  Future<void> _mergeObject(EntryDetail d) async {
+    final l10n = AppLocalizations.of(context);
+    final repo = ref.read(entryRepositoryProvider);
+    final candidates = (await repo.findDuplicateCandidates(
+      d.object.typeId,
+      d.object.title,
+    )).where((o) => o.id != d.object.id).toList();
+    if (!mounted) return;
+
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.entryMergeEmpty)));
+      return;
+    }
+
+    final target = await showDialog<ObjectRow>(
+      context: context,
+      builder: (_) => _MergeDialog(candidates: candidates.take(5).toList()),
+    );
+    if (target == null || !mounted) return;
+
+    await PurgeService(
+      ref.read(appDatabaseProvider),
+    ).mergeObjects(mergeId: d.object.id, keepId: target.id);
+    _bump();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.entryMergeDone)));
+  }
+
   Future<void> _pickImpressionDate(EntryDetail d) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -777,6 +824,78 @@ class _ImpressionDateRow extends StatelessWidget {
 typedef _ObjectEdit = ({String title, String? creator, int? year});
 
 /// Диалог правки названия, бренда и года объекта.
+/// Выбор объекта, с которым сводить.
+class _MergeDialog extends StatefulWidget {
+  const _MergeDialog({required this.candidates});
+
+  final List<ObjectRow> candidates;
+
+  @override
+  State<_MergeDialog> createState() => _MergeDialogState();
+}
+
+class _MergeDialogState extends State<_MergeDialog> {
+  /// Заранее ничего не выбрано: объединение необратимо, и подставленный выбор
+  /// человек принимает не глядя.
+  String? _selectedId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final selected = widget.candidates
+        .where((o) => o.id == _selectedId)
+        .firstOrNull;
+
+    return AlertDialog(
+      title: Text(l10n.entryMergeTitle),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.entryMergeMessage),
+            const SizedBox(height: AppDimens.space12),
+            RadioGroup<String>(
+              groupValue: _selectedId,
+              onChanged: (v) => setState(() => _selectedId = v),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final o in widget.candidates)
+                    RadioListTile<String>(
+                      value: o.id,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(
+                        o.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: o.creator == null ? null : Text(o.creator!),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.commonCancel),
+        ),
+        FilledButton(
+          onPressed: selected == null
+              ? null
+              : () => Navigator.of(context).pop(selected),
+          child: Text(l10n.entryMergeAction),
+        ),
+      ],
+    );
+  }
+}
+
 class _ObjectEditDialog extends StatefulWidget {
   const _ObjectEditDialog({required this.object});
   final ObjectRow object;

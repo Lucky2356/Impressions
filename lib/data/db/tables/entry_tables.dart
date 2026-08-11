@@ -89,19 +89,3 @@ class EntryTags extends Table {
   @override
   Set<Column> get primaryKey => {entryId, tagId};
 }
-
-/// Рекомендации (§12): кто и что порекомендовал.
-@DataClassName('RecommendationRow')
-class Recommendations extends Table {
-  TextColumn get id => text()();
-  TextColumn get profileId =>
-      text().references(Profiles, #id, onDelete: KeyAction.restrict)();
-  TextColumn get objectId =>
-      text().references(Objects, #id, onDelete: KeyAction.restrict)();
-  TextColumn get fromProfileId => text().nullable()();
-  TextColumn get note => text().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
