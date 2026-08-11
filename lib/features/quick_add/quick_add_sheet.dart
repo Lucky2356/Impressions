@@ -836,12 +836,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     ),
                   ],
                 ),
-                Slider(
-                  value: _rating ?? 0,
-                  min: 0,
-                  max: 10,
-                  divisions: 20,
-                  label: (_rating ?? 0).toStringAsFixed(1),
+                RatingPicker(
+                  value: _rating,
                   onChanged: (v) => setState(() => _rating = v),
                 ),
                 if (_rating != null)

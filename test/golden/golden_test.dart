@@ -260,5 +260,21 @@ void main() {
         matchesGoldenFile('goldens/catalog_$suffix.png'),
       );
     });
+
+    testWidgets('golden: выбор оценки ($suffix)', (tester) async {
+      await tester.pumpWidget(
+        golden(
+          RatingPicker(value: 8, onChanged: (_) {}),
+          brightness: brightness,
+          size: const Size(380, 120),
+        ),
+      );
+      await tester.pump();
+
+      await expectLater(
+        find.byType(RatingPicker),
+        matchesGoldenFile('goldens/rating_picker_$suffix.png'),
+      );
+    });
   }
 }

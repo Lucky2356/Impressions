@@ -20,6 +20,7 @@ class EntryTile extends ConsumerWidget {
     required this.entry,
     required this.selected,
     required this.selectionActive,
+    required this.order,
     required this.builder,
   });
 
@@ -28,6 +29,12 @@ class EntryTile extends ConsumerWidget {
 
   /// Хотя бы одна запись уже выделена: обычное нажатие тоже выделяет.
   final bool selectionActive;
+
+  /// Порядок записей на экране: по нему Shift+клик выделяет диапазон.
+  ///
+  /// Именно показанный порядок, а не порядок отбора: человек тянет выделение
+  /// по тому, что видит.
+  final List<String> order;
 
   /// Строит саму карточку. Нажатие приходит извне, чтобы карточка осталась
   /// кнопкой: только так работают обход фокуса стрелками и Enter.
@@ -42,6 +49,12 @@ class EntryTile extends ConsumerWidget {
     void toggle() => selection.toggle(entry.entryId);
 
     void onTap() {
+      // Shift тянет выделение от последней отмеченной записи: убрать в архив
+      // тридцать штук подряд иначе означало тридцать нажатий.
+      if (HardwareKeyboard.instance.isShiftPressed) {
+        selection.selectTo(entry.entryId, order);
+        return;
+      }
       // Ctrl добавляет к выделению, не открывая карточку.
       final ctrl =
           HardwareKeyboard.instance.isControlPressed ||

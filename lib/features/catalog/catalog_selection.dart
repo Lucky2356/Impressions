@@ -20,15 +20,47 @@ class CatalogSelection extends Notifier<Set<String>> {
   @override
   Set<String> build() => const {};
 
+  /// Запись, от которой тянут диапазон Shift+кликом.
+  String? _anchor;
+
   void toggle(String entryId) {
     final next = {...state};
     if (!next.remove(entryId)) next.add(entryId);
     state = next;
+    _anchor = entryId;
   }
 
-  void selectAll(Iterable<String> entryIds) => state = entryIds.toSet();
+  /// Выделяет всё между якорем и записью в показанном порядке.
+  ///
+  /// Убрать в архив тридцать записей подряд означало тридцать нажатий: меню
+  /// умело Ctrl+клик и долгое нажатие, а привычного Shift+клика не было.
+  /// Якорь не двигаем — от одной точки можно тянуть в обе стороны, как в
+  /// проводнике.
+  void selectTo(String entryId, List<String> order) {
+    final anchor = _anchor;
+    final from = anchor == null ? -1 : order.indexOf(anchor);
+    final to = order.indexOf(entryId);
+    // Якоря нет или он уехал из выборки (сменились фильтры, ушла страница) —
+    // тянуть неоткуда, ведём себя как обычный клик с Ctrl.
+    if (from < 0 || to < 0) {
+      toggle(entryId);
+      return;
+    }
 
-  void clear() => state = const {};
+    final lo = from < to ? from : to;
+    final hi = from < to ? to : from;
+    state = {...state, ...order.sublist(lo, hi + 1)};
+  }
+
+  void selectAll(Iterable<String> entryIds) {
+    state = entryIds.toSet();
+    _anchor = state.isEmpty ? null : state.last;
+  }
+
+  void clear() {
+    state = const {};
+    _anchor = null;
+  }
 
   bool get isActive => state.isNotEmpty;
 }

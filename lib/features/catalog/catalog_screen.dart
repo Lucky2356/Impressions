@@ -251,11 +251,17 @@ class _Results extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = context.layout;
     final selected = ref.watch(catalogSelectionProvider);
+    // Порядок, в котором записи показаны: по нему Shift+клик берёт диапазон.
+    final order = [for (final e in entries) e.entryId];
 
     if (view == CatalogViewMode.list) {
       return NotificationListener<ScrollNotification>(
         onNotification: (n) => _onScroll(n, ref),
         child: ListView.separated(
+          // Разделы живут в `KeyedSubtree` и при переключении уничтожаются:
+          // без своего ключа в хранилище страницы каталог возвращался в
+          // начало, и подгруженное приходилось докручивать заново.
+          key: const PageStorageKey('catalog-list'),
           padding: EdgeInsets.fromLTRB(
             layout.gutter,
             AppDimens.space16,
@@ -270,6 +276,7 @@ class _Results extends ConsumerWidget {
               entry: entries[i],
               selected: selected.contains(entries[i].entryId),
               selectionActive: selected.isNotEmpty,
+              order: order,
               builder: (onTap) => EntryCardCompact(
                 data: _toCardData(context, entries[i]),
                 onTap: onTap,
@@ -291,6 +298,7 @@ class _Results extends ConsumerWidget {
         return NotificationListener<ScrollNotification>(
           onNotification: (n) => _onScroll(n, ref),
           child: GridView.builder(
+            key: const PageStorageKey('catalog-grid'),
             padding: EdgeInsets.fromLTRB(
               layout.gutter,
               AppDimens.space16,
@@ -316,6 +324,7 @@ class _Results extends ConsumerWidget {
                 entry: entries[i],
                 selected: selected.contains(entries[i].entryId),
                 selectionActive: selected.isNotEmpty,
+                order: order,
                 builder: (onTap) => EntryCard(
                   dense: dense,
                   data: _toCardData(context, entries[i]),

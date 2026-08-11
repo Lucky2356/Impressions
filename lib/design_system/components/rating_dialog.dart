@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
+import 'rating_picker.dart';
 import 'rating_view.dart';
 
 /// Оценка одним движением.
@@ -62,12 +63,8 @@ class _RatingDialogState extends State<RatingDialog> {
                 RatingView(value: _rating, compact: true),
               ],
             ),
-            Slider(
+            RatingPicker(
               value: _rating,
-              min: 0,
-              max: 10,
-              divisions: 20,
-              label: _rating.toStringAsFixed(1),
               onChanged: (v) => setState(() => _rating = v),
             ),
             Text(
