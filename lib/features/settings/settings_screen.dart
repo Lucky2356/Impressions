@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../app/locale_controller.dart';
 import '../../app/theme_controller.dart';
 import '../../core/config/app_config.dart';
 import '../../core/domain/hotkeys.dart';
@@ -326,14 +327,55 @@ class _AppearanceSection extends ConsumerWidget {
           minControlWidth: 330,
         ),
         Divider(height: AppDimens.space24, color: c.divider),
-        SettingsRow(
-          label: l10n.settingsLanguage,
-          control: Text(
-            l10n.settingsLanguageRu,
-            style: context.text.labelMedium?.copyWith(color: c.textSecondary),
-          ),
-        ),
+        SettingsRow(label: l10n.settingsLanguage, control: _LanguagePicker()),
       ],
+    );
+  }
+}
+
+/// Выбор языка интерфейса.
+///
+/// Названия языков намеренно написаны на них самих: человек, включивший чужой
+/// язык по ошибке, должен узнать свой в списке и вернуться обратно.
+class _LanguagePicker extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final locale = ref.watch(localeProvider);
+
+    String label(Locale? value) => switch (value?.languageCode) {
+      'ru' => l10n.settingsLanguageRu,
+      'en' => l10n.settingsLanguageEn,
+      _ => l10n.settingsLanguageSystem,
+    };
+
+    return PopupMenuButton<String>(
+      tooltip: '',
+      onSelected: (code) =>
+          ref.read(localeProvider.notifier).set(LocaleController.parse(code)),
+      itemBuilder: (_) => [
+        for (final value in <Locale?>[null, ...LocaleController.supported])
+          PopupMenuItem(
+            value: value?.languageCode ?? '',
+            child: Text(label(value)),
+          ),
+      ],
+      // Название языка сжимается: на телефоне «Язык интерфейса» и «Язык
+      // системы» вместе шире строки, и без этого она переполнялась.
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label(locale),
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: c.textSecondary),
+            ),
+          ),
+          Icon(Icons.arrow_drop_down_rounded, color: c.textSecondary),
+        ],
+      ),
     );
   }
 }

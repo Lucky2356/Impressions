@@ -24,6 +24,7 @@ import '../features/settings/network_section.dart';
 import '../features/settings/whats_new_dialog.dart';
 import '../features/shell/app_shell.dart';
 import 'app_state.dart';
+import 'locale_controller.dart';
 import 'navigation.dart';
 import 'data_refresh.dart';
 import 'theme_controller.dart';
@@ -35,12 +36,15 @@ class ImpressionsApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
     return MaterialApp(
       onGenerateTitle: (context) => AppConfig.appName,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
+      // null — язык системы; неизвестный системе язык уводит на русский, на
+      // котором написан исходный перевод.
+      locale: locale,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,

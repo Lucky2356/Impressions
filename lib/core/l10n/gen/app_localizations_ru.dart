@@ -1643,7 +1643,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsLanguage => 'Язык интерфейса';
 
   @override
+  String get settingsLanguageSystem => 'Язык системы';
+
+  @override
   String get settingsLanguageRu => 'Русский';
+
+  @override
+  String get settingsLanguageEn => 'English';
 
   @override
   String get tagsTitle => 'Теги';

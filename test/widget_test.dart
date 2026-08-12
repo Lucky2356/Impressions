@@ -27,6 +27,46 @@ ProviderScope _app(List<ProfileRow> profiles) => ProviderScope(
 );
 
 void main() {
+  /// Язык системы для теста.
+  ///
+  /// Выбор языка идёт по списку `locales`, а не по одному `locale`, поэтому
+  /// задавать нужно оба: иначе приложение продолжит смотреть на настоящую
+  /// систему, где у тестового окружения английский.
+  void systemLanguage(String code) {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.localeTestValue = Locale(code);
+    dispatcher.localesTestValue = [Locale(code)];
+  }
+
+  // Язык интерфейса берётся из системы, а тестовое окружение отвечает
+  // «английский». Проверки ниже написаны по русским подписям — задаём язык
+  // явно, как на машине, где приложением и пользуются.
+  setUp(() => systemLanguage('ru'));
+
+  tearDown(() {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.clearLocaleTestValue();
+    dispatcher.clearLocalesTestValue();
+  });
+
+  testWidgets('интерфейс говорит на языке системы', (tester) async {
+    systemLanguage('en');
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app(const []));
+    await tester.pump();
+
+    expect(
+      find.text('Your taste, not someone else\'s ratings'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Нет профилей: онбординг начинается с объяснения', (
     tester,
   ) async {

@@ -5,6 +5,10 @@ class SettingKeys {
   const SettingKeys._();
   static const activeProfileId = 'active_profile_id';
   static const themeMode = 'theme_mode';
+
+  /// Язык интерфейса: `ru`, `en` или пусто — брать язык системы.
+  static const language = 'language';
+
   static const catalogViewMode = 'catalog_view_mode';
   static const catalogIncludeSubcategories = 'catalog_include_subcategories';
 
