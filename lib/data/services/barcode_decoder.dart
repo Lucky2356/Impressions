@@ -9,7 +9,7 @@ class DecodedCode {
 
   final String value;
 
-  /// `EAN-13`, `EAN-8`, `UPC-A` или `QR`.
+  /// `EAN-13`, `UPC-A`, `ITF-14`, `Code 128` или `QR`.
   final String format;
 
   /// Товарный ли это код (в отличие от произвольного текста в QR).
@@ -110,7 +110,14 @@ class BarcodeDecoder {
       final threshold = (min + max) ~/ 2;
       final bits = List<bool>.generate(width, (x) => row[x] < threshold);
 
-      final result = _decodeRow(bits) ?? _decodeRow(bits.reversed.toList());
+      final reversed = bits.reversed.toList();
+      final result =
+          _decodeRow(bits) ??
+          _decodeRow(reversed) ??
+          _decodeItf(bits) ??
+          _decodeItf(reversed) ??
+          _decodeCode128(bits) ??
+          _decodeCode128(reversed);
       if (result != null) return result;
     }
     return null;
@@ -294,6 +301,270 @@ class BarcodeDecoder {
     }
     if (bestValue < 0 || best >= _maxVariance) return null;
     return _Digit(bestValue, start + counters.reduce((a, b) => a + b));
+  }
+
+  // ---- Code 128 ----
+
+  /// Ширины шести элементов каждого символа Code 128 (три штриха, три
+  /// пробела; всего 11 модулей). Индекс — значение символа.
+  static const List<List<int>> _code128Patterns = [
+    [2, 1, 2, 2, 2, 2],
+    [2, 2, 2, 1, 2, 2],
+    [2, 2, 2, 2, 2, 1],
+    [1, 2, 1, 2, 2, 3],
+    [1, 2, 1, 3, 2, 2],
+    [1, 3, 1, 2, 2, 2],
+    [1, 2, 2, 2, 1, 3],
+    [1, 2, 2, 3, 1, 2],
+    [1, 3, 2, 2, 1, 2],
+    [2, 2, 1, 2, 1, 3],
+    [2, 2, 1, 3, 1, 2],
+    [2, 3, 1, 2, 1, 2],
+    [1, 1, 2, 2, 3, 2],
+    [1, 2, 2, 1, 3, 2],
+    [1, 2, 2, 2, 3, 1],
+    [1, 1, 3, 2, 2, 2],
+    [1, 2, 3, 1, 2, 2],
+    [1, 2, 3, 2, 2, 1],
+    [2, 2, 3, 2, 1, 1],
+    [2, 2, 1, 1, 3, 2],
+    [2, 2, 1, 2, 3, 1],
+    [2, 1, 3, 2, 1, 2],
+    [2, 2, 3, 1, 1, 2],
+    [3, 1, 2, 1, 3, 1],
+    [3, 1, 1, 2, 2, 2],
+    [3, 2, 1, 1, 2, 2],
+    [3, 2, 1, 2, 2, 1],
+    [3, 1, 2, 2, 1, 2],
+    [3, 2, 2, 1, 1, 2],
+    [3, 2, 2, 2, 1, 1],
+    [2, 1, 2, 1, 2, 3],
+    [2, 1, 2, 3, 2, 1],
+    [2, 3, 2, 1, 2, 1],
+    [1, 1, 1, 3, 2, 3],
+    [1, 3, 1, 1, 2, 3],
+    [1, 3, 1, 3, 2, 1],
+    [1, 1, 2, 3, 1, 3],
+    [1, 3, 2, 1, 1, 3],
+    [1, 3, 2, 3, 1, 1],
+    [2, 1, 1, 3, 1, 3],
+    [2, 3, 1, 1, 1, 3],
+    [2, 3, 1, 3, 1, 1],
+    [1, 1, 2, 1, 3, 3],
+    [1, 1, 2, 3, 3, 1],
+    [1, 3, 2, 1, 3, 1],
+    [1, 1, 3, 1, 2, 3],
+    [1, 1, 3, 3, 2, 1],
+    [1, 3, 3, 1, 2, 1],
+    [3, 1, 3, 1, 2, 1],
+    [2, 1, 1, 3, 3, 1],
+    [2, 3, 1, 1, 3, 1],
+    [2, 1, 3, 1, 1, 3],
+    [2, 1, 3, 3, 1, 1],
+    [2, 1, 3, 1, 3, 1],
+    [3, 1, 1, 1, 2, 3],
+    [3, 1, 1, 3, 2, 1],
+    [3, 3, 1, 1, 2, 1],
+    [3, 1, 2, 1, 1, 3],
+    [3, 1, 2, 3, 1, 1],
+    [3, 3, 2, 1, 1, 1],
+    [3, 1, 4, 1, 1, 1],
+    [2, 2, 1, 4, 1, 1],
+    [4, 3, 1, 1, 1, 1],
+    [1, 1, 1, 2, 2, 4],
+    [1, 1, 1, 4, 2, 2],
+    [1, 2, 1, 1, 2, 4],
+    [1, 2, 1, 4, 2, 1],
+    [1, 4, 1, 1, 2, 2],
+    [1, 4, 1, 2, 2, 1],
+    [1, 1, 2, 2, 1, 4],
+    [1, 1, 2, 4, 1, 2],
+    [1, 2, 2, 1, 1, 4],
+    [1, 2, 2, 4, 1, 1],
+    [1, 4, 2, 1, 1, 2],
+    [1, 4, 2, 2, 1, 1],
+    [2, 4, 1, 2, 1, 1],
+    [2, 2, 1, 1, 1, 4],
+    [4, 1, 3, 1, 1, 1],
+    [2, 4, 1, 1, 1, 2],
+    [1, 3, 4, 1, 1, 1],
+    [1, 1, 1, 2, 4, 2],
+    [1, 2, 1, 1, 4, 2],
+    [1, 2, 1, 2, 4, 1],
+    [1, 1, 4, 2, 1, 2],
+    [1, 2, 4, 1, 1, 2],
+    [1, 2, 4, 2, 1, 1],
+    [4, 1, 1, 2, 1, 2],
+    [4, 2, 1, 1, 1, 2],
+    [4, 2, 1, 2, 1, 1],
+    [2, 1, 2, 1, 4, 1],
+    [2, 1, 4, 1, 2, 1],
+    [4, 1, 2, 1, 2, 1],
+    [1, 1, 1, 1, 4, 3],
+    [1, 1, 1, 3, 4, 1],
+    [1, 3, 1, 1, 4, 1],
+    [1, 1, 4, 1, 1, 3],
+    [1, 3, 4, 1, 1, 1],
+    [4, 1, 1, 1, 1, 3],
+    [4, 1, 1, 3, 1, 1],
+    [1, 1, 3, 1, 4, 1],
+    [1, 1, 4, 1, 3, 1],
+    [3, 1, 1, 1, 4, 1],
+    [4, 1, 1, 1, 3, 1],
+    [2, 1, 1, 4, 1, 2],
+    [2, 1, 1, 2, 1, 4],
+    [2, 1, 1, 2, 3, 2],
+    [2, 3, 3, 1, 1, 1],
+  ];
+
+  /// Стоп-метка Code 128: тринадцать модулей вместо одиннадцати.
+  static const List<int> _code128Stop = [2, 3, 3, 1, 1, 1, 2];
+
+  /// Code 128 — код складов, посылок и внутренней маркировки. Кодирует буквы
+  /// и цифры, поэтому «товарным» его считаем только по факту: значение уходит
+  /// в поле кода как есть.
+  DecodedCode? _decodeCode128(List<bool> bits) {
+    var index = 0;
+    while (index < bits.length && !bits[index]) {
+      index++;
+    }
+    if (index >= bits.length) return null;
+
+    final startCounters = _recordPattern(bits, index, 6);
+    if (startCounters == null) return null;
+
+    // Стартовых символов три: A (буквы и управляющие), B (буквы и цифры),
+    // C (пары цифр).
+    var mode = -1;
+    for (final start in [103, 104, 105]) {
+      if (_variance(startCounters, _code128Patterns[start]) < _maxVariance) {
+        mode = start;
+        break;
+      }
+    }
+    if (mode < 0) return null;
+
+    var checksum = mode;
+    var multiplier = 0;
+    var pos = index + startCounters.reduce((a, b) => a + b);
+    final text = StringBuffer();
+
+    while (pos < bits.length) {
+      // Стоп-метка кончает код: её проверяем раньше обычных символов.
+      final stop = _recordPattern(bits, pos, 7);
+      if (stop != null && _variance(stop, _code128Stop) < _maxVariance) {
+        if (text.isEmpty) return null;
+        return DecodedCode(value: text.toString(), format: 'Code 128');
+      }
+
+      final counters = _recordPattern(bits, pos, 6);
+      if (counters == null) return null;
+
+      var best = double.infinity;
+      var value = -1;
+      for (var i = 0; i < _code128Patterns.length; i++) {
+        final v = _variance(counters, _code128Patterns[i]);
+        if (v < best) {
+          best = v;
+          value = i;
+        }
+      }
+      if (value < 0 || best >= _maxVariance) return null;
+
+      // Предпоследний символ — контрольная сумма по модулю 103.
+      final next = _recordPattern(
+        bits,
+        pos + counters.reduce((a, b) => a + b),
+        7,
+      );
+      final isCheck =
+          next != null && _variance(next, _code128Stop) < _maxVariance;
+      if (isCheck) {
+        if (checksum % 103 != value) return null;
+        pos += counters.reduce((a, b) => a + b);
+        continue;
+      }
+
+      multiplier++;
+      checksum += value * multiplier;
+      text.write(_code128Char(mode, value));
+      pos += counters.reduce((a, b) => a + b);
+    }
+    return null;
+  }
+
+  /// Символ по значению: набор C кодирует пару цифр, A и B — печатные знаки.
+  String _code128Char(int mode, int value) {
+    if (mode == 105) return value < 100 ? value.toString().padLeft(2, '0') : '';
+    if (value < 96) return String.fromCharCode(value + 32);
+    return '';
+  }
+
+  // ---- ITF (Interleaved 2 of 5), в том числе ITF-14 ----
+
+  /// Ширины пяти элементов каждой цифры: 1 — узкий, 2 — широкий.
+  static const List<List<int>> _itfPatterns = [
+    [1, 1, 2, 2, 1],
+    [2, 1, 1, 1, 2],
+    [1, 2, 1, 1, 2],
+    [2, 2, 1, 1, 1],
+    [1, 1, 2, 1, 2],
+    [2, 1, 2, 1, 1],
+    [1, 2, 2, 1, 1],
+    [1, 1, 1, 2, 2],
+    [2, 1, 1, 2, 1],
+    [1, 2, 1, 2, 1],
+  ];
+
+  /// ITF-14 — код транспортной упаковки: им помечены коробки и блоки, которые
+  /// как раз и фотографируют. Цифры идут парами: первая штрихами, вторая
+  /// пробелами между ними.
+  DecodedCode? _decodeItf(List<bool> bits) {
+    // Стартовая метка: четыре узких элемента подряд.
+    final start = _findGuard(bits, 0, const [1, 1, 1, 1], whiteFirst: false);
+    if (start == null) return null;
+
+    final digits = StringBuffer();
+    var pos = start.end;
+    while (true) {
+      // Пары читаются, пока хватает элементов: у стоп-метки их всего три,
+      // и чтение просто не набирает нужные десять. Отдельная проверка на
+      // стоп здесь только мешала бы — её шаблон совпадает с началом многих
+      // обычных пар.
+      final counters = _recordPattern(bits, pos, 10);
+      if (counters == null) break;
+
+      final bars = [for (var i = 0; i < 10; i += 2) counters[i]];
+      final spaces = [for (var i = 1; i < 10; i += 2) counters[i]];
+      final first = _itfDigit(bars);
+      final second = _itfDigit(spaces);
+      if (first == null || second == null) break;
+
+      digits
+        ..write(first)
+        ..write(second);
+      pos += counters.reduce((a, b) => a + b);
+    }
+
+    final body = digits.toString();
+    // Короткие ITF слишком легко «увидеть» в случайной картинке, поэтому
+    // берём только длины настоящих товарных кодов.
+    if (body.length != 14 && body.length != 12) return null;
+    if (!_checksumOk(body)) return null;
+    return DecodedCode(value: body, format: 'ITF-14');
+  }
+
+  int? _itfDigit(List<int> widths) {
+    var best = double.infinity;
+    var bestValue = -1;
+    for (var d = 0; d < _itfPatterns.length; d++) {
+      final v = _variance(widths, _itfPatterns[d]);
+      if (v < best) {
+        best = v;
+        bestValue = d;
+      }
+    }
+    return best >= _maxVariance || bestValue < 0 ? null : bestValue;
   }
 
   /// Контрольная сумма GTIN.
