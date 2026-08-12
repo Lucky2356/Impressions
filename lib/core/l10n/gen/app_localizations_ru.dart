@@ -1293,6 +1293,105 @@ class AppLocalizationsRu extends AppLocalizations {
   String get whatsNewNothing => 'Для этой версии описания нет';
 
   @override
+  String get barcodeBatchTitle => 'Сканировать подряд';
+
+  @override
+  String get barcodeBatchNext => 'Взять и сканировать дальше';
+
+  @override
+  String get barcodeBatchFinish => 'Хватит';
+
+  @override
+  String barcodeBatchCollected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Собрано $count кодов',
+      many: 'Собрано $count кодов',
+      few: 'Собрано $count кода',
+      one: 'Собран $count код',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String barcodeBatchQueue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Осталось ещё $count кодов',
+      many: 'Осталось ещё $count кодов',
+      few: 'Осталось ещё $count кода',
+      one: 'Осталось ещё $count код',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get entryDuplicate => 'Дублировать';
+
+  @override
+  String get csvImportTitle => 'Список из таблицы';
+
+  @override
+  String get csvImportHint =>
+      'Перенести записи из CSV — своей же выгрузки или таблицы из другого приложения. Недостающие типы и категории заведутся сами.';
+
+  @override
+  String get csvImportPick => 'Выбрать таблицу';
+
+  @override
+  String csvImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Готово $count записей',
+      many: 'Готово $count записей',
+      few: 'Готовы $count записи',
+      one: 'Готова $count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count строк без названия пропущено',
+      many: '$count строк без названия пропущено',
+      few: '$count строки без названия пропущены',
+      one: '$count строка без названия пропущена',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String csvImportColumns(String columns) {
+    return 'Колонки: $columns';
+  }
+
+  @override
+  String get csvImportApply => 'Перенести';
+
+  @override
+  String get csvImportNothing =>
+      'В таблице не нашлось ни одной записи с названием';
+
+  @override
+  String csvImportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Перенесено $count записей',
+      many: 'Перенесено $count записей',
+      few: 'Перенесено $count записи',
+      one: 'Перенесена $count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get backupMirrorTitle => 'Класть копию ещё и сюда';
 
   @override

@@ -16,6 +16,7 @@ import '../../data/providers.dart';
 import '../../data/services/backup_service.dart';
 import '../../data/services/import_service.dart';
 import '../../design_system/design_system.dart';
+import 'csv_import_card.dart';
 
 /// Файл, с которым открыли приложение, — ждёт разбора на экране импорта.
 ///
@@ -190,6 +191,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           const SizedBox(height: AppDimens.space16),
           const LinearProgressIndicator(),
         ],
+
+        // Перенос списка из таблицы: выгрузка в CSV была, обратного пути не
+        // было — список из Excel переносили руками.
+        const SizedBox(height: AppDimens.space24),
+        const CsvImportCard(),
 
         if (_needPassword) ...[
           const SizedBox(height: AppDimens.space16),

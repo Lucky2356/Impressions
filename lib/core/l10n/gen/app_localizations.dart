@@ -2302,6 +2302,96 @@ abstract class AppLocalizations {
   /// **'Для этой версии описания нет'**
   String get whatsNewNothing;
 
+  /// No description provided for @barcodeBatchTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать подряд'**
+  String get barcodeBatchTitle;
+
+  /// No description provided for @barcodeBatchNext.
+  ///
+  /// In ru, this message translates to:
+  /// **'Взять и сканировать дальше'**
+  String get barcodeBatchNext;
+
+  /// No description provided for @barcodeBatchFinish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хватит'**
+  String get barcodeBatchFinish;
+
+  /// No description provided for @barcodeBatchCollected.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Собран {count} код} few{Собрано {count} кода} many{Собрано {count} кодов} other{Собрано {count} кодов}}'**
+  String barcodeBatchCollected(int count);
+
+  /// No description provided for @barcodeBatchQueue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Осталось ещё {count} код} few{Осталось ещё {count} кода} many{Осталось ещё {count} кодов} other{Осталось ещё {count} кодов}}'**
+  String barcodeBatchQueue(int count);
+
+  /// No description provided for @entryDuplicate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дублировать'**
+  String get entryDuplicate;
+
+  /// No description provided for @csvImportTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Список из таблицы'**
+  String get csvImportTitle;
+
+  /// No description provided for @csvImportHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести записи из CSV — своей же выгрузки или таблицы из другого приложения. Недостающие типы и категории заведутся сами.'**
+  String get csvImportHint;
+
+  /// No description provided for @csvImportPick.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать таблицу'**
+  String get csvImportPick;
+
+  /// No description provided for @csvImportFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Готова {count} запись} few{Готовы {count} записи} many{Готово {count} записей} other{Готово {count} записей}}'**
+  String csvImportFound(int count);
+
+  /// No description provided for @csvImportSkipped.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} строка без названия пропущена} few{{count} строки без названия пропущены} many{{count} строк без названия пропущено} other{{count} строк без названия пропущено}}'**
+  String csvImportSkipped(int count);
+
+  /// No description provided for @csvImportColumns.
+  ///
+  /// In ru, this message translates to:
+  /// **'Колонки: {columns}'**
+  String csvImportColumns(String columns);
+
+  /// No description provided for @csvImportApply.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести'**
+  String get csvImportApply;
+
+  /// No description provided for @csvImportNothing.
+  ///
+  /// In ru, this message translates to:
+  /// **'В таблице не нашлось ни одной записи с названием'**
+  String get csvImportNothing;
+
+  /// No description provided for @csvImportDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Перенесена {count} запись} few{Перенесено {count} записи} many{Перенесено {count} записей} other{Перенесено {count} записей}}'**
+  String csvImportDone(int count);
+
   /// No description provided for @backupMirrorTitle.
   ///
   /// In ru, this message translates to:

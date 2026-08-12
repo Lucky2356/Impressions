@@ -324,10 +324,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
   }
 
+  /// Сканирование: по одному коду или подряд — режим выбирается в самом окне.
+  ///
+  /// Разбирая пакет из магазина, сканер открывали заново на каждую позицию.
+  /// Собранные коды по очереди наполняют форму записи.
   Future<void> _scanBarcode() async {
-    final scanned = await BarcodeScanSheet.show(context);
-    if (scanned == null || !mounted) return;
-    await QuickAddSheet.show(context, prefill: scanned);
+    final scanned = await BarcodeScanSheet.showBatch(context);
+    if (scanned.isEmpty || !mounted) return;
+    if (scanned.length == 1) {
+      await QuickAddSheet.show(context, prefill: scanned.first);
+      return;
+    }
+    await QuickAddSheet.show(context, queue: scanned);
   }
 
   /// Горячие клавиши Windows (§4.1). Escape обрабатывают сами диалоги.

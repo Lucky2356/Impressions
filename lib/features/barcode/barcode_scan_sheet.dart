@@ -40,25 +40,44 @@ class ScannedProduct {
 /// фотографии или снимка экрана. Ручной ввод доступен везде, поэтому функция
 /// работает и без сети, и без камеры.
 class BarcodeScanSheet extends ConsumerStatefulWidget {
-  const BarcodeScanSheet({super.key});
+  const BarcodeScanSheet({super.key, this.batch = false});
 
-  static Future<ScannedProduct?> show(BuildContext context) {
+  /// Сканируем подряд: код за кодом, без закрытия окна.
+  ///
+  /// Разбирая пакет из магазина, сканер открывали заново на каждую позицию —
+  /// а позиций в пакете десяток.
+  final bool batch;
+
+  static Future<ScannedProduct?> show(BuildContext context) async {
+    final result = await _open(context, batch: false);
+    return result == null || result.isEmpty ? null : result.first;
+  }
+
+  /// Пачка: возвращает всё отсканированное подряд.
+  static Future<List<ScannedProduct>> showBatch(BuildContext context) async {
+    return await _open(context, batch: true) ?? const [];
+  }
+
+  static Future<List<ScannedProduct>?> _open(
+    BuildContext context, {
+    required bool batch,
+  }) {
     final wide =
         MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
     if (wide) {
-      return showDialog<ScannedProduct>(
+      return showDialog<List<ScannedProduct>>(
         context: context,
-        builder: (_) => const Dialog(
+        builder: (_) => Dialog(
           clipBehavior: Clip.antiAlias,
-          child: SizedBox(width: 560, child: BarcodeScanSheet()),
+          child: SizedBox(width: 560, child: BarcodeScanSheet(batch: batch)),
         ),
       );
     }
-    return showModalBottomSheet<ScannedProduct>(
+    return showModalBottomSheet<List<ScannedProduct>>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => const BarcodeScanSheet(),
+      builder: (_) => BarcodeScanSheet(batch: batch),
     );
   }
 
@@ -77,6 +96,13 @@ class _BarcodeScanSheetState extends ConsumerState<BarcodeScanSheet> {
   Map<String, String> _sourceErrors = const {};
   bool _lookupDone = false;
 
+  /// Что уже отсканировано в этом заходе.
+  final _collected = <ScannedProduct>[];
+
+  /// Сканируем подряд. Переключатель внутри окна, а не отдельный вход: так
+  /// режим виден там, где он и нужен, — с кодом в руках.
+  late bool _batch = widget.batch;
+
   /// Камера доступна только на мобильных платформах.
   bool get _cameraAvailable => Platform.isAndroid || Platform.isIOS;
 
@@ -85,6 +111,29 @@ class _BarcodeScanSheetState extends ConsumerState<BarcodeScanSheet> {
     _codeController.dispose();
     _codeFocus.dispose();
     super.dispose();
+  }
+
+  /// Забирает распознанное: по одному — закрывает окно, пачкой — копит.
+  void _take() {
+    final code = _code;
+    if (code == null) return;
+    final product = ScannedProduct(code: code, info: _info);
+
+    if (!_batch) {
+      Navigator.of(context).pop([product]);
+      return;
+    }
+
+    setState(() {
+      _collected.add(product);
+      // Готовимся к следующему коду: поле и результат очищаются, окно остаётся.
+      _code = null;
+      _info = null;
+      _lookupDone = false;
+      _sourceErrors = const {};
+      _codeController.clear();
+    });
+    _codeFocus.requestFocus();
   }
 
   Future<void> _submitManual() async {
@@ -209,9 +258,27 @@ class _BarcodeScanSheetState extends ConsumerState<BarcodeScanSheet> {
                       style: context.text.headlineSmall,
                     ),
                   ),
+                  // Пачкой или по одному — решают здесь же, с кодом в руках.
+                  Tooltip(
+                    message: l10n.barcodeBatchTitle,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.barcodeBatchTitle,
+                          style: context.text.labelSmall,
+                        ),
+                        Switch(
+                          value: _batch,
+                          onChanged: (v) => setState(() => _batch = v),
+                        ),
+                      ],
+                    ),
+                  ),
                   IconButton(
                     tooltip: l10n.commonClose,
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () =>
+                        Navigator.of(context).pop(List.of(_collected)),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
@@ -290,6 +357,28 @@ class _BarcodeScanSheetState extends ConsumerState<BarcodeScanSheet> {
                 ),
               ],
 
+              // Сколько уже собрано и кнопка «хватит»: в пачке результат
+              // отдаётся не по одному коду, а целиком.
+              if (_batch && _collected.isNotEmpty) ...[
+                const SizedBox(height: AppDimens.space16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.barcodeBatchCollected(_collected.length),
+                        style: context.text.labelMedium,
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () =>
+                          Navigator.of(context).pop(List.of(_collected)),
+                      icon: const Icon(Icons.done_all_rounded, size: 18),
+                      label: Text(l10n.barcodeBatchFinish),
+                    ),
+                  ],
+                ),
+              ],
+
               if (_code != null && !_busy) ...[
                 const SizedBox(height: AppDimens.space20),
                 _ResultCard(
@@ -310,10 +399,12 @@ class _BarcodeScanSheetState extends ConsumerState<BarcodeScanSheet> {
                     const SizedBox(width: AppDimens.space12),
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => Navigator.of(
-                          context,
-                        ).pop(ScannedProduct(code: _code!, info: _info)),
-                        child: Text(l10n.barcodeUseResult),
+                        onPressed: _take,
+                        child: Text(
+                          _batch
+                              ? l10n.barcodeBatchNext
+                              : l10n.barcodeUseResult,
+                        ),
                       ),
                     ),
                   ],

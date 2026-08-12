@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
+import '../quick_add/quick_add_sheet.dart';
 import 'entry_detail_sheet.dart';
 
 /// Контекстное меню записи: открыть, сменить категорию, добавить в подборку,
@@ -122,6 +123,9 @@ class EntryContextMenu {
         item('rating', Icons.star_border_rounded, l10n.entryRateAction),
         const PopupMenuDivider(),
         item('category', Icons.account_tree_rounded, l10n.bulkSetCategory),
+        // «То же самое, но другой бренд» и «тот же фильм, второй просмотр»
+        // заводились с нуля.
+        item('duplicate', Icons.copy_rounded, l10n.entryDuplicate),
         // Пункт есть всегда: подборку можно завести прямо из него, а раньше
         // при пустом списке он просто исчезал из меню.
         item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
@@ -169,6 +173,10 @@ class EntryContextMenu {
             .read(entryRepositoryProvider)
             .setPrimaryCategory(entry.entryId, category.id);
         ref.read(dataRefreshProvider.notifier).bump();
+      case 'duplicate':
+        // Копия не создаётся молча: форма открывается заполненной, человек
+        // меняет то, что отличается, — бренд, год, оценку.
+        await QuickAddSheet.show(context, duplicateOf: entry);
       case 'collection':
         await _pickCollection(context, ref, entry);
       case 'archive':

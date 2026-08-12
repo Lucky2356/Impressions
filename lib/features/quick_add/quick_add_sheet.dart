@@ -10,6 +10,7 @@ import '../../app/data_refresh.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/domain/custom_fields.dart';
 import '../../core/domain/relation.dart';
+import '../../core/utils/normalize.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -35,7 +36,13 @@ import 'type_for_category.dart';
 /// «Добавить подробности». Открывается диалогом на широком экране и нижним
 /// листом на узком.
 class QuickAddSheet extends ConsumerStatefulWidget {
-  const QuickAddSheet({super.key, this.prefill, this.initialCategory});
+  const QuickAddSheet({
+    super.key,
+    this.prefill,
+    this.initialCategory,
+    this.queue = const [],
+    this.duplicateOf,
+  });
 
   /// Данные, полученные сканированием штрихкода.
   final ScannedProduct? prefill;
@@ -43,11 +50,20 @@ class QuickAddSheet extends ConsumerStatefulWidget {
   /// Категория, подставляемая заранее: форма открыта из ветки категорий.
   final CategoryRow? initialCategory;
 
+  /// Очередь отсканированного подряд: следующая позиция подставляется сама
+  /// после сохранения предыдущей — форму на каждую не открывают заново.
+  final List<ScannedProduct> queue;
+
+  /// Запись, с которой снимается копия: «то же, но другой бренд».
+  final EntryView? duplicateOf;
+
   /// Показывает форму подходящим для платформы способом.
   static Future<bool> show(
     BuildContext context, {
     ScannedProduct? prefill,
     CategoryRow? initialCategory,
+    List<ScannedProduct> queue = const [],
+    EntryView? duplicateOf,
   }) async {
     final wide =
         MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
@@ -61,6 +77,8 @@ class QuickAddSheet extends ConsumerStatefulWidget {
                 child: QuickAddSheet(
                   prefill: prefill,
                   initialCategory: initialCategory,
+                  queue: queue,
+                  duplicateOf: duplicateOf,
                 ),
               ),
             ),
@@ -72,6 +90,8 @@ class QuickAddSheet extends ConsumerStatefulWidget {
             builder: (_) => QuickAddSheet(
               prefill: prefill,
               initialCategory: initialCategory,
+              queue: queue,
+              duplicateOf: duplicateOf,
             ),
           );
     return result ?? false;
@@ -144,12 +164,58 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   void initState() {
     super.initState();
     _category = widget.initialCategory;
-    _applyPrefill(widget.prefill);
+    // Пачка сканирования: первый код подставляется сразу, остальные ждут
+    // своей очереди.
+    _queue = List.of(widget.queue);
+    _applyPrefill(
+      widget.prefill ?? (_queue.isEmpty ? null : _queue.removeAt(0)),
+    );
+    _applyDuplicate();
     // Набор в полях сам по себе не вызывает setState, поэтому черновик
     // отмечается изменённым отдельно.
     _title.addListener(_scheduleDraftSave);
     _note.addListener(_scheduleDraftSave);
     _restoreDraft();
+  }
+
+  /// Заполняет форму по записи, с которой снимают копию.
+  ///
+  /// Тип и категория берутся по названию: карточка знает их именами, а форме
+  /// нужны идентификаторы.
+  Future<void> _applyDuplicate() async {
+    final source = widget.duplicateOf;
+    final profile = ref.read(activeProfileProvider);
+    if (source == null || profile == null) return;
+
+    _title.text = source.title;
+    _relation = Relation.values
+        .where((r) => r.name == source.relation)
+        .firstOrNull;
+    _rating = source.rating;
+    _showDetails = true;
+
+    final types = await ref
+        .read(entryRepositoryProvider)
+        .objectTypes(profile.id);
+    final type = types
+        .where((t) => Normalize.name(t.name) == Normalize.name(source.typeName))
+        .firstOrNull;
+
+    CategoryRow? category;
+    if (source.categoryPath.isNotEmpty) {
+      final all = await ref.read(allCategoriesProvider.future);
+      final wanted = Normalize.name(source.categoryPath.last);
+      category = all.where((c) => c.normalizedName == wanted).firstOrNull;
+    }
+    if (!mounted) return;
+
+    super.setState(() {
+      if (type != null) {
+        _typeId = type.id;
+        _typePicked = true;
+      }
+      _category ??= category;
+    });
   }
 
   void _applyPrefill(ScannedProduct? scanned) {
@@ -187,7 +253,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// поля заполнены осознанно и подмена сбила бы с толку.
   Future<void> _restoreDraft() async {
     final profile = ref.read(activeProfileProvider);
-    if (profile == null || widget.prefill != null) {
+    if (profile == null ||
+        widget.prefill != null ||
+        widget.duplicateOf != null) {
       _draftLoaded = true;
       return;
     }
@@ -374,6 +442,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Сколько записей заведено подряд, не закрывая форму.
   int _savedInARow = 0;
 
+  /// Отсканированное, что ещё ждёт своей формы.
+  List<ScannedProduct> _queue = const [];
+
   /// Сохраняет и оставляет форму открытой для следующей записи.
   ///
   /// Заводя пять записей подряд, форму открывали пять раз, хотя категория и
@@ -381,8 +452,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// очищается, курсор снова в названии.
   Future<void> _saveAndContinue() async {
     await _save(keepOpen: true);
-    if (!mounted) return;
+  }
 
+  /// Готовит форму к следующей записи: место остаётся, остальное очищается.
+  void _resetForNext() {
     _title.removeListener(_scheduleDraftSave);
     _note.removeListener(_scheduleDraftSave);
     _title.clear();
@@ -399,6 +472,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _creator = null;
       _customValues.clear();
       _impressionDate = null;
+      // Следующий код из пачки заполняет форму сам.
+      if (_queue.isNotEmpty) _applyPrefill(_queue.removeAt(0));
     });
     _titleFocus.requestFocus();
   }
@@ -470,8 +545,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
       ref.read(dataRefreshProvider.notifier).bump();
       if (!mounted) return;
-      if (keepOpen) {
+      if (keepOpen || _queue.isNotEmpty) {
         _savedInARow++;
+        _resetForNext();
       } else {
         Navigator.of(context).pop(true);
       }
@@ -938,6 +1014,15 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   ..._customFieldInputs(typeList, l10n),
                 ],
                 const SizedBox(height: AppDimens.space24),
+                if (_queue.isNotEmpty) ...[
+                  Text(
+                    l10n.barcodeBatchQueue(_queue.length),
+                    style: context.text.labelSmall?.copyWith(
+                      color: context.colors.accentPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space8),
+                ],
                 if (_savedInARow > 0) ...[
                   Text(
                     l10n.quickAddSavedInARow(_savedInARow),
