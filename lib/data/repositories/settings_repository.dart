@@ -11,6 +11,13 @@ class SettingKeys {
   /// Отбор каталога: тип, категория, отношение, теги, сортировка.
   static const catalogFilters = 'catalog_filters';
 
+  /// Названные отборы каталога: «без оценки в Продуктах», «любимое за год».
+  static const catalogSavedFilters = 'catalog_saved_filters';
+
+  /// Недавние поисковые запросы и недавно открытые записи.
+  static const recentSearches = 'recent_searches';
+  static const recentEntries = 'recent_entries';
+
   /// Раздел, открытый в прошлый раз.
   static const lastSection = 'last_section';
 

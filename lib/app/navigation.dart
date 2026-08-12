@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/l10n/gen/app_localizations.dart';
 import '../data/repositories/settings_repository.dart';
 import 'app_state.dart';
 
@@ -68,3 +70,40 @@ class NavController extends Notifier<String> {
 }
 
 final navProvider = NotifierProvider<NavController, String>(NavController.new);
+
+/// Название раздела и его значок — в одном месте.
+///
+/// Раньше и то и другое перечислялось внутри оболочки, а палитре команд нужны
+/// те же самые: два списка неминуемо разошлись бы, как когда-то справка и
+/// настройки по горячим клавишам.
+String navTitle(AppLocalizations l10n, String id) => switch (id) {
+  NavIds.home => l10n.homeTitle,
+  NavIds.categories => l10n.categoriesTitle,
+  NavIds.catalog => l10n.navCatalog,
+  NavIds.collections => l10n.navCollections,
+  NavIds.compare => l10n.navCompare,
+  NavIds.profiles => l10n.navProfiles,
+  NavIds.import => l10n.navImport,
+  NavIds.incoming => l10n.incomingTitle,
+  NavIds.wishlist => l10n.wishlistTitle,
+  NavIds.insights => l10n.insightsTitle,
+  NavIds.archive => l10n.archiveTitle,
+  NavIds.settings => l10n.navSettings,
+  _ => l10n.homeTitle,
+};
+
+IconData navIcon(String id) => switch (id) {
+  NavIds.home => Icons.home_rounded,
+  NavIds.categories => Icons.account_tree_rounded,
+  NavIds.catalog => Icons.grid_view_rounded,
+  NavIds.collections => Icons.collections_bookmark_rounded,
+  NavIds.compare => Icons.compare_arrows_rounded,
+  NavIds.profiles => Icons.people_alt_rounded,
+  NavIds.import => Icons.download_rounded,
+  NavIds.incoming => Icons.inbox_rounded,
+  NavIds.wishlist => Icons.bookmark_add_rounded,
+  NavIds.insights => Icons.insights_rounded,
+  NavIds.archive => Icons.archive_rounded,
+  NavIds.settings => Icons.settings_rounded,
+  _ => Icons.circle_outlined,
+};

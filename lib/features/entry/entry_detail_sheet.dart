@@ -17,6 +17,7 @@ import '../../data/services/transfer_service.dart';
 import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
+import '../search/recent_store.dart';
 import 'entry_photos.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
@@ -75,6 +76,11 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   @override
   void initState() {
     super.initState();
+    // Открытая запись попадает в недавние: закрыли — и искали её снова.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) =>
+          ref.read(recentStoreProvider.notifier).rememberEntry(widget.entryId),
+    );
     _noteFocus.addListener(() {
       if (!_noteFocus.hasFocus) _saveNoteIfChanged();
     });
@@ -424,6 +430,9 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                   const SizedBox(height: AppDimens.space16),
                   Divider(color: c.divider),
                   const SizedBox(height: AppDimens.space8),
+
+                  // Похожее рядом: тот же тип, близкая оценка или общий тег.
+                  _SimilarEntries(entryId: d.entry.id),
 
                   // История версий
                   InkWell(
@@ -975,6 +984,62 @@ class _ObjectEditDialogState extends State<_ObjectEditDialog> {
           },
           child: Text(l10n.commonSave),
         ),
+      ],
+    );
+  }
+}
+
+/// Похожие записи под карточкой.
+///
+/// Данные для такой связи лежали с самого начала — тип, оценка, теги, — но
+/// нигде не сводились: приложение знало о вкусах больше, чем показывало.
+class _SimilarEntries extends ConsumerWidget {
+  const _SimilarEntries({required this.entryId});
+
+  final String entryId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final similar =
+        ref.watch(similarEntriesProvider(entryId)).value ?? const [];
+    if (similar.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l10n.entrySimilar, style: context.text.titleSmall),
+        const SizedBox(height: AppDimens.space8),
+        for (final entry in similar)
+          InkWell(
+            onTap: () => EntryDetailSheet.show(context, entry.entryId),
+            borderRadius: AppDimens.brSm,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimens.space8,
+                horizontal: AppDimens.space4,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.bodyMedium,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.space8),
+                  RatingView(value: entry.rating, compact: true),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: AppDimens.space8),
+        Divider(color: c.divider),
+        const SizedBox(height: AppDimens.space8),
       ],
     );
   }

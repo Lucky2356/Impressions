@@ -102,6 +102,56 @@ class CatalogState {
     );
   }
 
+  /// Отбор в виде, пригодном для сохранения.
+  ///
+  /// Живёт в модели, а не в контроллере: тот же вид используют и сохранённые
+  /// отборы, и восстановление после перезапуска.
+  Map<String, Object?> toJson() => {
+    'typeId': typeId,
+    'categoryId': categoryId,
+    'includeSubcategories': includeSubcategories,
+    'relation': relation,
+    'tagIds': tagIds,
+    'sort': sort.name,
+    'reverseSort': reverseSort,
+    'withoutRating': withoutRating,
+    'withoutCategory': withoutCategory,
+    'withoutPhoto': withoutPhoto,
+    'recommendedOnly': recommendedOnly,
+  };
+
+  /// Восстанавливает отбор поверх [base]: вид отображения и прочее, чего в
+  /// записи нет, остаётся прежним.
+  static CatalogState fromJson(Map<String, Object?> json, CatalogState base) {
+    String? text(String key) {
+      final value = json[key];
+      return value is String && value.isNotEmpty ? value : null;
+    }
+
+    return base.copyWith(
+      typeId: text('typeId'),
+      categoryId: text('categoryId'),
+      includeSubcategories:
+          json['includeSubcategories'] as bool? ?? base.includeSubcategories,
+      relation: text('relation'),
+      tagIds: switch (json['tagIds']) {
+        final List<Object?> list => [
+          for (final id in list)
+            if (id is String) id,
+        ],
+        _ => const <String>[],
+      },
+      sort:
+          EntrySort.values.where((s) => s.name == json['sort']).firstOrNull ??
+          base.sort,
+      reverseSort: json['reverseSort'] == true,
+      withoutRating: json['withoutRating'] == true,
+      withoutCategory: json['withoutCategory'] == true,
+      withoutPhoto: json['withoutPhoto'] == true,
+      recommendedOnly: json['recommendedOnly'] == true,
+    );
+  }
+
   static const Object _unset = Object();
 }
 
@@ -139,7 +189,7 @@ class CatalogController extends Notifier<CatalogState> {
       try {
         final json = jsonDecode(filtersRaw);
         if (json is Map<String, Object?>) {
-          restored = _fromJson(json, restored);
+          restored = CatalogState.fromJson(json, restored);
         }
       } on FormatException {
         // Настройка записана прошлой версией — просто начинаем с чистых
@@ -151,53 +201,17 @@ class CatalogController extends Notifier<CatalogState> {
     state = restored.copyWith(search: '');
   }
 
-  CatalogState _fromJson(Map<String, Object?> json, CatalogState base) {
-    String? text(String key) {
-      final value = json[key];
-      return value is String && value.isNotEmpty ? value : null;
-    }
-
-    return base.copyWith(
-      typeId: text('typeId'),
-      categoryId: text('categoryId'),
-      relation: text('relation'),
-      tagIds: switch (json['tagIds']) {
-        final List<Object?> list => [
-          for (final id in list)
-            if (id is String) id,
-        ],
-        _ => const <String>[],
-      },
-      sort:
-          EntrySort.values.where((s) => s.name == json['sort']).firstOrNull ??
-          base.sort,
-      reverseSort: json['reverseSort'] == true,
-      withoutRating: json['withoutRating'] == true,
-      withoutCategory: json['withoutCategory'] == true,
-      withoutPhoto: json['withoutPhoto'] == true,
-      recommendedOnly: json['recommendedOnly'] == true,
-    );
-  }
-
   /// Сохраняет отбор, чтобы он пережил перезапуск.
   Future<void> _persist() async {
     await ref
         .read(settingsRepositoryProvider)
-        .set(
-          SettingKeys.catalogFilters,
-          jsonEncode({
-            'typeId': state.typeId,
-            'categoryId': state.categoryId,
-            'relation': state.relation,
-            'tagIds': state.tagIds,
-            'sort': state.sort.name,
-            'reverseSort': state.reverseSort,
-            'withoutRating': state.withoutRating,
-            'withoutCategory': state.withoutCategory,
-            'withoutPhoto': state.withoutPhoto,
-            'recommendedOnly': state.recommendedOnly,
-          }),
-        );
+        .set(SettingKeys.catalogFilters, jsonEncode(state.toJson()));
+  }
+
+  /// Ставит отбор целиком — из сохранённого набора.
+  void apply(CatalogState filters) {
+    state = filters.copyWith(view: state.view, search: '');
+    _persist();
   }
 
   void setType(String? id) {

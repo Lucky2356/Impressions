@@ -29,6 +29,7 @@ import '../insights/insights_screen.dart';
 import '../notifications/notifications.dart';
 import '../profiles/profiles_screen.dart';
 import '../quick_add/quick_add_sheet.dart';
+import '../search/command_palette.dart';
 import '../settings/settings_screen.dart';
 import '../wishlist/wishlist_screen.dart';
 
@@ -147,21 +148,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     ),
   ];
 
-  String _titleFor(String id, AppLocalizations l10n) => switch (id) {
-    NavIds.home => l10n.homeTitle,
-    NavIds.categories => l10n.categoriesTitle,
-    NavIds.catalog => l10n.navCatalog,
-    NavIds.collections => l10n.navCollections,
-    NavIds.compare => l10n.navCompare,
-    NavIds.profiles => l10n.navProfiles,
-    NavIds.import => l10n.navImport,
-    NavIds.incoming => l10n.incomingTitle,
-    NavIds.wishlist => l10n.wishlistTitle,
-    NavIds.insights => l10n.insightsTitle,
-    NavIds.archive => l10n.archiveTitle,
-    NavIds.settings => l10n.navSettings,
-    _ => AppConfig.appName,
-  };
+  /// Название раздела берётся из общего места — им же пользуется палитра.
+  String _titleFor(String id, AppLocalizations l10n) =>
+      NavIds.all.contains(id) ? navTitle(l10n, id) : AppConfig.appName;
 
   /// Раздел с плавной сменой.
   ///
@@ -343,6 +332,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
         QuickAddSheet.show(context),
     const SingleActivator(LogicalKeyboardKey.keyB, control: true): _scanBarcode,
+    // Одно поле вместо восьми сочетаний: раздел, категория или запрос.
+    const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+        CommandPalette.show(context),
     const SingleActivator(LogicalKeyboardKey.keyF, control: true):
         _searchFocus.requestFocus,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true): () =>

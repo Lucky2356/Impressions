@@ -801,6 +801,78 @@ class EntryRepository {
     return _viewsOf(profileId, await query.get());
   }
 
+  /// Записи, похожие на эту.
+  ///
+  /// Похожесть простая и объяснимая: тот же тип, близкая оценка или общий тег.
+  /// Приложение знало о вкусах больше, чем показывало: связей между записями на
+  /// экране не было вовсе.
+  Future<List<EntryView>> similarTo(
+    String profileId,
+    String entryId, {
+    int limit = 5,
+  }) async {
+    final source = await (db.select(
+      db.profileEntries,
+    )..where((e) => e.id.equals(entryId))).getSingleOrNull();
+    if (source == null) return const [];
+
+    final object = await (db.select(
+      db.objects,
+    )..where((o) => o.id.equals(source.objectId))).getSingleOrNull();
+    if (object == null) return const [];
+
+    // Записи с теми же тегами — самая осмысленная близость: теги человек
+    // ставит руками.
+    final tagIds = (await (db.select(
+      db.entryTags,
+    )..where((t) => t.entryId.equals(entryId))).get()).map((t) => t.tagId);
+    final byTag = tagIds.isEmpty
+        ? <String>{}
+        : (await (db.select(
+                db.entryTags,
+              )..where((t) => t.tagId.isIn(tagIds.toList()))).get())
+              .map((t) => t.entryId)
+              .where((id) => id != entryId)
+              .toSet();
+
+    final sameType =
+        await (db.select(db.profileEntries).join([
+                innerJoin(
+                  db.objects,
+                  db.objects.id.equalsExp(db.profileEntries.objectId),
+                ),
+              ])
+              ..where(db.profileEntries.profileId.equals(profileId))
+              ..where(db.profileEntries.archivedAt.isNull())
+              ..where(db.profileEntries.id.equals(entryId).not())
+              ..where(db.objects.typeId.equals(object.typeId)))
+            .get();
+
+    final rating = source.rating;
+    final scored = <({String id, int score})>[];
+    for (final row in sameType) {
+      final entry = row.readTable(db.profileEntries);
+      var score = 0;
+      if (byTag.contains(entry.id)) score += 2;
+      if (rating != null &&
+          entry.rating != null &&
+          (entry.rating! - rating).abs() <= 1.5) {
+        score += 1;
+      }
+      if (score > 0) scored.add((id: entry.id, score: score));
+    }
+    if (scored.isEmpty) return const [];
+
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    final ids = [for (final s in scored.take(limit)) s.id];
+    final views = await entryViews(profileId, entryIds: ids);
+    // Порядок задаёт близость, а не выборка.
+    views.sort(
+      (a, b) => ids.indexOf(a.entryId).compareTo(ids.indexOf(b.entryId)),
+    );
+    return views;
+  }
+
   /// Страница каталога вместе с общим числом найденного.
   ///
   /// Раньше каталог просил у базы **все** подходящие идентификаторы — только

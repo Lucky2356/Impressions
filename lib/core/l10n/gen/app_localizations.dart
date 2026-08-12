@@ -2302,6 +2302,96 @@ abstract class AppLocalizations {
   /// **'Для этой версии описания нет'**
   String get whatsNewNothing;
 
+  /// No description provided for @savedFiltersTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отборы'**
+  String get savedFiltersTitle;
+
+  /// No description provided for @savedFiltersSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить отбор'**
+  String get savedFiltersSave;
+
+  /// No description provided for @savedFiltersName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название отбора'**
+  String get savedFiltersName;
+
+  /// No description provided for @savedFiltersEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённых отборов пока нет'**
+  String get savedFiltersEmpty;
+
+  /// No description provided for @savedFiltersSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отбор сохранён'**
+  String get savedFiltersSaved;
+
+  /// No description provided for @savedFiltersRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить отбор'**
+  String get savedFiltersRemove;
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавние запросы'**
+  String get recentSearches;
+
+  /// No description provided for @recentEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавно открытые'**
+  String get recentEntries;
+
+  /// No description provided for @commandPaletteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что сделать'**
+  String get commandPaletteTitle;
+
+  /// No description provided for @commandPaletteHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раздел, категория, запись или действие'**
+  String get commandPaletteHint;
+
+  /// No description provided for @commandPaletteSections.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разделы'**
+  String get commandPaletteSections;
+
+  /// No description provided for @commandPaletteActions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Действия'**
+  String get commandPaletteActions;
+
+  /// No description provided for @commandPaletteEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи'**
+  String get commandPaletteEntries;
+
+  /// No description provided for @commandPaletteCategories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категории'**
+  String get commandPaletteCategories;
+
+  /// No description provided for @entrySimilar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похожее рядом'**
+  String get entrySimilar;
+
   /// No description provided for @barcodeBatchTitle.
   ///
   /// In ru, this message translates to:

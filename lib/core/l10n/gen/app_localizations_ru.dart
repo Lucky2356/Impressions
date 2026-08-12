@@ -1293,6 +1293,51 @@ class AppLocalizationsRu extends AppLocalizations {
   String get whatsNewNothing => 'Для этой версии описания нет';
 
   @override
+  String get savedFiltersTitle => 'Отборы';
+
+  @override
+  String get savedFiltersSave => 'Сохранить отбор';
+
+  @override
+  String get savedFiltersName => 'Название отбора';
+
+  @override
+  String get savedFiltersEmpty => 'Сохранённых отборов пока нет';
+
+  @override
+  String get savedFiltersSaved => 'Отбор сохранён';
+
+  @override
+  String get savedFiltersRemove => 'Удалить отбор';
+
+  @override
+  String get recentSearches => 'Недавние запросы';
+
+  @override
+  String get recentEntries => 'Недавно открытые';
+
+  @override
+  String get commandPaletteTitle => 'Что сделать';
+
+  @override
+  String get commandPaletteHint => 'Раздел, категория, запись или действие';
+
+  @override
+  String get commandPaletteSections => 'Разделы';
+
+  @override
+  String get commandPaletteActions => 'Действия';
+
+  @override
+  String get commandPaletteEntries => 'Записи';
+
+  @override
+  String get commandPaletteCategories => 'Категории';
+
+  @override
+  String get entrySimilar => 'Похожее рядом';
+
+  @override
   String get barcodeBatchTitle => 'Сканировать подряд';
 
   @override

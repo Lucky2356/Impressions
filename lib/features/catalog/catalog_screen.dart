@@ -19,6 +19,8 @@ import '../categories/category_providers.dart';
 import '../home/home_providers.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'catalog_providers.dart';
+import '../search/recent_store.dart';
+import 'saved_filters.dart';
 import 'catalog_selection.dart';
 import 'entry_tile.dart';
 
@@ -67,6 +69,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 250), () {
       ref.read(catalogStateProvider.notifier).setSearch(value);
+      // Запрос попадает в недавние: часто повторяемый набирали заново.
+      if (value.trim().length >= 3) {
+        ref.read(recentStoreProvider.notifier).rememberSearch(value);
+      }
     });
   }
 
@@ -650,6 +656,9 @@ class _FilterBar extends ConsumerWidget {
           icon: const Icon(Icons.close_rounded, size: 16),
           label: Text(l10n.catalogResetFilters),
         ),
+      // Именованные отборы: «без оценки в Продуктах» собирали заново каждый
+      // раз, хотя это те же несколько переключателей.
+      const _SavedFiltersButton(),
     ];
 
     // Решаем по месту, а не по ширине окна: каталог может стоять рядом с
@@ -773,6 +782,92 @@ class _FilterToggle extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Сохранённые отборы: применить, сохранить текущий, удалить.
+class _SavedFiltersButton extends ConsumerWidget {
+  const _SavedFiltersButton();
+
+  Future<void> _saveCurrent(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final name = await TextInputDialog.show(
+      context,
+      title: l10n.savedFiltersSave,
+      label: l10n.savedFiltersName,
+    );
+    if (name == null || !context.mounted) return;
+
+    await ref
+        .read(savedFiltersProvider.notifier)
+        .save(name, ref.read(catalogStateProvider));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.savedFiltersSaved)));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final saved =
+        ref.watch(savedFiltersProvider).value ?? const <SavedFilter>[];
+
+    return PopupMenuButton<String>(
+      tooltip: l10n.savedFiltersTitle,
+      onSelected: (value) {
+        if (value == '__save__') {
+          _saveCurrent(context, ref);
+          return;
+        }
+        final filter = saved.where((f) => f.name == value).firstOrNull;
+        if (filter != null) {
+          ref.read(catalogStateProvider.notifier).apply(filter.filters);
+        }
+      },
+      itemBuilder: (_) => [
+        for (final filter in saved)
+          PopupMenuItem(
+            value: filter.name,
+            child: Row(
+              children: [
+                const Icon(Icons.filter_alt_rounded, size: 18),
+                const SizedBox(width: AppDimens.space8),
+                Expanded(
+                  child: Text(
+                    filter.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Удаление — рядом со строкой: отдельный экран ради этого
+                // заводить не за чем.
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    ref.read(savedFiltersProvider.notifier).remove(filter.name);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(AppDimens.space4),
+                    child: Icon(Icons.close_rounded, size: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (saved.isEmpty)
+          PopupMenuItem(enabled: false, child: Text(l10n.savedFiltersEmpty)),
+        const PopupMenuDivider(),
+        PopupMenuItem(value: '__save__', child: Text(l10n.savedFiltersSave)),
+      ],
+      child: IgnorePointer(
+        child: TextButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.bookmarks_outlined, size: 16),
+          label: Text(l10n.savedFiltersTitle),
         ),
       ),
     );

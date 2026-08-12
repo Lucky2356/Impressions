@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
+import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/services/revision_service.dart';
 
@@ -88,4 +90,18 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
     history: history,
     recommendedBy: recommender?.firstName,
   );
+});
+
+/// Записи, похожие на открытую: тот же тип, близкая оценка или общий тег.
+///
+/// Приложение знало о вкусах больше, чем показывало: связей между записями на
+/// экране не было вовсе.
+final similarEntriesProvider = FutureProvider.family<List<EntryView>, String>((
+  ref,
+  entryId,
+) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+  return ref.watch(entryRepositoryProvider).similarTo(profile.id, entryId);
 });
