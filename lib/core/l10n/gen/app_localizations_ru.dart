@@ -1293,6 +1293,109 @@ class AppLocalizationsRu extends AppLocalizations {
   String get whatsNewNothing => 'Для этой версии описания нет';
 
   @override
+  String get backupMirrorTitle => 'Класть копию ещё и сюда';
+
+  @override
+  String get backupMirrorHint =>
+      'Копии лежат рядом с базой: потеряли устройство — потеряли и копии. Папка на флешке или в облачном клиенте переживёт устройство.';
+
+  @override
+  String get backupMirrorChoose => 'Выбрать папку';
+
+  @override
+  String get backupMirrorClear => 'Не класть';
+
+  @override
+  String get backupMirrorOff => 'Копии никуда не дублируются';
+
+  @override
+  String get doctorTitle => 'Проверка данных';
+
+  @override
+  String get doctorHint =>
+      'Сверяет фотографии, версии записей, связи и поисковый индекс. Ничего не удаляет из того, что несёт смысл.';
+
+  @override
+  String get doctorRun => 'Проверить';
+
+  @override
+  String get doctorRepair => 'Починить';
+
+  @override
+  String get doctorClean => 'Расхождений не найдено';
+
+  @override
+  String get doctorFixed => 'Починено';
+
+  @override
+  String doctorOrphanFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count лишних файлов фотографий',
+      many: '$count лишних файлов фотографий',
+      few: '$count лишних файла фотографий',
+      one: '$count лишний файл фотографии',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doctorMissingFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count фотографий потеряно',
+      many: '$count фотографий потеряно',
+      few: '$count фотографии потеряны',
+      one: '$count фотография потеряна',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doctorEntriesWithoutRevision(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей без текущей версии',
+      many: '$count записей без текущей версии',
+      few: '$count записи без текущей версии',
+      one: '$count запись без текущей версии',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doctorDanglingCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count связей с исчезнувшими категориями',
+      many: '$count связей с исчезнувшими категориями',
+      few: '$count связи с исчезнувшими категориями',
+      one: '$count связь с исчезнувшей категорией',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String doctorDanglingCollectionEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей подборки указывают в пустоту',
+      many: '$count записей подборки указывают в пустоту',
+      few: '$count записи подборки указывают в пустоту',
+      one: '$count запись подборки указывает в пустоту',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get doctorSearchOutOfSync => 'Поисковый индекс отстал от записей';
+
+  @override
   String get settingsSearch => 'Поиск по настройкам';
 
   @override
@@ -1329,6 +1432,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsWordsKeyStorage => 'ключ хранилище шифрование';
+
+  @override
+  String get settingsWordsDoctor =>
+      'проверка целостность данные починить фотографии индекс';
 
   @override
   String get settingsWordsErrorLog => 'ошибки журнал сбои';

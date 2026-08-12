@@ -299,6 +299,7 @@ class BackupService {
     // хранения уже достигнут, и тогда файла к моменту ответа не будет.
     final byteSize = await file.length();
     await _pruneOld();
+    await _mirrorOutside(file);
 
     return BackupInfo(
       path: file.path,
@@ -307,6 +308,25 @@ class BackupService {
       reason: reason,
       encrypted: encrypt,
     );
+  }
+
+  /// Кладёт готовую копию ещё и в выбранную человеком папку.
+  ///
+  /// Копии лежат рядом с базой: потеряли устройство — потеряли и копии. Папка
+  /// на флешке или в облачном клиенте закрывает именно этот случай. Ошибки
+  /// глотаем: флешку могли вынуть, а копия рядом с базой уже сделана, и
+  /// сообщать об этом посреди фонового расписания некому.
+  Future<void> _mirrorOutside(File file) async {
+    final target = await _settings.get(SettingKeys.backupMirrorDir);
+    if (target == null || target.isEmpty) return;
+
+    try {
+      final dir = Directory(target);
+      if (!dir.existsSync()) return;
+      await file.copy(p.join(dir.path, p.basename(file.path)));
+    } catch (_) {
+      // Папка недоступна или нет места — работе это мешать не должно.
+    }
   }
 
   /// SHA-256 файла без чтения его целиком в память.

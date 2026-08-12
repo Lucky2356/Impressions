@@ -75,7 +75,7 @@ class AppDatabase extends _$AppDatabase {
         await _dropSearchTriggers();
         await _createSearch();
         await _foldYoInNormalizedColumns();
-        await _rebuildSearchIndex();
+        await rebuildSearchIndex();
       }
       // 4: убрана таблица profile_relationships. Она была заведена под связи
       // между профилями, за всё время не получила ни одной строки и ни одного
@@ -181,7 +181,11 @@ class AppDatabase extends _$AppDatabase {
   /// Строки набираются запросом, а не командой FTS5 `rebuild`: та читает
   /// таблицу-источник напрямую, минуя триггеры, и вернула бы в индекс сырой
   /// текст — со всеми «ё», ради которых индекс и пересобирается.
-  Future<void> _rebuildSearchIndex() async {
+  /// Набирает поисковый индекс заново.
+  ///
+  /// Нужен и миграции, и проверке целостности: индекс наполняют триггеры, и
+  /// если он отстал — поиск молча не находит часть записей.
+  Future<void> rebuildSearchIndex() async {
     await customStatement(
       "INSERT INTO object_search(object_search) VALUES('delete-all')",
     );

@@ -23,6 +23,7 @@ import '../exchange/file_delivery_report.dart';
 import '../onboarding/app_tour.dart';
 import 'backup_password_dialog.dart';
 import 'devices_section.dart';
+import 'doctor_section.dart';
 import 'error_log_section.dart';
 import 'network_section.dart';
 import 'tags_section.dart';
@@ -64,6 +65,15 @@ final backupAutoProvider = FutureProvider<bool>((ref) async {
   return ref
       .watch(settingsRepositoryProvider)
       .getBool(SettingKeys.autoBackupEnabled, defaultValue: true);
+});
+
+/// Куда копия кладётся ещё и наружу.
+final backupMirrorProvider = FutureProvider<String?>((ref) async {
+  ref.watch(dataRefreshProvider);
+  final value = await ref
+      .watch(settingsRepositoryProvider)
+      .get(SettingKeys.backupMirrorDir);
+  return value == null || value.isEmpty ? null : value;
 });
 
 /// Ширина колонки настроек: формы шире читать неудобно.
@@ -125,6 +135,11 @@ List<_Section> _advancedSections(AppLocalizations l10n) => [
     title: l10n.keyStorageTitle,
     words: l10n.settingsWordsKeyStorage,
     widget: const KeyStorageSection(),
+  ),
+  (
+    title: l10n.doctorTitle,
+    words: l10n.settingsWordsDoctor,
+    widget: const DoctorSection(),
   ),
   (
     title: l10n.errorLogTitle,
@@ -643,6 +658,8 @@ class _BackupsSection extends ConsumerWidget {
         const SizedBox(height: AppDimens.space16),
         const _BackupAutoRow(),
         const SizedBox(height: AppDimens.space16),
+        const _BackupMirrorRow(),
+        const SizedBox(height: AppDimens.space16),
         const _BackupEncryptionRow(),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
@@ -720,6 +737,83 @@ class _BackupAutoRow extends ConsumerWidget {
             l10n.backupAutoHint,
             style: context.text.labelSmall?.copyWith(color: c.textMuted),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Куда класть копию, кроме папки приложения.
+class _BackupMirrorRow extends ConsumerWidget {
+  const _BackupMirrorRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final target = ref.watch(backupMirrorProvider).value;
+
+    Future<void> save(String? path) async {
+      await ref
+          .read(settingsRepositoryProvider)
+          .set(SettingKeys.backupMirrorDir, path ?? '');
+      ref.read(dataRefreshProvider.notifier).bump();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.drive_file_move_rounded,
+              size: 18,
+              color: target == null ? c.textMuted : c.accentPrimary,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Text(
+                l10n.backupMirrorTitle,
+                style: context.text.bodySmall,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimens.space4),
+        Text(
+          target ?? l10n.backupMirrorOff,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.labelSmall?.copyWith(
+            color: target == null ? c.textMuted : c.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppDimens.space8),
+        Wrap(
+          spacing: AppDimens.space8,
+          runSpacing: AppDimens.space8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () async {
+                final picked = await getDirectoryPath();
+                if (picked == null) return;
+                await save(picked);
+              },
+              icon: const Icon(Icons.folder_open_rounded, size: 18),
+              label: Text(l10n.backupMirrorChoose),
+            ),
+            if (target != null)
+              TextButton(
+                onPressed: () => save(null),
+                child: Text(l10n.backupMirrorClear),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppDimens.space4),
+        Text(
+          l10n.backupMirrorHint,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
       ],
     );

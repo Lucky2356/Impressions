@@ -2302,6 +2302,108 @@ abstract class AppLocalizations {
   /// **'Для этой версии описания нет'**
   String get whatsNewNothing;
 
+  /// No description provided for @backupMirrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Класть копию ещё и сюда'**
+  String get backupMirrorTitle;
+
+  /// No description provided for @backupMirrorHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии лежат рядом с базой: потеряли устройство — потеряли и копии. Папка на флешке или в облачном клиенте переживёт устройство.'**
+  String get backupMirrorHint;
+
+  /// No description provided for @backupMirrorChoose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать папку'**
+  String get backupMirrorChoose;
+
+  /// No description provided for @backupMirrorClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не класть'**
+  String get backupMirrorClear;
+
+  /// No description provided for @backupMirrorOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии никуда не дублируются'**
+  String get backupMirrorOff;
+
+  /// No description provided for @doctorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверка данных'**
+  String get doctorTitle;
+
+  /// No description provided for @doctorHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сверяет фотографии, версии записей, связи и поисковый индекс. Ничего не удаляет из того, что несёт смысл.'**
+  String get doctorHint;
+
+  /// No description provided for @doctorRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить'**
+  String get doctorRun;
+
+  /// No description provided for @doctorRepair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Починить'**
+  String get doctorRepair;
+
+  /// No description provided for @doctorClean.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расхождений не найдено'**
+  String get doctorClean;
+
+  /// No description provided for @doctorFixed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Починено'**
+  String get doctorFixed;
+
+  /// No description provided for @doctorOrphanFiles.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} лишний файл фотографии} few{{count} лишних файла фотографий} many{{count} лишних файлов фотографий} other{{count} лишних файлов фотографий}}'**
+  String doctorOrphanFiles(int count);
+
+  /// No description provided for @doctorMissingFiles.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} фотография потеряна} few{{count} фотографии потеряны} many{{count} фотографий потеряно} other{{count} фотографий потеряно}}'**
+  String doctorMissingFiles(int count);
+
+  /// No description provided for @doctorEntriesWithoutRevision.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись без текущей версии} few{{count} записи без текущей версии} many{{count} записей без текущей версии} other{{count} записей без текущей версии}}'**
+  String doctorEntriesWithoutRevision(int count);
+
+  /// No description provided for @doctorDanglingCategories.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} связь с исчезнувшей категорией} few{{count} связи с исчезнувшими категориями} many{{count} связей с исчезнувшими категориями} other{{count} связей с исчезнувшими категориями}}'**
+  String doctorDanglingCategories(int count);
+
+  /// No description provided for @doctorDanglingCollectionEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись подборки указывает в пустоту} few{{count} записи подборки указывают в пустоту} many{{count} записей подборки указывают в пустоту} other{{count} записей подборки указывают в пустоту}}'**
+  String doctorDanglingCollectionEntries(int count);
+
+  /// No description provided for @doctorSearchOutOfSync.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поисковый индекс отстал от записей'**
+  String get doctorSearchOutOfSync;
+
   /// No description provided for @settingsSearch.
   ///
   /// In ru, this message translates to:
@@ -2367,6 +2469,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'ключ хранилище шифрование'**
   String get settingsWordsKeyStorage;
+
+  /// No description provided for @settingsWordsDoctor.
+  ///
+  /// In ru, this message translates to:
+  /// **'проверка целостность данные починить фотографии индекс'**
+  String get settingsWordsDoctor;
 
   /// No description provided for @settingsWordsErrorLog.
   ///
