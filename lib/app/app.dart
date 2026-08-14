@@ -218,9 +218,11 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
   /// Приложение обновляется само, и поведение меняется молча. Свежая
   /// установка ничего не показывает: там только что прошло обучение, и
   /// «новое» человеку не с чем сравнивать — версия просто запоминается.
-  Future<void> _showWhatsNewIfNeeded({required bool freshInstall}) async {
+  Future<void> _showWhatsNewIfNeeded({
+    required bool freshInstall,
+    required String version,
+  }) async {
     final settings = ref.read(settingsRepositoryProvider);
-    final version = (await PackageInfo.fromPlatform()).version;
     final seen = await settings.get(SettingKeys.changelogSeenVersion);
     if (seen == version) return;
 
@@ -248,12 +250,22 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
         .read(settingsRepositoryProvider)
         .getBool(SettingKeys.tourDone, defaultValue: false);
 
+    // Версия нужна и «Что нового», и проверке обновлений — спрашиваем один раз.
+    final version = (await PackageInfo.fromPlatform()).version;
+
     await _showTourIfNeeded();
-    await _showWhatsNewIfNeeded(freshInstall: freshInstall);
-    await _backupIfDue();
+    await _showWhatsNewIfNeeded(freshInstall: freshInstall, version: version);
+
+    // Копия и сетевые проверки друг от друга не зависят. Раньше они стояли
+    // цепочкой, и обновление ждало, пока допишется zip всей базы: на большом
+    // профиле это минуты. Обе стороны глушат свои ошибки сами.
+    await Future.wait([_backupIfDue(), _checkNetwork(version)]);
+  }
+
+  /// Проверки, которым нужна сеть. Отсутствие сети работе не мешает.
+  Future<void> _checkNetwork(String version) async {
     try {
       final service = ref.read(updateServiceProvider);
-      final version = (await PackageInfo.fromPlatform()).version;
       final release = await service.checkAppUpdate(currentVersion: version);
       if (release != null && mounted) await _offerUpdate(release);
 

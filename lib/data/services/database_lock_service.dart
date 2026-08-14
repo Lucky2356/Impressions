@@ -54,7 +54,9 @@ class DatabaseLockService {
     final remembered = DatabaseCipher.decodeKey(await secrets.read(secretName));
     if (remembered == null) return LockStatus.needsPassword;
 
-    if (!await cipher.verify(remembered)) {
+    // Быстрая проверка: доказать надо только то, что ключ подходит. Полная
+    // проверка целостности читает весь файл, а это происходит до первого кадра.
+    if (!await cipher.opens(remembered)) {
       // Ключ не от этой базы: держать его дальше незачем, а человеку надо
       // дать ввести пароль от того файла, который лежит сейчас.
       await secrets.delete(secretName);
@@ -72,7 +74,7 @@ class DatabaseLockService {
     if (!state.encrypted) return true;
 
     final key = await DatabaseCipher.deriveKey(password, state.salt);
-    if (!await cipher.verify(key)) return false;
+    if (!await cipher.opens(key)) return false;
 
     databaseKey = key;
     if (remember) {

@@ -67,7 +67,12 @@ Name: "desktopicon"; Description: "Создать ярлык на рабочем
 
 [Files]
 ; Всё содержимое релизной сборки Flutter: exe, DLL движка, плагины и data\.
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+;
+; Кроме kernel_blob.bin: это снимок кода для отладочной сборки, релизу он не
+; нужен — код лежит в data\app.so. Flutter копирует его в папку сборки из
+; промежуточного каталога, поэтому очисткой папки от него не избавиться, и
+; 74 МБ уезжали в установщик при каждой сборке.
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "kernel_blob.bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

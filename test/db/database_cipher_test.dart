@@ -109,6 +109,51 @@ void main() {
     expect(await cipher.verify(null), isFalse);
   });
 
+  group('быстрая проверка ключа', () {
+    // Она выполняется при каждом запуске, до первого кадра, поэтому не должна
+    // читать файл целиком — этим занимается verify после перешифровки.
+    test('отличает верный ключ от неверного', () async {
+      final key = await cipher.encrypt('очень длинный пароль');
+      final wrong = await DatabaseCipher.deriveKey(
+        'другой пароль',
+        DatabaseCipher.newSalt(),
+      );
+
+      expect(await cipher.opens(key), isTrue);
+      expect(await cipher.opens(wrong), isFalse);
+      expect(await cipher.opens(null), isFalse);
+    });
+
+    test('на незашифрованной базе открывает без ключа', () async {
+      expect(await cipher.opens(null), isTrue);
+    });
+
+    test('не читает файл целиком', () async {
+      // База, у которой оглавление цело, а страница с данными испорчена.
+      // Быстрая проверка такую откроет — она смотрит только оглавление; полная
+      // должна её отвергнуть. Так видно, что это два разных действия, а не
+      // одно под двумя именами.
+      final db = sqlite3.open(cipher.databasePath);
+      db.execute('BEGIN');
+      for (var i = 0; i < 2000; i++) {
+        db.execute("INSERT INTO entries VALUES ('запись номер $i')");
+      }
+      db.execute('COMMIT');
+      db.close();
+
+      final file = File(cipher.databasePath);
+      final bytes = await file.readAsBytes();
+      // Первая страница — оглавление, её не трогаем; портим четвёртую.
+      const pageSize = 4096;
+      expect(bytes.length, greaterThan(pageSize * 5));
+      bytes.fillRange(pageSize * 3, pageSize * 4, 0x7f);
+      await file.writeAsBytes(bytes, flush: true);
+
+      expect(await cipher.opens(null), isTrue);
+      expect(await cipher.verify(null), isFalse);
+    });
+  });
+
   group('состояние', () {
     test('переживает запись и чтение', () async {
       await cipher.writeState(

@@ -217,7 +217,7 @@ class _DbEncryptionSectionState extends ConsumerState<DbEncryptionSection> {
     final cipher = await lock.cipher();
     final state = await cipher.readState();
     final key = await DatabaseCipher.deriveKey(password, state.salt);
-    if (!await cipher.verify(key)) {
+    if (!await cipher.opens(key)) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

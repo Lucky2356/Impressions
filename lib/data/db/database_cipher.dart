@@ -225,11 +225,12 @@ class DatabaseCipher {
     return newKey;
   }
 
-  /// Открывается ли база вообще — проверка после миграции.
+  /// Подходит ли ключ к базе — быстрая проверка для запуска.
   ///
-  /// Читает не только заголовок, но и одну настоящую таблицу: повреждённый
-  /// файл может отдать список таблиц и не отдать их содержимое.
-  Future<bool> verify(List<int>? key) async {
+  /// Читает оглавление: без верного ключа не расшифруется даже оно. Дальше не
+  /// идём намеренно — это выполняется до первого кадра, и цена должна быть
+  /// одинаковой на базе в мегабайт и в гигабайт.
+  Future<bool> opens(List<int>? key) async {
     Database? db;
     try {
       db = sqlite3.open(databasePath);
@@ -237,9 +238,28 @@ class DatabaseCipher {
       final tables = db.select(
         "SELECT name FROM sqlite_master WHERE type = 'table' LIMIT 1",
       );
-      if (tables.isEmpty) return false;
-      db.select('PRAGMA integrity_check');
-      return true;
+      return tables.isNotEmpty;
+    } on Object {
+      return false;
+    } finally {
+      db?.close();
+    }
+  }
+
+  /// Цела ли база — полная проверка после перешифровки.
+  ///
+  /// Читает файл целиком (`integrity_check`), поэтому уместна ровно там, где
+  /// файл только что переписали и надо убедиться, что он не испорчен.
+  Future<bool> verify(List<int>? key) async {
+    if (!await opens(key)) return false;
+
+    Database? db;
+    try {
+      db = sqlite3.open(databasePath);
+      if (key != null) db.execute(openStatement(key));
+      final result = db.select('PRAGMA integrity_check');
+      // Целая база отвечает единственной строкой `ok`.
+      return result.length == 1 && result.first.values.first == 'ok';
     } on Object {
       return false;
     } finally {

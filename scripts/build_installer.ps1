@@ -39,6 +39,12 @@ if (-not $SkipBuild) {
         Remove-Item -Recurse -Force $releaseDir
     }
 
+    # Промежуточные ресурсы отладочной сборки: оттуда Flutter копирует в релиз
+    # kernel_blob.bin на 74 МБ, который релизу не нужен. Очистка самой папки
+    # сборки его не убирает — он возвращается отсюда при каждой сборке.
+    $staleAssets = Join-Path $root 'build\flutter_assets'
+    if (Test-Path $staleAssets) { Remove-Item -Recurse -Force $staleAssets }
+
     Write-Host '== flutter build windows --release ==' -ForegroundColor Cyan
     flutter build windows --release
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -51,7 +57,11 @@ if (-not (Test-Path (Join-Path $releaseDir 'impressions.exe'))) {
 
 # Что уезжает к пользователю — видно до упаковки, а не после жалоб. С
 # -SkipBuild очистки не было, и здесь может всплыть чужой файл.
-Write-Host '== Библиотеки в установщике ==' -ForegroundColor Cyan
+$packed = Get-ChildItem -Path $releaseDir -Recurse -File |
+    Where-Object { $_.Name -ne 'kernel_blob.bin' } |
+    Measure-Object -Property Length -Sum
+Write-Host ('== Уезжает в установщик: {0:N1} МБ в {1} файлах ==' -f ($packed.Sum / 1MB), $packed.Count) -ForegroundColor Cyan
+
 Get-ChildItem -Path $releaseDir -Filter '*.dll' |
     ForEach-Object { Write-Host ('  {0,-34} {1,6:N2} МБ' -f $_.Name, ($_.Length / 1MB)) }
 
