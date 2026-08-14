@@ -20,6 +20,7 @@ import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/insights/insights_screen.dart';
 import 'package:impressions/features/profiles/profiles_screen.dart';
 import 'package:impressions/features/quick_add/category_picker.dart';
+import 'package:impressions/features/settings/backups_section.dart';
 import 'package:impressions/features/settings/settings_screen.dart';
 import 'package:impressions/features/wishlist/wishlist_screen.dart';
 

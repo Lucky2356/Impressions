@@ -13,6 +13,7 @@ import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/home/home_providers.dart';
+import 'package:impressions/features/settings/backups_section.dart';
 import 'package:impressions/features/settings/settings_screen.dart';
 
 import '../db/test_db.dart';
