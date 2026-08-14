@@ -23,17 +23,37 @@ if (-not $Version) {
 }
 Write-Host "== Версия: $Version ==" -ForegroundColor Cyan
 
+$releaseDir = Join-Path $root 'build\windows\x64\runner\Release'
+
 if (-not $SkipBuild) {
+    # Папка сборки очищается перед сборкой: Flutter в неё только докладывает и
+    # ничего оттуда не убирает, а установщик берёт её содержимое целиком
+    # (`Source: {#SourceDir}\*`). Файл от удалённой зависимости так и остаётся
+    # лежать и уезжает к пользователю. Так случилось со старой sqlite3.dll,
+    # оставшейся после перехода на сборку с шифрованием: в лучшем случае лишние
+    # полтора мегабайта, в худшем — приложение берёт не ту библиотеку.
+    # Промежуточные файлы CMake лежат уровнем выше и не удаляются, поэтому
+    # пересборка остаётся быстрой.
+    if (Test-Path $releaseDir) {
+        Write-Host '== Очистка папки сборки ==' -ForegroundColor Cyan
+        Remove-Item -Recurse -Force $releaseDir
+    }
+
     Write-Host '== flutter build windows --release ==' -ForegroundColor Cyan
     flutter build windows --release
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-$releaseDir = Join-Path $root 'build\windows\x64\runner\Release'
 if (-not (Test-Path (Join-Path $releaseDir 'impressions.exe'))) {
     Write-Error "Не найдена сборка в $releaseDir. Запустите без -SkipBuild."
     exit 1
 }
+
+# Что уезжает к пользователю — видно до упаковки, а не после жалоб. С
+# -SkipBuild очистки не было, и здесь может всплыть чужой файл.
+Write-Host '== Библиотеки в установщике ==' -ForegroundColor Cyan
+Get-ChildItem -Path $releaseDir -Filter '*.dll' |
+    ForEach-Object { Write-Host ('  {0,-34} {1,6:N2} МБ' -f $_.Name, ($_.Length / 1MB)) }
 
 $searchPaths = @(
     (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6'),
