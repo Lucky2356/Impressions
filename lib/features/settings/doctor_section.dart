@@ -45,9 +45,7 @@ class _DoctorSectionState extends ConsumerState<DoctorSection> {
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.doctorFixed)));
+    showMessage(context, l10n.doctorFixed);
   }
 
   /// Человеческое название находки.

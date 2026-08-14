@@ -681,9 +681,7 @@ class _BackupsSection extends ConsumerWidget {
           await BackupService(db).create(reason: 'manual');
           ref.read(dataRefreshProvider.notifier).bump();
           if (!context.mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l10n.backupCreated)));
+          showMessage(context, l10n.backupCreated);
         },
         icon: const Icon(Icons.save_rounded, size: 18),
         label: Text(l10n.backupCreate),
@@ -760,9 +758,7 @@ class _BackupAutoRow extends ConsumerWidget {
           .setBool(SettingKeys.autoBackupEnabled, value);
       ref.read(dataRefreshProvider.notifier).bump();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(value ? l10n.backupAutoOn : l10n.backupAutoOff)),
-      );
+      showMessage(context, value ? l10n.backupAutoOn : l10n.backupAutoOff);
     }
 
     return Column(
@@ -920,9 +916,7 @@ class _BackupEncryptionRow extends ConsumerWidget {
     await BackupService(ref.read(appDatabaseProvider)).disableEncryption();
     ref.read(dataRefreshProvider.notifier).bump();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.backupEncryptionOff)));
+    showMessage(context, l10n.backupEncryptionOff);
   }
 
   @override
@@ -1021,7 +1015,7 @@ class _BackupRow extends StatelessWidget {
               ),
               Text(
                 '$reasonLabel · '
-                '${(backup.byteSize / 1024).toStringAsFixed(0)} КБ'
+                '${l10n.backupSizeLabel((backup.byteSize / 1024).toStringAsFixed(0))}'
                 '${backup.encrypted ? ' · ${l10n.backupEncryptedBadge}' : ''}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1074,9 +1068,7 @@ Future<void> _openWhatsNew(BuildContext context, WidgetRef ref) async {
   final entry = await const ChangelogService().forVersion(version);
   if (!context.mounted) return;
   if (entry == null) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.whatsNewNothing)));
+    showMessage(context, l10n.whatsNewNothing);
     return;
   }
   await WhatsNewDialog.show(context, entry);

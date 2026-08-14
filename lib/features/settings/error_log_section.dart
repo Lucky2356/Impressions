@@ -51,9 +51,7 @@ class ErrorLogSection extends ConsumerWidget {
     final text = await ErrorLog.read();
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.errorLogCopied)));
+    showMessage(context, l10n.errorLogCopied);
   }
 
   Future<void> _clear(BuildContext context, WidgetRef ref) async {
@@ -61,9 +59,7 @@ class ErrorLogSection extends ConsumerWidget {
     await ErrorLog.clear();
     ref.invalidate(errorLogCountProvider);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.errorLogCleared)));
+    showMessage(context, l10n.errorLogCleared);
   }
 
   @override

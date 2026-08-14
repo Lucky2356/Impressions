@@ -287,9 +287,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.compareTransferred(moved))));
+    showMessage(context, l10n.compareTransferred(moved));
   }
 }
 
@@ -423,14 +421,6 @@ class _OpinionSide extends StatelessWidget {
   const _OpinionSide({required this.entry});
   final EntryView? entry;
 
-  Relation? _relationOf(String? name) {
-    if (name == null) return null;
-    for (final r in Relation.values) {
-      if (r.name == name) return r;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -442,7 +432,7 @@ class _OpinionSide extends StatelessWidget {
         style: context.text.bodySmall?.copyWith(color: c.textMuted),
       );
     }
-    final relation = _relationOf(e.relation);
+    final relation = Relation.byName(e.relation);
     return Wrap(
       spacing: AppDimens.space8,
       runSpacing: AppDimens.space4,

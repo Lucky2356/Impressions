@@ -99,29 +99,6 @@ void main() {
       );
     });
 
-    testWidgets('golden: карточка статистики ($suffix)', (tester) async {
-      await tester.pumpWidget(
-        golden(
-          StatCard(
-            title: 'Записей',
-            value: '128',
-            unit: 'шт.',
-            subtitle: '+14 за месяц',
-            trend: const [4, 6, 5, 8, 7, 10, 9, 12, 11, 14],
-            trendColor: const Color(0xFF35C759),
-          ),
-          brightness: brightness,
-          size: const Size(320, 170),
-        ),
-      );
-      await tester.pump();
-
-      await expectLater(
-        find.byType(StatCard),
-        matchesGoldenFile('goldens/stat_card_$suffix.png'),
-      );
-    });
-
     testWidgets('golden: дерево категорий ($suffix)', (tester) async {
       tester.view.physicalSize = const Size(900, 600);
       tester.view.devicePixelRatio = 1.0;

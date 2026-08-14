@@ -1,31 +1,21 @@
 {
   "@@locale": "en",
 
-  "appNameFallback": "Impressions",
 
   "commonSave": "Save",
-  "commonSaveAndClose": "Save and close",
   "commonCancel": "Cancel",
-  "commonDelete": "Delete",
-  "commonArchive": "Archive",
   "commonRestore": "Restore",
   "commonUndo": "Undo",
   "commonEdit": "Edit",
   "commonAdd": "Add",
   "commonCreate": "Create",
-  "commonRename": "Rename",
   "commonSearch": "Search",
-  "commonImport": "Import",
-  "commonExport": "Export",
   "commonClose": "Close",
   "commonBack": "Back",
   "commonNext": "Next",
-  "commonDone": "Done",
   "commonSkip": "Skip",
   "commonYes": "Yes",
-  "commonNo": "No",
   "commonNothingFound": "Nothing found",
-  "commonLoading": "Loading…",
 
   "navHome": "Home",
   "navCatalog": "Catalogue",
@@ -41,25 +31,14 @@
   "navAllSections": "All sections",
 
   "headerHelp": "Help",
-  "headerSearchHint": "Search entries, categories, profiles…",
   "homeTitle": "Home",
-  "homeGreeting": "Welcome back",
 
   "statEntries": "Entries",
   "statCategories": "Categories",
-  "statProfiles": "Profiles",
-  "statCollections": "Collections",
-  "statUnitPieces": "pcs",
 
   "sectionRecent": "Recent entries",
-  "sectionCollections": "Collections",
-  "sectionImpression": "Latest recommendation",
   "sectionWantToTry": "Want to try",
-  "sectionShowAll": "Show all",
-  "collectionNew": "New collection",
 
-  "comingSoonTitle": "Coming in a later stage",
-  "comingSoonMessage": "This section will be built while the main features are being developed.",
 
   "quickAddTitle": "New entry",
   "quickAddNameLabel": "Title",
@@ -79,7 +58,6 @@
   "quickAddRatingLabel": "Rating",
   "quickAddRatingNone": "No rating",
   "quickAddNoteLabel": "Note",
-  "quickAddSaved": "Entry added",
   "quickAddPickCategory": "Pick a category",
   "quickAddSearchCategory": "Search categories",
 
@@ -93,11 +71,7 @@
   "categoryMoveEdge": "There is nowhere further to move",
   "categoryArchive": "Archive",
   "categoryArchived": "Category moved to the archive",
-  "categoryRestore": "Restore",
   "categoryNameLabel": "Category name",
-  "categoryMoveToRoot": "To the top level",
-  "categoryMoveTarget": "Where to move it",
-  "categoryArchiveConfirm": "Archive this category together with its subcategories? Entries will not be deleted.",
   "categoryEmptyTitle": "No categories yet",
   "categoryEmptyMessage": "Create your first category to start arranging entries on shelves.",
   "categoryEntriesCount": "{count, plural, one{{count} entry} other{{count} entries}}",
@@ -126,10 +100,8 @@
   "bulkMore": "More",
   "bulkDone": "{count, plural, one{{count} entry changed} other{{count} entries changed}}",
   "bulkArchive": "To archive",
-  "bulkArchiveConfirm": "{count, plural, one{Move {count} entry to the archive? You will be able to bring it back.} other{Move {count} entries to the archive? You will be able to bring them back.}}",
   "bulkArchived": "{count, plural, one{{count} entry moved to the archive} other{{count} entries moved to the archive}}",
   "entryOpen": "Open",
-  "entryContextHint": "Right-click for actions",
 
   "catalogAddedHiddenByFilters": "The entry was added but does not match the current filters",
   "catalogViewGrid": "Large grid",
@@ -149,9 +121,7 @@
   "catalogFound": "{count, plural, one{{count} entry found} other{{count} entries found}}",
 
   "entryDetailTitle": "Entry",
-  "entryEdit": "Edit entry",
   "entryHistory": "Change history",
-  "entryHistoryEmpty": "No changes yet",
   "entryRestoreRevision": "Restore this version",
   "entryRestored": "Version restored",
   "entryNoteLabel": "Note",
@@ -248,7 +218,6 @@
   "profileLocalName": "Local name",
   "profileLocalNameHint": "For example: Sam from work",
   "profileLocalNote": "Note about this person",
-  "profileSaved": "Saved",
   "profileEntriesCount": "{count, plural, one{{count} entry} other{{count} entries}}",
 
   "compareTitle": "Compare profiles",
@@ -270,11 +239,6 @@
   "compareNoEntry": "No entry",
 
   "transferTitle": "Add to my profile",
-  "transferCategoryQuestion": "What should happen to the category?",
-  "transferSourcePath": "Source category: {path}",
-  "transferUseMatch": "Use an existing category",
-  "transferCreatePath": "Create the missing categories",
-  "transferNoCategory": "Save without a category",
   "transferDone": "The entry was added to your profile",
   "transferAlreadyHave": "You already have an entry about this object",
 
@@ -291,7 +255,6 @@
   "exportRevisions": "Versions",
   "exportPhotos": "Photos",
   "exportExcludedPrivate": "Private entries excluded",
-  "exportSize": "Size",
   "exportForbidden": "The owner has forbidden passing this profile on",
 
   "fileSaved": "File saved: {path}",
@@ -302,8 +265,6 @@
   "importTitle": "Import profile",
   "importPickFile": "Choose a file",
   "importDropHint": "Drop a profile file here or choose one",
-  "importChecking": "Checking the package…",
-  "importApplying": "Applying the changes…",
   "importPreviewTitle": "Preview",
   "importProfileLine": "Profile: {name}",
   "importFingerprintLine": "Fingerprint: {value}",
@@ -397,14 +358,10 @@
   "savedFiltersName": "Name",
   "savedFiltersEmpty": "No saved filters yet",
   "savedFiltersSaved": "Filters saved",
-  "savedFiltersRemove": "Delete",
   "recentSearches": "Recent searches",
   "recentEntries": "Recently opened",
-  "commandPaletteTitle": "What to do",
   "commandPaletteHint": "A section, a category, an entry or an action",
   "commandPaletteSections": "Sections",
-  "commandPaletteActions": "Actions",
-  "commandPaletteEntries": "Entries",
   "commandPaletteCategories": "Categories",
   "entrySimilar": "Similar nearby",
   "barcodeBatchTitle": "Scan one after another",
@@ -462,12 +419,8 @@
   "settingsTransferAutoCreate": "Create the missing categories automatically",
   "settingsTransferAlwaysAsk": "Always ask",
   "settingsTransferNoCategory": "Save without a category",
-  "settingsData": "Data",
-  "settingsTypes": "Object types",
-  "settingsDevices": "Devices",
   "settingsAbout": "About",
   "settingsVersion": "Version",
-  "settingsStorage": "Storage",
   "settingsPrivacyNote": "Entries, photos and keys are kept on this device only: no server, no cloud, no account, no analytics, no telemetry. The only things that go out are a barcode when looking up a product and a request for the list of releases when checking for updates — both can be switched off above.",
   "settingsLanguage": "Interface language",
   "settingsLanguageSystem": "System language",
@@ -503,7 +456,6 @@
 
   "tagsLabel": "Tags",
   "tagAdd": "Add tag",
-  "tagRemove": "Remove tag",
 
   "privacyLabel": "Sharing",
   "privacyOnlyMe": "Only me",
@@ -512,11 +464,6 @@
   "privacyNoPhotos": "Share without the photos",
   "privacyBasic": "Share only the basics",
 
-  "updatesTitle": "Updates",
-  "updatesEmpty": "No new changes",
-  "updatesEmptyMessage": "Changes that arrive with imported profiles will show up here.",
-  "updatesMarkSeen": "Mark as seen",
-  "updatesFrom": "Profile: {name}",
 
   "duplicateTitle": "Possible duplicates",
   "duplicateMessage": "Similar objects already exist. Link them or keep them apart?",
@@ -538,7 +485,6 @@
   "hotkeyScan": "Scan a barcode",
   "hotkeySettings": "Settings",
 
-  "onboardingWelcomeTitle": "Your personal archive of impressions",
   "onboardingWelcomeSubtitle": "Keep your preferences, recommendations and collections. All local, no network, no account.",
   "onboardingCreateProfile": "Create a profile",
   "onboardingProfileNameHint": "What is your name?",
@@ -551,7 +497,6 @@
   "onboardingStarterHint": "For example: Groceries → Cheese, Sausages, Drinks. Everything can be renamed or deleted later.",
   "onboardingCreating": "Creating the profile…",
 
-  "componentGalleryTitle": "Component gallery",
 
   "themeSystem": "System",
   "themeLight": "Light",
@@ -564,22 +509,16 @@
   "relationAvoid": "Avoid it",
   "relationWantToTry": "Want to try",
 
-  "emptyCatalogTitle": "Nothing here yet",
-  "emptyCatalogSubtitle": "Add your first entry — it takes a few seconds.",
 
   "entryAddToMyProfile": "Add to my profile",
-  "profileSwitcherActive": "Active profile",
-  "profileSwitcherTitle": "Profiles",
 
   "breadcrumbObjectSeparator": " / ",
 
-  "categoriesSubtitle": "{count, plural, one{{count} category in the tree} other{{count} categories in the tree}}",
   "categorySearchHint": "Find a category",
   "categoryExpandAll": "Expand all",
   "categoryCollapseAll": "Collapse all",
   "categoryIcon": "Category icon",
   "typeIcon": "Type icon",
-  "categoryOpenInCatalog": "Show entries",
   "categorySubcategoriesCount": "{count, plural, one{{count} subcategory} other{{count} subcategories}}",
   "categoryDirectCount": "{count, plural, one{{count} right here} other{{count} right here}}",
   "categoryBranchCount": "{count, plural, one{{count} entry in the branch} other{{count} entries in the branch}}",
@@ -594,14 +533,12 @@
   "catalogRelationLabel": "Attitude",
 
   "searchGlobalHint": "Search entries",
-  "searchResultsTitle": "Search results",
 
   "headerNotifications": "Notifications",
   "notificationsTitle": "Notifications",
   "notificationsEmpty": "Nothing new",
   "notificationsEmptyHint": "Incoming changes, updates and import results will show up here.",
   "notificationsMarkAllRead": "Mark everything as read",
-  "notificationsOpen": "Open",
 
   "notificationIncomingTitle": "Incoming changes",
   "notificationIncomingBody": "{count, plural, one{{count} change in the imported profiles} other{{count} changes in the imported profiles}}",
@@ -620,9 +557,6 @@
 
   "profilesSubtitle": "{count} of {max} possible",
   "profileMenuManage": "All profiles",
-  "profileMenuLocal": "Local settings",
-  "profileMenuExport": "Export profile",
-  "profileMenuSwitch": "Switch",
   "profileMenuSettings": "App settings",
 
   "barcodeTitle": "Add by barcode",
@@ -658,7 +592,6 @@
 
   "updateTitle": "App update",
   "updateAvailable": "Version {version} is available",
-  "updateCurrent": "Version {version} is installed",
   "updateDownload": "Download the installer",
   "updateOpenPage": "Open the release page",
   "updateLater": "Later",
@@ -666,7 +599,6 @@
   "updateInstallNow": "Install",
   "updateInstallHint": "The app will close, update and start again.",
   "updateInstallHintAndroid": "The app will download the update and hand it to the system. The first time, Android will ask you to allow installing from this source.",
-  "updateInstalling": "Opening the installer…",
   "updateDownloading": "Downloading: {percent}%",
   "updateDownloadingUnknown": "Downloading…",
   "updateFailed": "The update failed",
@@ -716,7 +648,6 @@
   "archiveCategories": "Categories",
   "archiveCollections": "Collections",
   "archiveCategoryLevel": "Nesting level: {level}",
-  "archiveRestored": "Brought back from the archive",
   "archiveRestoredMany": "{count, plural, one{{count} entry brought back} other{{count} entries brought back}}",
   "archivePurgeConfirmMany": "{count, plural, one{Delete {count} entry forever?} other{Delete {count} entries forever?}}",
 
@@ -772,10 +703,8 @@
   "dbEncryptionConfirmAccept": "The password is written down, continue",
   "dbEncryptionDisableTitle": "Turn encryption off?",
   "dbEncryptionDisableMessage": "The database becomes an ordinary file again: anyone who copies it will read your entries without a password.",
-  "dbEncryptionWorking": "Re-encrypting the database…",
   "dbEncryptionDone": "The database is encrypted",
   "dbEncryptionOffDone": "Encryption is off",
-  "dbEncryptionRestartTitle": "Done",
   "dbEncryptionRestartMessage": "Close the app and open it again — the re-encrypted database can only be used after a restart.",
   "dbEncryptionFailed": "Re-encryption failed. The database is unchanged and the backup is in place.",
   "dbEncryptionRememberTitle": "Do not ask for the password on this device",

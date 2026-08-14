@@ -134,9 +134,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _result = result;
         _preview = null;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.importBackupCreated)));
+      showMessage(context, l10n.importBackupCreated);
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _error = '$e');

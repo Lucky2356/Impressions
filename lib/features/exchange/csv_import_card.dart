@@ -68,9 +68,7 @@ class _CsvImportCardState extends ConsumerState<CsvImportCard> {
       ref.read(dataRefreshProvider.notifier).bump();
       if (!mounted) return;
       setState(() => _preview = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.csvImportDone(result.created))),
-      );
+      showMessage(context, l10n.csvImportDone(result.created));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

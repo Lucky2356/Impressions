@@ -98,15 +98,4 @@ class DeviceService {
     return (db.update(db.profileDevices)..where((d) => d.id.equals(deviceId)))
         .write(ProfileDevicesCompanion(name: Value(name)));
   }
-
-  /// Отмечает время последнего экспорта/импорта для устройства.
-  Future<void> markExport(String deviceId) {
-    return (db.update(db.profileDevices)..where((d) => d.id.equals(deviceId)))
-        .write(ProfileDevicesCompanion(lastExportAt: Value(DateTime.now())));
-  }
-
-  Future<void> markImport(String deviceId) {
-    return (db.update(db.profileDevices)..where((d) => d.id.equals(deviceId)))
-        .write(ProfileDevicesCompanion(lastImportAt: Value(DateTime.now())));
-  }
 }

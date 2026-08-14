@@ -137,9 +137,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     if (!mounted) return;
     if (!moved) {
       // Молча ничего не делать нельзя: нажатие выглядит как поломка.
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.categoryMoveEdge)));
+      showMessage(context, l10n.categoryMoveEdge);
       return;
     }
     _bump();
@@ -247,9 +245,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       _bump();
     } on CategoryTreeException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      showMessage(context, e.message);
     }
   }
 

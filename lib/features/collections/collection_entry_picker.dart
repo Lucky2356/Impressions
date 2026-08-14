@@ -24,26 +24,11 @@ class CollectionEntryPicker extends ConsumerStatefulWidget {
 
   /// Возвращает true, если состав подборки изменился.
   static Future<bool> show(BuildContext context, String collectionId) async {
-    final wide =
-        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
-    final result = wide
-        ? await showDialog<bool>(
-            context: context,
-            builder: (_) => Dialog(
-              clipBehavior: Clip.antiAlias,
-              child: SizedBox(
-                width: 560,
-                height: 620,
-                child: CollectionEntryPicker(collectionId: collectionId),
-              ),
-            ),
-          )
-        : await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            builder: (_) => CollectionEntryPicker(collectionId: collectionId),
-          );
+    final result = await showAdaptiveSheet<bool>(
+      context,
+      height: 620,
+      builder: (_) => CollectionEntryPicker(collectionId: collectionId),
+    );
     return result ?? false;
   }
 

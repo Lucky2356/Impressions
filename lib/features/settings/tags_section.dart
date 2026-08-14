@@ -56,9 +56,7 @@ class TagsSection extends ConsumerWidget {
       // Слияние — не то, о чём просили вслух: если тег с таким названием уже
       // был, человек должен узнать, что теперь их один.
       if (kept.id != tag.id) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.tagMerged(kept.name))));
+        showMessage(context, l10n.tagMerged(kept.name));
       }
     }
 

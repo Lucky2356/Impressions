@@ -132,7 +132,7 @@ void main() {
     expect(find.text('Главная'), findsWidgets);
     // Записей нет — главная показывает пустое состояние, а не пустые блоки (§14).
     expect(find.byType(EmptyState), findsOneWidget);
-    expect(find.byType(StatCard), findsNothing);
+    expect(find.byType(SummaryStrip), findsNothing);
   });
 
   testWidgets('Узкая раскладка: нижняя навигация вместо боковой', (

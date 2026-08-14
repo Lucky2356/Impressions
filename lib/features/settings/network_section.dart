@@ -113,9 +113,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
   }
 
   void _notify(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showMessage(context, message);
   }
 
   @override

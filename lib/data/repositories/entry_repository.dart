@@ -374,35 +374,6 @@ class EntryRepository {
   Future<void> addCategory(String entryId, String categoryId) =>
       _link(entryId, categoryId, primary: false);
 
-  Future<List<ProfileEntryRow>> entriesByProfile(String profileId) {
-    return (db.select(db.profileEntries)
-          ..where((e) => e.profileId.equals(profileId) & e.archivedAt.isNull())
-          ..orderBy([
-            (e) =>
-                OrderingTerm(expression: e.createdAt, mode: OrderingMode.desc),
-          ]))
-        .get();
-  }
-
-  /// Записи в категории или во всей ветке (§7.5).
-  Future<List<ProfileEntryRow>> entriesInCategories(
-    List<String> categoryIds,
-  ) async {
-    if (categoryIds.isEmpty) return [];
-    final query =
-        db.select(db.profileEntries).join([
-            innerJoin(
-              db.entryCategories,
-              db.entryCategories.entryId.equalsExp(db.profileEntries.id),
-            ),
-          ])
-          ..where(db.entryCategories.categoryId.isIn(categoryIds))
-          ..where(db.profileEntries.archivedAt.isNull())
-          ..groupBy([db.profileEntries.id]);
-    final rows = await query.get();
-    return rows.map((r) => r.readTable(db.profileEntries)).toList();
-  }
-
   // ---- Теги (§7.2) ----
   //
   // Теги — свободные метки без вложенности. Это отдельный от категорий

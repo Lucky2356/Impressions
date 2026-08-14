@@ -138,9 +138,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final sorted = await repo.tagsOfEntries(ids);
     if (!mounted) return;
     if (sorted.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.bulkRemoveTagEmpty)));
+      showMessage(context, l10n.bulkRemoveTagEmpty);
       return;
     }
 
@@ -184,9 +182,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.bulkDone(count))));
+    showMessage(context, l10n.bulkDone(count));
   }
 
   /// Ставит оценку всей пачке — тем же выбором, что и в карточке.
@@ -206,9 +202,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.bulkDone(count))));
+    showMessage(context, l10n.bulkDone(count));
   }
 
   /// Кладёт выделенное в подборку.

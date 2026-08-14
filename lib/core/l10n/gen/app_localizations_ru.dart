@@ -9,22 +9,10 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appNameFallback => 'Впечатления';
-
-  @override
   String get commonSave => 'Сохранить';
 
   @override
-  String get commonSaveAndClose => 'Сохранить и закрыть';
-
-  @override
   String get commonCancel => 'Отмена';
-
-  @override
-  String get commonDelete => 'Удалить';
-
-  @override
-  String get commonArchive => 'Архивировать';
 
   @override
   String get commonRestore => 'Восстановить';
@@ -42,16 +30,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonCreate => 'Создать';
 
   @override
-  String get commonRename => 'Переименовать';
-
-  @override
   String get commonSearch => 'Поиск';
-
-  @override
-  String get commonImport => 'Импорт';
-
-  @override
-  String get commonExport => 'Экспорт';
 
   @override
   String get commonClose => 'Закрыть';
@@ -63,22 +42,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonNext => 'Далее';
 
   @override
-  String get commonDone => 'Готово';
-
-  @override
   String get commonSkip => 'Пропустить';
 
   @override
   String get commonYes => 'Да';
 
   @override
-  String get commonNo => 'Нет';
-
-  @override
   String get commonNothingFound => 'Ничего не найдено';
-
-  @override
-  String get commonLoading => 'Загрузка…';
 
   @override
   String get navHome => 'Главная';
@@ -120,13 +90,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get headerHelp => 'Помощь';
 
   @override
-  String get headerSearchHint => 'Поиск по записям, категориям, профилям…';
-
-  @override
   String get homeTitle => 'Главная';
-
-  @override
-  String get homeGreeting => 'С возвращением';
 
   @override
   String get statEntries => 'Записей';
@@ -135,38 +99,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statCategories => 'Категорий';
 
   @override
-  String get statProfiles => 'Профилей';
-
-  @override
-  String get statCollections => 'Подборок';
-
-  @override
-  String get statUnitPieces => 'шт.';
-
-  @override
   String get sectionRecent => 'Недавние записи';
 
   @override
-  String get sectionCollections => 'Подборки';
-
-  @override
-  String get sectionImpression => 'Последняя рекомендация';
-
-  @override
   String get sectionWantToTry => 'Хочу попробовать';
-
-  @override
-  String get sectionShowAll => 'Показать все';
-
-  @override
-  String get collectionNew => 'Новая подборка';
-
-  @override
-  String get comingSoonTitle => 'Появится на следующих этапах';
-
-  @override
-  String get comingSoonMessage =>
-      'Этот раздел будет реализован в ходе разработки основных функций.';
 
   @override
   String get quickAddTitle => 'Новая запись';
@@ -234,9 +170,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddNoteLabel => 'Заметка';
 
   @override
-  String get quickAddSaved => 'Запись добавлена';
-
-  @override
   String get quickAddPickCategory => 'Выбрать категорию';
 
   @override
@@ -273,20 +206,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryArchived => 'Категория убрана в архив';
 
   @override
-  String get categoryRestore => 'Восстановить';
-
-  @override
   String get categoryNameLabel => 'Название категории';
-
-  @override
-  String get categoryMoveToRoot => 'В корень';
-
-  @override
-  String get categoryMoveTarget => 'Куда переместить';
-
-  @override
-  String get categoryArchiveConfirm =>
-      'Архивировать категорию вместе с подкатегориями? Записи не будут удалены.';
 
   @override
   String get categoryEmptyTitle => 'Категорий пока нет';
@@ -403,19 +323,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bulkArchive => 'В архив';
 
   @override
-  String bulkArchiveConfirm(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Убрать $count записей в архив? Их можно будет вернуть.',
-      many: 'Убрать $count записей в архив? Их можно будет вернуть.',
-      few: 'Убрать $count записи в архив? Их можно будет вернуть.',
-      one: 'Убрать $count запись в архив? Её можно будет вернуть.',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String bulkArchived(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -430,9 +337,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get entryOpen => 'Открыть';
-
-  @override
-  String get entryContextHint => 'Нажмите правой кнопкой для действий';
 
   @override
   String get catalogAddedHiddenByFilters =>
@@ -497,13 +401,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryDetailTitle => 'Запись';
 
   @override
-  String get entryEdit => 'Изменить запись';
-
-  @override
   String get entryHistory => 'История изменений';
-
-  @override
-  String get entryHistoryEmpty => 'Изменений пока нет';
 
   @override
   String get entryRestoreRevision => 'Восстановить эту версию';
@@ -822,9 +720,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileLocalNote => 'Заметка о человеке';
 
   @override
-  String get profileSaved => 'Сохранено';
-
-  @override
   String profileEntriesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -898,23 +793,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get transferTitle => 'Добавить в мой профиль';
 
   @override
-  String get transferCategoryQuestion => 'Что сделать с категорией?';
-
-  @override
-  String transferSourcePath(String path) {
-    return 'Категория источника: $path';
-  }
-
-  @override
-  String get transferUseMatch => 'Использовать существующую категорию';
-
-  @override
-  String get transferCreatePath => 'Создать недостающие категории';
-
-  @override
-  String get transferNoCategory => 'Сохранить без категории';
-
-  @override
   String get transferDone => 'Запись добавлена в ваш профиль';
 
   @override
@@ -960,9 +838,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exportExcludedPrivate => 'Исключено приватных записей';
 
   @override
-  String get exportSize => 'Размер';
-
-  @override
   String get exportForbidden =>
       'Владелец запретил повторную передачу этого профиля';
 
@@ -990,12 +865,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importDropHint => 'Перетащите файл профиля сюда или выберите его';
-
-  @override
-  String get importChecking => 'Проверяем пакет…';
-
-  @override
-  String get importApplying => 'Применяем изменения…';
 
   @override
   String get importPreviewTitle => 'Предварительный просмотр';
@@ -1311,28 +1180,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get savedFiltersSaved => 'Отбор сохранён';
 
   @override
-  String get savedFiltersRemove => 'Удалить отбор';
-
-  @override
   String get recentSearches => 'Недавние запросы';
 
   @override
   String get recentEntries => 'Недавно открытые';
 
   @override
-  String get commandPaletteTitle => 'Что сделать';
-
-  @override
   String get commandPaletteHint => 'Раздел, категория, запись или действие';
 
   @override
   String get commandPaletteSections => 'Разделы';
-
-  @override
-  String get commandPaletteActions => 'Действия';
-
-  @override
-  String get commandPaletteEntries => 'Записи';
 
   @override
   String get commandPaletteCategories => 'Категории';
@@ -1621,22 +1478,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsTransferNoCategory => 'Сохранять без категории';
 
   @override
-  String get settingsData => 'Данные';
-
-  @override
-  String get settingsTypes => 'Типы объектов';
-
-  @override
-  String get settingsDevices => 'Устройства';
-
-  @override
   String get settingsAbout => 'О приложении';
 
   @override
   String get settingsVersion => 'Версия';
-
-  @override
-  String get settingsStorage => 'Хранилище';
 
   @override
   String get settingsPrivacyNote =>
@@ -1758,9 +1603,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tagAdd => 'Добавить тег';
 
   @override
-  String get tagRemove => 'Убрать тег';
-
-  @override
   String get privacyLabel => 'Доступность';
 
   @override
@@ -1777,24 +1619,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get privacyBasic => 'Передавать только основную информацию';
-
-  @override
-  String get updatesTitle => 'Обновления';
-
-  @override
-  String get updatesEmpty => 'Новых изменений нет';
-
-  @override
-  String get updatesEmptyMessage =>
-      'Здесь появятся изменения, пришедшие с импортом чужих профилей.';
-
-  @override
-  String get updatesMarkSeen => 'Отметить просмотренным';
-
-  @override
-  String updatesFrom(String name) {
-    return 'Профиль: $name';
-  }
 
   @override
   String get duplicateTitle => 'Возможные дубли';
@@ -1849,9 +1673,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hotkeySettings => 'Настройки';
 
   @override
-  String get onboardingWelcomeTitle => 'Ваш личный архив впечатлений';
-
-  @override
   String get onboardingWelcomeSubtitle =>
       'Храните предпочтения, рекомендации и коллекции. Всё локально, без сети и регистрации.';
 
@@ -1887,9 +1708,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingCreating => 'Создаём профиль…';
 
   @override
-  String get componentGalleryTitle => 'Галерея компонентов';
-
-  @override
   String get themeSystem => 'Системная';
 
   @override
@@ -1917,36 +1735,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get relationWantToTry => 'Хочу попробовать';
 
   @override
-  String get emptyCatalogTitle => 'Здесь пока пусто';
-
-  @override
-  String get emptyCatalogSubtitle =>
-      'Добавьте первую запись — это займёт несколько секунд.';
-
-  @override
   String get entryAddToMyProfile => 'Добавить в мой профиль';
 
   @override
-  String get profileSwitcherActive => 'Активный профиль';
-
-  @override
-  String get profileSwitcherTitle => 'Профили';
-
-  @override
   String get breadcrumbObjectSeparator => ' / ';
-
-  @override
-  String categoriesSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count категорий в дереве',
-      many: '$count категорий в дереве',
-      few: '$count категории в дереве',
-      one: '$count категория в дереве',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get categorySearchHint => 'Найти категорию';
@@ -1962,9 +1754,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get typeIcon => 'Значок типа';
-
-  @override
-  String get categoryOpenInCatalog => 'Показать записи';
 
   @override
   String categorySubcategoriesCount(int count) {
@@ -2034,9 +1823,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchGlobalHint => 'Поиск по записям';
 
   @override
-  String get searchResultsTitle => 'Результаты поиска';
-
-  @override
   String get headerNotifications => 'Уведомления';
 
   @override
@@ -2051,9 +1837,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationsMarkAllRead => 'Отметить всё прочитанным';
-
-  @override
-  String get notificationsOpen => 'Открыть';
 
   @override
   String get notificationIncomingTitle => 'Входящие изменения';
@@ -2122,15 +1905,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileMenuManage => 'Все профили';
-
-  @override
-  String get profileMenuLocal => 'Локальные настройки';
-
-  @override
-  String get profileMenuExport => 'Экспортировать профиль';
-
-  @override
-  String get profileMenuSwitch => 'Переключиться';
 
   @override
   String get profileMenuSettings => 'Настройки приложения';
@@ -2244,11 +2018,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String updateCurrent(String version) {
-    return 'Установлена версия $version';
-  }
-
-  @override
   String get updateDownload => 'Скачать установщик';
 
   @override
@@ -2270,9 +2039,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get updateInstallHintAndroid =>
       'Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.';
-
-  @override
-  String get updateInstalling => 'Открываем установщик…';
 
   @override
   String updateDownloading(int percent) {
@@ -2446,9 +2212,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String archiveCategoryLevel(int level) {
     return 'Уровень вложенности: $level';
   }
-
-  @override
-  String get archiveRestored => 'Возвращено из архива';
 
   @override
   String archiveRestoredMany(int count) {
@@ -2634,16 +2397,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'База снова станет обычным файлом: скопировавший его прочитает записи без пароля.';
 
   @override
-  String get dbEncryptionWorking => 'Перешифровываем базу…';
-
-  @override
   String get dbEncryptionDone => 'База зашифрована';
 
   @override
   String get dbEncryptionOffDone => 'Шифрование выключено';
-
-  @override
-  String get dbEncryptionRestartTitle => 'Готово';
 
   @override
   String get dbEncryptionRestartMessage =>

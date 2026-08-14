@@ -62,9 +62,7 @@ class AppLayout {
     _ => 366,
   };
 
-  bool get isCompact => size == LayoutSize.compact;
   bool get isWide => size == LayoutSize.expanded || size == LayoutSize.ultra;
-  bool get isUltra => size == LayoutSize.ultra;
 
   /// Число колонок сетки под целевую ширину ячейки.
   int columnsFor(double available, {required double tileWidth, int min = 2}) {

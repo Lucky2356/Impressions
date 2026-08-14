@@ -2,6 +2,7 @@
 /// компонентов (§3.4). Не дублировать стили вручную на экранах.
 library;
 
+export 'components/adaptive_sheet.dart';
 export 'components/app_card.dart';
 export 'components/app_logo.dart';
 export 'components/appear.dart';
@@ -19,8 +20,6 @@ export 'components/error_state.dart';
 export 'components/summary_strip.dart';
 export 'components/nav_sidebar.dart';
 export 'components/profile_avatar.dart';
-export 'components/profile_card.dart';
-export 'components/profile_switcher.dart';
 export 'components/rating_dialog.dart';
 export 'components/rating_picker.dart';
 export 'components/rating_view.dart';
@@ -29,7 +28,6 @@ export 'components/screen_header.dart';
 export 'components/section_header.dart';
 export 'components/settings_group.dart';
 export 'components/sparkline.dart';
-export 'components/stat_card.dart';
 export 'components/status_chip.dart';
 export 'components/text_input_dialog.dart';
 export 'components/transfer_button.dart';

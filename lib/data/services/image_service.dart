@@ -171,20 +171,6 @@ class ImageService {
     return _appMediaDir = Directory(p.join(base.path, 'media'));
   }
 
-  /// Добавляет изображение из файла: полный конвейер обработки (§16).
-  Future<ImageResult> addFromFile(File source, {String? caption}) async {
-    if (!source.existsSync()) {
-      return const ImageRejected('Файл не найден');
-    }
-    final length = await source.length();
-    if (length > AppConfig.maxAttachmentBytes) {
-      return const ImageRejected('Файл слишком большой');
-    }
-
-    final bytes = await source.readAsBytes();
-    return addFromBytes(bytes, caption: caption);
-  }
-
   /// Добавляет изображение из байтов (общий путь для файла, камеры и drag-and-drop).
   Future<ImageResult> addFromBytes(Uint8List bytes, {String? caption}) async {
     // 1-3. Сигнатура и MIME; подозрительные файлы отклоняем.

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/domain/app_icons.dart';
-import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../design_system/design_system.dart';
+import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'category_providers.dart';
@@ -308,15 +308,7 @@ class CategoryDetail extends ConsumerWidget {
                         itemBuilder: (context, i) {
                           final e = list[i];
                           return EntryCardCompact(
-                            data: EntryCardData(
-                              title: e.title,
-                              subtitle: e.subtitle,
-                              categoryPath: e.categoryPath,
-                              relation: _relationOf(e.relation),
-                              rating: e.rating,
-                              imagePath: e.coverPath,
-                              seedColor: c.profileColorFor(e.objectId),
-                            ),
+                            data: entryCardData(context, e),
                             onTap: () =>
                                 EntryDetailSheet.show(context, e.entryId),
                           );
@@ -367,14 +359,6 @@ class CategoryDetail extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Relation? _relationOf(String? name) {
-    if (name == null) return null;
-    for (final r in Relation.values) {
-      if (r.name == name) return r;
-    }
-    return null;
   }
 }
 

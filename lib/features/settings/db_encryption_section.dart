@@ -104,24 +104,13 @@ class _DbEncryptionSectionState extends ConsumerState<DbEncryptionSection> {
   Future<void> _enable() async {
     final l10n = AppLocalizations.of(context);
 
-    final agreed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.dbEncryptionConfirmTitle),
-        content: Text(l10n.dbEncryptionConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.dbEncryptionConfirmAccept),
-          ),
-        ],
-      ),
+    final agreed = await ConfirmDialog.show(
+      context,
+      title: l10n.dbEncryptionConfirmTitle,
+      message: l10n.dbEncryptionConfirmMessage,
+      confirmLabel: l10n.dbEncryptionConfirmAccept,
     );
-    if (agreed != true || !mounted) return;
+    if (!agreed || !mounted) return;
 
     final password = await BackupPasswordDialog.show(
       context,
@@ -140,24 +129,13 @@ class _DbEncryptionSectionState extends ConsumerState<DbEncryptionSection> {
   Future<void> _disable() async {
     final l10n = AppLocalizations.of(context);
 
-    final agreed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.dbEncryptionDisableTitle),
-        content: Text(l10n.dbEncryptionDisableMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.dbEncryptionDisable),
-          ),
-        ],
-      ),
+    final agreed = await ConfirmDialog.show(
+      context,
+      title: l10n.dbEncryptionDisableTitle,
+      message: l10n.dbEncryptionDisableMessage,
+      confirmLabel: l10n.dbEncryptionDisable,
     );
-    if (agreed != true || !mounted) return;
+    if (!agreed || !mounted) return;
 
     final password = await BackupPasswordDialog.show(
       context,
@@ -219,9 +197,7 @@ class _DbEncryptionSectionState extends ConsumerState<DbEncryptionSection> {
     final key = await DatabaseCipher.deriveKey(password, state.salt);
     if (!await cipher.opens(key)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.backupWrongPassword)));
+      showMessage(context, l10n.backupWrongPassword);
       return;
     }
 

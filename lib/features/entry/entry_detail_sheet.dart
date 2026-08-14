@@ -30,29 +30,12 @@ class EntryDetailSheet extends ConsumerStatefulWidget {
   final String entryId;
 
   static Future<void> show(BuildContext context, String entryId) {
-    final wide =
-        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
-    if (wide) {
-      return showDialog(
-        context: context,
-        builder: (_) => Dialog(
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(
-            width: 640,
-            height: 700,
-            child: EntryDetailSheet(entryId: entryId),
-          ),
-        ),
-      );
-    }
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.92,
-        child: EntryDetailSheet(entryId: entryId),
-      ),
+    return showAdaptiveSheet<void>(
+      context,
+      width: 640,
+      height: 700,
+      heightFactor: 0.92,
+      builder: (_) => EntryDetailSheet(entryId: entryId),
     );
   }
 
@@ -130,7 +113,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
           _savedNote = _note.text;
           _noteInitialised = true;
         }
-        final relation = _relationOf(d.entry.relation);
+        final relation = Relation.byName(d.entry.relation);
         final revisionDate = localeDate(context, 'd MMMM y, HH:mm');
         // Чужую запись нельзя редактировать: мнение принадлежит её автору (§6.2).
         // Вместо редактирования предлагается добавить её себе (§12).
@@ -486,14 +469,6 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     );
   }
 
-  Relation? _relationOf(String? name) {
-    if (name == null) return null;
-    for (final r in Relation.values) {
-      if (r.name == name) return r;
-    }
-    return null;
-  }
-
   // ---- Вспомогательные виджеты вынесены ниже по файлу ----
 
   Future<void> _setRelation(String entryId, Relation? r) async {
@@ -580,9 +555,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     if (!mounted) return;
 
     if (candidates.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.entryMergeEmpty)));
+      showMessage(context, l10n.entryMergeEmpty);
       return;
     }
 
@@ -597,9 +570,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     ).mergeObjects(mergeId: d.object.id, keepId: target.id);
     _bump();
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.entryMergeDone)));
+    showMessage(context, l10n.entryMergeDone);
   }
 
   Future<void> _pickImpressionDate(EntryDetail d) async {
@@ -633,9 +604,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     _noteInitialised = false;
     _bump();
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.entryRestored)));
+    showMessage(context, l10n.entryRestored);
   }
 
   /// Добавление записи в подборку с возможностью создать новую (§27).
@@ -657,9 +626,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     await repo.addEntry(collectionId, entryId);
     _bump();
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.collectionAdded)));
+    showMessage(context, l10n.collectionAdded);
   }
 
   /// Добавляет чужую запись в активный профиль (§12).
@@ -673,9 +640,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     if (source != null &&
         await service.hasEntryFor(active.id, source.object.id)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.transferAlreadyHave)));
+      showMessage(context, l10n.transferAlreadyHave);
       return;
     }
 
@@ -687,9 +652,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     _bump();
     if (!mounted) return;
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.transferDone)));
+    showMessage(context, l10n.transferDone);
   }
 
   /// Архивирование без вопроса «точно?»: рядом сразу появляется «Вернуть».

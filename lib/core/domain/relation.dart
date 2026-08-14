@@ -14,6 +14,17 @@ enum Relation {
   avoid,
   wantToTry;
 
+  /// Отношение по его записанному в базе имени; null — не задано или чужое.
+  ///
+  /// В базе лежит строка, а экранам нужен разбор — и каждый писал его сам.
+  static Relation? byName(String? name) {
+    if (name == null) return null;
+    for (final relation in values) {
+      if (relation.name == name) return relation;
+    }
+    return null;
+  }
+
   /// Локализованная метка.
   String label(AppLocalizations l10n) => switch (this) {
     Relation.love => l10n.relationLove,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../data/services/file_delivery_service.dart';
+import '../../design_system/design_system.dart';
 
 /// Сказать человеку, чем кончилась выдача файла, и вернуть `true`, если файл
 /// ушёл.
@@ -18,7 +19,7 @@ bool reportDelivery(BuildContext context, FileDelivery delivery) {
     FileDeliveryStatus.shared => l10n.fileShared,
     FileDeliveryStatus.cancelled => l10n.fileSaveCancelled,
   };
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  showMessage(context, message);
   return delivery.status != FileDeliveryStatus.cancelled;
 }
 
@@ -26,7 +27,5 @@ bool reportDelivery(BuildContext context, FileDelivery delivery) {
 /// поломкой экспорта на Android.
 void reportDeliveryFailure(BuildContext context, Object error) {
   final l10n = AppLocalizations.of(context);
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(l10n.fileSaveFailed('$error'))));
+  showMessage(context, l10n.fileSaveFailed('$error'));
 }

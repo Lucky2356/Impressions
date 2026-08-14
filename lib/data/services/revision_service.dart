@@ -299,49 +299,6 @@ class RevisionService {
     return id;
   }
 
-  /// Создаёт версию категории и делает её текущей.
-  Future<String> commitCategory(
-    String categoryId, {
-    String? authorProfileId,
-    String? deviceId,
-    String? originPackageId,
-  }) async {
-    final cat = await (db.select(
-      db.categories,
-    )..where((c) => c.id.equals(categoryId))).getSingle();
-    final payload = categoryPayload(cat);
-    final hash = Hashing.contentHash(payload);
-
-    final currentHash = await _currentHash(
-      cat.currentRevisionId,
-      'category_revisions',
-    );
-    if (currentHash == hash) return cat.currentRevisionId!;
-
-    final id = Ids.newId();
-    await db.transaction(() async {
-      await db
-          .into(db.categoryRevisions)
-          .insert(
-            CategoryRevisionsCompanion.insert(
-              id: id,
-              categoryId: categoryId,
-              parentRevisionId: Value(cat.currentRevisionId),
-              authorProfileId: Value(authorProfileId ?? cat.profileId),
-              deviceId: Value(deviceId),
-              createdAt: DateTime.now(),
-              payloadVersion: const Value(AppConfig.payloadVersion),
-              payloadJson: jsonEncode(payload),
-              contentHash: hash,
-              originPackageId: Value(originPackageId),
-            ),
-          );
-      await (db.update(db.categories)..where((c) => c.id.equals(categoryId)))
-          .write(CategoriesCompanion(currentRevisionId: Value(id)));
-    });
-    return id;
-  }
-
   /// История версий записи профиля, от новых к старым.
   ///
   /// Вторичная сортировка по rowid делает порядок детерминированным, когда

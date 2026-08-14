@@ -65,35 +65,15 @@ class QuickAddSheet extends ConsumerStatefulWidget {
     List<ScannedProduct> queue = const [],
     EntryView? duplicateOf,
   }) async {
-    final wide =
-        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
-    final result = wide
-        ? await showDialog<bool>(
-            context: context,
-            builder: (_) => Dialog(
-              clipBehavior: Clip.antiAlias,
-              child: SizedBox(
-                width: 560,
-                child: QuickAddSheet(
-                  prefill: prefill,
-                  initialCategory: initialCategory,
-                  queue: queue,
-                  duplicateOf: duplicateOf,
-                ),
-              ),
-            ),
-          )
-        : await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            builder: (_) => QuickAddSheet(
-              prefill: prefill,
-              initialCategory: initialCategory,
-              queue: queue,
-              duplicateOf: duplicateOf,
-            ),
-          );
+    final result = await showAdaptiveSheet<bool>(
+      context,
+      builder: (_) => QuickAddSheet(
+        prefill: prefill,
+        initialCategory: initialCategory,
+        queue: queue,
+        duplicateOf: duplicateOf,
+      ),
+    );
     return result ?? false;
   }
 
@@ -587,9 +567,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     if (rejected > 0 && mounted) {
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.photoRejected)));
+      showMessage(context, l10n.photoRejected);
     }
   }
 

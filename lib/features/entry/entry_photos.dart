@@ -10,6 +10,7 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../design_system/design_system.dart';
 import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
 import 'photo_source.dart';
@@ -113,15 +114,11 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
           revisionId: revisionId,
         );
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l10n.photoDuplicate)));
+          showMessage(context, l10n.photoDuplicate);
         }
       case ImageRejected(reason: final reason):
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${l10n.photoRejected} ($reason)')),
-          );
+          showMessage(context, '${l10n.photoRejected} ($reason)');
         }
         return;
     }

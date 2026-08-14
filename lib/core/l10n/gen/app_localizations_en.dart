@@ -9,22 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appNameFallback => 'Impressions';
-
-  @override
   String get commonSave => 'Save';
 
   @override
-  String get commonSaveAndClose => 'Save and close';
-
-  @override
   String get commonCancel => 'Cancel';
-
-  @override
-  String get commonDelete => 'Delete';
-
-  @override
-  String get commonArchive => 'Archive';
 
   @override
   String get commonRestore => 'Restore';
@@ -42,16 +30,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCreate => 'Create';
 
   @override
-  String get commonRename => 'Rename';
-
-  @override
   String get commonSearch => 'Search';
-
-  @override
-  String get commonImport => 'Import';
-
-  @override
-  String get commonExport => 'Export';
 
   @override
   String get commonClose => 'Close';
@@ -63,22 +42,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonNext => 'Next';
 
   @override
-  String get commonDone => 'Done';
-
-  @override
   String get commonSkip => 'Skip';
 
   @override
   String get commonYes => 'Yes';
 
   @override
-  String get commonNo => 'No';
-
-  @override
   String get commonNothingFound => 'Nothing found';
-
-  @override
-  String get commonLoading => 'Loading…';
 
   @override
   String get navHome => 'Home';
@@ -120,13 +90,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get headerHelp => 'Help';
 
   @override
-  String get headerSearchHint => 'Search entries, categories, profiles…';
-
-  @override
   String get homeTitle => 'Home';
-
-  @override
-  String get homeGreeting => 'Welcome back';
 
   @override
   String get statEntries => 'Entries';
@@ -135,38 +99,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statCategories => 'Categories';
 
   @override
-  String get statProfiles => 'Profiles';
-
-  @override
-  String get statCollections => 'Collections';
-
-  @override
-  String get statUnitPieces => 'pcs';
-
-  @override
   String get sectionRecent => 'Recent entries';
 
   @override
-  String get sectionCollections => 'Collections';
-
-  @override
-  String get sectionImpression => 'Latest recommendation';
-
-  @override
   String get sectionWantToTry => 'Want to try';
-
-  @override
-  String get sectionShowAll => 'Show all';
-
-  @override
-  String get collectionNew => 'New collection';
-
-  @override
-  String get comingSoonTitle => 'Coming in a later stage';
-
-  @override
-  String get comingSoonMessage =>
-      'This section will be built while the main features are being developed.';
 
   @override
   String get quickAddTitle => 'New entry';
@@ -232,9 +168,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAddNoteLabel => 'Note';
 
   @override
-  String get quickAddSaved => 'Entry added';
-
-  @override
   String get quickAddPickCategory => 'Pick a category';
 
   @override
@@ -271,20 +204,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryArchived => 'Category moved to the archive';
 
   @override
-  String get categoryRestore => 'Restore';
-
-  @override
   String get categoryNameLabel => 'Category name';
-
-  @override
-  String get categoryMoveToRoot => 'To the top level';
-
-  @override
-  String get categoryMoveTarget => 'Where to move it';
-
-  @override
-  String get categoryArchiveConfirm =>
-      'Archive this category together with its subcategories? Entries will not be deleted.';
 
   @override
   String get categoryEmptyTitle => 'No categories yet';
@@ -395,19 +315,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bulkArchive => 'To archive';
 
   @override
-  String bulkArchiveConfirm(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other:
-          'Move $count entries to the archive? You will be able to bring them back.',
-      one:
-          'Move $count entry to the archive? You will be able to bring it back.',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String bulkArchived(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -420,9 +327,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get entryOpen => 'Open';
-
-  @override
-  String get entryContextHint => 'Right-click for actions';
 
   @override
   String get catalogAddedHiddenByFilters =>
@@ -485,13 +389,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryDetailTitle => 'Entry';
 
   @override
-  String get entryEdit => 'Edit entry';
-
-  @override
   String get entryHistory => 'Change history';
-
-  @override
-  String get entryHistoryEmpty => 'No changes yet';
 
   @override
   String get entryRestoreRevision => 'Restore this version';
@@ -807,9 +705,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileLocalNote => 'Note about this person';
 
   @override
-  String get profileSaved => 'Saved';
-
-  @override
   String profileEntriesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -882,23 +777,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transferTitle => 'Add to my profile';
 
   @override
-  String get transferCategoryQuestion => 'What should happen to the category?';
-
-  @override
-  String transferSourcePath(String path) {
-    return 'Source category: $path';
-  }
-
-  @override
-  String get transferUseMatch => 'Use an existing category';
-
-  @override
-  String get transferCreatePath => 'Create the missing categories';
-
-  @override
-  String get transferNoCategory => 'Save without a category';
-
-  @override
   String get transferDone => 'The entry was added to your profile';
 
   @override
@@ -945,9 +823,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportExcludedPrivate => 'Private entries excluded';
 
   @override
-  String get exportSize => 'Size';
-
-  @override
   String get exportForbidden =>
       'The owner has forbidden passing this profile on';
 
@@ -975,12 +850,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importDropHint => 'Drop a profile file here or choose one';
-
-  @override
-  String get importChecking => 'Checking the package…';
-
-  @override
-  String get importApplying => 'Applying the changes…';
 
   @override
   String get importPreviewTitle => 'Preview';
@@ -1293,16 +1162,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedFiltersSaved => 'Filters saved';
 
   @override
-  String get savedFiltersRemove => 'Delete';
-
-  @override
   String get recentSearches => 'Recent searches';
 
   @override
   String get recentEntries => 'Recently opened';
-
-  @override
-  String get commandPaletteTitle => 'What to do';
 
   @override
   String get commandPaletteHint =>
@@ -1310,12 +1173,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandPaletteSections => 'Sections';
-
-  @override
-  String get commandPaletteActions => 'Actions';
-
-  @override
-  String get commandPaletteEntries => 'Entries';
 
   @override
   String get commandPaletteCategories => 'Categories';
@@ -1581,22 +1438,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTransferNoCategory => 'Save without a category';
 
   @override
-  String get settingsData => 'Data';
-
-  @override
-  String get settingsTypes => 'Object types';
-
-  @override
-  String get settingsDevices => 'Devices';
-
-  @override
   String get settingsAbout => 'About';
 
   @override
   String get settingsVersion => 'Version';
-
-  @override
-  String get settingsStorage => 'Storage';
 
   @override
   String get settingsPrivacyNote =>
@@ -1716,9 +1561,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagAdd => 'Add tag';
 
   @override
-  String get tagRemove => 'Remove tag';
-
-  @override
   String get privacyLabel => 'Sharing';
 
   @override
@@ -1735,24 +1577,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyBasic => 'Share only the basics';
-
-  @override
-  String get updatesTitle => 'Updates';
-
-  @override
-  String get updatesEmpty => 'No new changes';
-
-  @override
-  String get updatesEmptyMessage =>
-      'Changes that arrive with imported profiles will show up here.';
-
-  @override
-  String get updatesMarkSeen => 'Mark as seen';
-
-  @override
-  String updatesFrom(String name) {
-    return 'Profile: $name';
-  }
 
   @override
   String get duplicateTitle => 'Possible duplicates';
@@ -1807,9 +1631,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotkeySettings => 'Settings';
 
   @override
-  String get onboardingWelcomeTitle => 'Your personal archive of impressions';
-
-  @override
   String get onboardingWelcomeSubtitle =>
       'Keep your preferences, recommendations and collections. All local, no network, no account.';
 
@@ -1845,9 +1666,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCreating => 'Creating the profile…';
 
   @override
-  String get componentGalleryTitle => 'Component gallery';
-
-  @override
   String get themeSystem => 'System';
 
   @override
@@ -1875,34 +1693,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relationWantToTry => 'Want to try';
 
   @override
-  String get emptyCatalogTitle => 'Nothing here yet';
-
-  @override
-  String get emptyCatalogSubtitle =>
-      'Add your first entry — it takes a few seconds.';
-
-  @override
   String get entryAddToMyProfile => 'Add to my profile';
 
   @override
-  String get profileSwitcherActive => 'Active profile';
-
-  @override
-  String get profileSwitcherTitle => 'Profiles';
-
-  @override
   String get breadcrumbObjectSeparator => ' / ';
-
-  @override
-  String categoriesSubtitle(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count categories in the tree',
-      one: '$count category in the tree',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get categorySearchHint => 'Find a category';
@@ -1918,9 +1712,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get typeIcon => 'Type icon';
-
-  @override
-  String get categoryOpenInCatalog => 'Show entries';
 
   @override
   String categorySubcategoriesCount(int count) {
@@ -1984,9 +1775,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchGlobalHint => 'Search entries';
 
   @override
-  String get searchResultsTitle => 'Search results';
-
-  @override
   String get headerNotifications => 'Notifications';
 
   @override
@@ -2001,9 +1789,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsMarkAllRead => 'Mark everything as read';
-
-  @override
-  String get notificationsOpen => 'Open';
 
   @override
   String get notificationIncomingTitle => 'Incoming changes';
@@ -2070,15 +1855,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileMenuManage => 'All profiles';
-
-  @override
-  String get profileMenuLocal => 'Local settings';
-
-  @override
-  String get profileMenuExport => 'Export profile';
-
-  @override
-  String get profileMenuSwitch => 'Switch';
 
   @override
   String get profileMenuSettings => 'App settings';
@@ -2191,11 +1967,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String updateCurrent(String version) {
-    return 'Version $version is installed';
-  }
-
-  @override
   String get updateDownload => 'Download the installer';
 
   @override
@@ -2216,9 +1987,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateInstallHintAndroid =>
       'The app will download the update and hand it to the system. The first time, Android will ask you to allow installing from this source.';
-
-  @override
-  String get updateInstalling => 'Opening the installer…';
 
   @override
   String updateDownloading(int percent) {
@@ -2386,9 +2154,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String archiveCategoryLevel(int level) {
     return 'Nesting level: $level';
   }
-
-  @override
-  String get archiveRestored => 'Brought back from the archive';
 
   @override
   String archiveRestoredMany(int count) {
@@ -2570,16 +2335,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'The database becomes an ordinary file again: anyone who copies it will read your entries without a password.';
 
   @override
-  String get dbEncryptionWorking => 'Re-encrypting the database…';
-
-  @override
   String get dbEncryptionDone => 'The database is encrypted';
 
   @override
   String get dbEncryptionOffDone => 'Encryption is off';
-
-  @override
-  String get dbEncryptionRestartTitle => 'Done';
 
   @override
   String get dbEncryptionRestartMessage =>

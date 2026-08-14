@@ -74,9 +74,7 @@ Future<void> _confirmPurge(
   }
   ref.read(dataRefreshProvider.notifier).bump();
   if (!context.mounted) return;
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(l10n.purgeDone)));
+  showMessage(context, l10n.purgeDone);
 }
 
 /// Архив (§24): всё, что убрано из работы, но не удалено.
@@ -109,9 +107,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
     setState(_selected.clear);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.archiveRestoredMany(ids.length))),
-    );
+    showMessage(context, l10n.archiveRestoredMany(ids.length));
   }
 
   /// Удаление насовсем: подтверждение одно на всю пачку, а не на каждую запись.
@@ -131,9 +127,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
     setState(_selected.clear);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.purgeDone)));
+    showMessage(context, l10n.purgeDone);
   }
 
   @override

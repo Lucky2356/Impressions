@@ -98,41 +98,17 @@ abstract class AppLocalizations {
     Locale('ru'),
   ];
 
-  /// Резервное имя приложения (основное — в AppConfig)
-  ///
-  /// In ru, this message translates to:
-  /// **'Впечатления'**
-  String get appNameFallback;
-
   /// No description provided for @commonSave.
   ///
   /// In ru, this message translates to:
   /// **'Сохранить'**
   String get commonSave;
 
-  /// No description provided for @commonSaveAndClose.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сохранить и закрыть'**
-  String get commonSaveAndClose;
-
   /// No description provided for @commonCancel.
   ///
   /// In ru, this message translates to:
   /// **'Отмена'**
   String get commonCancel;
-
-  /// No description provided for @commonDelete.
-  ///
-  /// In ru, this message translates to:
-  /// **'Удалить'**
-  String get commonDelete;
-
-  /// No description provided for @commonArchive.
-  ///
-  /// In ru, this message translates to:
-  /// **'Архивировать'**
-  String get commonArchive;
 
   /// No description provided for @commonRestore.
   ///
@@ -164,29 +140,11 @@ abstract class AppLocalizations {
   /// **'Создать'**
   String get commonCreate;
 
-  /// No description provided for @commonRename.
-  ///
-  /// In ru, this message translates to:
-  /// **'Переименовать'**
-  String get commonRename;
-
   /// No description provided for @commonSearch.
   ///
   /// In ru, this message translates to:
   /// **'Поиск'**
   String get commonSearch;
-
-  /// No description provided for @commonImport.
-  ///
-  /// In ru, this message translates to:
-  /// **'Импорт'**
-  String get commonImport;
-
-  /// No description provided for @commonExport.
-  ///
-  /// In ru, this message translates to:
-  /// **'Экспорт'**
-  String get commonExport;
 
   /// No description provided for @commonClose.
   ///
@@ -206,12 +164,6 @@ abstract class AppLocalizations {
   /// **'Далее'**
   String get commonNext;
 
-  /// No description provided for @commonDone.
-  ///
-  /// In ru, this message translates to:
-  /// **'Готово'**
-  String get commonDone;
-
   /// No description provided for @commonSkip.
   ///
   /// In ru, this message translates to:
@@ -224,23 +176,11 @@ abstract class AppLocalizations {
   /// **'Да'**
   String get commonYes;
 
-  /// No description provided for @commonNo.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нет'**
-  String get commonNo;
-
   /// No description provided for @commonNothingFound.
   ///
   /// In ru, this message translates to:
   /// **'Ничего не найдено'**
   String get commonNothingFound;
-
-  /// No description provided for @commonLoading.
-  ///
-  /// In ru, this message translates to:
-  /// **'Загрузка…'**
-  String get commonLoading;
 
   /// No description provided for @navHome.
   ///
@@ -320,23 +260,11 @@ abstract class AppLocalizations {
   /// **'Помощь'**
   String get headerHelp;
 
-  /// No description provided for @headerSearchHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Поиск по записям, категориям, профилям…'**
-  String get headerSearchHint;
-
   /// No description provided for @homeTitle.
   ///
   /// In ru, this message translates to:
   /// **'Главная'**
   String get homeTitle;
-
-  /// No description provided for @homeGreeting.
-  ///
-  /// In ru, this message translates to:
-  /// **'С возвращением'**
-  String get homeGreeting;
 
   /// No description provided for @statEntries.
   ///
@@ -350,71 +278,17 @@ abstract class AppLocalizations {
   /// **'Категорий'**
   String get statCategories;
 
-  /// No description provided for @statProfiles.
-  ///
-  /// In ru, this message translates to:
-  /// **'Профилей'**
-  String get statProfiles;
-
-  /// No description provided for @statCollections.
-  ///
-  /// In ru, this message translates to:
-  /// **'Подборок'**
-  String get statCollections;
-
-  /// No description provided for @statUnitPieces.
-  ///
-  /// In ru, this message translates to:
-  /// **'шт.'**
-  String get statUnitPieces;
-
   /// No description provided for @sectionRecent.
   ///
   /// In ru, this message translates to:
   /// **'Недавние записи'**
   String get sectionRecent;
 
-  /// No description provided for @sectionCollections.
-  ///
-  /// In ru, this message translates to:
-  /// **'Подборки'**
-  String get sectionCollections;
-
-  /// No description provided for @sectionImpression.
-  ///
-  /// In ru, this message translates to:
-  /// **'Последняя рекомендация'**
-  String get sectionImpression;
-
   /// No description provided for @sectionWantToTry.
   ///
   /// In ru, this message translates to:
   /// **'Хочу попробовать'**
   String get sectionWantToTry;
-
-  /// No description provided for @sectionShowAll.
-  ///
-  /// In ru, this message translates to:
-  /// **'Показать все'**
-  String get sectionShowAll;
-
-  /// No description provided for @collectionNew.
-  ///
-  /// In ru, this message translates to:
-  /// **'Новая подборка'**
-  String get collectionNew;
-
-  /// No description provided for @comingSoonTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Появится на следующих этапах'**
-  String get comingSoonTitle;
-
-  /// No description provided for @comingSoonMessage.
-  ///
-  /// In ru, this message translates to:
-  /// **'Этот раздел будет реализован в ходе разработки основных функций.'**
-  String get comingSoonMessage;
 
   /// No description provided for @quickAddTitle.
   ///
@@ -524,12 +398,6 @@ abstract class AppLocalizations {
   /// **'Заметка'**
   String get quickAddNoteLabel;
 
-  /// No description provided for @quickAddSaved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Запись добавлена'**
-  String get quickAddSaved;
-
   /// No description provided for @quickAddPickCategory.
   ///
   /// In ru, this message translates to:
@@ -602,35 +470,11 @@ abstract class AppLocalizations {
   /// **'Категория убрана в архив'**
   String get categoryArchived;
 
-  /// No description provided for @categoryRestore.
-  ///
-  /// In ru, this message translates to:
-  /// **'Восстановить'**
-  String get categoryRestore;
-
   /// No description provided for @categoryNameLabel.
   ///
   /// In ru, this message translates to:
   /// **'Название категории'**
   String get categoryNameLabel;
-
-  /// No description provided for @categoryMoveToRoot.
-  ///
-  /// In ru, this message translates to:
-  /// **'В корень'**
-  String get categoryMoveToRoot;
-
-  /// No description provided for @categoryMoveTarget.
-  ///
-  /// In ru, this message translates to:
-  /// **'Куда переместить'**
-  String get categoryMoveTarget;
-
-  /// No description provided for @categoryArchiveConfirm.
-  ///
-  /// In ru, this message translates to:
-  /// **'Архивировать категорию вместе с подкатегориями? Записи не будут удалены.'**
-  String get categoryArchiveConfirm;
 
   /// No description provided for @categoryEmptyTitle.
   ///
@@ -794,12 +638,6 @@ abstract class AppLocalizations {
   /// **'В архив'**
   String get bulkArchive;
 
-  /// No description provided for @bulkArchiveConfirm.
-  ///
-  /// In ru, this message translates to:
-  /// **'{count, plural, one{Убрать {count} запись в архив? Её можно будет вернуть.} few{Убрать {count} записи в архив? Их можно будет вернуть.} many{Убрать {count} записей в архив? Их можно будет вернуть.} other{Убрать {count} записей в архив? Их можно будет вернуть.}}'**
-  String bulkArchiveConfirm(int count);
-
   /// No description provided for @bulkArchived.
   ///
   /// In ru, this message translates to:
@@ -811,12 +649,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Открыть'**
   String get entryOpen;
-
-  /// No description provided for @entryContextHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Нажмите правой кнопкой для действий'**
-  String get entryContextHint;
 
   /// No description provided for @catalogAddedHiddenByFilters.
   ///
@@ -920,23 +752,11 @@ abstract class AppLocalizations {
   /// **'Запись'**
   String get entryDetailTitle;
 
-  /// No description provided for @entryEdit.
-  ///
-  /// In ru, this message translates to:
-  /// **'Изменить запись'**
-  String get entryEdit;
-
   /// No description provided for @entryHistory.
   ///
   /// In ru, this message translates to:
   /// **'История изменений'**
   String get entryHistory;
-
-  /// No description provided for @entryHistoryEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Изменений пока нет'**
-  String get entryHistoryEmpty;
 
   /// No description provided for @entryRestoreRevision.
   ///
@@ -1496,12 +1316,6 @@ abstract class AppLocalizations {
   /// **'Заметка о человеке'**
   String get profileLocalNote;
 
-  /// No description provided for @profileSaved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сохранено'**
-  String get profileSaved;
-
   /// No description provided for @profileEntriesCount.
   ///
   /// In ru, this message translates to:
@@ -1616,36 +1430,6 @@ abstract class AppLocalizations {
   /// **'Добавить в мой профиль'**
   String get transferTitle;
 
-  /// No description provided for @transferCategoryQuestion.
-  ///
-  /// In ru, this message translates to:
-  /// **'Что сделать с категорией?'**
-  String get transferCategoryQuestion;
-
-  /// No description provided for @transferSourcePath.
-  ///
-  /// In ru, this message translates to:
-  /// **'Категория источника: {path}'**
-  String transferSourcePath(String path);
-
-  /// No description provided for @transferUseMatch.
-  ///
-  /// In ru, this message translates to:
-  /// **'Использовать существующую категорию'**
-  String get transferUseMatch;
-
-  /// No description provided for @transferCreatePath.
-  ///
-  /// In ru, this message translates to:
-  /// **'Создать недостающие категории'**
-  String get transferCreatePath;
-
-  /// No description provided for @transferNoCategory.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сохранить без категории'**
-  String get transferNoCategory;
-
   /// No description provided for @transferDone.
   ///
   /// In ru, this message translates to:
@@ -1736,12 +1520,6 @@ abstract class AppLocalizations {
   /// **'Исключено приватных записей'**
   String get exportExcludedPrivate;
 
-  /// No description provided for @exportSize.
-  ///
-  /// In ru, this message translates to:
-  /// **'Размер'**
-  String get exportSize;
-
   /// No description provided for @exportForbidden.
   ///
   /// In ru, this message translates to:
@@ -1789,18 +1567,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Перетащите файл профиля сюда или выберите его'**
   String get importDropHint;
-
-  /// No description provided for @importChecking.
-  ///
-  /// In ru, this message translates to:
-  /// **'Проверяем пакет…'**
-  String get importChecking;
-
-  /// No description provided for @importApplying.
-  ///
-  /// In ru, this message translates to:
-  /// **'Применяем изменения…'**
-  String get importApplying;
 
   /// No description provided for @importPreviewTitle.
   ///
@@ -2342,12 +2108,6 @@ abstract class AppLocalizations {
   /// **'Отбор сохранён'**
   String get savedFiltersSaved;
 
-  /// No description provided for @savedFiltersRemove.
-  ///
-  /// In ru, this message translates to:
-  /// **'Удалить отбор'**
-  String get savedFiltersRemove;
-
   /// No description provided for @recentSearches.
   ///
   /// In ru, this message translates to:
@@ -2360,12 +2120,6 @@ abstract class AppLocalizations {
   /// **'Недавно открытые'**
   String get recentEntries;
 
-  /// No description provided for @commandPaletteTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Что сделать'**
-  String get commandPaletteTitle;
-
   /// No description provided for @commandPaletteHint.
   ///
   /// In ru, this message translates to:
@@ -2377,18 +2131,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Разделы'**
   String get commandPaletteSections;
-
-  /// No description provided for @commandPaletteActions.
-  ///
-  /// In ru, this message translates to:
-  /// **'Действия'**
-  String get commandPaletteActions;
-
-  /// No description provided for @commandPaletteEntries.
-  ///
-  /// In ru, this message translates to:
-  /// **'Записи'**
-  String get commandPaletteEntries;
 
   /// No description provided for @commandPaletteCategories.
   ///
@@ -2732,24 +2474,6 @@ abstract class AppLocalizations {
   /// **'Сохранять без категории'**
   String get settingsTransferNoCategory;
 
-  /// No description provided for @settingsData.
-  ///
-  /// In ru, this message translates to:
-  /// **'Данные'**
-  String get settingsData;
-
-  /// No description provided for @settingsTypes.
-  ///
-  /// In ru, this message translates to:
-  /// **'Типы объектов'**
-  String get settingsTypes;
-
-  /// No description provided for @settingsDevices.
-  ///
-  /// In ru, this message translates to:
-  /// **'Устройства'**
-  String get settingsDevices;
-
   /// No description provided for @settingsAbout.
   ///
   /// In ru, this message translates to:
@@ -2761,12 +2485,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Версия'**
   String get settingsVersion;
-
-  /// No description provided for @settingsStorage.
-  ///
-  /// In ru, this message translates to:
-  /// **'Хранилище'**
-  String get settingsStorage;
 
   /// No description provided for @settingsPrivacyNote.
   ///
@@ -2954,12 +2672,6 @@ abstract class AppLocalizations {
   /// **'Добавить тег'**
   String get tagAdd;
 
-  /// No description provided for @tagRemove.
-  ///
-  /// In ru, this message translates to:
-  /// **'Убрать тег'**
-  String get tagRemove;
-
   /// No description provided for @privacyLabel.
   ///
   /// In ru, this message translates to:
@@ -2995,36 +2707,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Передавать только основную информацию'**
   String get privacyBasic;
-
-  /// No description provided for @updatesTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Обновления'**
-  String get updatesTitle;
-
-  /// No description provided for @updatesEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Новых изменений нет'**
-  String get updatesEmpty;
-
-  /// No description provided for @updatesEmptyMessage.
-  ///
-  /// In ru, this message translates to:
-  /// **'Здесь появятся изменения, пришедшие с импортом чужих профилей.'**
-  String get updatesEmptyMessage;
-
-  /// No description provided for @updatesMarkSeen.
-  ///
-  /// In ru, this message translates to:
-  /// **'Отметить просмотренным'**
-  String get updatesMarkSeen;
-
-  /// No description provided for @updatesFrom.
-  ///
-  /// In ru, this message translates to:
-  /// **'Профиль: {name}'**
-  String updatesFrom(String name);
 
   /// No description provided for @duplicateTitle.
   ///
@@ -3128,12 +2810,6 @@ abstract class AppLocalizations {
   /// **'Настройки'**
   String get hotkeySettings;
 
-  /// No description provided for @onboardingWelcomeTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Ваш личный архив впечатлений'**
-  String get onboardingWelcomeTitle;
-
   /// No description provided for @onboardingWelcomeSubtitle.
   ///
   /// In ru, this message translates to:
@@ -3200,12 +2876,6 @@ abstract class AppLocalizations {
   /// **'Создаём профиль…'**
   String get onboardingCreating;
 
-  /// No description provided for @componentGalleryTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Галерея компонентов'**
-  String get componentGalleryTitle;
-
   /// No description provided for @themeSystem.
   ///
   /// In ru, this message translates to:
@@ -3260,47 +2930,17 @@ abstract class AppLocalizations {
   /// **'Хочу попробовать'**
   String get relationWantToTry;
 
-  /// No description provided for @emptyCatalogTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Здесь пока пусто'**
-  String get emptyCatalogTitle;
-
-  /// No description provided for @emptyCatalogSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Добавьте первую запись — это займёт несколько секунд.'**
-  String get emptyCatalogSubtitle;
-
   /// No description provided for @entryAddToMyProfile.
   ///
   /// In ru, this message translates to:
   /// **'Добавить в мой профиль'**
   String get entryAddToMyProfile;
 
-  /// No description provided for @profileSwitcherActive.
-  ///
-  /// In ru, this message translates to:
-  /// **'Активный профиль'**
-  String get profileSwitcherActive;
-
-  /// No description provided for @profileSwitcherTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Профили'**
-  String get profileSwitcherTitle;
-
   /// No description provided for @breadcrumbObjectSeparator.
   ///
   /// In ru, this message translates to:
   /// **' / '**
   String get breadcrumbObjectSeparator;
-
-  /// No description provided for @categoriesSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'{count, plural, one{{count} категория в дереве} few{{count} категории в дереве} many{{count} категорий в дереве} other{{count} категорий в дереве}}'**
-  String categoriesSubtitle(int count);
 
   /// No description provided for @categorySearchHint.
   ///
@@ -3331,12 +2971,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Значок типа'**
   String get typeIcon;
-
-  /// No description provided for @categoryOpenInCatalog.
-  ///
-  /// In ru, this message translates to:
-  /// **'Показать записи'**
-  String get categoryOpenInCatalog;
 
   /// No description provided for @categorySubcategoriesCount.
   ///
@@ -3410,12 +3044,6 @@ abstract class AppLocalizations {
   /// **'Поиск по записям'**
   String get searchGlobalHint;
 
-  /// No description provided for @searchResultsTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Результаты поиска'**
-  String get searchResultsTitle;
-
   /// No description provided for @headerNotifications.
   ///
   /// In ru, this message translates to:
@@ -3445,12 +3073,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отметить всё прочитанным'**
   String get notificationsMarkAllRead;
-
-  /// No description provided for @notificationsOpen.
-  ///
-  /// In ru, this message translates to:
-  /// **'Открыть'**
-  String get notificationsOpen;
 
   /// No description provided for @notificationIncomingTitle.
   ///
@@ -3541,24 +3163,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Все профили'**
   String get profileMenuManage;
-
-  /// No description provided for @profileMenuLocal.
-  ///
-  /// In ru, this message translates to:
-  /// **'Локальные настройки'**
-  String get profileMenuLocal;
-
-  /// No description provided for @profileMenuExport.
-  ///
-  /// In ru, this message translates to:
-  /// **'Экспортировать профиль'**
-  String get profileMenuExport;
-
-  /// No description provided for @profileMenuSwitch.
-  ///
-  /// In ru, this message translates to:
-  /// **'Переключиться'**
-  String get profileMenuSwitch;
 
   /// No description provided for @profileMenuSettings.
   ///
@@ -3752,12 +3356,6 @@ abstract class AppLocalizations {
   /// **'Доступна версия {version}'**
   String updateAvailable(String version);
 
-  /// No description provided for @updateCurrent.
-  ///
-  /// In ru, this message translates to:
-  /// **'Установлена версия {version}'**
-  String updateCurrent(String version);
-
   /// No description provided for @updateDownload.
   ///
   /// In ru, this message translates to:
@@ -3799,12 +3397,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.'**
   String get updateInstallHintAndroid;
-
-  /// No description provided for @updateInstalling.
-  ///
-  /// In ru, this message translates to:
-  /// **'Открываем установщик…'**
-  String get updateInstalling;
 
   /// No description provided for @updateDownloading.
   ///
@@ -4069,12 +3661,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Уровень вложенности: {level}'**
   String archiveCategoryLevel(int level);
-
-  /// No description provided for @archiveRestored.
-  ///
-  /// In ru, this message translates to:
-  /// **'Возвращено из архива'**
-  String get archiveRestored;
 
   /// No description provided for @archiveRestoredMany.
   ///
@@ -4376,12 +3962,6 @@ abstract class AppLocalizations {
   /// **'База снова станет обычным файлом: скопировавший его прочитает записи без пароля.'**
   String get dbEncryptionDisableMessage;
 
-  /// No description provided for @dbEncryptionWorking.
-  ///
-  /// In ru, this message translates to:
-  /// **'Перешифровываем базу…'**
-  String get dbEncryptionWorking;
-
   /// No description provided for @dbEncryptionDone.
   ///
   /// In ru, this message translates to:
@@ -4393,12 +3973,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Шифрование выключено'**
   String get dbEncryptionOffDone;
-
-  /// No description provided for @dbEncryptionRestartTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Готово'**
-  String get dbEncryptionRestartTitle;
 
   /// No description provided for @dbEncryptionRestartMessage.
   ///

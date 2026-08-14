@@ -9,9 +9,4 @@ extension ThemeContextX on BuildContext {
 
   /// Текстовая тема.
   TextTheme get text => Theme.of(this).textTheme;
-
-  /// Стандартный [ColorScheme].
-  ColorScheme get scheme => Theme.of(this).colorScheme;
-
-  bool get isDark => Theme.of(this).brightness == Brightness.dark;
 }

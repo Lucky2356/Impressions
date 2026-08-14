@@ -9,6 +9,7 @@ import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
+import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
 import 'collection_entry_picker.dart';
 import 'collection_providers.dart';
@@ -278,14 +279,7 @@ class _CollectionDetail extends ConsumerWidget {
                     ),
                     Expanded(
                       child: EntryCardCompact(
-                        data: EntryCardData(
-                          title: e.title,
-                          subtitle: e.subtitle,
-                          categoryPath: e.categoryPath,
-                          rating: e.rating,
-                          imagePath: e.coverPath,
-                          seedColor: c.profileColorFor(e.objectId),
-                        ),
+                        data: entryCardData(context, e),
                         onTap: () => EntryDetailSheet.show(context, e.entryId),
                       ),
                     ),

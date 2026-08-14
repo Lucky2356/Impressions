@@ -2,6 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../core/l10n/gen/app_localizations.dart';
 
+/// Короткое сообщение о том, что произошло.
+///
+/// Одна строка вместо `ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+/// content: Text(...)))`, повторённой по всему приложению три десятка раз.
+/// Прежнее сообщение убирается: два подряд иначе стоят в очереди, и второе
+/// человек видит через четыре секунды после того, как оно стало неактуальным.
+void showMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(content: Text(message)));
+}
+
 /// Сообщение о выполненном действии с возможностью его отменить.
 ///
 /// Архивирование обратимо, но узнать об этом можно было только зайдя в раздел

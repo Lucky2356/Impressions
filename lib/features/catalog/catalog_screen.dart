@@ -18,6 +18,7 @@ import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 import '../home/home_providers.dart';
 import '../quick_add/quick_add_sheet.dart';
+import '../entry/entry_card_data.dart';
 import 'catalog_providers.dart';
 import '../search/recent_store.dart';
 import 'saved_filters.dart';
@@ -291,7 +292,7 @@ class _Results extends ConsumerWidget {
               selectionActive: selectionActive,
               order: order,
               builder: (onTap) => EntryCardCompact(
-                data: _toCardData(context, entries[i]),
+                data: entryCardData(context, entries[i]),
                 onTap: onTap,
               ),
             ),
@@ -339,7 +340,7 @@ class _Results extends ConsumerWidget {
                 order: order,
                 builder: (onTap) => EntryCard(
                   dense: dense,
-                  data: _toCardData(context, entries[i]),
+                  data: entryCardData(context, entries[i]),
                   onTap: onTap,
                 ),
               ),
@@ -348,26 +349,6 @@ class _Results extends ConsumerWidget {
         );
       },
     );
-  }
-
-  EntryCardData _toCardData(BuildContext context, EntryView e) {
-    return EntryCardData(
-      title: e.title,
-      subtitle: e.subtitle,
-      categoryPath: e.categoryPath,
-      relation: _relationOf(e.relation),
-      rating: e.rating,
-      imagePath: e.coverPath,
-      seedColor: context.colors.profileColorFor(e.objectId),
-    );
-  }
-
-  Relation? _relationOf(String? name) {
-    if (name == null) return null;
-    for (final r in Relation.values) {
-      if (r.name == name) return r;
-    }
-    return null;
   }
 }
 
@@ -805,9 +786,7 @@ class _SavedFiltersButton extends ConsumerWidget {
         .read(savedFiltersProvider.notifier)
         .save(name, ref.read(catalogStateProvider));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.savedFiltersSaved)));
+    showMessage(context, l10n.savedFiltersSaved);
   }
 
   @override

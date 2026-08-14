@@ -62,21 +62,8 @@ class BarcodeScanSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required bool batch,
   }) {
-    final wide =
-        MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
-    if (wide) {
-      return showDialog<List<ScannedProduct>>(
-        context: context,
-        builder: (_) => Dialog(
-          clipBehavior: Clip.antiAlias,
-          child: SizedBox(width: 560, child: BarcodeScanSheet(batch: batch)),
-        ),
-      );
-    }
-    return showModalBottomSheet<List<ScannedProduct>>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
+    return showAdaptiveSheet<List<ScannedProduct>>(
+      context,
       builder: (_) => BarcodeScanSheet(batch: batch),
     );
   }
