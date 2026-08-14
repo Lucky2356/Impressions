@@ -36,14 +36,44 @@ class CompareParams {
   int get hashCode => Object.hash(firstId, secondId, mode);
 }
 
+/// Пара сравниваемых профилей — без режима.
+class _ComparePair {
+  const _ComparePair(this.firstId, this.secondId);
+
+  final String firstId;
+  final String secondId;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ComparePair &&
+      other.firstId == firstId &&
+      other.secondId == secondId;
+
+  @override
+  int get hashCode => Object.hash(firstId, secondId);
+}
+
+/// Строки сравнения пары профилей — собираются один раз на пару.
+final _comparePairProvider =
+    FutureProvider.family<List<CompareRow>, _ComparePair>((ref, pair) async {
+      ref.watch(dataRefreshProvider);
+      return CompareService(
+        ref.watch(appDatabaseProvider),
+      ).rows(firstProfileId: pair.firstId, secondProfileId: pair.secondId);
+    });
+
+/// Строки под выбранный режим.
+///
+/// Режим отбирает уже собранное: раньше каждое переключение «только у меня /
+/// у обоих» заново поднимало оба профиля целиком.
 final compareResultsProvider =
     FutureProvider.family<List<CompareRow>, CompareParams>((ref, params) async {
-      ref.watch(dataRefreshProvider);
-      return CompareService(ref.watch(appDatabaseProvider)).compare(
-        firstProfileId: params.firstId,
-        secondProfileId: params.secondId,
-        mode: params.mode,
+      final rows = await ref.watch(
+        _comparePairProvider(
+          _ComparePair(params.firstId, params.secondId),
+        ).future,
       );
+      return CompareService.filter(rows, params.mode);
     });
 
 /// Сравнение двух профилей (§13): режимы, две колонки на широком экране,

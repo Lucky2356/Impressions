@@ -320,22 +320,6 @@ final catalogSearchFocusProvider = NotifierProvider<CatalogSearchFocus, int>(
 /// при полном профиле это заметная задержка на каждом изменении фильтра.
 const int catalogPageSize = 60;
 
-/// Сколько записей каталог сейчас показывает.
-///
-/// Сбрасывается при любом изменении фильтров: иначе после смены условий
-/// осталась бы «подгруженная» глубина от прошлого запроса.
-class CatalogPage extends Notifier<int> {
-  @override
-  int build() {
-    ref.listen(catalogStateProvider, (_, _) => state = catalogPageSize);
-    return catalogPageSize;
-  }
-
-  void more() => state += catalogPageSize;
-}
-
-final catalogPageProvider = NotifierProvider<CatalogPage, int>(CatalogPage.new);
-
 /// Что показывает каталог: подгруженная часть и сколько всего подходит.
 ///
 /// Одним значением, а не двумя провайдерами: иначе счётчик в заголовке и
@@ -355,39 +339,111 @@ class CatalogResults {
   bool get hasMore => items.length < total;
 }
 
-/// Видимая часть результатов вместе с общим числом.
+/// Показанные страницы каталога.
 ///
 /// База отдаёт ровно показанную страницу и число «сколько всего подходит».
 /// Раньше сюда поднимался список идентификаторов всего найденного — на каждую
 /// букву в поиске и каждое переключение фильтра, при том что нужны из него
 /// были только длина и первые шестьдесят строк.
-final catalogResultsProvider = FutureProvider<CatalogResults>((ref) async {
-  ref.watch(dataRefreshProvider);
-  final profile = ref.watch(activeProfileProvider);
-  if (profile == null) return const CatalogResults(items: [], total: 0);
+///
+/// Подгрузка при этом растила предел: чтобы показать шестисотую запись,
+/// каталог просил у базы первые шестьсот — и так на каждый шаг прокрутки.
+/// Пролистать профиль в пять тысяч записей стоило двухсот тысяч прочитанных
+/// строк вместо пяти. Теперь шаг просит только свою страницу, а показанное
+/// накапливается здесь.
+class CatalogFeed extends AsyncNotifier<CatalogResults> {
+  /// Условия, под которые набран нынешний список.
+  ///
+  /// Смена фильтров начинает список заново, а обновление данных — нет: иначе
+  /// правка записи сбрасывала бы каталог в начало прямо под рукой у человека.
+  CatalogState? _shownFor;
 
-  final s = ref.watch(catalogStateProvider);
-  final limit = ref.watch(catalogPageProvider);
+  /// Сколько записей показано — столько же перечитываем при обновлении данных.
+  int _depth = catalogPageSize;
 
-  final page = await ref
-      .watch(entryRepositoryProvider)
-      .entryPage(
-        profile.id,
-        categoryIds: await _categoryScope(ref, s),
-        tagIds: s.tagIds.isEmpty ? null : s.tagIds,
-        relation: s.relation,
-        typeId: s.typeId,
-        search: s.search,
-        sort: s.sort,
-        reverseSort: s.reverseSort,
-        withoutRating: s.withoutRating,
-        withoutCategory: s.withoutCategory,
-        withoutPhoto: s.withoutPhoto,
-        recommendedOnly: s.recommendedOnly,
-        limit: limit,
+  bool _loadingMore = false;
+
+  @override
+  Future<CatalogResults> build() {
+    ref.watch(dataRefreshProvider);
+    ref.watch(activeProfileProvider);
+    // Ветка категорий считается по дереву: его изменение меняет и отбор.
+    ref.watch(allCategoriesProvider);
+
+    final s = ref.watch(catalogStateProvider);
+    if (!identical(s, _shownFor)) {
+      _shownFor = s;
+      _depth = catalogPageSize;
+    }
+    return _window(limit: _depth, offset: 0);
+  }
+
+  Future<CatalogResults> _window({
+    required int limit,
+    required int offset,
+  }) async {
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return const CatalogResults(items: [], total: 0);
+
+    final s = ref.read(catalogStateProvider);
+    final page = await ref
+        .read(entryRepositoryProvider)
+        .entryPage(
+          profile.id,
+          categoryIds: await _categoryScope(ref, s),
+          tagIds: s.tagIds.isEmpty ? null : s.tagIds,
+          relation: s.relation,
+          typeId: s.typeId,
+          search: s.search,
+          sort: s.sort,
+          reverseSort: s.reverseSort,
+          withoutRating: s.withoutRating,
+          withoutCategory: s.withoutCategory,
+          withoutPhoto: s.withoutPhoto,
+          recommendedOnly: s.recommendedOnly,
+          limit: limit,
+          offset: offset,
+        );
+    return CatalogResults(items: page.items, total: page.total);
+  }
+
+  /// Подгружает следующую страницу и дописывает её к показанному.
+  Future<void> more() async {
+    final shown = state.value;
+    if (shown == null || !shown.hasMore || _loadingMore) return;
+
+    _loadingMore = true;
+    try {
+      final next = await _window(
+        limit: catalogPageSize,
+        offset: shown.items.length,
       );
-  return CatalogResults(items: page.items, total: page.total);
-});
+      // Пока страница ехала, список мог смениться целиком — тогда дописывать
+      // её некуда.
+      final now = state.value;
+      if (now == null || now.items.length != shown.items.length) return;
+
+      _depth = now.items.length + next.items.length;
+      state = AsyncData(
+        CatalogResults(items: [...now.items, ...next.items], total: next.total),
+      );
+    } finally {
+      _loadingMore = false;
+    }
+  }
+}
+
+final catalogFeedProvider = AsyncNotifierProvider<CatalogFeed, CatalogResults>(
+  CatalogFeed.new,
+);
+
+/// Видимая часть результатов вместе с общим числом.
+///
+/// Отдельно от [catalogFeedProvider], чтобы экранам и тестам было что читать и
+/// чем подменять, не зная о том, как список набирается по страницам.
+final catalogResultsProvider = FutureProvider<CatalogResults>(
+  (ref) => ref.watch(catalogFeedProvider.future),
+);
 
 /// Категории, попадающие под отбор: сама выбранная и, если попрошено, ветка.
 Future<List<String>?> _categoryScope(Ref ref, CatalogState s) async {

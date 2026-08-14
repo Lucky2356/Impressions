@@ -712,15 +712,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     if (byName != null) return byName;
 
     // И только если имя ничего не сказало — смотрим, что в ветке уже лежит.
-    final entries =
-        ref.watch(categoryEntriesProvider(category.id)).value ??
-        const <EntryView>[];
-    if (entries.isEmpty) return null;
+    // Перевес типа считает база: сами записи ветки форме не нужны.
+    final counts =
+        ref.watch(branchTypeCountsProvider(category.id)).value ??
+        const <String, int>{};
+    if (counts.isEmpty) return null;
     return typeForCategory(
       category: category,
       categories: categories,
       types: types,
-      branchTypeNames: [for (final e in entries) e.typeName],
+      branchTypeCounts: counts,
     );
   }
 

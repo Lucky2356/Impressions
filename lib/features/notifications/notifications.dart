@@ -56,20 +56,39 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
   final settings = ref.watch(settingsRepositoryProvider);
   final profile = ref.watch(activeProfileProvider);
 
-  final seenRaw = await settings.get(_seenKey);
+  // Все нужные настройки одним запросом: этот провайдер пересчитывается на
+  // каждое изменение данных — ради точки на колокольчике, — и полдюжины
+  // отдельных чтений здесь стоили дороже самого ответа.
+  final stored = await settings.getAll(const [
+    _seenKey,
+    _productCountKey,
+    SettingKeys.appUpdateLatest,
+    SettingKeys.appUpdateDismissed,
+    SettingKeys.appUpdateCheckedAt,
+    SettingKeys.productAutoUpdateAt,
+  ]);
+
+  final seenRaw = stored[_seenKey];
   final seenAt = seenRaw == null ? null : DateTime.tryParse(seenRaw);
   bool unread(DateTime at) => seenAt == null || at.isAfter(seenAt);
 
   final result = <AppNotification>[];
 
-  // Входящие изменения из импортированных профилей (§23).
-  final incoming = await (db.select(
-    db.incomingChanges,
-  )..where((c) => c.seen.equals(false))).get();
-  if (incoming.isNotEmpty) {
-    final latest = incoming
-        .map((c) => c.receivedAt)
-        .reduce((a, b) => a.isAfter(b) ? a : b);
+  // Входящие изменения из импортированных профилей (§23). Нужна только самая
+  // свежая: раньше сюда поднимались все непросмотренные.
+  final incoming =
+      await (db.select(db.incomingChanges)
+            ..where((c) => c.seen.equals(false))
+            ..orderBy([
+              (c) => OrderingTerm(
+                expression: c.receivedAt,
+                mode: OrderingMode.desc,
+              ),
+            ])
+            ..limit(1))
+          .getSingleOrNull();
+  if (incoming != null) {
+    final latest = incoming.receivedAt;
     result.add(
       AppNotification(
         kind: NotificationKind.incoming,
@@ -87,12 +106,12 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
   }
 
   // Найденное обновление приложения.
-  final latestVersion = await settings.get(SettingKeys.appUpdateLatest);
-  final dismissed = await settings.get(SettingKeys.appUpdateDismissed);
+  final latestVersion = stored[SettingKeys.appUpdateLatest];
+  final dismissed = stored[SettingKeys.appUpdateDismissed];
   if (latestVersion != null &&
       latestVersion.isNotEmpty &&
       latestVersion != dismissed) {
-    final checkedRaw = await settings.get(SettingKeys.appUpdateCheckedAt);
+    final checkedRaw = stored[SettingKeys.appUpdateCheckedAt];
     final checkedAt = DateTime.tryParse(checkedRaw ?? '') ?? DateTime.now();
     result.add(
       AppNotification(
@@ -141,10 +160,8 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
   // Обновлённые сведения о товарах — только если что-то действительно
   // дополнилось: «обновлено 0 карточек» уведомлением не является.
   if (profile != null) {
-    final productsAt = await settings.get(SettingKeys.productAutoUpdateAt);
-    final at = DateTime.tryParse(productsAt ?? '');
-    final updated =
-        int.tryParse(await settings.get(_productCountKey) ?? '') ?? 0;
+    final at = DateTime.tryParse(stored[SettingKeys.productAutoUpdateAt] ?? '');
+    final updated = int.tryParse(stored[_productCountKey] ?? '') ?? 0;
     if (at != null && updated > 0 && at.isAfter(horizon)) {
       result.add(
         AppNotification(

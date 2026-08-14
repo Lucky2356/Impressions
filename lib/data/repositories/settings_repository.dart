@@ -104,6 +104,18 @@ class SettingsRepository {
     return row?.value;
   }
 
+  /// Несколько настроек одним запросом.
+  ///
+  /// Значок уведомлений пересчитывается на каждое изменение данных и читал по
+  /// настройке за раз — полдюжины запросов ради одного числа.
+  Future<Map<String, String>> getAll(List<String> keys) async {
+    if (keys.isEmpty) return const {};
+    final rows = await (db.select(
+      db.settings,
+    )..where((s) => s.key.isIn(keys))).get();
+    return {for (final row in rows) row.key: row.value};
+  }
+
   Future<void> set(String key, String value) async {
     await db
         .into(db.settings)

@@ -55,6 +55,28 @@ class CompareService {
     String? typeId,
     String? search,
   }) async {
+    return filter(
+      await rows(
+        firstProfileId: firstProfileId,
+        secondProfileId: secondProfileId,
+        typeId: typeId,
+        search: search,
+      ),
+      mode,
+    );
+  }
+
+  /// Все строки сравнения — без отбора по режиму.
+  ///
+  /// Режим только скрывает часть строк и считается в памяти, поэтому его здесь
+  /// нет: иначе каждое переключение «только у меня / у обоих» заново поднимало
+  /// бы оба профиля целиком.
+  Future<List<CompareRow>> rows({
+    required String firstProfileId,
+    required String secondProfileId,
+    String? typeId,
+    String? search,
+  }) async {
     final left = await _entries.entryViews(
       firstProfileId,
       typeId: typeId,
@@ -86,11 +108,15 @@ class CompareService {
       );
     }
 
-    return rows.where((row) => _matches(row, mode)).toList()
+    return rows
       ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
   }
 
-  bool _matches(CompareRow row, CompareMode mode) {
+  /// Оставляет только то, что подходит под режим.
+  static List<CompareRow> filter(List<CompareRow> rows, CompareMode mode) =>
+      rows.where((row) => _matches(row, mode)).toList();
+
+  static bool _matches(CompareRow row, CompareMode mode) {
     final l = row.left;
     final r = row.right;
     return switch (mode) {

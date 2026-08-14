@@ -7,19 +7,20 @@ import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/saved_filters.dart';
 import 'package:impressions/features/search/recent_store.dart';
 
-import 'test_db.dart';
+import 'query_counter.dart';
 
 /// Связи между записями, недавнее и сохранённые отборы.
 void main() {
   group('похожее рядом', () {
     late AppDatabase db;
+    late QueryCounter counter;
     late EntryRepository entries;
     late ProfileRow me;
     late ObjectTypeRow food;
     late ObjectTypeRow films;
 
     setUp(() async {
-      db = openTestDb();
+      (db, counter) = openCountingDb();
       entries = EntryRepository(db);
       me = await ProfileRepository(db).createOwnProfile(firstName: 'Я');
       food = await entries.createObjectType(me.id, 'Продукты');
@@ -78,6 +79,27 @@ void main() {
       final source = await add('Докторская', type: food, rating: 8);
 
       expect(await entries.similarTo(me.id, source.id), isEmpty);
+    });
+
+    test('на полном каталоге не поднимает весь тип', () async {
+      // Раньше сюда приезжали все записи того же типа и сравнивались в
+      // памяти — тысячи строк ради пяти показанных, и так на каждое открытие
+      // карточки.
+      final source = await add('Докторская', type: food, rating: 8);
+      for (var i = 0; i < 200; i++) {
+        await add('Далёкая \$i', type: food, rating: 1);
+      }
+      final close = await add('Краковская', type: food, rating: 7.5);
+
+      counter.reset();
+      final similar = await entries.similarTo(me.id, source.id);
+
+      expect(similar.map((e) => e.entryId), [close.id]);
+      expect(
+        counter.matching('LIMIT 20'),
+        greaterThan(0),
+        reason: 'кандидатов должна ограничивать база, а не Dart',
+      );
     });
   });
 

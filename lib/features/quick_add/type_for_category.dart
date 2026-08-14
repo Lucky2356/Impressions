@@ -19,7 +19,12 @@ String? typeForCategory({
   required CategoryRow category,
   required List<CategoryRow> categories,
   required List<ObjectTypeRow> types,
-  List<String> branchTypeNames = const [],
+
+  /// Сколько записей каждого типа уже лежит в ветке.
+  ///
+  /// Считает база: поднимать сюда сами записи ради их типов — это весь
+  /// каталог ветки на каждое открытие формы.
+  Map<String, int> branchTypeCounts = const {},
 }) {
   if (types.isEmpty) return null;
 
@@ -36,12 +41,9 @@ String? typeForCategory({
     node = parentId == null ? null : byId[parentId];
   }
 
-  if (branchTypeNames.isEmpty) return null;
+  if (branchTypeCounts.isEmpty) return null;
 
-  final counts = <String, int>{};
-  for (final name in branchTypeNames) {
-    counts[name] = (counts[name] ?? 0) + 1;
-  }
+  final counts = branchTypeCounts;
   // При равенстве берём тот, что стоит раньше в списке типов: иначе
   // подстановка зависела бы от порядка записей и менялась сама собой.
   ObjectTypeRow? best;

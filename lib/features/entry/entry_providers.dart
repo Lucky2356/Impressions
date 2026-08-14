@@ -5,6 +5,7 @@ import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/category_repository.dart';
 import '../../data/services/revision_service.dart';
 
 /// Подробности записи для карточки: сама запись, объект, тип, путь категории
@@ -58,20 +59,14 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
   )..where((ec) => ec.entryId.equals(entryId))).get();
   final primary = links.where((l) => l.isPrimary).firstOrNull;
 
-  var path = <String>[];
-  if (primary != null) {
-    final cats = await (db.select(
-      db.categories,
-    )..where((c) => c.profileId.equals(entry.profileId))).get();
-    final byId = {for (final c in cats) c.id: c};
-    final selected = byId[primary.categoryId];
-    if (selected != null) {
-      path = [
-        for (final id in selected.path.split('/'))
-          if (byId[id] != null) byId[id]!.name,
-      ];
-    }
-  }
+  // Путь берём крошками: они читают саму категорию и её предков по
+  // материализованному пути. Раньше сюда поднимались все категории профиля —
+  // сотни строк ради одного-трёх названий, и так на каждое открытие карточки.
+  final path = primary == null
+      ? const <String>[]
+      : (await CategoryRepository(
+          db,
+        ).breadcrumb(primary.categoryId)).map((c) => c.name).toList();
 
   final history = await RevisionService(db).entryHistory(entryId);
 

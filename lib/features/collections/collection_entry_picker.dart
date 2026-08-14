@@ -6,7 +6,6 @@ import '../../app/data_refresh.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
-import '../../core/utils/normalize.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
@@ -72,12 +71,14 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
     setState(() => _busy = true);
     try {
       final repo = ref.read(collectionRepositoryProvider);
-      for (final id in selected.difference(_initial)) {
-        await repo.addEntry(widget.collectionId, id);
-      }
-      for (final id in _initial.difference(selected)) {
-        await repo.removeEntry(widget.collectionId, id);
-      }
+      await repo.addEntries(
+        widget.collectionId,
+        selected.difference(_initial).toList(),
+      );
+      await repo.removeEntries(
+        widget.collectionId,
+        _initial.difference(selected).toList(),
+      );
       ref.read(dataRefreshProvider.notifier).bump();
       if (mounted) Navigator.of(context).pop(true);
     } finally {
@@ -90,7 +91,7 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final profile = ref.watch(activeProfileProvider);
-    final all = ref.watch(_allEntriesProvider);
+    final found = ref.watch(_pickerEntriesProvider(_query));
     final current = ref.watch(
       _entriesInCollectionProvider(widget.collectionId),
     );
@@ -103,12 +104,7 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
     }
     final selected = _selected ?? const <String>{};
 
-    final query = Normalize.forMatch(_query);
-    final entries = (all.value ?? const <EntryView>[])
-        .where(
-          (e) => query.isEmpty || Normalize.forMatch(e.title).contains(query),
-        )
-        .toList();
+    final entries = found.value ?? const <EntryView>[];
 
     return SafeArea(
       child: Padding(
@@ -239,12 +235,35 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
   }
 }
 
-/// Все записи активного профиля — источник для выбора.
-final _allEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
+/// Сколько записей показывать в списке выбора.
+///
+/// Дальше двухсот отметок глазами всё равно не наберёшь — там ищут по
+/// названию. Отметки, поставленные раньше, от сужения списка не теряются:
+/// снимается только то, что человек снял руками.
+const int _pickerLimit = 200;
+
+/// Записи, подходящие под запрос, — источник для выбора.
+///
+/// Раньше сюда поднимался весь профиль с обложками: чтобы поставить одну
+/// галочку, приложение читало все записи. Отбор и предел теперь в базе, а
+/// значит, и поиск идёт по тем же правилам, что в каталоге, — по началу слова
+/// в названии, авторе и заметках.
+final _pickerEntriesProvider = FutureProvider.family<List<EntryView>, String>((
+  ref,
+  query,
+) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
-  return ref.watch(entryRepositoryProvider).entryViews(profile.id);
+
+  final page = await ref
+      .watch(entryRepositoryProvider)
+      .entryPage(
+        profile.id,
+        search: query.trim().isEmpty ? null : query,
+        limit: _pickerLimit,
+      );
+  return page.items;
 });
 
 /// Идентификаторы записей, уже входящих в подборку.

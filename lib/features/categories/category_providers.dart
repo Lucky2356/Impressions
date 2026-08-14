@@ -112,20 +112,45 @@ final categoryEntriesProvider = FutureProvider.family<List<EntryView>, String>((
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
 
-  final all = await ref.watch(allCategoriesProvider.future);
-  final selected = all.where((c) => c.id == categoryId).firstOrNull;
-  if (selected == null) return const [];
-
-  final prefix = '${selected.path}/';
-  final ids = [
-    selected.id,
-    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-  ];
+  final ids = await _branchIds(ref, categoryId);
+  if (ids.isEmpty) return const [];
 
   return ref
       .watch(entryRepositoryProvider)
       .entryViews(profile.id, categoryIds: ids);
 });
+
+/// Сколько записей каждого типа лежит в ветке.
+///
+/// Отдельно от [categoryEntriesProvider]: форме нужен только перевес типа,
+/// а тот поднимает всю ветку с обложками — на каждое открытие формы и на
+/// каждую смену категории в ней.
+final branchTypeCountsProvider =
+    FutureProvider.family<Map<String, int>, String>((ref, categoryId) async {
+      ref.watch(dataRefreshProvider);
+      final profile = ref.watch(activeProfileProvider);
+      if (profile == null) return const {};
+
+      return ref
+          .watch(entryRepositoryProvider)
+          .typeCountsInCategories(
+            profile.id,
+            await _branchIds(ref, categoryId),
+          );
+    });
+
+/// Ветка целиком: сама категория и всё, что под ней.
+Future<List<String>> _branchIds(Ref ref, String categoryId) async {
+  final all = await ref.watch(allCategoriesProvider.future);
+  final selected = all.where((c) => c.id == categoryId).firstOrNull;
+  if (selected == null) return const [];
+
+  final prefix = '${selected.path}/';
+  return [
+    selected.id,
+    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
+  ];
+}
 
 /// По несколько обложек на категорию — для карточек-полок.
 final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((

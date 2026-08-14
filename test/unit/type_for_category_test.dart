@@ -104,7 +104,7 @@ void main() {
       category: root,
       categories: [root],
       types: types,
-      branchTypeNames: const ['Места', 'Места', 'Продукты'],
+      branchTypeCounts: const {'Места': 2, 'Продукты': 1},
     );
 
     expect(result, 't-Места');
@@ -129,7 +129,7 @@ void main() {
       category: root,
       categories: [root],
       types: const [],
-      branchTypeNames: const ['Места'],
+      branchTypeCounts: const {'Места': 1},
     );
 
     expect(result, isNull);

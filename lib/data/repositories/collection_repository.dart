@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/utils/chunks.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
 import '../models/entry_view.dart';
@@ -165,6 +166,18 @@ class CollectionRepository {
         );
       }
     });
+  }
+
+  /// Убирает из подборки набор записей.
+  Future<void> removeEntries(String collectionId, List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+    for (final chunk in chunked(entryIds)) {
+      await (db.delete(db.collectionEntries)..where(
+            (ce) =>
+                ce.collectionId.equals(collectionId) & ce.entryId.isIn(chunk),
+          ))
+          .go();
+    }
   }
 
   Future<void> removeEntry(String collectionId, String entryId) {

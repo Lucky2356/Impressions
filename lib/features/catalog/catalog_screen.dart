@@ -252,7 +252,7 @@ class _Results extends ConsumerWidget {
     if (!hasMore) return false;
     final metrics = n.metrics;
     if (metrics.pixels >= metrics.maxScrollExtent - 600) {
-      ref.read(catalogPageProvider.notifier).more();
+      ref.read(catalogFeedProvider.notifier).more();
     }
     return false;
   }

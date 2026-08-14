@@ -976,42 +976,141 @@ class EntryRepository {
               .where((id) => id != entryId)
               .toSet();
 
-    final sameType =
-        await (db.select(db.profileEntries).join([
-                innerJoin(
-                  db.objects,
-                  db.objects.id.equalsExp(db.profileEntries.objectId),
-                ),
-              ])
-              ..where(db.profileEntries.profileId.equals(profileId))
-              ..where(db.profileEntries.archivedAt.isNull())
-              ..where(db.profileEntries.id.equals(entryId).not())
-              ..where(db.objects.typeId.equals(object.typeId)))
-            .get();
-
     final rating = source.rating;
-    final scored = <({String id, int score})>[];
-    for (final row in sameType) {
-      final entry = row.readTable(db.profileEntries);
-      var score = 0;
-      if (byTag.contains(entry.id)) score += 2;
-      if (rating != null &&
-          entry.rating != null &&
-          (entry.rating! - rating).abs() <= 1.5) {
-        score += 1;
+    // Набрать заведомо больше, чем покажем: часть кандидатов по тегу может
+    // оказаться и близкой по оценке, и тогда порядок решает сумма.
+    final cap = limit * 4;
+
+    // Кандидатов отбирает база. Раньше сюда поднимались все записи того же
+    // типа — на полном каталоге тысячи строк ради пяти показанных, и так на
+    // каждое открытие карточки.
+    final scored = <String, int>{};
+    if (byTag.isNotEmpty) {
+      for (final entry in await _sameTypeEntries(
+        profileId: profileId,
+        exceptId: entryId,
+        typeId: object.typeId,
+        only: byTag.toList(),
+        cap: cap,
+      )) {
+        scored[entry.id] = 2 + (_ratingClose(rating, entry.rating) ? 1 : 0);
       }
-      if (score > 0) scored.add((id: entry.id, score: score));
+    }
+    if (scored.length < limit && rating != null) {
+      for (final entry in await _sameTypeEntries(
+        profileId: profileId,
+        exceptId: entryId,
+        typeId: object.typeId,
+        nearRating: rating,
+        cap: cap,
+      )) {
+        scored.putIfAbsent(entry.id, () => 1);
+      }
     }
     if (scored.isEmpty) return const [];
 
-    scored.sort((a, b) => b.score.compareTo(a.score));
-    final ids = [for (final s in scored.take(limit)) s.id];
+    final order = scored.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final ids = [for (final s in order.take(limit)) s.key];
     final views = await entryViews(profileId, entryIds: ids);
     // Порядок задаёт близость, а не выборка.
     views.sort(
       (a, b) => ids.indexOf(a.entryId).compareTo(ids.indexOf(b.entryId)),
     );
     return views;
+  }
+
+  /// Сколько живых записей каждого типа лежит в этих категориях.
+  ///
+  /// Нужно форме: она подставляет тип по тому, что уже лежит в ветке. Раньше
+  /// ради этого поднималась вся ветка с обложками — на каждое открытие формы.
+  Future<Map<String, int>> typeCountsInCategories(
+    String profileId,
+    List<String> categoryIds,
+  ) async {
+    if (categoryIds.isEmpty) return const {};
+
+    final counts = <String, int>{};
+    for (final chunk in chunked(categoryIds)) {
+      final total = db.profileEntries.id.count(distinct: true);
+      final rows =
+          await (db.selectOnly(db.profileEntries)
+                ..addColumns([db.objectTypes.name, total])
+                ..join([
+                  innerJoin(
+                    db.objects,
+                    db.objects.id.equalsExp(db.profileEntries.objectId),
+                    useColumns: false,
+                  ),
+                  innerJoin(
+                    db.objectTypes,
+                    db.objectTypes.id.equalsExp(db.objects.typeId),
+                    useColumns: false,
+                  ),
+                  innerJoin(
+                    db.entryCategories,
+                    db.entryCategories.entryId.equalsExp(db.profileEntries.id),
+                    useColumns: false,
+                  ),
+                ])
+                ..where(db.profileEntries.profileId.equals(profileId))
+                ..where(db.profileEntries.archivedAt.isNull())
+                ..where(db.entryCategories.categoryId.isIn(chunk))
+                ..groupBy([db.objectTypes.name]))
+              .get();
+
+      for (final row in rows) {
+        final name = row.read(db.objectTypes.name)!;
+        counts[name] = (counts[name] ?? 0) + (row.read(total) ?? 0);
+      }
+    }
+    return counts;
+  }
+
+  /// Близки ли оценки настолько, чтобы считать записи похожими.
+  static bool _ratingClose(double? a, double? b) =>
+      a != null && b != null && (a - b).abs() <= 1.5;
+
+  /// Кандидаты в похожие: живые записи профиля того же типа.
+  ///
+  /// [only] сужает до перечисленных, [nearRating] — до близких по оценке;
+  /// без обоих запрос вернул бы весь тип, чего мы как раз и избегаем.
+  Future<List<ProfileEntryRow>> _sameTypeEntries({
+    required String profileId,
+    required String exceptId,
+    required String typeId,
+    required int cap,
+    List<String>? only,
+    double? nearRating,
+  }) async {
+    if (only == null && nearRating == null) return const [];
+
+    final query =
+        db.select(db.profileEntries).join([
+            innerJoin(
+              db.objects,
+              db.objects.id.equalsExp(db.profileEntries.objectId),
+            ),
+          ])
+          ..where(db.profileEntries.profileId.equals(profileId))
+          ..where(db.profileEntries.archivedAt.isNull())
+          ..where(db.profileEntries.id.equals(exceptId).not())
+          ..where(db.objects.typeId.equals(typeId))
+          ..limit(cap);
+
+    if (only != null) {
+      query.where(db.profileEntries.id.isIn(only));
+    } else {
+      query.where(
+        db.profileEntries.rating.isBetweenValues(
+          nearRating! - 1.5,
+          nearRating + 1.5,
+        ),
+      );
+    }
+
+    final rows = await query.get();
+    return [for (final row in rows) row.readTable(db.profileEntries)];
   }
 
   /// Страница каталога вместе с общим числом найденного.
