@@ -7,6 +7,7 @@
 - Android SDK (из Android Studio) — для Android-сборки.
 - Visual Studio с рабочей нагрузкой «Desktop development with C++» — для Windows-сборки.
 - Windows: включённый **Developer Mode** (для симлинков плагинов при сборке/запуске).
+- Доступ в интернет при первой сборке: библиотеку SQLite поставляет сборочный хук `package:sqlite3`, который скачивает её с GitHub и дальше берёт из кеша. Какую именно сборку брать, задано в `pubspec.yaml` (`hooks → user_defines → sqlite3`): у нас это `sqlite3mc` — SQLite с шифрованием базы. Обычная незашифрованная база такой сборкой открывается как прежде.
 
 ## Скрипты (PowerShell, папка `scripts/`)
 
