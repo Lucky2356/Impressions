@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:impressions/app/locale_controller.dart';
 import 'package:impressions/core/l10n/gen/app_localizations.dart';
+import 'package:impressions/core/utils/dates.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Переводы интерфейса: полнота, совпадение подстановок и выбор языка.
 ///
@@ -92,6 +94,42 @@ void main() {
     expect(strings.navCatalog, 'Catalogue');
     expect(strings.catalogFound(1), '1 entry found');
     expect(strings.catalogFound(5), '5 entries found');
+  });
+
+  group('даты', () {
+    setUpAll(() async {
+      await initializeDateFormatting('ru');
+      await initializeDateFormatting('en');
+    });
+
+    /// Показывает дату так, как её увидит человек с этим языком интерфейса.
+    Future<String> shown(WidgetTester tester, String language) async {
+      late String text;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: Locale(language),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              text = localeDate(
+                context,
+                'd MMMM y',
+              ).format(DateTime(2026, 8, 12));
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      return text;
+    }
+
+    // Название месяца — единственное место, где дата говорит словами, и до
+    // этой правки оно оставалось русским посреди английского интерфейса.
+    testWidgets('месяц пишется на языке интерфейса', (tester) async {
+      expect(await shown(tester, 'ru'), '12 августа 2026');
+      expect(await shown(tester, 'en'), '12 August 2026');
+    });
   });
 
   group('выбор языка', () {

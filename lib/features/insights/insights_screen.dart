@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../app/navigation.dart';
+import '../../core/utils/dates.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
@@ -535,7 +535,7 @@ class _MonthlyChart extends StatelessWidget {
         ? months.sublist(months.length - 24)
         : months;
     final max = shown.fold<int>(0, (a, b) => a > b.count ? a : b.count);
-    final format = DateFormat('LLL', 'ru');
+    final format = localeDate(context, 'LLL');
 
     return AppCard(
       child: SizedBox(

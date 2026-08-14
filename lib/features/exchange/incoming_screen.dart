@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart' show OrderingMode, OrderingTerm, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/data_refresh.dart';
+import '../../core/utils/dates.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
@@ -137,7 +137,7 @@ class IncomingScreen extends ConsumerWidget {
         }
 
         final unseen = list.where((i) => !i.change.seen).length;
-        final dateFormat = DateFormat('d MMMM yyyy, HH:mm', 'ru');
+        final dateFormat = localeDate(context, 'd MMMM yyyy, HH:mm');
 
         return ScreenScaffold(
           header: ScreenHeader(

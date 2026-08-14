@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart' show OrderingMode, OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../app/navigation.dart';
+import '../../core/utils/dates.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -226,7 +226,7 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.backup => l10n.notificationBackupTitle,
     };
 
-    final dateFormat = DateFormat('d MMMM, HH:mm', 'ru');
+    final dateFormat = localeDate(context, 'd MMMM, HH:mm');
 
     String bodyOf(AppNotification n) => switch (n.kind) {
       NotificationKind.incoming => l10n.notificationIncomingBody(

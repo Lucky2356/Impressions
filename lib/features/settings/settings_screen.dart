@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../app/locale_controller.dart';
 import '../../app/theme_controller.dart';
+import '../../core/utils/dates.dart';
 import '../../core/config/app_config.dart';
 import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -580,7 +580,10 @@ class _BackupsSection extends ConsumerWidget {
     BackupInfo backup,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final date = DateFormat('d MMMM y, HH:mm', 'ru').format(backup.createdAt);
+    final date = localeDate(
+      context,
+      'd MMMM y, HH:mm',
+    ).format(backup.createdAt);
 
     final ok = await ConfirmDialog.show(
       context,
@@ -1004,7 +1007,7 @@ class _BackupRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                DateFormat('d MMMM y, HH:mm', 'ru').format(backup.createdAt),
+                localeDate(context, 'd MMMM y, HH:mm').format(backup.createdAt),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: context.text.bodySmall,

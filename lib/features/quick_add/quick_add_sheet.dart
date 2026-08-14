@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/utils/dates.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/domain/custom_fields.dart';
 import '../../core/domain/relation.dart';
@@ -1405,7 +1405,7 @@ class _ImpressionDateField extends StatelessWidget {
         child: Text(
           value == null
               ? l10n.entryImpressionDateNone
-              : DateFormat('d MMMM y', 'ru').format(value!),
+              : localeDate(context, 'd MMMM y').format(value!),
           style: context.text.bodyMedium?.copyWith(
             color: value == null ? c.textMuted : c.textPrimary,
           ),

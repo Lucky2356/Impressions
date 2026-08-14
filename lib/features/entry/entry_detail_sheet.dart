@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/utils/dates.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
@@ -468,9 +468,9 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                   if (_showHistory)
                     for (final rev in d.history)
                       _RevisionRow(
-                        dateLabel: DateFormat(
+                        dateLabel: localeDate(
+                          context,
                           'd MMMM y, HH:mm',
-                          'ru',
                         ).format(rev.createdAt),
                         isCurrent: rev.id == d.entry.currentRevisionId,
                         onRestore: rev.id == d.entry.currentRevisionId
@@ -805,7 +805,7 @@ class _ImpressionDateRow extends StatelessWidget {
               Text(
                 value == null
                     ? l10n.entryImpressionDateNone
-                    : DateFormat('d MMMM y', 'ru').format(value!),
+                    : localeDate(context, 'd MMMM y').format(value!),
                 style: context.text.bodyMedium,
               ),
             ],

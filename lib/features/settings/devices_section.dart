@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/utils/dates.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -100,7 +100,7 @@ class DevicesSection extends ConsumerWidget {
                       ),
                       Text(
                         '${devices[i].os ?? ''} · '
-                        '${l10n.deviceRegisteredAt(DateFormat('d MMMM y', 'ru').format(devices[i].registeredAt))}',
+                        '${l10n.deviceRegisteredAt(localeDate(context, 'd MMMM y').format(devices[i].registeredAt))}',
                         style: context.text.labelSmall?.copyWith(
                           color: c.textMuted,
                         ),
