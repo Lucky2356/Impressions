@@ -12,6 +12,7 @@ import 'package:impressions/design_system/design_system.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
+import 'package:impressions/features/categories/category_tree_pane.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/collections/collections_screen.dart';
