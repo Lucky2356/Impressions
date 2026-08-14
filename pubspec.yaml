@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.2
   drift: ^2.34.2
-  sqlite3_flutter_libs: ^0.6.0+eol
+  sqlite3: ^3.5.0
   path_provider: ^2.1.6
   path: ^1.9.1
   uuid: ^4.6.0
@@ -76,7 +76,6 @@ dev_dependencies:
   json_serializable: ^6.14.0
   file_selector_platform_interface: ^2.7.0
   share_plus_platform_interface: ^7.2.0
-  sqlite3: ^3.5.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -107,3 +106,12 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
+
+# Библиотека SQLite для приложения собирается сборочным хуком package:sqlite3.
+# Берём сборку SQLite3 Multiple Ciphers: тот же SQLite плюс шифрование базы
+# (MIT, без зависимости от OpenSSL). Обычная незашифрованная база такой
+# сборкой открывается как прежде.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc

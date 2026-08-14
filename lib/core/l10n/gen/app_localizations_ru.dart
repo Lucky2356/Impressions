@@ -1081,6 +1081,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupReasonBeforeRestore => 'перед восстановлением';
 
   @override
+  String get backupReasonBeforeEncrypt => 'перед сменой шифрования';
+
+  @override
   String get backupAutoTitle => 'Делать копию самому';
 
   @override
@@ -2561,6 +2564,105 @@ class AppLocalizationsRu extends AppLocalizations {
   String quickAddBarcodeHint(String code) {
     return 'Заполнено по штрихкоду $code';
   }
+
+  @override
+  String get lockTitle => 'База под паролем';
+
+  @override
+  String get lockMessage => 'Введите пароль, чтобы открыть записи.';
+
+  @override
+  String get lockPasswordLabel => 'Пароль';
+
+  @override
+  String get lockOpen => 'Открыть';
+
+  @override
+  String get lockWrongPassword => 'Неверный пароль';
+
+  @override
+  String get lockRemember => 'Помнить на этом устройстве';
+
+  @override
+  String get lockStaleKey =>
+      'Запомненный ключ не подходит к нынешней базе. Так бывает после восстановления копии, сделанной под другим паролем.';
+
+  @override
+  String get lockForgotWarning =>
+      'Забытый пароль восстановить нечем: данные откроются только из резервной копии, снятой до включения.';
+
+  @override
+  String get lockQuit => 'Закрыть приложение';
+
+  @override
+  String get dbEncryptionTitle => 'Шифровать базу паролем';
+
+  @override
+  String get dbEncryptionHint =>
+      'Файл базы становится нечитаемым без пароля: унесённый ноутбук, вытащенный диск или скопированный файл не выдадут записи. От того, кто сидит за вашим разблокированным устройством, это не защищает.';
+
+  @override
+  String get dbEncryptionOn => 'База зашифрована';
+
+  @override
+  String get dbEncryptionOff => 'База не зашифрована';
+
+  @override
+  String get dbEncryptionEnable => 'Включить';
+
+  @override
+  String get dbEncryptionDisable => 'Выключить';
+
+  @override
+  String get dbEncryptionChange => 'Сменить пароль';
+
+  @override
+  String get dbEncryptionConfirmTitle => 'Включить шифрование базы?';
+
+  @override
+  String get dbEncryptionConfirmMessage =>
+      'Забытый пароль означает потерю всех записей: восстановить их будет нечем, и это свойство шифрования, а не недоработка. Запишите пароль там же, где остальные важные пароли. Перед перешифровкой приложение сделает резервную копию.';
+
+  @override
+  String get dbEncryptionConfirmAccept => 'Пароль записан, продолжить';
+
+  @override
+  String get dbEncryptionDisableTitle => 'Выключить шифрование?';
+
+  @override
+  String get dbEncryptionDisableMessage =>
+      'База снова станет обычным файлом: скопировавший его прочитает записи без пароля.';
+
+  @override
+  String get dbEncryptionWorking => 'Перешифровываем базу…';
+
+  @override
+  String get dbEncryptionDone => 'База зашифрована';
+
+  @override
+  String get dbEncryptionOffDone => 'Шифрование выключено';
+
+  @override
+  String get dbEncryptionRestartTitle => 'Готово';
+
+  @override
+  String get dbEncryptionRestartMessage =>
+      'Закройте приложение и откройте снова — работать с перешифрованной базой можно только после перезапуска.';
+
+  @override
+  String get dbEncryptionFailed =>
+      'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.';
+
+  @override
+  String get dbEncryptionRememberTitle =>
+      'Не спрашивать пароль на этом устройстве';
+
+  @override
+  String get dbEncryptionRememberHint =>
+      'Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.';
+
+  @override
+  String get settingsWordsDbEncryption => 'шифрование база пароль защита диск';
 
   @override
   String get keyStorageTitle => 'Хранение закрытого ключа';

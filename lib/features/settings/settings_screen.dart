@@ -23,6 +23,7 @@ import '../../design_system/design_system.dart';
 import '../exchange/file_delivery_report.dart';
 import '../onboarding/app_tour.dart';
 import 'backup_password_dialog.dart';
+import 'db_encryption_section.dart';
 import 'devices_section.dart';
 import 'doctor_section.dart';
 import 'error_log_section.dart';
@@ -131,6 +132,11 @@ List<_Section> _advancedSections(AppLocalizations l10n) => [
     title: l10n.devicesTitle,
     words: l10n.settingsWordsDevices,
     widget: const DevicesSection(),
+  ),
+  (
+    title: l10n.dbEncryptionTitle,
+    words: l10n.settingsWordsDbEncryption,
+    widget: const DbEncryptionSection(),
   ),
   (
     title: l10n.keyStorageTitle,
@@ -663,6 +669,7 @@ class _BackupsSection extends ConsumerWidget {
       'auto' => l10n.backupReasonAuto,
       'beforeImport' => l10n.backupReasonBeforeImport,
       'beforeRestore' => l10n.backupReasonBeforeRestore,
+      'beforeEncrypt' => l10n.backupReasonBeforeEncrypt,
       _ => l10n.backupReasonManual,
     };
 

@@ -5,6 +5,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app.dart';
 import 'core/diagnostics/error_log.dart';
+import 'data/services/database_lock_service.dart';
+import 'features/lock/unlock_screen.dart';
 import 'design_system/design_system.dart';
 
 Future<void> main(List<String> args) async {
@@ -30,6 +32,25 @@ Future<void> main(List<String> args) async {
     // берёт из MediaQuery: так шапка не оказывается под часами, а фон уходит
     // под панель навигации, а не обрывается серой полосой.
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    runApp(const ProviderScope(child: ImpressionsApp()));
+
+    // Ключ к базе выясняется до первого обращения к данным: drift открывает
+    // файл лениво, но открывает его уже с ключом или без — поменять это
+    // потом нельзя.
+    const lock = DatabaseLockService();
+    final status = await lock.prepare();
+    switch (status) {
+      case LockStatus.open:
+      case LockStatus.unlocked:
+        runApp(const ProviderScope(child: ImpressionsApp()));
+      case LockStatus.needsPassword:
+      case LockStatus.staleKey:
+        runApp(
+          UnlockApp(
+            stale: status == LockStatus.staleKey,
+            onUnlocked: () =>
+                runApp(const ProviderScope(child: ImpressionsApp())),
+          ),
+        );
+    }
   });
 }

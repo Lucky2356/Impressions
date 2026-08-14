@@ -10,8 +10,10 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/config/app_config.dart';
 import '../db/database.dart';
+import '../db/database_cipher.dart';
 import '../repositories/settings_repository.dart';
 import 'backup_cipher.dart';
+import 'database_lock_service.dart';
 import 'secret_storage.dart';
 
 /// Информация о резервной копии.
@@ -108,6 +110,10 @@ class BackupService {
   static const String _manifestName = 'backup.json';
   static const String _dbEntryName = 'impressions.sqlite';
   static const String _mediaPrefix = 'media/';
+
+  /// Состояние шифрования базы. Без него зашифрованная копия бесполезна:
+  /// в этом файле лежит соль, без которой из пароля не вывести ключ.
+  static const String _cipherEntryName = DatabaseCipher.stateFileName;
 
   /// Имя ключа копий в хранилище ОС.
   static const String _backupKeyName = 'backup_key';
@@ -214,6 +220,8 @@ class BackupService {
     // Что попадёт в копию: имя внутри архива → файл на диске.
     final sources = <String, File>{};
     if (dbFile.existsSync()) sources[_dbEntryName] = dbFile;
+    final cipherState = File(p.join(base.path, DatabaseCipher.stateFileName));
+    if (cipherState.existsSync()) sources[_cipherEntryName] = cipherState;
     if (mediaDir.existsSync()) {
       for (final entity in mediaDir.listSync()) {
         if (entity is! File) continue;
@@ -524,6 +532,9 @@ class BackupService {
       final dbTarget = File(p.join(base.path, 'impressions.sqlite'));
       final mediaDir = Directory(p.join(base.path, 'media'));
 
+      // Состояние шифрования задаёт копия, а не то, что лежало здесь до неё.
+      var restoredCipherState = false;
+
       InputFileStream? input;
       try {
         input = InputFileStream(zipPath);
@@ -534,6 +545,14 @@ class BackupService {
 
           if (entry.name == _dbEntryName) {
             await _replaceAtomic(dbTarget, entry);
+            continue;
+          }
+          if (entry.name == _cipherEntryName) {
+            await _replaceAtomic(
+              File(p.join(base.path, DatabaseCipher.stateFileName)),
+              entry,
+            );
+            restoredCipherState = true;
             continue;
           }
           if (!entry.name.startsWith(_mediaPrefix)) continue;
@@ -548,6 +567,18 @@ class BackupService {
         // Пока дескриптор архива открыт, Windows не даст переименовать файлы.
         await input?.close();
       }
+
+      // В копии не было состояния шифрования — значит, база в ней открытая.
+      // Оставшийся от прежней базы файл состояния запер бы правильные данные:
+      // приложение спрашивало бы пароль, который к этому файлу не подходит.
+      if (!restoredCipherState) {
+        final state = File(p.join(base.path, DatabaseCipher.stateFileName));
+        if (state.existsSync()) await state.delete();
+      }
+
+      // Ключ, запомненный на этом устройстве, был от прежней базы. Пароль к
+      // восстановленной знает только владелец — спросим его при запуске.
+      await const DatabaseLockService().forget();
 
       // Журнал упреждающей записи остался от прежней базы. Если его не убрать,
       // SQLite накатит чужие страницы на восстановленный файл и испортит его.

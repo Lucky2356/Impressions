@@ -1066,6 +1066,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupReasonBeforeRestore => 'before a restore';
 
   @override
+  String get backupReasonBeforeEncrypt => 'before an encryption change';
+
+  @override
   String get backupAutoTitle => 'Back up on its own';
 
   @override
@@ -2496,6 +2499,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String quickAddBarcodeHint(String code) {
     return 'Filled in from barcode $code';
   }
+
+  @override
+  String get lockTitle => 'The database is locked';
+
+  @override
+  String get lockMessage => 'Enter the password to open your entries.';
+
+  @override
+  String get lockPasswordLabel => 'Password';
+
+  @override
+  String get lockOpen => 'Open';
+
+  @override
+  String get lockWrongPassword => 'Wrong password';
+
+  @override
+  String get lockRemember => 'Remember on this device';
+
+  @override
+  String get lockStaleKey =>
+      'The remembered key does not fit the current database. This happens after restoring a backup that was made under a different password.';
+
+  @override
+  String get lockForgotWarning =>
+      'A forgotten password cannot be recovered: the data will only open from a backup made before you turned encryption on.';
+
+  @override
+  String get lockQuit => 'Close the app';
+
+  @override
+  String get dbEncryptionTitle => 'Encrypt the database with a password';
+
+  @override
+  String get dbEncryptionHint =>
+      'The database file becomes unreadable without the password: a stolen laptop, a pulled-out drive or a copied file will not give up your entries. It does not protect you from someone sitting at your unlocked device.';
+
+  @override
+  String get dbEncryptionOn => 'The database is encrypted';
+
+  @override
+  String get dbEncryptionOff => 'The database is not encrypted';
+
+  @override
+  String get dbEncryptionEnable => 'Turn on';
+
+  @override
+  String get dbEncryptionDisable => 'Turn off';
+
+  @override
+  String get dbEncryptionChange => 'Change the password';
+
+  @override
+  String get dbEncryptionConfirmTitle => 'Encrypt the database?';
+
+  @override
+  String get dbEncryptionConfirmMessage =>
+      'A forgotten password means losing every entry: there will be nothing to recover them from, and that is a property of encryption, not a shortcoming. Write the password down where you keep your other important ones. A backup is made before the database is re-encrypted.';
+
+  @override
+  String get dbEncryptionConfirmAccept =>
+      'The password is written down, continue';
+
+  @override
+  String get dbEncryptionDisableTitle => 'Turn encryption off?';
+
+  @override
+  String get dbEncryptionDisableMessage =>
+      'The database becomes an ordinary file again: anyone who copies it will read your entries without a password.';
+
+  @override
+  String get dbEncryptionWorking => 'Re-encrypting the database…';
+
+  @override
+  String get dbEncryptionDone => 'The database is encrypted';
+
+  @override
+  String get dbEncryptionOffDone => 'Encryption is off';
+
+  @override
+  String get dbEncryptionRestartTitle => 'Done';
+
+  @override
+  String get dbEncryptionRestartMessage =>
+      'Close the app and open it again — the re-encrypted database can only be used after a restart.';
+
+  @override
+  String get dbEncryptionFailed =>
+      'Re-encryption failed. The database is unchanged and the backup is in place.';
+
+  @override
+  String get dbEncryptionRememberTitle =>
+      'Do not ask for the password on this device';
+
+  @override
+  String get dbEncryptionRememberHint =>
+      'The key goes into the system store, next to the profile key. Convenient — but then the password only protects you from another device, not from your own while it is unlocked.';
+
+  @override
+  String get settingsWordsDbEncryption =>
+      'encryption database password protection disk';
 
   @override
   String get keyStorageTitle => 'Where the private key is kept';

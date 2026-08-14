@@ -1958,6 +1958,12 @@ abstract class AppLocalizations {
   /// **'перед восстановлением'**
   String get backupReasonBeforeRestore;
 
+  /// No description provided for @backupReasonBeforeEncrypt.
+  ///
+  /// In ru, this message translates to:
+  /// **'перед сменой шифрования'**
+  String get backupReasonBeforeEncrypt;
+
   /// No description provided for @backupAutoTitle.
   ///
   /// In ru, this message translates to:
@@ -4243,6 +4249,186 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Заполнено по штрихкоду {code}'**
   String quickAddBarcodeHint(String code);
+
+  /// No description provided for @lockTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'База под паролем'**
+  String get lockTitle;
+
+  /// No description provided for @lockMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите пароль, чтобы открыть записи.'**
+  String get lockMessage;
+
+  /// No description provided for @lockPasswordLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль'**
+  String get lockPasswordLabel;
+
+  /// No description provided for @lockOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть'**
+  String get lockOpen;
+
+  /// No description provided for @lockWrongPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверный пароль'**
+  String get lockWrongPassword;
+
+  /// No description provided for @lockRemember.
+  ///
+  /// In ru, this message translates to:
+  /// **'Помнить на этом устройстве'**
+  String get lockRemember;
+
+  /// No description provided for @lockStaleKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запомненный ключ не подходит к нынешней базе. Так бывает после восстановления копии, сделанной под другим паролем.'**
+  String get lockStaleKey;
+
+  /// No description provided for @lockForgotWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забытый пароль восстановить нечем: данные откроются только из резервной копии, снятой до включения.'**
+  String get lockForgotWarning;
+
+  /// No description provided for @lockQuit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть приложение'**
+  String get lockQuit;
+
+  /// No description provided for @dbEncryptionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шифровать базу паролем'**
+  String get dbEncryptionTitle;
+
+  /// No description provided for @dbEncryptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл базы становится нечитаемым без пароля: унесённый ноутбук, вытащенный диск или скопированный файл не выдадут записи. От того, кто сидит за вашим разблокированным устройством, это не защищает.'**
+  String get dbEncryptionHint;
+
+  /// No description provided for @dbEncryptionOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'База зашифрована'**
+  String get dbEncryptionOn;
+
+  /// No description provided for @dbEncryptionOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'База не зашифрована'**
+  String get dbEncryptionOff;
+
+  /// No description provided for @dbEncryptionEnable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить'**
+  String get dbEncryptionEnable;
+
+  /// No description provided for @dbEncryptionDisable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить'**
+  String get dbEncryptionDisable;
+
+  /// No description provided for @dbEncryptionChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить пароль'**
+  String get dbEncryptionChange;
+
+  /// No description provided for @dbEncryptionConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить шифрование базы?'**
+  String get dbEncryptionConfirmTitle;
+
+  /// No description provided for @dbEncryptionConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забытый пароль означает потерю всех записей: восстановить их будет нечем, и это свойство шифрования, а не недоработка. Запишите пароль там же, где остальные важные пароли. Перед перешифровкой приложение сделает резервную копию.'**
+  String get dbEncryptionConfirmMessage;
+
+  /// No description provided for @dbEncryptionConfirmAccept.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль записан, продолжить'**
+  String get dbEncryptionConfirmAccept;
+
+  /// No description provided for @dbEncryptionDisableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить шифрование?'**
+  String get dbEncryptionDisableTitle;
+
+  /// No description provided for @dbEncryptionDisableMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'База снова станет обычным файлом: скопировавший его прочитает записи без пароля.'**
+  String get dbEncryptionDisableMessage;
+
+  /// No description provided for @dbEncryptionWorking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перешифровываем базу…'**
+  String get dbEncryptionWorking;
+
+  /// No description provided for @dbEncryptionDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'База зашифрована'**
+  String get dbEncryptionDone;
+
+  /// No description provided for @dbEncryptionOffDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шифрование выключено'**
+  String get dbEncryptionOffDone;
+
+  /// No description provided for @dbEncryptionRestartTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get dbEncryptionRestartTitle;
+
+  /// No description provided for @dbEncryptionRestartMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закройте приложение и откройте снова — работать с перешифрованной базой можно только после перезапуска.'**
+  String get dbEncryptionRestartMessage;
+
+  /// No description provided for @dbEncryptionFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.'**
+  String get dbEncryptionFailed;
+
+  /// No description provided for @dbEncryptionRememberTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не спрашивать пароль на этом устройстве'**
+  String get dbEncryptionRememberTitle;
+
+  /// No description provided for @dbEncryptionRememberHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.'**
+  String get dbEncryptionRememberHint;
+
+  /// No description provided for @settingsWordsDbEncryption.
+  ///
+  /// In ru, this message translates to:
+  /// **'шифрование база пароль защита диск'**
+  String get settingsWordsDbEncryption;
 
   /// No description provided for @keyStorageTitle.
   ///
