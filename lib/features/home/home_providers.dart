@@ -5,6 +5,7 @@ import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/entry_stats.dart';
 
 /// Сводка по активному профилю.
 final profileStatsProvider = FutureProvider<ProfileStats?>((ref) async {

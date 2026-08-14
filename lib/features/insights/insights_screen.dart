@@ -13,6 +13,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/entry_stats.dart';
 import '../../design_system/design_system.dart';
 import '../catalog/catalog_providers.dart';
 import '../categories/category_providers.dart';

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/repositories/category_repository.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
+import 'package:impressions/data/repositories/entry_stats.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 
 import 'test_db.dart';
