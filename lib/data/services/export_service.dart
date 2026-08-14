@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart';
@@ -13,6 +14,23 @@ import '../repositories/entry_repository.dart';
 import 'image_service.dart';
 import 'key_service.dart';
 import 'readable_export_service.dart';
+
+/// Контрольные суммы файлов пакета.
+///
+/// Функция верхнего уровня: уходит в [Isolate.run], а замыкание не должно
+/// тянуть за собой ссылки на объекты вызывающего изолята.
+Map<String, Object?> _checksumsOf(Map<String, List<int>> files) => {
+  for (final entry in files.entries) entry.key: Hashing.sha256Hex(entry.value),
+};
+
+/// Собирает zip из готовых файлов пакета.
+List<int> _zipOf(Map<String, List<int>> files) {
+  final archive = Archive();
+  for (final entry in files.entries) {
+    archive.add(ArchiveFile(entry.key, entry.value.length, entry.value));
+  }
+  return ZipEncoder().encode(archive);
+}
 
 /// Режим экспорта (§19).
 enum ExportMode { full, branch, collection, selection, backup }
@@ -156,10 +174,9 @@ class ExportService {
     files['manifest.json'] = _json(manifest);
 
     // Контрольные суммы всех файлов, кроме самих checksums и signature.
-    final checksums = <String, Object?>{
-      for (final entry in files.entries)
-        entry.key: Hashing.sha256Hex(entry.value),
-    };
+    // Считаются в отдельном изоляте: с фотографиями пакет весит десятки
+    // мегабайт, и один проход хеширования по ним замораживал окно целиком.
+    final checksums = await Isolate.run(() => _checksumsOf(files));
     files['checksums.json'] = _json(checksums);
 
     // Подпись над каноническим представлением manifest + checksums (§22).
@@ -174,12 +191,9 @@ class ExportService {
       'signature': signature,
     });
 
-    // Упаковка.
-    final archive = Archive();
-    for (final entry in files.entries) {
-      archive.add(ArchiveFile(entry.key, entry.value.length, entry.value));
-    }
-    var bytes = ZipEncoder().encode(archive);
+    // Упаковка — тоже в изоляте: сжатие пакета с фотографиями идёт секундами,
+    // и всё это время интерфейс не отвечал вовсе.
+    var bytes = await Isolate.run(() => _zipOf(files));
 
     if (options.isProtected) {
       bytes = await KeyService.encryptWithPassword(bytes, options.password!);
@@ -387,22 +401,32 @@ class ExportService {
             db.categoryRevisions,
           )..where((r) => r.categoryId.isIn(categoryIds.toList()))).get();
 
-    // Связи запись↔категория (только внутри выбранного).
-    final entryCategoryLinks = await (db.select(db.entryCategories)).get();
-    final links = entryCategoryLinks
-        .where(
-          (l) =>
-              entryIds.contains(l.entryId) &&
-              categoryIds.contains(l.categoryId),
-        )
-        .toList();
+    // Связи запись↔категория (только внутри выбранного). Спрашиваем нужные, а
+    // не всю таблицу: раньше сюда приезжали связи всех профилей сразу, и
+    // выгрузка одной ветки читала их целиком.
+    final links = entryIds.isEmpty
+        ? <EntryCategoryRow>[]
+        : (await (db.select(
+                db.entryCategories,
+              )..where((l) => l.entryId.isIn(entryIds.toList()))).get())
+              .where((l) => categoryIds.contains(l.categoryId))
+              .toList();
+
+    // Кому какая запись принадлежит — по идентификатору, а не поиском в
+    // списке: у выгрузки на пять тысяч записей это был перебор всего списка
+    // на каждую версию.
+    final entryById = {for (final e in entries) e.id: e};
+    final linksByEntry = <String, List<EntryCategoryRow>>{};
+    for (final link in links) {
+      (linksByEntry[link.entryId] ??= []).add(link);
+    }
 
     // Вложения (§25: приватность «без фотографий»).
     var attachments = <AttachmentRow>[];
     if (options.includePhotos) {
       final revisionIds = entryRevisions
           .where((r) {
-            final entry = entries.where((e) => e.id == r.entryId).firstOrNull;
+            final entry = entryById[r.entryId];
             return entry != null && entry.privacy != privacyNoPhotos;
           })
           .map((r) => r.id)
@@ -506,7 +530,7 @@ class ExportService {
             'createdAt': e.createdAt.toUtc().toIso8601String(),
             'archivedAt': e.archivedAt?.toUtc().toIso8601String(),
             'categories': [
-              for (final l in links.where((l) => l.entryId == e.id))
+              for (final l in linksByEntry[e.id] ?? const <EntryCategoryRow>[])
                 {'categoryId': l.categoryId, 'isPrimary': l.isPrimary},
             ],
           },

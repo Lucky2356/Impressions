@@ -271,14 +271,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     );
   }
 
-  bool _hiddenByCollapse(CategoryRow cat) {
-    final ids = cat.path.split('/');
-    for (var i = 0; i < ids.length - 1; i++) {
-      if (_collapsed.contains(ids[i])) return true;
-    }
-    return false;
-  }
-
   /// Раскрывает всех предков, чтобы выбранная категория была видна в дереве.
   void _select(CategoryRow cat) {
     _setSelected(cat.id);
@@ -339,7 +331,6 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
               ..clear()
               ..addAll(list.map((x) => x.id));
           }),
-          hiddenByCollapse: _hiddenByCollapse,
         );
 
         Widget detailFor(CategoryRow cat, {VoidCallback? onBack}) =>
@@ -624,7 +615,6 @@ class _TreePane extends StatelessWidget {
     required this.onCreateRoot,
     required this.onExpandAll,
     required this.onCollapseAll,
-    required this.hiddenByCollapse,
   });
 
   final List<CategoryRow> categories;
@@ -643,28 +633,36 @@ class _TreePane extends StatelessWidget {
   final VoidCallback onCreateRoot;
   final VoidCallback onExpandAll;
   final VoidCallback onCollapseAll;
-  final bool Function(CategoryRow) hiddenByCollapse;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
 
+    // Один проход на всё: кто с детьми, сколько их и кто спрятан свёрнутым
+    // предком. Прежде «спрятан ли» решалось разбором материализованного пути
+    // на каждую строку — ещё один проход по всему дереву, и так на каждый
+    // кадр. Родитель в списке всегда стоит раньше детей, поэтому его
+    // видимость к этому моменту уже известна.
     final hasChildren = <String, bool>{};
     final childCount = <String, int>{};
+    final hidden = <String, bool>{};
     for (final cat in categories) {
       final parent = cat.parentId;
-      if (parent != null) {
-        hasChildren[parent] = true;
-        childCount[parent] = (childCount[parent] ?? 0) + 1;
+      if (parent == null) {
+        hidden[cat.id] = false;
+        continue;
       }
+      hasChildren[parent] = true;
+      childCount[parent] = (childCount[parent] ?? 0) + 1;
+      hidden[cat.id] = collapsed.contains(parent) || (hidden[parent] ?? false);
     }
 
     // Поиск показывает совпавшие узлы вместе с предками — иначе теряется путь.
     final normalized = Normalize.name(query);
     final visible = <CategoryRow>[];
     if (normalized.isEmpty) {
-      visible.addAll(categories.where((cat) => !hiddenByCollapse(cat)));
+      visible.addAll(categories.where((cat) => !(hidden[cat.id] ?? false)));
     } else {
       final keep = <String>{};
       for (final cat in categories) {

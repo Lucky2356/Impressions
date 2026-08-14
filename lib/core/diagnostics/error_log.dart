@@ -20,6 +20,24 @@ class ErrorLog {
   /// история за всё время: старые записи вытесняются новыми.
   static const int maxRecords = 200;
 
+  /// С какого размера журнал подрезается, даже если записей немного.
+  ///
+  /// Одна авария с длинным сообщением может весить сколько угодно, а счёт
+  /// записей этого не заметит.
+  static const int _trimAtSize = 1024 * 1024;
+
+  /// Сколько оставляем, когда подрезаем по размеру.
+  static const int _keepSize = 256 * 1024;
+
+  /// Сколько аварий записано с последней подрезки.
+  ///
+  /// Считаем в памяти, а не по файлу: авария в отрисовке повторяется каждый
+  /// кадр, и перечитывать журнал целиком на каждую — верный способ добить и
+  /// без того сломанное приложение. После перезапуска счёт начинается заново,
+  /// поэтому записей до первой подрезки может набраться вдвое больше — на
+  /// разбор недавнего это не влияет.
+  static int _sinceTrim = 0;
+
   static const String _fileName = 'errors.log';
 
   /// Разделитель записей: одна авария занимает несколько строк.
@@ -48,8 +66,15 @@ class ErrorLog {
       final record = '$_separator$when$where ===\n$error$trace\n';
 
       final file = await _file();
-      final existing = file.existsSync() ? await file.readAsString() : '';
-      await file.writeAsString(_trim(existing + record));
+      // Дописываем в конец: раньше каждая авария читала и переписывала весь
+      // журнал, и сбой в отрисовке делал это каждый кадр.
+      await file.writeAsString(record, mode: FileMode.append, flush: true);
+
+      _sinceTrim++;
+      if (_sinceTrim >= maxRecords || await file.length() > _trimAtSize) {
+        await file.writeAsString(_trim(await file.readAsString()));
+        _sinceTrim = 0;
+      }
     } on Object catch (e) {
       // Писать некуда — остаётся консоль отладочной сборки.
       debugPrint('Не удалось записать в журнал ошибок: $e');
@@ -83,12 +108,26 @@ class ErrorLog {
     }
   }
 
-  /// Оставляет последние [maxRecords] записей.
+  /// Оставляет последние [maxRecords] записей и не больше [_keepSize].
   static String _trim(String text) {
-    final parts = text.split(_separator);
-    if (parts.length - 1 <= maxRecords) return text;
-    final kept = parts.sublist(parts.length - maxRecords);
-    return _separator + kept.join(_separator);
+    var kept = text;
+
+    final parts = kept.split(_separator);
+    if (parts.length - 1 > maxRecords) {
+      kept =
+          _separator +
+          parts.sublist(parts.length - maxRecords).join(_separator);
+    }
+
+    // Двести записей — это ещё не ограничение размера: у одной аварии
+    // сообщение может быть длиной в целый файл.
+    if (kept.length > _keepSize) {
+      final from = kept.indexOf(_separator, kept.length - _keepSize);
+      kept = from < 0
+          ? kept.substring(kept.length - _keepSize)
+          : kept.substring(from);
+    }
+    return kept;
   }
 
   /// Первые кадры стека: полный след занимает экран и почти ничего не

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart';
@@ -9,6 +10,71 @@ import '../../core/utils/ids.dart';
 import '../db/database.dart';
 import 'image_service.dart';
 import 'key_service.dart';
+
+/// Разбирает пакет в память с проверками §21.
+///
+/// Функция верхнего уровня: уходит в [Isolate.run], а замыкание не должно
+/// тянуть за собой ссылки на объекты вызывающего изолята. Отказы возвращаются
+/// исключением — [Isolate.run] пробрасывает его вызывающему.
+Map<String, Uint8List> _unpackPackage(Uint8List archiveBytes) {
+  final Archive archive;
+  try {
+    archive = ZipDecoder().decodeBytes(archiveBytes);
+  } on Object {
+    throw ImportException(
+      ImportProblem.notAnArchive,
+      'Файл повреждён или не является пакетом профиля',
+    );
+  }
+
+  // Сколько выйдет после распаковки — известно из оглавления архива. Раньше
+  // предел проверялся по ходу дела, то есть уже после того, как содержимое
+  // оказывалось в памяти: к моменту отказа памяти могло не остаться. Теперь
+  // заведомо неподъёмный архив отклоняется, не распаковав ни байта.
+  final declared = archive.files.fold<int>(0, (sum, f) => sum + f.size);
+  if (declared > AppConfig.maxUnpackedBytes) {
+    throw ImportException(
+      ImportProblem.limitExceeded,
+      'Распакованные данные превышают лимит',
+    );
+  }
+
+  final files = <String, Uint8List>{};
+  var unpacked = 0;
+  for (final file in archive.files) {
+    final name = file.name;
+    ImportService.assertSafePath(name);
+    if (!file.isFile) {
+      throw ImportException(
+        ImportProblem.unsafePath,
+        'В пакете недопустимый элемент: $name',
+      );
+    }
+    final isAttachment = name.startsWith(ImportService.attachmentsPrefix);
+    if (!ImportService.allowedFiles.contains(name) && !isAttachment) {
+      throw ImportException(
+        ImportProblem.unexpectedFile,
+        'Неожиданный файл в пакете: $name',
+      );
+    }
+    final content = file.content as List<int>;
+    if (isAttachment && content.length > AppConfig.maxAttachmentBytes) {
+      throw ImportException(
+        ImportProblem.limitExceeded,
+        'Вложение больше допустимого размера',
+      );
+    }
+    unpacked += content.length;
+    if (unpacked > AppConfig.maxUnpackedBytes) {
+      throw ImportException(
+        ImportProblem.limitExceeded,
+        'Распакованные данные превышают лимит',
+      );
+    }
+    files[name] = Uint8List.fromList(content);
+  }
+  return files;
+}
 
 /// Причина отказа во время проверки пакета (§21).
 enum ImportProblem {
@@ -137,7 +203,7 @@ class ImportService {
     'signature.json',
   };
 
-  static const String _attachmentsPrefix = 'attachments/';
+  static const String attachmentsPrefix = 'attachments/';
 
   /// Разбирает и проверяет пакет, ничего не записывая в базу.
   Future<ImportPreview> inspect(Uint8List bytes, {String? password}) async {
@@ -162,63 +228,11 @@ class ImportService {
       archiveBytes = decrypted;
     }
 
-    final Archive archive;
-    try {
-      archive = ZipDecoder().decodeBytes(archiveBytes);
-    } on Object {
-      throw ImportException(
-        ImportProblem.notAnArchive,
-        'Файл повреждён или не является пакетом профиля',
-      );
-    }
-
-    // Сколько выйдет после распаковки — известно из оглавления архива. Раньше
-    // предел проверялся по ходу дела, то есть уже после того, как содержимое
-    // оказывалось в памяти: к моменту отказа памяти могло не остаться. Теперь
-    // заведомо неподъёмный архив отклоняется, не распаковав ни байта.
-    final declared = archive.files.fold<int>(0, (sum, f) => sum + f.size);
-    if (declared > AppConfig.maxUnpackedBytes) {
-      throw ImportException(
-        ImportProblem.limitExceeded,
-        'Распакованные данные превышают лимит',
-      );
-    }
-
-    // Распаковка в память с проверками путей (§21).
-    final files = <String, Uint8List>{};
-    var unpacked = 0;
-    for (final file in archive.files) {
-      final name = file.name;
-      _assertSafePath(name);
-      if (!file.isFile) {
-        throw ImportException(
-          ImportProblem.unsafePath,
-          'В пакете недопустимый элемент: $name',
-        );
-      }
-      final isAttachment = name.startsWith(_attachmentsPrefix);
-      if (!allowedFiles.contains(name) && !isAttachment) {
-        throw ImportException(
-          ImportProblem.unexpectedFile,
-          'Неожиданный файл в пакете: $name',
-        );
-      }
-      final content = file.content as List<int>;
-      if (isAttachment && content.length > AppConfig.maxAttachmentBytes) {
-        throw ImportException(
-          ImportProblem.limitExceeded,
-          'Вложение больше допустимого размера',
-        );
-      }
-      unpacked += content.length;
-      if (unpacked > AppConfig.maxUnpackedBytes) {
-        throw ImportException(
-          ImportProblem.limitExceeded,
-          'Распакованные данные превышают лимит',
-        );
-      }
-      files[name] = Uint8List.fromList(content);
-    }
+    // Распаковка — в отдельном изоляте: пакет с фотографиями разжимается
+    // секундами, и всё это время окно не отвечало вовсе. Проверки уезжают
+    // туда же и в том же порядке: отказ по оглавлению должен случаться до
+    // того, как в память попадёт хоть байт содержимого.
+    final files = await Isolate.run(() => _unpackPackage(archiveBytes));
 
     if (!files.containsKey('manifest.json')) {
       throw ImportException(
@@ -300,7 +314,7 @@ class ImportService {
       revisions: _decodeJsonl(files['revisions.jsonl']),
       attachments: {
         for (final entry in files.entries)
-          if (entry.key.startsWith(_attachmentsPrefix)) entry.key: entry.value,
+          if (entry.key.startsWith(attachmentsPrefix)) entry.key: entry.value,
       },
     );
 
@@ -384,7 +398,7 @@ class ImportService {
 
   /// Запрещает абсолютные пути, выход за пределы каталога и обратные слеши
   /// (защита от Zip Slip, §21).
-  static void _assertSafePath(String name) {
+  static void assertSafePath(String name) {
     if (name.isEmpty) {
       throw ImportException(ImportProblem.unsafePath, 'Пустое имя файла');
     }

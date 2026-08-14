@@ -156,118 +156,139 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
       );
     }
 
+    // Список собирается построителями, а не готовыми виджетами: архив на
+    // тысячу записей строился целиком на каждый кадр, хотя на экране помещается
+    // десяток строк. Отметить запись — значит перестроить весь список.
+    final rows = <WidgetBuilder>[];
+
+    if (entries.isNotEmpty) {
+      rows.add(
+        (_) => Row(
+          children: [
+            Expanded(child: SectionHeader(title: l10n.archiveEntries)),
+            if (_selected.isEmpty)
+              TextButton(
+                onPressed: () => setState(
+                  () => _selected.addAll(entries.map((e) => e.entryId)),
+                ),
+                child: Text(l10n.bulkSelectAll),
+              ),
+          ],
+        ),
+      );
+      if (_selected.isNotEmpty) {
+        rows.add(
+          (_) => Padding(
+            padding: const EdgeInsets.only(top: AppDimens.space8),
+            child: _ArchiveSelectionBar(
+              count: _selected.length,
+              onClear: () => setState(_selected.clear),
+              onRestore: _restoreSelected,
+              onPurge: _purgeSelected,
+            ),
+          ),
+        );
+      }
+      rows.add((_) => const SizedBox(height: AppDimens.space12));
+      for (final entry in entries) {
+        rows.add(
+          (context) => _ArchivedTile(
+            icon: Icons.article_rounded,
+            title: entry.title,
+            subtitle: entry.categoryPath.isEmpty
+                ? entry.typeName
+                : entry.categoryPath.join(' / '),
+            selected: _selected.contains(entry.entryId),
+            onSelect: () => _toggle(entry.entryId),
+            onRestore: () async {
+              await ref
+                  .read(entryRepositoryProvider)
+                  .restoreEntry(entry.entryId);
+              ref.read(dataRefreshProvider.notifier).bump();
+            },
+            onPurge: () => _confirmPurge(
+              context,
+              ref,
+              title: entry.title,
+              purge: () => PurgeService(
+                ref.read(appDatabaseProvider),
+              ).purgeEntry(entry.entryId),
+            ),
+          ),
+        );
+      }
+      rows.add((_) => const SizedBox(height: AppDimens.space32));
+    }
+
+    if (categories.isNotEmpty) {
+      rows.add((_) => SectionHeader(title: l10n.archiveCategories));
+      rows.add((_) => const SizedBox(height: AppDimens.space12));
+      for (final category in categories) {
+        rows.add(
+          (context) => _ArchivedTile(
+            icon: AppIcons.byKey(category.icon),
+            title: category.name,
+            subtitle: l10n.archiveCategoryLevel(category.level + 1),
+            onRestore: () async {
+              await ref.read(categoryRepositoryProvider).restore(category.id);
+              ref.read(dataRefreshProvider.notifier).bump();
+            },
+            onPurge: () => _confirmPurge(
+              context,
+              ref,
+              title: category.name,
+              purge: () => PurgeService(
+                ref.read(appDatabaseProvider),
+              ).purgeCategory(category.id),
+            ),
+          ),
+        );
+      }
+      rows.add((_) => const SizedBox(height: AppDimens.space32));
+    }
+
+    if (collections.isNotEmpty) {
+      rows.add((_) => SectionHeader(title: l10n.archiveCollections));
+      rows.add((_) => const SizedBox(height: AppDimens.space12));
+      for (final collection in collections) {
+        rows.add(
+          (context) => _ArchivedTile(
+            icon: Icons.collections_bookmark_rounded,
+            title: collection.name,
+            subtitle: collection.description ?? '',
+            onRestore: () async {
+              await ref
+                  .read(collectionRepositoryProvider)
+                  .restore(collection.id);
+              ref.read(dataRefreshProvider.notifier).bump();
+            },
+            onPurge: () => _confirmPurge(
+              context,
+              ref,
+              title: collection.name,
+              purge: () => PurgeService(
+                ref.read(appDatabaseProvider),
+              ).purgeCollection(collection.id),
+            ),
+          ),
+        );
+      }
+    }
+
     return ScreenScaffold(
       header: ScreenHeader(
         title: l10n.archiveTitle,
         subtitle: l10n.archiveSubtitle(total),
       ),
-      child: ListView(
+      child: ListView.builder(
         padding: EdgeInsets.fromLTRB(
           layout.gutter,
           AppDimens.space16,
           layout.gutter,
           AppDimens.space40,
         ),
-        children: [
-          if (entries.isNotEmpty) ...[
-            Row(
-              children: [
-                Expanded(child: SectionHeader(title: l10n.archiveEntries)),
-                if (_selected.isEmpty)
-                  TextButton(
-                    onPressed: () => setState(
-                      () => _selected.addAll(entries.map((e) => e.entryId)),
-                    ),
-                    child: Text(l10n.bulkSelectAll),
-                  ),
-              ],
-            ),
-            if (_selected.isNotEmpty) ...[
-              const SizedBox(height: AppDimens.space8),
-              _ArchiveSelectionBar(
-                count: _selected.length,
-                onClear: () => setState(_selected.clear),
-                onRestore: _restoreSelected,
-                onPurge: _purgeSelected,
-              ),
-            ],
-            const SizedBox(height: AppDimens.space12),
-            for (final entry in entries)
-              _ArchivedTile(
-                icon: Icons.article_rounded,
-                title: entry.title,
-                subtitle: entry.categoryPath.isEmpty
-                    ? entry.typeName
-                    : entry.categoryPath.join(' / '),
-                selected: _selected.contains(entry.entryId),
-                onSelect: () => _toggle(entry.entryId),
-                onRestore: () async {
-                  await ref
-                      .read(entryRepositoryProvider)
-                      .restoreEntry(entry.entryId);
-                  ref.read(dataRefreshProvider.notifier).bump();
-                },
-                onPurge: () => _confirmPurge(
-                  context,
-                  ref,
-                  title: entry.title,
-                  purge: () => PurgeService(
-                    ref.read(appDatabaseProvider),
-                  ).purgeEntry(entry.entryId),
-                ),
-              ),
-            const SizedBox(height: AppDimens.space32),
-          ],
-          if (categories.isNotEmpty) ...[
-            SectionHeader(title: l10n.archiveCategories),
-            const SizedBox(height: AppDimens.space12),
-            for (final category in categories)
-              _ArchivedTile(
-                icon: AppIcons.byKey(category.icon),
-                title: category.name,
-                subtitle: l10n.archiveCategoryLevel(category.level + 1),
-                onRestore: () async {
-                  await ref
-                      .read(categoryRepositoryProvider)
-                      .restore(category.id);
-                  ref.read(dataRefreshProvider.notifier).bump();
-                },
-                onPurge: () => _confirmPurge(
-                  context,
-                  ref,
-                  title: category.name,
-                  purge: () => PurgeService(
-                    ref.read(appDatabaseProvider),
-                  ).purgeCategory(category.id),
-                ),
-              ),
-            const SizedBox(height: AppDimens.space32),
-          ],
-          if (collections.isNotEmpty) ...[
-            SectionHeader(title: l10n.archiveCollections),
-            const SizedBox(height: AppDimens.space12),
-            for (final collection in collections)
-              _ArchivedTile(
-                icon: Icons.collections_bookmark_rounded,
-                title: collection.name,
-                subtitle: collection.description ?? '',
-                onRestore: () async {
-                  await ref
-                      .read(collectionRepositoryProvider)
-                      .restore(collection.id);
-                  ref.read(dataRefreshProvider.notifier).bump();
-                },
-                onPurge: () => _confirmPurge(
-                  context,
-                  ref,
-                  title: collection.name,
-                  purge: () => PurgeService(
-                    ref.read(appDatabaseProvider),
-                  ).purgeCollection(collection.id),
-                ),
-              ),
-          ],
-        ],
+        itemCount: rows.length,
+        itemBuilder: (context, i) => rows[i](context),
       ),
     );
   }

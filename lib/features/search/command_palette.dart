@@ -113,6 +113,61 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
     final items = _items(l10n, _query.text);
     final recent = ref.watch(recentStoreProvider).value?.searches ?? const [];
 
+    // Строки собираются построителями: палитра знает все разделы и все
+    // категории профиля, и раньше каждая из них становилась виджетом на
+    // каждый набранный символ — при том что на экране их помещается десяток.
+    final rows = <WidgetBuilder>[];
+
+    // Недавние запросы — сверху и только на пустом поле: они подсказка, а не
+    // результат.
+    if (_query.text.isEmpty && recent.isNotEmpty) {
+      rows.add(
+        (context) => Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.space16,
+            AppDimens.space8,
+            AppDimens.space16,
+            AppDimens.space4,
+          ),
+          child: Text(
+            l10n.recentSearches,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
+        ),
+      );
+      for (final query in recent.take(5)) {
+        rows.add(
+          (_) => ListTile(
+            dense: true,
+            leading: const Icon(Icons.history_rounded, size: 18),
+            title: Text(query),
+            onTap: () {
+              ref.read(catalogStateProvider.notifier)
+                ..reset()
+                ..setSearch(query);
+              _go(NavIds.catalog);
+            },
+          ),
+        );
+      }
+      rows.add((_) => Divider(height: 1, color: c.border));
+    }
+
+    for (final item in items) {
+      rows.add(
+        (context) => ListTile(
+          dense: true,
+          leading: Icon(item.icon, size: 18),
+          title: Text(item.label),
+          subtitle: Text(
+            item.group,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
+          onTap: item.run,
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -139,56 +194,12 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
                     ),
                   ),
                 )
-              : ListView(
+              : ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     vertical: AppDimens.space8,
                   ),
-                  children: [
-                    // Недавние запросы — сверху и только на пустом поле: они
-                    // подсказка, а не результат.
-                    if (_query.text.isEmpty && recent.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimens.space16,
-                          AppDimens.space8,
-                          AppDimens.space16,
-                          AppDimens.space4,
-                        ),
-                        child: Text(
-                          l10n.recentSearches,
-                          style: context.text.labelSmall?.copyWith(
-                            color: c.textMuted,
-                          ),
-                        ),
-                      ),
-                      for (final query in recent.take(5))
-                        ListTile(
-                          dense: true,
-                          leading: const Icon(Icons.history_rounded, size: 18),
-                          title: Text(query),
-                          onTap: () {
-                            ref.read(catalogStateProvider.notifier)
-                              ..reset()
-                              ..setSearch(query);
-                            _go(NavIds.catalog);
-                          },
-                        ),
-                      Divider(height: 1, color: c.border),
-                    ],
-                    for (final item in items)
-                      ListTile(
-                        dense: true,
-                        leading: Icon(item.icon, size: 18),
-                        title: Text(item.label),
-                        subtitle: Text(
-                          item.group,
-                          style: context.text.labelSmall?.copyWith(
-                            color: c.textMuted,
-                          ),
-                        ),
-                        onTap: item.run,
-                      ),
-                  ],
+                  itemCount: rows.length,
+                  itemBuilder: (context, i) => rows[i](context),
                 ),
         ),
       ],

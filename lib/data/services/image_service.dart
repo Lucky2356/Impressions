@@ -150,19 +150,25 @@ class ImageService {
     return true;
   }
 
+  /// Папка приложения, уже спрошенная у платформы.
+  ///
+  /// Спрашивать её — это вызов через канал платформы, а зовётся он на каждую
+  /// фотографию: показать обложки страницы каталога или удалить снимки записи
+  /// означало десятки одинаковых вопросов подряд. Путь за время работы не
+  /// меняется, а вот существование каталога проверяем каждый раз — его могли
+  /// убрать снаружи.
+  static Directory? _appMediaDir;
+
   /// Каталог хранения изображений внутри приватной папки приложения.
   Future<Directory> _mediaDir() async {
-    final override = _mediaOverride;
-    if (override != null) {
-      if (!override.existsSync()) await override.create(recursive: true);
-      return override;
-    }
-    final base = await getApplicationSupportDirectory();
-    final dir = Directory(p.join(base.path, 'media'));
-    if (!dir.existsSync()) {
-      await dir.create(recursive: true);
-    }
+    final dir = _mediaOverride ?? _appMediaDir ?? await _resolveMediaDir();
+    if (!dir.existsSync()) await dir.create(recursive: true);
     return dir;
+  }
+
+  Future<Directory> _resolveMediaDir() async {
+    final base = await getApplicationSupportDirectory();
+    return _appMediaDir = Directory(p.join(base.path, 'media'));
   }
 
   /// Добавляет изображение из файла: полный конвейер обработки (§16).

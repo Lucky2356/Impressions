@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,6 +55,16 @@ class CollectionEntryPicker extends ConsumerStatefulWidget {
 class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
   final _search = TextEditingController();
   String _query = '';
+  Timer? _debounce;
+
+  /// Поиск с задержкой: отбор идёт в базе, и дёргать её на каждый символ
+  /// незачем — так же, как в каталоге.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() => _query = value);
+    });
+  }
 
   /// Записи, отмеченные в этом сеансе; изначально — уже входящие в подборку.
   Set<String>? _selected;
@@ -61,6 +73,7 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -144,7 +157,7 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
               child: AppSearchField(
                 hint: l10n.catalogSearchHint,
                 controller: _search,
-                onChanged: (v) => setState(() => _query = v),
+                onChanged: _onSearchChanged,
               ),
             ),
             const SizedBox(height: AppDimens.space12),

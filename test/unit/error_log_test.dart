@@ -48,15 +48,35 @@ void main() {
   });
 
   test('журнал не растёт без предела', () async {
-    for (var i = 0; i < ErrorLog.maxRecords + 25; i++) {
+    // Подрезка идёт не на каждой записи, а когда их накопилось: авария в
+    // отрисовке повторяется каждый кадр, и переписывать весь журнал по кругу
+    // означало добить и без того сломанное приложение. Поэтому записей может
+    // быть немного больше предела, но старые всё равно вытесняются.
+    const total = ErrorLog.maxRecords * 2 + 25;
+    for (var i = 0; i < total; i++) {
       await ErrorLog.record(StateError('сбой $i'), null);
     }
 
-    expect(await ErrorLog.count(), ErrorLog.maxRecords);
     final text = await ErrorLog.read();
-    // Вытесняются самые старые, последние остаются.
-    expect(text, isNot(contains('сбой 0')));
-    expect(text, contains('сбой ${ErrorLog.maxRecords + 24}'));
+    expect(
+      await ErrorLog.count(),
+      lessThanOrEqualTo(ErrorLog.maxRecords * 2),
+      reason: 'между подрезками накапливается не больше двух пределов',
+    );
+    expect(text, isNot(contains('сбой 0 ')));
+    expect(text, contains('сбой ${total - 1}'));
+  });
+
+  test('одна огромная авария не раздувает журнал', () async {
+    // Счёт записей размера не ограничивает: у сообщения об аварии длины нет.
+    final long = 'ы' * 200000;
+    for (var i = 0; i < 12; i++) {
+      await ErrorLog.record(StateError('сбой $i $long'), null);
+    }
+
+    final text = await ErrorLog.read();
+    expect(text.length, lessThan(1024 * 1024));
+    expect(text, contains('сбой 11 '));
   });
 
   test('очистка убирает записи', () async {

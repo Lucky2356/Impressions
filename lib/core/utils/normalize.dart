@@ -14,20 +14,28 @@ class Normalize {
   static String yo(String input) =>
       input.replaceAll('ё', 'е').replaceAll('Ё', 'Е');
 
+  /// Разбор выражений стоит дороже самой замены, а [forMatch] зовётся на
+  /// каждую запись на каждый набранный символ — в подборках, в палитре команд,
+  /// в отборе дублей. Собираем их один раз на всё приложение.
+  static final RegExp _spaces = RegExp(r'\s+');
+  static final RegExp _punctuation = RegExp(
+    r'''[^\p{L}\p{N}\s]''',
+    unicode: true,
+  );
+
   /// Базовая нормализация: обрезка, нижний регистр, схлопывание пробелов,
   /// «ё» → «е». Сохраняет буквы/цифры пользовательских названий любого языка.
   static String name(String input) {
-    return yo(input.trim().toLowerCase()).replaceAll(RegExp(r'\s+'), ' ');
+    return yo(input.trim().toLowerCase()).replaceAll(_spaces, ' ');
   }
 
   /// Нормализация для поиска дублей: [name] + удаление пунктуации.
   /// «Папа Может, варёная!» → «папа может вареная».
   static String forMatch(String input) {
     final lowered = yo(input.trim().toLowerCase());
-    final noPunct = lowered.replaceAll(
-      RegExp(r'''[^\p{L}\p{N}\s]''', unicode: true),
-      ' ',
-    );
-    return noPunct.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return lowered
+        .replaceAll(_punctuation, ' ')
+        .replaceAll(_spaces, ' ')
+        .trim();
   }
 }

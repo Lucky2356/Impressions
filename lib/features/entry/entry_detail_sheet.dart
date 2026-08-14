@@ -131,6 +131,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
           _noteInitialised = true;
         }
         final relation = _relationOf(d.entry.relation);
+        final revisionDate = localeDate(context, 'd MMMM y, HH:mm');
         // Чужую запись нельзя редактировать: мнение принадлежит её автору (§6.2).
         // Вместо редактирования предлагается добавить её себе (§12).
         final active = ref.watch(activeProfileProvider);
@@ -465,13 +466,12 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       ),
                     ),
                   ),
+                  // Форматтер один на всю историю: у записи, правленной двести
+                  // раз, здесь заводилось двести штук за кадр.
                   if (_showHistory)
                     for (final rev in d.history)
                       _RevisionRow(
-                        dateLabel: localeDate(
-                          context,
-                          'd MMMM y, HH:mm',
-                        ).format(rev.createdAt),
+                        dateLabel: revisionDate.format(rev.createdAt),
                         isCurrent: rev.id == d.entry.currentRevisionId,
                         onRestore: rev.id == d.entry.currentRevisionId
                             ? null
