@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 
+import '../../core/utils/chunks.dart';
 import '../db/database.dart';
 import 'image_service.dart';
 
@@ -54,7 +55,7 @@ class PurgeService {
       await (db.update(db.profileEntries)
             ..where((e) => e.objectId.equals(mergeId)))
           .write(ProfileEntriesCompanion(objectId: Value(keepId)));
-      orphanedAttachments.addAll(await _purgeObjectIfUnused(mergeId));
+      orphanedAttachments.addAll(await _purgeObjectsIfUnused({mergeId}));
     });
 
     await _deleteAttachmentFiles(orphanedAttachments);
@@ -65,47 +66,65 @@ class PurgeService {
   /// Объект (общее описание предмета) удаляется вместе с ней, только если на
   /// него больше не ссылается ничья запись: одним и тем же товаром могут
   /// пользоваться несколько профилей.
-  Future<void> purgeEntry(String entryId) async {
-    final entry = await (db.select(
-      db.profileEntries,
-    )..where((e) => e.id.equals(entryId))).getSingleOrNull();
-    if (entry == null) return;
+  Future<void> purgeEntry(String entryId) => purgeEntries([entryId]);
 
+  /// Удаляет набор записей — по десятку запросов на всю пачку, а не на каждую.
+  ///
+  /// Разбор архива идёт пачками: отметить полсотни записей и снести их одним
+  /// нажатием — обычное дело. Прежний цикл по [purgeEntry] делал на каждую
+  /// запись свою транзакцию и больше десяти запросов внутри неё, а поиск
+  /// осиротевших вложений добавлял по запросу на каждую фотографию.
+  Future<void> purgeEntries(List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+    for (final chunk in chunked(entryIds, _purgeChunkSize)) {
+      await _purgeEntryChunk(chunk);
+    }
+  }
+
+  /// Записи удаляются пачками поменьше: внутри одной транзакции набирается
+  /// несколько списков идентификаторов — версий, тегов, объектов, — и каждый
+  /// уходит в запрос своим `IN (…)`.
+  static const int _purgeChunkSize = 200;
+
+  Future<void> _purgeEntryChunk(List<String> chunk) async {
+    final entries = await (db.select(
+      db.profileEntries,
+    )..where((e) => e.id.isIn(chunk))).get();
+    if (entries.isEmpty) return;
+
+    final ids = entries.map((e) => e.id).toList();
+    final objectIds = entries.map((e) => e.objectId).toSet();
     final orphanedAttachments = <String>{};
 
     await db.transaction(() async {
-      final revisionIds =
-          (await (db.select(
-                db.profileEntryRevisions,
-              )..where((r) => r.entryId.equals(entryId))).get())
-              .map((r) => r.id)
-              .toList();
+      final revisionIds = (await (db.select(
+        db.profileEntryRevisions,
+      )..where((r) => r.entryId.isIn(ids))).get()).map((r) => r.id).toList();
 
       orphanedAttachments.addAll(await _detachRevisions(revisionIds));
 
       final tagIds =
           (await (db.select(
                 db.entryTags,
-              )..where((t) => t.entryId.equals(entryId))).get())
+              )..where((t) => t.entryId.isIn(ids))).get())
               .map((t) => t.tagId)
+              .toSet()
               .toList();
-      await (db.delete(
-        db.entryTags,
-      )..where((t) => t.entryId.equals(entryId))).go();
+      await (db.delete(db.entryTags)..where((t) => t.entryId.isIn(ids))).go();
       await _purgeTagsIfUnused(tagIds);
 
       await (db.delete(
         db.entryCategories,
-      )..where((ec) => ec.entryId.equals(entryId))).go();
+      )..where((ec) => ec.entryId.isIn(ids))).go();
       await (db.delete(
         db.collectionEntries,
-      )..where((ce) => ce.entryId.equals(entryId))).go();
+      )..where((ce) => ce.entryId.isIn(ids))).go();
 
-      // Записи, добавленные с этой (§12), остаются — но ссылаться им уже
+      // Записи, добавленные с этих (§12), остаются — но ссылаться им уже
       // некуда, иначе получится указатель в пустоту.
       await (db.update(
         db.profileEntries,
-      )..where((e) => e.sourceEntryId.equals(entryId))).write(
+      )..where((e) => e.sourceEntryId.isIn(ids))).write(
         const ProfileEntriesCompanion(
           sourceEntryId: Value(null),
           followSource: Value(false),
@@ -114,16 +133,15 @@ class PurgeService {
 
       // Сначала снимаем ссылку на текущую версию, иначе она указывает на уже
       // удалённую строку.
-      await (db.update(db.profileEntries)..where((e) => e.id.equals(entryId)))
-          .write(const ProfileEntriesCompanion(currentRevisionId: Value(null)));
+      await (db.update(db.profileEntries)..where((e) => e.id.isIn(ids))).write(
+        const ProfileEntriesCompanion(currentRevisionId: Value(null)),
+      );
       await (db.delete(
         db.profileEntryRevisions,
-      )..where((r) => r.entryId.equals(entryId))).go();
-      await (db.delete(
-        db.profileEntries,
-      )..where((e) => e.id.equals(entryId))).go();
+      )..where((r) => r.entryId.isIn(ids))).go();
+      await (db.delete(db.profileEntries)..where((e) => e.id.isIn(ids))).go();
 
-      orphanedAttachments.addAll(await _purgeObjectIfUnused(entry.objectId));
+      orphanedAttachments.addAll(await _purgeObjectsIfUnused(objectIds));
     });
 
     await _deleteAttachmentFiles(orphanedAttachments);
@@ -165,25 +183,35 @@ class PurgeService {
   Future<Set<String>> _detachRevisions(List<String> revisionIds) async {
     if (revisionIds.isEmpty) return const {};
 
-    final links = await (db.select(
-      db.revisionAttachments,
-    )..where((ra) => ra.revisionId.isIn(revisionIds))).get();
-    if (links.isEmpty) return const {};
-
-    await (db.delete(
-      db.revisionAttachments,
-    )..where((ra) => ra.revisionId.isIn(revisionIds))).go();
-
-    final orphaned = <String>{};
-    for (final id in links.map((l) => l.attachmentId).toSet()) {
-      final stillUsed = await (db.select(
+    final candidates = <String>{};
+    for (final chunk in chunked(revisionIds)) {
+      final links = await (db.select(
         db.revisionAttachments,
-      )..where((ra) => ra.attachmentId.equals(id))).getSingleOrNull();
-      // Файлы дедуплицируются по SHA-256, поэтому одно вложение вполне может
-      // принадлежать нескольким записям.
-      if (stillUsed == null) orphaned.add(id);
+      )..where((ra) => ra.revisionId.isIn(chunk))).get();
+      candidates.addAll(links.map((l) => l.attachmentId));
+
+      await (db.delete(
+        db.revisionAttachments,
+      )..where((ra) => ra.revisionId.isIn(chunk))).go();
     }
-    return orphaned;
+    if (candidates.isEmpty) return const {};
+
+    // Файлы дедуплицируются по SHA-256, поэтому одно вложение вполне может
+    // принадлежать нескольким записям. Уцелевшие ссылки спрашиваем одним
+    // запросом на всю пачку: раньше это был запрос на каждую фотографию.
+    final stillUsed = <String>{};
+    for (final chunk in chunked(candidates.toList())) {
+      final rows =
+          await (db.selectOnly(db.revisionAttachments)
+                ..addColumns([db.revisionAttachments.attachmentId])
+                ..where(db.revisionAttachments.attachmentId.isIn(chunk))
+                ..groupBy([db.revisionAttachments.attachmentId]))
+              .get();
+      stillUsed.addAll(
+        rows.map((r) => r.read(db.revisionAttachments.attachmentId)!),
+      );
+    }
+    return candidates.difference(stillUsed);
   }
 
   /// Убирает теги, на которых после удаления записи никого не осталось.
@@ -191,45 +219,64 @@ class PurgeService {
   /// Иначе метка, поставленная однажды и по ошибке, навсегда остаётся в списке
   /// фильтров каталога — записи давно нет, а тег есть.
   Future<void> _purgeTagsIfUnused(List<String> tagIds) async {
-    for (final id in tagIds) {
-      // Строк на тег может быть много, поэтому limit(1) и get(): у
-      // getSingleOrNull на нескольких строках падение, а не ответ.
-      final stillUsed =
-          await (db.select(db.entryTags)
-                ..where((et) => et.tagId.equals(id))
-                ..limit(1))
+    if (tagIds.isEmpty) return;
+
+    final stillUsed = <String>{};
+    for (final chunk in chunked(tagIds)) {
+      final rows =
+          await (db.selectOnly(db.entryTags)
+                ..addColumns([db.entryTags.tagId])
+                ..where(db.entryTags.tagId.isIn(chunk))
+                ..groupBy([db.entryTags.tagId]))
               .get();
-      if (stillUsed.isNotEmpty) continue;
-      await (db.delete(db.tags)..where((t) => t.id.equals(id))).go();
+      stillUsed.addAll(rows.map((r) => r.read(db.entryTags.tagId)!));
+    }
+
+    final unused = tagIds.where((id) => !stillUsed.contains(id)).toList();
+    for (final chunk in chunked(unused)) {
+      await (db.delete(db.tags)..where((t) => t.id.isIn(chunk))).go();
     }
   }
 
-  Future<Set<String>> _purgeObjectIfUnused(String objectId) async {
-    // Ссылок на объект может быть сколько угодно — им пользуются разные
-    // профили. getSingleOrNull на двух и более строках падает, а не отвечает
-    // «занято», поэтому limit(1) и get().
-    final used =
-        await (db.select(db.profileEntries)
-              ..where((e) => e.objectId.equals(objectId))
-              ..limit(1))
-            .get();
-    if (used.isNotEmpty) return const {};
+  /// Убирает объекты, на которые после удаления записей никто не ссылается.
+  ///
+  /// Одним и тем же товаром пользуются разные профили, поэтому объект уходит
+  /// не вместе с записью, а только когда на него больше не смотрят.
+  Future<Set<String>> _purgeObjectsIfUnused(Set<String> objectIds) async {
+    if (objectIds.isEmpty) return const {};
 
-    final revisionIds =
-        (await (db.select(
-              db.objectRevisions,
-            )..where((r) => r.objectId.equals(objectId))).get())
-            .map((r) => r.id)
-            .toList();
+    final used = <String>{};
+    for (final chunk in chunked(objectIds.toList())) {
+      final rows =
+          await (db.selectOnly(db.profileEntries)
+                ..addColumns([db.profileEntries.objectId])
+                ..where(db.profileEntries.objectId.isIn(chunk))
+                ..groupBy([db.profileEntries.objectId]))
+              .get();
+      used.addAll(rows.map((r) => r.read(db.profileEntries.objectId)!));
+    }
+
+    final unused = objectIds.where((id) => !used.contains(id)).toList();
+    if (unused.isEmpty) return const {};
+
+    final revisionIds = <String>[];
+    for (final chunk in chunked(unused)) {
+      final rows = await (db.select(
+        db.objectRevisions,
+      )..where((r) => r.objectId.isIn(chunk))).get();
+      revisionIds.addAll(rows.map((r) => r.id));
+    }
     final orphaned = await _detachRevisions(revisionIds);
 
-    await (db.update(db.objects)..where((o) => o.id.equals(objectId))).write(
-      const ObjectsCompanion(currentRevisionId: Value(null)),
-    );
-    await (db.delete(
-      db.objectRevisions,
-    )..where((r) => r.objectId.equals(objectId))).go();
-    await (db.delete(db.objects)..where((o) => o.id.equals(objectId))).go();
+    for (final chunk in chunked(unused)) {
+      await (db.update(db.objects)..where((o) => o.id.isIn(chunk))).write(
+        const ObjectsCompanion(currentRevisionId: Value(null)),
+      );
+      await (db.delete(
+        db.objectRevisions,
+      )..where((r) => r.objectId.isIn(chunk))).go();
+      await (db.delete(db.objects)..where((o) => o.id.isIn(chunk))).go();
+    }
     return orphaned;
   }
 

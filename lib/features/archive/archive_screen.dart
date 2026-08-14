@@ -105,10 +105,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
   Future<void> _restoreSelected() async {
     final l10n = AppLocalizations.of(context);
     final ids = _selected.toList();
-    final repo = ref.read(entryRepositoryProvider);
-    for (final id in ids) {
-      await repo.restoreEntry(id);
-    }
+    await ref.read(entryRepositoryProvider).restoreEntries(ids);
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
     setState(_selected.clear);
@@ -130,10 +127,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     );
     if (!ok || !mounted) return;
 
-    final purge = PurgeService(ref.read(appDatabaseProvider));
-    for (final id in ids) {
-      await purge.purgeEntry(id);
-    }
+    await PurgeService(ref.read(appDatabaseProvider)).purgeEntries(ids);
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
     setState(_selected.clear);

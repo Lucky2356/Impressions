@@ -8,18 +8,19 @@ import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/data/services/csv_import_service.dart';
 
-import 'test_db.dart';
+import 'query_counter.dart';
 
 /// Перенос таблицы в записи.
 void main() {
   late AppDatabase db;
+  late QueryCounter counter;
   late EntryRepository entries;
   late CategoryRepository categories;
   late ProfileRow me;
   const service = CsvImportService();
 
   setUp(() async {
-    db = openTestDb();
+    (db, counter) = openCountingDb();
     entries = EntryRepository(db);
     categories = CategoryRepository(db);
     me = await ProfileRepository(db).createOwnProfile(firstName: 'Я');
@@ -103,5 +104,43 @@ void main() {
 
     expect(result.created, 0);
     expect(await entries.entryViews(me.id), isEmpty);
+  });
+
+  test('таблица на 500 строк не спрашивает дерево заново', () async {
+    // Пути повторяются, как в настоящей выгрузке: пять веток на пятьсот
+    // строк. Прежде на каждый сегмент каждой строки шёл свой запрос за
+    // соседями — тысяча запросов, спрашивающих одно и то же.
+    final table = StringBuffer('Название;Тип;Категория;Оценка\n');
+    for (var i = 0; i < 500; i++) {
+      table.writeln('Запись $i;Продукты;Продукты / Ветка ${i % 5};${i % 10}');
+    }
+
+    counter.reset();
+    final result = await importText(table.toString());
+
+    expect(result.created, 500);
+    expect(result.categoriesCreated, 6, reason: 'корень и пять веток');
+    expect(
+      counter.transactions,
+      1,
+      reason: 'раньше транзакцию открывала каждая строка',
+    );
+    // Главное: дерево категорий прочитано ровно один раз на всю таблицу.
+    // Раньше каждая строка спрашивала соседей на каждый сегмент своего пути.
+    // Остаётся только то, что нужно на заведение шести новых веток (18
+    // запросов), а не по паре на каждую из пятисот строк.
+    expect(
+      counter.matching('FROM "categories"'),
+      lessThan(50),
+      reason: 'спросили дерево ${counter.matching('FROM "categories"')} раз',
+    );
+
+    final views = await entries.entryViews(me.id);
+    expect(views, hasLength(500));
+    expect(
+      views.where((v) => v.categoryPath.length == 2),
+      hasLength(500),
+      reason: 'все легли в свои ветки',
+    );
   });
 }

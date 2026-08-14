@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -92,6 +92,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await customStatement('DROP TABLE IF EXISTS recommendations');
       }
+      // 6: индекс по вложению (создаётся ниже общим списком). Удаление записи
+      // насовсем спрашивает про каждую её фотографию, не смотрит ли на неё
+      // кто-то ещё, — а искать это приходилось перебором всей таблицы связей.
       await _createIndexes();
     },
     beforeOpen: (details) async {
@@ -132,6 +135,10 @@ class AppDatabase extends _$AppDatabase {
       // SQLite держит свой индекс.
       'CREATE INDEX IF NOT EXISTS idx_entry_tags_tag ON entry_tags (tag_id)',
       'CREATE INDEX IF NOT EXISTS idx_revision_attachments_revision ON revision_attachments (revision_id)',
+      // Обратное направление: «на эту фотографию ещё кто-нибудь ссылается?».
+      // Спрашивается при удалении насовсем — без индекса это перебор всей
+      // таблицы связей на каждую фотографию удаляемой записи.
+      'CREATE INDEX IF NOT EXISTS idx_revision_attachments_attachment ON revision_attachments (attachment_id)',
       'CREATE INDEX IF NOT EXISTS idx_collection_entries_entry ON collection_entries (entry_id)',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_entry_primary_category ON entry_categories (entry_id) WHERE is_primary = 1',
     ];

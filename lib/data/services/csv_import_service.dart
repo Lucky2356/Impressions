@@ -214,6 +214,20 @@ class CsvImportService {
       return createdType;
     }
 
+    // Дерево категорий профиля целиком — один раз до цикла. Прежде на каждый
+    // сегмент пути каждой строки шёл запрос за соседями: у таблицы в две
+    // тысячи строк с путями в два уровня это четыре тысячи запросов, из
+    // которых почти все спрашивали одно и то же.
+    String branchKey(String? parentId, String normalizedName) =>
+        '${parentId ?? ''} $normalizedName';
+
+    final tree = <String, CategoryRow>{};
+    for (final c in await categories.allOf(profileId)) {
+      // Порядок запроса — тот же, что у соседей, поэтому при одинаковых
+      // названиях выбирается первая из них, как и раньше.
+      tree.putIfAbsent(branchKey(c.parentId, c.normalizedName), () => c);
+    }
+
     /// Категория по пути «Продукты / Колбасы»: чего нет — заводится.
     Future<String?> categoryFor(String? path) async {
       final parts = (path ?? '')
@@ -226,12 +240,7 @@ class CsvImportService {
       CategoryRow? parent;
       for (final name in parts) {
         final wanted = Normalize.name(name);
-        final siblings = parent == null
-            ? await categories.roots(profileId)
-            : await categories.children(parent.id);
-        final found = siblings
-            .where((c) => c.normalizedName == wanted)
-            .firstOrNull;
+        final found = tree[branchKey(parent?.id, wanted)];
         if (found != null) {
           parent = found;
           continue;
@@ -239,28 +248,33 @@ class CsvImportService {
         parent = parent == null
             ? await categories.createRoot(profileId, name)
             : await categories.createChild(parent.id, name);
+        tree[branchKey(parent.parentId, parent.normalizedName)] = parent;
         categoriesCreated++;
       }
       return parent?.id;
     }
 
-    for (final row in rows) {
-      final type = await typeFor(row.type);
-      final object = await entries.createObject(
-        typeId: type.id,
-        title: row.title,
-      );
-      await entries.createEntry(
-        profileId: profileId,
-        objectId: object.id,
-        relation: relationOf(row.relation),
-        rating: row.rating,
-        detailedNote: row.note,
-        impressionDate: row.impressionDate,
-        primaryCategoryId: await categoryFor(row.category),
-      );
-      created++;
-    }
+    // Весь перенос — одной транзакцией. Раньше транзакцию открывала каждая
+    // строка, а с ней шли запись в журнал и ожидание диска.
+    await entries.db.transaction(() async {
+      for (final row in rows) {
+        final type = await typeFor(row.type);
+        final object = await entries.createObject(
+          typeId: type.id,
+          title: row.title,
+        );
+        await entries.createEntry(
+          profileId: profileId,
+          objectId: object.id,
+          relation: relationOf(row.relation),
+          rating: row.rating,
+          detailedNote: row.note,
+          impressionDate: row.impressionDate,
+          primaryCategoryId: await categoryFor(row.category),
+        );
+        created++;
+      }
+    });
 
     return CsvImportResult(
       created: created,

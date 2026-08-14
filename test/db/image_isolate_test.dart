@@ -72,6 +72,67 @@ void main() {
     );
   });
 
+  group('пачка фотографий', () {
+    /// Маленькая картинка своего оттенка — чтобы у каждой был свой SHA-256.
+    Uint8List photo(int shade) {
+      final image = img.Image(width: 64, height: 48);
+      img.fill(image, color: img.ColorRgb8(shade, 90, 90));
+      return Uint8List.fromList(img.encodeJpg(image));
+    }
+
+    test('ответы идут в том же порядке, что и присланное', () async {
+      final service = ImageService(db, mediaDirectory: media);
+      // Больше одной пачки: внутри изолята они обрабатываются по очереди, и
+      // порядок не должен зависеть от того, где проходит граница.
+      final shades = [for (var i = 0; i < 20; i++) 10 + i * 5];
+
+      final results = await service.addAllFromBytes([
+        for (final s in shades) photo(s),
+      ]);
+
+      expect(results, hasLength(shades.length));
+      expect(results.whereType<ImageAdded>(), hasLength(shades.length));
+      final sizes = [
+        for (final r in results) (r as ImageAdded).attachment.byteSize,
+      ];
+      // Каждая своя: одинаковые схлопнулись бы в дубликаты.
+      expect(await db.select(db.attachments).get(), hasLength(shades.length));
+      expect(sizes.every((s) => s > 0), isTrue);
+    });
+
+    test('повтор внутри пачки распознаётся как дубликат', () async {
+      final service = ImageService(db, mediaDirectory: media);
+      final same = photo(120);
+
+      final results = await service.addAllFromBytes([same, photo(200), same]);
+
+      expect(results[0], isA<ImageAdded>());
+      expect(results[1], isA<ImageAdded>());
+      expect(results[2], isA<ImageDuplicate>());
+      expect(await db.select(db.attachments).get(), hasLength(2));
+    });
+
+    test('негодный файл не срывает остальные', () async {
+      final service = ImageService(db, mediaDirectory: media);
+
+      final results = await service.addAllFromBytes([
+        photo(30),
+        Uint8List.fromList(List.filled(64, 7)),
+        photo(60),
+      ]);
+
+      expect(results[0], isA<ImageAdded>());
+      expect(results[1], isA<ImageRejected>());
+      expect(results[2], isA<ImageAdded>());
+    });
+
+    test('пустой список ничего не запускает', () async {
+      final service = ImageService(db, mediaDirectory: media);
+
+      expect(await service.addAllFromBytes([]), isEmpty);
+    });
+  });
+
   test(
     'изображение после обработки в изоляте не отличается от прежнего',
     () async {

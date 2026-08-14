@@ -39,6 +39,17 @@ void main() {
     );
   });
 
+  test('«кто ещё смотрит на эту фотографию» идёт по индексу', () async {
+    // Спрашивается при удалении насовсем — на каждую фотографию удаляемой
+    // записи. Без индекса это перебор всей таблицы связей.
+    expect(
+      await plan(
+        "SELECT id FROM revision_attachments WHERE attachment_id = 'a1'",
+      ),
+      contains('USING INDEX idx_revision_attachments_attachment'),
+    );
+  });
+
   test('подборки записи идут по индексу', () async {
     expect(
       await plan(
@@ -55,6 +66,33 @@ void main() {
       await plan("SELECT id FROM attachments WHERE sha256 = 'abc'"),
       allOf(contains('SEARCH attachments'), contains('USING INDEX')),
     );
+  });
+
+  test('база пятой схемы получает новый индекс при открытии', () async {
+    // Индексы заводятся в миграции, а не в схеме таблиц: у того, кто уже
+    // пользуется приложением, база не пересоздаётся. Без поднятой версии схемы
+    // обновление просто не запустится, и удаление насовсем останется медленным.
+    final dir = await Directory.systemTemp.createTemp('impressions-migrate');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/impressions.sqlite');
+
+    final old = AppDatabase.forTesting(NativeDatabase(file));
+    await old.customStatement(
+      'DROP INDEX IF EXISTS idx_revision_attachments_attachment',
+    );
+    await old.customStatement('PRAGMA user_version = 5');
+    await old.close();
+
+    final fresh = AppDatabase.forTesting(NativeDatabase(file));
+    addTearDown(fresh.close);
+    final indexes = await fresh
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'index' "
+          "AND name = 'idx_revision_attachments_attachment'",
+        )
+        .get();
+
+    expect(indexes, hasLength(1));
   });
 
   test('файловая база открывается с журналом упреждающей записи', () async {

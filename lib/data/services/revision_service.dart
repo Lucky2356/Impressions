@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/utils/chunks.dart';
 import '../../core/utils/hashing.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
@@ -113,6 +114,119 @@ class RevisionService {
       await _carryAttachments(entry.currentRevisionId, id, 'entry');
     });
     return id;
+  }
+
+  /// Фиксирует версии сразу для набора записей.
+  ///
+  /// То же самое, что [commitEntry] в цикле, но на 300 записей это было 300
+  /// транзакций и больше тысячи запросов: чтение записи, чтение хеша текущей
+  /// версии, вставка, обновление и перенос вложений — на каждую. Здесь всё
+  /// читается пачками, а пишется одним пакетом в одной транзакции.
+  ///
+  /// Записи, содержимое которых не изменилось, версию не получают — как и в
+  /// [commitEntry].
+  Future<void> commitEntries(Iterable<String> entryIds) async {
+    final ids = entryIds.toList();
+    if (ids.isEmpty) return;
+    for (final chunk in chunked(ids)) {
+      await _commitEntryChunk(chunk);
+    }
+  }
+
+  Future<void> _commitEntryChunk(List<String> ids) async {
+    final entries = await (db.select(
+      db.profileEntries,
+    )..where((e) => e.id.isIn(ids))).get();
+    if (entries.isEmpty) return;
+
+    // Хеши текущих версий — одним запросом на всю пачку.
+    final currentIds = entries
+        .map((e) => e.currentRevisionId)
+        .whereType<String>()
+        .toList();
+    final currentHashes = <String, String>{};
+    if (currentIds.isNotEmpty) {
+      final rows = await (db.select(
+        db.profileEntryRevisions,
+      )..where((r) => r.id.isIn(currentIds))).get();
+      for (final row in rows) {
+        currentHashes[row.id] = row.contentHash;
+      }
+    }
+
+    final pending =
+        <
+          ({ProfileEntryRow entry, String revisionId, String json, String hash})
+        >[];
+    for (final entry in entries) {
+      final payload = entryPayload(entry);
+      final hash = Hashing.contentHash(payload);
+      final current = entry.currentRevisionId;
+      if (current != null && currentHashes[current] == hash) continue;
+      pending.add((
+        entry: entry,
+        revisionId: Ids.newId(),
+        json: jsonEncode(payload),
+        hash: hash,
+      ));
+    }
+    if (pending.isEmpty) return;
+
+    // Вложения родительских версий — тоже одним запросом: иначе перенос
+    // фотографий возвращает запрос на запись, ради которого всё и затевалось.
+    final parents = pending
+        .map((p) => p.entry.currentRevisionId)
+        .whereType<String>()
+        .toList();
+    final carried = <String, List<RevisionAttachmentRow>>{};
+    if (parents.isNotEmpty) {
+      final rows = await (db.select(
+        db.revisionAttachments,
+      )..where((ra) => ra.revisionId.isIn(parents))).get();
+      for (final row in rows) {
+        (carried[row.revisionId] ??= []).add(row);
+      }
+    }
+
+    final now = DateTime.now();
+    await db.batch((batch) {
+      for (final p in pending) {
+        batch.insert(
+          db.profileEntryRevisions,
+          ProfileEntryRevisionsCompanion.insert(
+            id: p.revisionId,
+            entryId: p.entry.id,
+            parentRevisionId: Value(p.entry.currentRevisionId),
+            authorProfileId: Value(p.entry.profileId),
+            createdAt: now,
+            payloadVersion: const Value(AppConfig.payloadVersion),
+            payloadJson: p.json,
+            contentHash: p.hash,
+          ),
+        );
+        batch.update(
+          db.profileEntries,
+          ProfileEntriesCompanion(currentRevisionId: Value(p.revisionId)),
+          where: (e) => e.id.equals(p.entry.id),
+        );
+        final links =
+            carried[p.entry.currentRevisionId] ??
+            const <RevisionAttachmentRow>[];
+        for (final link in links) {
+          batch.insert(
+            db.revisionAttachments,
+            RevisionAttachmentsCompanion.insert(
+              id: Ids.newId(),
+              entityKind: 'entry',
+              revisionId: p.revisionId,
+              attachmentId: link.attachmentId,
+              sortOrder: Value(link.sortOrder),
+              isPrimary: Value(link.isPrimary),
+            ),
+          );
+        }
+      }
+    });
   }
 
   /// Копирует связи вложений с родительской версии на новую.

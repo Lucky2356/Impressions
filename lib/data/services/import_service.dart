@@ -557,8 +557,10 @@ class ImportService {
     // Вложения записываем до транзакции: файлы дедуплицируются по SHA-256,
     // а связи создаются уже внутри транзакции.
     final attachmentIdBySha = <String, String>{};
-    for (final entry in preview.payload.attachments.entries) {
-      final result = await _images.addFromBytes(entry.value);
+    final results = await _images.addAllFromBytes(
+      preview.payload.attachments.values.toList(),
+    );
+    for (final result in results) {
       switch (result) {
         case ImageAdded(attachment: final a):
           attachmentIdBySha[a.sha256] = a.id;

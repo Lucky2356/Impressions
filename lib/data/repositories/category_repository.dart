@@ -161,6 +161,23 @@ class CategoryRepository {
     return q.get();
   }
 
+  /// Все категории профиля в порядке соседства.
+  ///
+  /// Нужна тем, кто обходит дерево целиком: спрашивать детей у каждого узла —
+  /// это запрос на каждую ветку, а веток у полного каталога сотни.
+  Future<List<CategoryRow>> allOf(
+    String profileId, {
+    bool includeArchived = false,
+  }) {
+    final q = db.select(db.categories)
+      ..where((c) => c.profileId.equals(profileId))
+      ..orderBy(_siblingOrder);
+    if (!includeArchived) {
+      q.where((c) => c.archivedAt.isNull());
+    }
+    return q.get();
+  }
+
   /// Соседи категории — то, среди чего её можно двигать.
   Future<List<CategoryRow>> siblingsOf(CategoryRow node) {
     return node.parentId == null

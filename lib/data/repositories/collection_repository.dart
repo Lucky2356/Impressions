@@ -128,6 +128,45 @@ class CollectionRepository {
         );
   }
 
+  /// Кладёт в подборку набор записей, сохраняя их порядок и не плодя дублей.
+  ///
+  /// Раньше это был [addEntry] в цикле, а он на каждую запись поднимал всю
+  /// подборку целиком, чтобы найти последний номер: на подборке в тысячу
+  /// записей добавление сотни стоило сто тысяч прочитанных строк.
+  Future<void> addEntries(String collectionId, List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+
+    final rows = await (db.select(
+      db.collectionEntries,
+    )..where((ce) => ce.collectionId.equals(collectionId))).get();
+    final present = rows.map((r) => r.entryId).toSet();
+
+    final fresh = <String>[];
+    for (final id in entryIds) {
+      if (present.add(id)) fresh.add(id);
+    }
+    if (fresh.isEmpty) return;
+
+    var next = rows.isEmpty
+        ? 0
+        : rows.map((r) => r.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+    final now = DateTime.now();
+
+    await db.batch((batch) {
+      for (final id in fresh) {
+        batch.insert(
+          db.collectionEntries,
+          CollectionEntriesCompanion.insert(
+            collectionId: collectionId,
+            entryId: id,
+            sortOrder: Value(next++),
+            addedAt: now,
+          ),
+        );
+      }
+    });
+  }
+
   Future<void> removeEntry(String collectionId, String entryId) {
     return (db.delete(db.collectionEntries)..where(
           (ce) =>

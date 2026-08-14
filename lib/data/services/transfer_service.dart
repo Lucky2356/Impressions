@@ -69,6 +69,23 @@ class TransferService {
   /// Статус по умолчанию для перенесённой записи (§12).
   static const String defaultStatus = 'wantToTry';
 
+  /// Деревья категорий, уже прочитанные этой службой.
+  ///
+  /// Перенос идёт пачками: отметить в сравнении два десятка записей и забрать
+  /// их себе — обычное дело. Каждая запись поднимала оба дерева целиком, а они
+  /// за время переноса меняются только от нас самих — значит, читать их заново
+  /// незачем, достаточно дописывать то, что мы завели.
+  final Map<String, List<CategoryRow>> _categoryCache = {};
+
+  Future<List<CategoryRow>> _profileCategories(String profileId) async {
+    final known = _categoryCache[profileId];
+    if (known != null) return known;
+    final rows = await (db.select(
+      db.categories,
+    )..where((c) => c.profileId.equals(profileId))).get();
+    return _categoryCache[profileId] = rows;
+  }
+
   /// Разбирает путь основной категории записи в названиях.
   Future<List<String>> _sourcePathNames(ProfileEntryRow entry) async {
     final links = await (db.select(
@@ -77,9 +94,7 @@ class TransferService {
     final primary = links.where((l) => l.isPrimary).firstOrNull;
     if (primary == null) return const [];
 
-    final cats = await (db.select(
-      db.categories,
-    )..where((c) => c.profileId.equals(entry.profileId))).get();
+    final cats = await _profileCategories(entry.profileId);
     final byId = {for (final c in cats) c.id: c};
     final selected = byId[primary.categoryId];
     if (selected == null) return const [];
@@ -108,12 +123,9 @@ class TransferService {
       );
     }
 
-    final targetCats =
-        await (db.select(db.categories)..where(
-              (c) =>
-                  c.profileId.equals(targetProfileId) & c.archivedAt.isNull(),
-            ))
-            .get();
+    final targetCats = (await _profileCategories(
+      targetProfileId,
+    )).where((c) => c.archivedAt == null).toList();
     final byId = {for (final c in targetCats) c.id: c};
 
     String? currentParentId;
@@ -157,6 +169,9 @@ class TransferService {
       final created = parentId == null
           ? await _categories.createRoot(targetProfileId, name)
           : await _categories.createChild(parentId, name);
+      // Заведённое дописываем в прочитанное дерево: следующая запись из той же
+      // ветки должна лечь в неё, а не завести вторую такую же.
+      _categoryCache[targetProfileId]?.add(created);
       parentId = created.id;
     }
     return parentId;

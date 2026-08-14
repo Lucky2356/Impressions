@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/utils/chunks.dart';
 import '../../core/utils/hashing.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
@@ -84,6 +85,14 @@ _Processed? _processImage(Uint8List bytes) {
     height: image.height,
   );
 }
+
+/// То же самое для пачки — по одному изображению за раз в одном изоляте.
+///
+/// Обрабатываются они последовательно: разобранным в памяти остаётся одно,
+/// а изолят запускается один раз на всю пачку вместо раза на фотографию.
+List<_Processed?> _processImages(List<Uint8List> batch) => [
+  for (final bytes in batch) _processImage(bytes),
+];
 
 /// Обработка изображений (§16), полностью локальная, без сети.
 ///
@@ -172,15 +181,9 @@ class ImageService {
 
   /// Добавляет изображение из байтов (общий путь для файла, камеры и drag-and-drop).
   Future<ImageResult> addFromBytes(Uint8List bytes, {String? caption}) async {
-    if (bytes.length > AppConfig.maxAttachmentBytes) {
-      return const ImageRejected('Файл слишком большой');
-    }
-
     // 1-3. Сигнатура и MIME; подозрительные файлы отклоняем.
-    final mime = detectMime(bytes);
-    if (mime == null) {
-      return const ImageRejected('Неподдерживаемый формат изображения');
-    }
+    final rejection = _rejectionFor(bytes);
+    if (rejection != null) return rejection;
 
     // 4-8. Разбор, поворот по EXIF, сжатие и миниатюра — в отдельном изоляте.
     // `package:image` целиком на Dart, и снимок с телефона обрабатывается
@@ -190,6 +193,64 @@ class ImageService {
     if (processed == null) {
       return const ImageRejected('Не удалось прочитать изображение');
     }
+    return _store(processed, caption);
+  }
+
+  /// Сколько изображений уходит в изолят за один раз.
+  ///
+  /// Внутри они обрабатываются по одному, поэтому разобранным в памяти всегда
+  /// остаётся ровно одно, а наружу возвращаются уже сжатые. Больше не берём:
+  /// смысл не в размере пачки, а в том, чтобы не запускать изолят заново на
+  /// каждую фотографию.
+  static const int _processBatchSize = 8;
+
+  /// Добавляет пачку изображений.
+  ///
+  /// Импорт профиля с четырьмя сотнями фотографий запускал изолят четыреста
+  /// раз подряд. Порядок ответов совпадает с порядком [images], а отклонённые
+  /// не прерывают остальных.
+  Future<List<ImageResult>> addAllFromBytes(List<Uint8List> images) async {
+    final results = List<ImageResult?>.filled(images.length, null);
+
+    // Заведомо негодное отсеиваем до изолята — незачем его туда возить.
+    final queue = <int>[];
+    for (var i = 0; i < images.length; i++) {
+      final rejection = _rejectionFor(images[i]);
+      if (rejection != null) {
+        results[i] = rejection;
+      } else {
+        queue.add(i);
+      }
+    }
+
+    for (final chunk in chunked(queue, _processBatchSize)) {
+      final batch = [for (final i in chunk) images[i]];
+      final processed = await Isolate.run(() => _processImages(batch));
+      for (var k = 0; k < chunk.length; k++) {
+        final one = processed[k];
+        results[chunk[k]] = one == null
+            ? const ImageRejected('Не удалось прочитать изображение')
+            : await _store(one, null);
+      }
+    }
+
+    return [for (final r in results) r!];
+  }
+
+  /// Почему изображение не примут — или null, если примут.
+  ImageRejected? _rejectionFor(Uint8List bytes) {
+    if (bytes.length > AppConfig.maxAttachmentBytes) {
+      return const ImageRejected('Файл слишком большой');
+    }
+    if (detectMime(bytes) == null) {
+      return const ImageRejected('Неподдерживаемый формат изображения');
+    }
+    return null;
+  }
+
+  /// Дедупликация, запись файлов и строка в базе — общий хвост для одного
+  /// изображения и для пачки.
+  Future<ImageResult> _store(_Processed processed, String? caption) async {
     final optimized = processed.optimized;
     final thumb = processed.thumb;
 

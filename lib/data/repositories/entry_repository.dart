@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/utils/chunks.dart';
 import '../../core/utils/ids.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
@@ -279,6 +280,34 @@ class EntryRepository {
     await revisions.commitEntry(entryId);
   }
 
+  /// Ставит одно и то же полю сразу у набора записей.
+  ///
+  /// Массовые действия каталога раньше звали [updateEntry] в цикле: на каждую
+  /// запись — свой `UPDATE`, своя транзакция и свой обход версий. Оценка на
+  /// три сотни выделенных записей замораживала окно на несколько секунд.
+  Future<void> updateEntries(
+    List<String> entryIds, {
+    Object? relation = _unset,
+    Object? rating = _unset,
+    Object? status = _unset,
+  }) async {
+    if (entryIds.isEmpty) return;
+    Value<T?> val<T>(Object? v) =>
+        identical(v, _unset) ? const Value.absent() : Value(v as T?);
+
+    final change = ProfileEntriesCompanion(
+      relation: val<String>(relation),
+      rating: val<double>(rating),
+      status: val<String>(status),
+    );
+    for (final chunk in chunked(entryIds)) {
+      await (db.update(
+        db.profileEntries,
+      )..where((e) => e.id.isIn(chunk))).write(change);
+    }
+    await revisions.commitEntries(entryIds);
+  }
+
   /// Маркер «поле не передано» — позволяет отличить null от отсутствия.
   static const Object _unset = Object();
 
@@ -306,6 +335,39 @@ class EntryRepository {
             ..where((ec) => ec.entryId.equals(entryId)))
           .write(const EntryCategoriesCompanion(isPrimary: Value(false)));
       await _link(entryId, categoryId, primary: true);
+    });
+  }
+
+  /// Ставит одну основную категорию сразу набору записей.
+  ///
+  /// Порядок важен: сначала со всех выделенных снимается прежняя основная,
+  /// потом ставится новая. Частичный уникальный индекс по `entry_id` не
+  /// потерпит двух основных у одной записи, а внутри пакета команды идут в том
+  /// порядке, в каком записаны.
+  Future<void> setPrimaryCategories(
+    List<String> entryIds,
+    String categoryId,
+  ) async {
+    if (entryIds.isEmpty) return;
+    await db.batch((batch) {
+      for (final chunk in chunked(entryIds)) {
+        batch.update(
+          db.entryCategories,
+          const EntryCategoriesCompanion(isPrimary: Value(false)),
+          where: (ec) => ec.entryId.isIn(chunk),
+        );
+      }
+      for (final id in entryIds) {
+        batch.insert(
+          db.entryCategories,
+          EntryCategoriesCompanion.insert(
+            entryId: id,
+            categoryId: categoryId,
+            isPrimary: const Value(true),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
     });
   }
 
@@ -362,34 +424,61 @@ class EntryRepository {
     return (db.select(db.tags)..where((t) => t.id.isIn(ids))).get();
   }
 
-  /// Находит тег профиля по названию или создаёт новый и вешает на запись.
-  Future<TagRow> addTag(String profileId, String entryId, String name) async {
+  /// Теги, стоящие хотя бы на одной записи из набора, по алфавиту.
+  ///
+  /// Нужен панели массовых действий: снять предлагаем из того, что на
+  /// выделенном и стоит. Раньше это был запрос на каждую выделенную запись.
+  Future<List<TagRow>> tagsOfEntries(List<String> entryIds) async {
+    if (entryIds.isEmpty) return const [];
+
+    final tagIds = <String>{};
+    for (final chunk in chunked(entryIds)) {
+      final links = await (db.select(
+        db.entryTags,
+      )..where((et) => et.entryId.isIn(chunk))).get();
+      tagIds.addAll(links.map((l) => l.tagId));
+    }
+    if (tagIds.isEmpty) return const [];
+
+    final tags = <TagRow>[];
+    for (final chunk in chunked(tagIds.toList())) {
+      tags.addAll(
+        await (db.select(db.tags)..where((t) => t.id.isIn(chunk))).get(),
+      );
+    }
+    tags.sort((a, b) => a.normalizedName.compareTo(b.normalizedName));
+    return tags;
+  }
+
+  /// Находит тег профиля по названию или заводит новый.
+  Future<TagRow> _ensureTag(String profileId, String name) async {
     final normalized = Normalize.name(name);
-    var tag =
+    final existing =
         await (db.select(db.tags)..where(
               (t) =>
                   t.profileId.equals(profileId) &
                   t.normalizedName.equals(normalized),
             ))
             .getSingleOrNull();
+    if (existing != null) return existing;
 
-    if (tag == null) {
-      final id = Ids.newId();
-      await db
-          .into(db.tags)
-          .insert(
-            TagsCompanion.insert(
-              id: id,
-              profileId: profileId,
-              name: name,
-              normalizedName: normalized,
-            ),
-          );
-      tag = await (db.select(
-        db.tags,
-      )..where((t) => t.id.equals(id))).getSingle();
-    }
+    final id = Ids.newId();
+    await db
+        .into(db.tags)
+        .insert(
+          TagsCompanion.insert(
+            id: id,
+            profileId: profileId,
+            name: name,
+            normalizedName: normalized,
+          ),
+        );
+    return (db.select(db.tags)..where((t) => t.id.equals(id))).getSingle();
+  }
 
+  /// Находит тег профиля по названию или создаёт новый и вешает на запись.
+  Future<TagRow> addTag(String profileId, String entryId, String name) async {
+    final tag = await _ensureTag(profileId, name);
     await db
         .into(db.entryTags)
         .insert(
@@ -399,10 +488,43 @@ class EntryRepository {
     return tag;
   }
 
+  /// Вешает один тег на набор записей.
+  ///
+  /// Тег ищется и заводится один раз до цикла: раньше [addTag] в цикле искал
+  /// его заново на каждую запись, а первая итерация ещё и создавала.
+  Future<TagRow> addTagToEntries(
+    String profileId,
+    List<String> entryIds,
+    String name,
+  ) async {
+    final tag = await _ensureTag(profileId, name);
+    if (entryIds.isEmpty) return tag;
+
+    await db.batch((batch) {
+      for (final id in entryIds) {
+        batch.insert(
+          db.entryTags,
+          EntryTagsCompanion.insert(entryId: id, tagId: tag.id),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    });
+    return tag;
+  }
+
   Future<void> removeTag(String entryId, String tagId) {
     return (db.delete(
       db.entryTags,
     )..where((et) => et.entryId.equals(entryId) & et.tagId.equals(tagId))).go();
+  }
+
+  /// Снимает один тег с набора записей.
+  Future<void> removeTagFromEntries(List<String> entryIds, String tagId) async {
+    for (final chunk in chunked(entryIds)) {
+      await (db.delete(
+        db.entryTags,
+      )..where((et) => et.entryId.isIn(chunk) & et.tagId.equals(tagId))).go();
+    }
   }
 
   /// Сколько записей помечено каждым тегом профиля.
@@ -499,11 +621,30 @@ class EntryRepository {
         .write(ProfileEntriesCompanion(archivedAt: Value(DateTime.now())));
   }
 
+  /// Убирает в архив набор записей — одной датой на всю пачку.
+  Future<void> archiveEntries(List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+    final now = DateTime.now();
+    for (final chunk in chunked(entryIds)) {
+      await (db.update(db.profileEntries)..where((e) => e.id.isIn(chunk)))
+          .write(ProfileEntriesCompanion(archivedAt: Value(now)));
+    }
+  }
+
   /// Возвращает запись из архива (§24). Ничего не удалялось, поэтому связи с
   /// категориями, тегами и фотографиями остаются на месте.
   Future<void> restoreEntry(String entryId) async {
     await (db.update(db.profileEntries)..where((e) => e.id.equals(entryId)))
         .write(const ProfileEntriesCompanion(archivedAt: Value(null)));
+  }
+
+  /// Возвращает из архива набор записей.
+  Future<void> restoreEntries(List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+    for (final chunk in chunked(entryIds)) {
+      await (db.update(db.profileEntries)..where((e) => e.id.isIn(chunk)))
+          .write(const ProfileEntriesCompanion(archivedAt: Value(null)));
+    }
   }
 
   // ---- Представления для UI ----

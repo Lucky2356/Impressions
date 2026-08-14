@@ -8,7 +8,6 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
-import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
@@ -103,12 +102,11 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final picked = await CategoryPicker.show(context);
     final category = picked?.category;
     if (picked == null || picked.cleared || category == null) return;
-    await _run((ids) async {
-      final repo = ref.read(entryRepositoryProvider);
-      for (final id in ids) {
-        await repo.setPrimaryCategory(id, category.id);
-      }
-    });
+    await _run(
+      (ids) => ref
+          .read(entryRepositoryProvider)
+          .setPrimaryCategories(ids, category.id),
+    );
   }
 
   Future<void> _addTag() async {
@@ -121,12 +119,11 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
       label: l10n.tagNameLabel,
     );
     if (name == null) return;
-    await _run((ids) async {
-      final repo = ref.read(entryRepositoryProvider);
-      for (final id in ids) {
-        await repo.addTag(profile.id, id, name);
-      }
-    });
+    await _run(
+      (ids) => ref
+          .read(entryRepositoryProvider)
+          .addTagToEntries(profile.id, ids, name),
+    );
   }
 
   /// Снимает тег со всех выделенных записей.
@@ -138,22 +135,15 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final repo = ref.read(entryRepositoryProvider);
     final ids = ref.read(catalogSelectionProvider).toList();
 
-    final tags = <String, TagRow>{};
-    for (final id in ids) {
-      for (final tag in await repo.tagsOfEntry(id)) {
-        tags[tag.id] = tag;
-      }
-    }
+    final sorted = await repo.tagsOfEntries(ids);
     if (!mounted) return;
-    if (tags.isEmpty) {
+    if (sorted.isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.bulkRemoveTagEmpty)));
       return;
     }
 
-    final sorted = tags.values.toList()
-      ..sort((a, b) => a.normalizedName.compareTo(b.normalizedName));
     final chosen = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
@@ -175,11 +165,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     );
     if (chosen == null) return;
 
-    await _run((selected) async {
-      for (final id in selected) {
-        await repo.removeTag(id, chosen);
-      }
-    });
+    await _run((selected) => repo.removeTagFromEntries(selected, chosen));
   }
 
   /// Ставит отношение всей пачке.
@@ -191,12 +177,11 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final l10n = AppLocalizations.of(context);
     final count = ref.read(catalogSelectionProvider).length;
 
-    await _run((ids) async {
-      final repo = ref.read(entryRepositoryProvider);
-      for (final id in ids) {
-        await repo.updateEntry(id, relation: relation.name);
-      }
-    });
+    await _run(
+      (ids) => ref
+          .read(entryRepositoryProvider)
+          .updateEntries(ids, relation: relation.name),
+    );
 
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -215,12 +200,10 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     );
     if (rating == null) return;
 
-    await _run((ids) async {
-      final repo = ref.read(entryRepositoryProvider);
-      for (final id in ids) {
-        await repo.updateEntry(id, rating: rating);
-      }
-    });
+    await _run(
+      (ids) =>
+          ref.read(entryRepositoryProvider).updateEntries(ids, rating: rating),
+    );
 
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -235,12 +218,9 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
   Future<void> _addToCollection() async {
     final chosen = await CollectionPicker.show(context, ref);
     if (chosen == null) return;
-    await _run((ids) async {
-      final repo = ref.read(collectionRepositoryProvider);
-      for (final id in ids) {
-        await repo.addEntry(chosen, id);
-      }
-    });
+    await _run(
+      (ids) => ref.read(collectionRepositoryProvider).addEntries(chosen, ids),
+    );
   }
 
   /// Архивирование пачки без вопроса «точно?»: следом появляется «Вернуть»,
@@ -249,22 +229,16 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     final l10n = AppLocalizations.of(context);
     final ids = ref.read(catalogSelectionProvider).toList();
 
-    await _run((selected) async {
-      final repo = ref.read(entryRepositoryProvider);
-      for (final id in selected) {
-        await repo.archiveEntry(id);
-      }
-    });
+    await _run(
+      (selected) => ref.read(entryRepositoryProvider).archiveEntries(selected),
+    );
 
     if (!mounted) return;
     showUndoSnackBar(
       context,
       message: l10n.bulkArchived(ids.length),
       onUndo: () async {
-        final repo = ref.read(entryRepositoryProvider);
-        for (final id in ids) {
-          await repo.restoreEntry(id);
-        }
+        await ref.read(entryRepositoryProvider).restoreEntries(ids);
         ref.read(dataRefreshProvider.notifier).bump();
       },
     );

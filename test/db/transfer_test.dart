@@ -4,6 +4,7 @@ import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/data/services/transfer_service.dart';
 
+import 'query_counter.dart';
 import 'test_db.dart';
 
 void main() {
@@ -167,6 +168,57 @@ void main() {
 
     expect(result.categoryId, isNull);
     expect(await cats.roots(me.id), isEmpty);
+  });
+
+  test('перенос пачкой не поднимает дерево на каждую запись', () async {
+    final (db, counter) = openCountingDb();
+    addTearDown(db.close);
+    final profiles = ProfileRepository(db);
+    final entries = EntryRepository(db);
+    final cats = CategoryRepository(db);
+    final transfer = TransferService(db);
+
+    final other = await profiles.createOwnProfile(firstName: 'Источник');
+    final me = await profiles.createOwnProfile(firstName: 'Я');
+    final srcProducts = await cats.createRoot(other.id, 'Продукты');
+    final srcSausages = await cats.createChild(srcProducts.id, 'Колбасы');
+    final type = await entries.createObjectType(other.id, 'Продукты');
+
+    final theirs = <String>[];
+    for (var i = 0; i < 20; i++) {
+      final obj = await entries.createObject(
+        typeId: type.id,
+        title: 'Колбаса $i',
+      );
+      final entry = await entries.createEntry(
+        profileId: other.id,
+        objectId: obj.id,
+        primaryCategoryId: srcSausages.id,
+      );
+      theirs.add(entry.id);
+    }
+
+    counter.reset();
+    for (final id in theirs) {
+      await transfer.transfer(
+        sourceEntryId: id,
+        targetProfileId: me.id,
+        mode: TransferCategoryMode.autoCreate,
+      );
+    }
+
+    // Ветка заводится один раз: вторая запись из тех же «Колбас» должна лечь
+    // в них, а не завести вторые такие же.
+    final myRoots = await cats.roots(me.id);
+    expect(myRoots.map((c) => c.name), ['Продукты']);
+    expect((await cats.children(myRoots.single.id)).map((c) => c.name), [
+      'Колбасы',
+    ]);
+    expect(
+      counter.matching('FROM "categories"'),
+      lessThan(20),
+      reason: 'деревья читались по два на каждую запись',
+    );
   });
 
   test('объект переиспользуется, тип создаётся в целевом профиле', () async {
