@@ -18,6 +18,7 @@ import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
 import '../search/recent_store.dart';
+import 'entry_object_dialogs.dart';
 import 'entry_photos.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
@@ -524,9 +525,9 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   /// Правка описания объекта. Фиксируется новой версией (§18), поэтому
   /// прежнее название остаётся в истории.
   Future<void> _editObject(EntryDetail d) async {
-    final result = await showDialog<_ObjectEdit>(
+    final result = await showDialog<ObjectEdit>(
       context: context,
-      builder: (_) => _ObjectEditDialog(object: d.object),
+      builder: (_) => ObjectEditDialog(object: d.object),
     );
     if (result == null) return;
     await ref
@@ -561,7 +562,7 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
 
     final target = await showDialog<ObjectRow>(
       context: context,
-      builder: (_) => _MergeDialog(candidates: candidates.take(5).toList()),
+      builder: (_) => MergeDialog(candidates: candidates.take(5).toList()),
     );
     if (target == null || !mounted) return;
 
@@ -787,166 +788,6 @@ class _ImpressionDateRow extends StatelessWidget {
             onPressed: onPick,
           ),
         ],
-      ],
-    );
-  }
-}
-
-/// Результат правки описания объекта.
-typedef _ObjectEdit = ({String title, String? creator, int? year});
-
-/// Диалог правки названия, бренда и года объекта.
-/// Выбор объекта, с которым сводить.
-class _MergeDialog extends StatefulWidget {
-  const _MergeDialog({required this.candidates});
-
-  final List<ObjectRow> candidates;
-
-  @override
-  State<_MergeDialog> createState() => _MergeDialogState();
-}
-
-class _MergeDialogState extends State<_MergeDialog> {
-  /// Заранее ничего не выбрано: объединение необратимо, и подставленный выбор
-  /// человек принимает не глядя.
-  String? _selectedId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final selected = widget.candidates
-        .where((o) => o.id == _selectedId)
-        .firstOrNull;
-
-    return AlertDialog(
-      title: Text(l10n.entryMergeTitle),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.entryMergeMessage),
-            const SizedBox(height: AppDimens.space12),
-            RadioGroup<String>(
-              groupValue: _selectedId,
-              onChanged: (v) => setState(() => _selectedId = v),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final o in widget.candidates)
-                    RadioListTile<String>(
-                      value: o.id,
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(
-                        o.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: o.creator == null ? null : Text(o.creator!),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: selected == null
-              ? null
-              : () => Navigator.of(context).pop(selected),
-          child: Text(l10n.entryMergeAction),
-        ),
-      ],
-    );
-  }
-}
-
-class _ObjectEditDialog extends StatefulWidget {
-  const _ObjectEditDialog({required this.object});
-  final ObjectRow object;
-
-  @override
-  State<_ObjectEditDialog> createState() => _ObjectEditDialogState();
-}
-
-class _ObjectEditDialogState extends State<_ObjectEditDialog> {
-  late final _title = TextEditingController(text: widget.object.title);
-  late final _creator = TextEditingController(
-    text: widget.object.creator ?? '',
-  );
-  late final _year = TextEditingController(
-    text: widget.object.year?.toString() ?? '',
-  );
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _creator.dispose();
-    _year.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final c = context.colors;
-    return AlertDialog(
-      title: Text(l10n.entryEditObject),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.entryEditObjectHint,
-              style: context.text.labelSmall?.copyWith(color: c.textMuted),
-            ),
-            const SizedBox(height: AppDimens.space16),
-            TextField(
-              controller: _title,
-              autofocus: true,
-              decoration: InputDecoration(labelText: l10n.quickAddNameLabel),
-            ),
-            const SizedBox(height: AppDimens.space16),
-            TextField(
-              controller: _creator,
-              decoration: InputDecoration(labelText: l10n.entryCreatorLabel),
-            ),
-            const SizedBox(height: AppDimens.space16),
-            TextField(
-              controller: _year,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: l10n.entryYearLabel),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () {
-            final title = _title.text.trim();
-            if (title.isEmpty) return;
-            final creator = _creator.text.trim();
-            Navigator.of(context).pop((
-              title: title,
-              creator: creator.isEmpty ? null : creator,
-              year: int.tryParse(_year.text.trim()),
-            ));
-          },
-          child: Text(l10n.commonSave),
-        ),
       ],
     );
   }
