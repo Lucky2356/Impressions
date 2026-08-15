@@ -736,6 +736,8 @@ class EntryRepository {
     bool withoutCategory = false,
     bool withoutPhoto = false,
     bool recommendedOnly = false,
+    DateTime? impressionFrom,
+    DateTime? impressionTo,
     bool archived = false,
   }) async {
     final where = <Expression<bool>>[
@@ -831,6 +833,20 @@ class EntryRepository {
       where.add(db.profileEntries.recommendedByProfileId.isNotNull());
     }
 
+    // Окно по дате впечатления: «что было год назад» и «что было за этот год».
+    // Именно по дате впечатления, а не заведения записи: впечатление могло
+    // случиться задолго до того, как его записали.
+    if (impressionFrom != null) {
+      where.add(
+        db.profileEntries.impressionDate.isBiggerOrEqualValue(impressionFrom),
+      );
+    }
+    if (impressionTo != null) {
+      where.add(
+        db.profileEntries.impressionDate.isSmallerOrEqualValue(impressionTo),
+      );
+    }
+
     return where;
   }
 
@@ -864,6 +880,8 @@ class EntryRepository {
     bool withoutCategory = false,
     bool withoutPhoto = false,
     bool recommendedOnly = false,
+    DateTime? impressionFrom,
+    DateTime? impressionTo,
     bool archived = false,
   }) async {
     final where = await _filters(
@@ -879,6 +897,8 @@ class EntryRepository {
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
       recommendedOnly: recommendedOnly,
+      impressionFrom: impressionFrom,
+      impressionTo: impressionTo,
       archived: archived,
     );
     if (where == null) return null;
@@ -904,6 +924,8 @@ class EntryRepository {
     bool withoutCategory = false,
     bool withoutPhoto = false,
     bool recommendedOnly = false,
+    DateTime? impressionFrom,
+    DateTime? impressionTo,
     bool archived = false,
   }) async {
     final query = await _matching(
@@ -921,6 +943,8 @@ class EntryRepository {
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
       recommendedOnly: recommendedOnly,
+      impressionFrom: impressionFrom,
+      impressionTo: impressionTo,
       archived: archived,
     );
     if (query == null) return const [];
@@ -948,6 +972,8 @@ class EntryRepository {
     bool withoutCategory = false,
     bool withoutPhoto = false,
     bool recommendedOnly = false,
+    DateTime? impressionFrom,
+    DateTime? impressionTo,
     bool archived = false,
     int? limit,
     int offset = 0,
@@ -967,6 +993,8 @@ class EntryRepository {
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
       recommendedOnly: recommendedOnly,
+      impressionFrom: impressionFrom,
+      impressionTo: impressionTo,
       archived: archived,
     );
     if (query == null) return const [];
@@ -1167,6 +1195,8 @@ class EntryRepository {
     bool withoutCategory = false,
     bool withoutPhoto = false,
     bool recommendedOnly = false,
+    DateTime? impressionFrom,
+    DateTime? impressionTo,
     bool archived = false,
     required int limit,
     int offset = 0,
@@ -1183,6 +1213,8 @@ class EntryRepository {
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
       recommendedOnly: recommendedOnly,
+      impressionFrom: impressionFrom,
+      impressionTo: impressionTo,
       archived: archived,
     );
     if (where == null) return const EntryPage(items: [], total: 0);

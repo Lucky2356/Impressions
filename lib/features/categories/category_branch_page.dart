@@ -9,6 +9,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
+import '../home/pinned_store.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'category_actions.dart';
 import 'category_branch_entries.dart';
@@ -158,7 +159,7 @@ class CategoryBranchPage extends ConsumerWidget {
 }
 
 /// Шапка ветки: значок, название, сводка и действия.
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   const _Header({
     required this.category,
     required this.tone,
@@ -190,9 +191,13 @@ class _Header extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
+    // Значок закрепления меняется сразу после нажатия, поэтому смотрим на сам
+    // список, а не на его хранителя.
+    final pinned = (ref.watch(pinnedCategoryIdsProvider).value ?? const [])
+        .contains(category.id);
 
     return LayoutBuilder(
       builder: (context, cns) {
@@ -289,6 +294,11 @@ class _Header extends StatelessWidget {
             ),
             _item('merge', Icons.merge_rounded, l10n.categoryMerge),
             const PopupMenuDivider(),
+            _item(
+              'pin',
+              pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+              pinned ? l10n.homeUnpin : l10n.homePin,
+            ),
             _item('archive', Icons.archive_rounded, l10n.categoryArchive),
           ],
         );

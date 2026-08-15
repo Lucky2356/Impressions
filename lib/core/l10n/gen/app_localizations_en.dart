@@ -506,6 +506,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionAdded => 'Added to the collection';
 
   @override
+  String get homeContinue => 'Pick up where you left off';
+
+  @override
+  String get homeYearAgo => 'A year ago';
+
+  @override
+  String get homeSuggestion => 'How about today?';
+
+  @override
+  String get homePinned => 'Pinned';
+
+  @override
+  String get homePin => 'Pin to the home screen';
+
+  @override
+  String get homeUnpin => 'Unpin';
+
+  @override
+  String get homePinnedDone => 'Pinned to the home screen';
+
+  @override
+  String get homeUnpinned => 'Unpinned';
+
+  @override
   String get collectionAppearance => 'Collection look';
 
   @override

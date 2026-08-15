@@ -9,12 +9,16 @@ import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
+import '../categories/category_palette.dart';
 import '../categories/category_providers.dart';
+import '../collections/collection_providers.dart';
+import '../entry/entry_card_data.dart';
 import '../entry/entry_context_menu.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 import '../wishlist/wishlist_screen.dart';
 import 'home_providers.dart';
+import 'pinned_store.dart';
 
 /// Главная (§14): визуальная сводка активного профиля на реальных данных.
 /// Пустые блоки не показываются.
@@ -140,6 +144,11 @@ class _MainColumn extends ConsumerWidget {
               ),
             ],
           ),
+        // Начатое — выше недавнего: «на чём я остановился» спрашивают чаще,
+        // чем «что я заводил последним».
+        const _ContinueBlock(),
+        const _PinnedBlock(),
+        const _YearAgoBlock(),
         const SizedBox(height: AppDimens.space24),
         SectionHeader(title: l10n.sectionRecent),
         const SizedBox(height: AppDimens.space16),
@@ -231,6 +240,246 @@ class _MainColumn extends ConsumerWidget {
   }
 }
 
+/// Подсказка дня: одна задумка из тех, до чего ещё не дошли руки.
+///
+/// Список «Хочу попробовать» отвечает на вопрос «что я собирался», а он растёт
+/// и перестаёт читаться. Одна строка отвечает на другой вопрос — «чем заняться
+/// сегодня», — и на неё хватает взгляда.
+class _SuggestionCard extends ConsumerWidget {
+  const _SuggestionCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final entry = ref.watch(dailySuggestionProvider).value;
+    if (entry == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.space24),
+      child: AppCard(
+        onTap: () => EntryDetailSheet.show(context, entry.entryId),
+        child: Row(
+          children: [
+            Icon(
+              Icons.lightbulb_outline_rounded,
+              size: 20,
+              color: c.accentPrimary,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.homeSuggestion,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    entry.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.titleMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// «Продолжить начатое» — записи на стадии «В процессе».
+///
+/// Блок пустым не показывается: правило главной — не занимать место рамкой
+/// вокруг пустоты.
+class _ContinueBlock extends ConsumerWidget {
+  const _ContinueBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final started =
+        ref.watch(inProgressEntriesProvider).value ?? const <EntryView>[];
+    if (started.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppDimens.space24),
+        SectionHeader(title: l10n.homeContinue),
+        const SizedBox(height: AppDimens.space16),
+        for (var i = 0; i < started.length; i++) ...[
+          if (i != 0) const SizedBox(height: AppDimens.space8),
+          EntryMenuTarget(
+            entry: started[i],
+            child: EntryCardCompact(
+              data: entryCardData(context, started[i]),
+              onTap: () => EntryDetailSheet.show(context, started[i].entryId),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// «Год назад» — что случилось примерно в эти же дни год назад.
+class _YearAgoBlock extends ConsumerWidget {
+  const _YearAgoBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final then = ref.watch(yearAgoEntriesProvider).value ?? const <EntryView>[];
+    if (then.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppDimens.space32),
+        SectionHeader(title: l10n.homeYearAgo),
+        const SizedBox(height: AppDimens.space16),
+        LayoutBuilder(
+          builder: (context, cns) {
+            final cols = cns.maxWidth >= 900
+                ? 4
+                : cns.maxWidth >= 560
+                ? 3
+                : 2;
+            return GridView.count(
+              crossAxisCount: cols,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: AppDimens.space16,
+              crossAxisSpacing: AppDimens.space16,
+              childAspectRatio: 0.62,
+              children: [
+                for (final e in then.take(cols))
+                  EntryMenuTarget(
+                    entry: e,
+                    child: CoverProgress(
+                      title: e.title,
+                      imagePath: e.coverPath,
+                      seedColor: c.profileColorFor(e.objectId),
+                      progress: e.rating == null ? null : e.rating! / 10,
+                      leftLabel: e.categoryPath.isEmpty
+                          ? e.typeName
+                          : e.categoryPath.last,
+                      rightLabel: e.rating?.toStringAsFixed(1),
+                      onTap: () => EntryDetailSheet.show(context, e.entryId),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Закреплённые ветки и подборки.
+///
+/// Главная показывала то, что решило приложение: корневые категории и
+/// недавнее. Что человек ведёт прямо сейчас, оно знать не могло.
+class _PinnedBlock extends ConsumerWidget {
+  const _PinnedBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    final categoryIds =
+        ref.watch(pinnedCategoryIdsProvider).value ?? const <String>[];
+    final collectionIds =
+        ref.watch(pinnedCollectionIdsProvider).value ?? const <String>[];
+    if (categoryIds.isEmpty && collectionIds.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final categories = ref.watch(allCategoriesProvider).value ?? const [];
+    final counts = ref.watch(categoryBranchCountsProvider).value ?? const {};
+    final collections = ref.watch(collectionsProvider).value ?? const [];
+
+    // Закреплённое могли убрать в архив или удалить: пропускаем молча, а не
+    // рисуем плитку в никуда.
+    final pinnedCategories = [
+      for (final id in categoryIds)
+        ?categories.where((cat) => cat.id == id).firstOrNull,
+    ];
+    final pinnedCollections = [
+      for (final id in collectionIds)
+        ?collections.where((v) => v.collection.id == id).firstOrNull,
+    ];
+    if (pinnedCategories.isEmpty && pinnedCollections.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppDimens.space32),
+        SectionHeader(title: l10n.homePinned),
+        const SizedBox(height: AppDimens.space16),
+        LayoutBuilder(
+          builder: (context, cns) {
+            final cols = cns.maxWidth >= 900
+                ? 4
+                : cns.maxWidth >= 560
+                ? 2
+                : 1;
+            return GridView.count(
+              crossAxisCount: cols,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: AppDimens.space16,
+              crossAxisSpacing: AppDimens.space16,
+              childAspectRatio: cols == 1 ? 4.2 : 2.4,
+              children: [
+                for (final category in pinnedCategories)
+                  _CategoryTile(
+                    name: category.name,
+                    iconKey: category.icon,
+                    color: CategoryPalette.colorOf(category, categories, c),
+                    count: counts[category.id] ?? 0,
+                    onTap: () {
+                      ref
+                          .read(selectedCategoryProvider.notifier)
+                          .select(category.id);
+                      ref.read(navProvider.notifier).go(NavIds.categories);
+                    },
+                  ),
+                for (final view in pinnedCollections)
+                  _CategoryTile(
+                    name: view.collection.name,
+                    iconKey: null,
+                    icon: view.isSmart
+                        ? Icons.auto_awesome_rounded
+                        : Icons.collections_bookmark_rounded,
+                    color: view.collection.color == null
+                        ? c.profileColorFor(view.collection.id)
+                        : Color(view.collection.color!),
+                    count: view.entryCount,
+                    onTap: () =>
+                        ref.read(navProvider.notifier).go(NavIds.collections),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class _CategoryTile extends StatelessWidget {
   const _CategoryTile({
     required this.name,
@@ -238,10 +487,15 @@ class _CategoryTile extends StatelessWidget {
     required this.color,
     required this.count,
     required this.onTap,
+    this.icon,
   });
 
   final String name;
   final String? iconKey;
+
+  /// Готовый значок вместо ключа — у подборки своего значка в базе нет.
+  final IconData? icon;
+
   final Color color;
   final int count;
   final VoidCallback onTap;
@@ -261,7 +515,11 @@ class _CategoryTile extends StatelessWidget {
               color: color.withValues(alpha: 0.14),
               borderRadius: AppDimens.brSm,
             ),
-            child: Icon(AppIcons.byKey(iconKey), size: 20, color: color),
+            child: Icon(
+              icon ?? AppIcons.byKey(iconKey),
+              size: 20,
+              color: color,
+            ),
           ),
           const SizedBox(width: AppDimens.space12),
           Expanded(
@@ -301,6 +559,7 @@ class _SidePanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const _SuggestionCard(),
         SectionHeader(title: l10n.sectionWantToTry),
         const SizedBox(height: AppDimens.space16),
         // Та же строка, что и на своём экране: открывается по нажатию и даёт

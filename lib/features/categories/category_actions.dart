@@ -9,6 +9,7 @@ import '../../data/models/category_tree.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../design_system/design_system.dart';
+import '../home/pinned_store.dart';
 import '../quick_add/category_picker.dart';
 import 'category_drag.dart';
 import 'category_editor_sheet.dart';
@@ -344,8 +345,22 @@ class CategoryActions {
         await moveEntries(category);
       case 'merge':
         await merge(category);
+      case 'pin':
+        await togglePin(category);
       case 'archive':
         await archive(category);
     }
+  }
+
+  /// Закрепляет ветку на главной или снимает закрепление.
+  ///
+  /// Главная показывала то, что решило приложение: корневые категории и
+  /// недавнее. Ветку, которую человек ведёт прямо сейчас, оно знать не могло.
+  Future<void> togglePin(CategoryRow category) async {
+    final pinned = ref.read(pinnedCategoryIdsProvider.notifier);
+    final wasPinned = pinned.contains(category.id);
+    await pinned.toggle(category.id);
+    if (!context.mounted) return;
+    showMessage(context, wasPinned ? _l10n.homeUnpinned : _l10n.homePinnedDone);
   }
 }

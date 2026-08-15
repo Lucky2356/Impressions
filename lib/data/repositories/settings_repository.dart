@@ -25,6 +25,13 @@ class SettingKeys {
   /// Раздел, открытый в прошлый раз.
   static const lastSection = 'last_section';
 
+  /// Закреплённые на главной ветки и подборки — списки идентификаторов.
+  ///
+  /// Главная показывает корневые категории и недавнее, то есть то, что решило
+  /// приложение. Что человек ведёт прямо сейчас, оно знать не могло.
+  static const homePinnedCategories = 'home_pinned_categories';
+  static const homePinnedCollections = 'home_pinned_collections';
+
   /// Куда клали в прошлый раз: подряд обычно заводят записи в одно место, а
   /// форма подставляла категорию только при входе из ветки.
   static const quickAddLastCategory = 'quick_add_last_category';

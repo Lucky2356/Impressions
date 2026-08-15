@@ -55,6 +55,71 @@ final plannedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
       .entryViews(profile.id, status: EntryStatus.planned, limit: 5);
 });
 
+/// Начатое: записи на стадии «В процессе».
+///
+/// Самый частый вопрос к приложению — «на чём я остановился», — и ответить на
+/// него было нечем: стадия в базе была и не читалась ни одним экраном.
+final inProgressEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+  return ref
+      .watch(entryRepositoryProvider)
+      .entryViews(profile.id, status: EntryStatus.inProgress, limit: 8);
+});
+
+/// Что случилось примерно год назад — по дате впечатления.
+///
+/// Окно в неделю в обе стороны: строго один день почти никогда не совпал бы, и
+/// блок не показывался бы никогда. Дата впечатления, а не заведения записи:
+/// впечатление могло случиться задолго до того, как его записали.
+final yearAgoEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+
+  final now = DateTime.now();
+  final target = DateTime(now.year - 1, now.month, now.day);
+  return ref
+      .watch(entryRepositoryProvider)
+      .entryViews(
+        profile.id,
+        impressionFrom: target.subtract(const Duration(days: 7)),
+        impressionTo: target.add(const Duration(days: 7)),
+        sort: EntrySort.impressionDate,
+        limit: 6,
+      );
+});
+
+/// Одна задумка на сегодня — из тех, до чего ещё не дошли руки.
+///
+/// Выбирается по дню, а не случайно на каждую перерисовку: подсказка,
+/// меняющаяся от прокрутки, — не подсказка. Завтра будет другая.
+final dailySuggestionProvider = FutureProvider<EntryView?>((ref) async {
+  final planned = await ref.watch(plannedSuggestionPoolProvider.future);
+  if (planned.isEmpty) return null;
+
+  final now = DateTime.now();
+  final dayOfYear = now.difference(DateTime(now.year)).inDays;
+  return planned[dayOfYear % planned.length];
+});
+
+/// Из чего выбирается подсказка дня.
+///
+/// Отдельно от [plannedEntriesProvider]: тому хватает пяти записей для боковой
+/// колонки, а подсказке нужен запас пошире — иначе изо дня в день предлагалось
+/// бы одно и то же.
+final plannedSuggestionPoolProvider = FutureProvider<List<EntryView>>((
+  ref,
+) async {
+  ref.watch(dataRefreshProvider);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const [];
+  return ref
+      .watch(entryRepositoryProvider)
+      .entryViews(profile.id, status: EntryStatus.planned, limit: 50);
+});
+
 /// Корневые категории активного профиля.
 final rootCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {
   ref.watch(dataRefreshProvider);

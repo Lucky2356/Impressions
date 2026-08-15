@@ -19,6 +19,7 @@ import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../entry/status_field.dart';
 import '../home/home_providers.dart';
+import '../home/pinned_store.dart';
 import 'collection_editor_sheet.dart';
 import 'collection_entry_picker.dart';
 import 'collection_providers.dart';
@@ -165,6 +166,8 @@ class _CollectionDetail extends ConsumerWidget {
         .firstOrNull;
     final row = collection?.collection;
     final smart = row == null ? null : smartFilterOf(row);
+    final pinned = (ref.watch(pinnedCollectionIdsProvider).value ?? const [])
+        .contains(collectionId);
 
     return ScreenScaffold(
       header: ScreenHeader(
@@ -204,6 +207,15 @@ class _CollectionDetail extends ConsumerWidget {
                 if (row != null) {
                   await CollectionEditorSheet.show(context, row);
                 }
+              } else if (v == 'pin') {
+                final pins = ref.read(pinnedCollectionIdsProvider.notifier);
+                final was = pins.contains(collectionId);
+                await pins.toggle(collectionId);
+                if (!context.mounted) return;
+                showMessage(
+                  context,
+                  was ? l10n.homeUnpinned : l10n.homePinnedDone,
+                );
               } else if (v == 'archive') {
                 await repo.archive(collectionId);
                 ref.read(dataRefreshProvider.notifier).bump();
@@ -228,6 +240,20 @@ class _CollectionDetail extends ConsumerWidget {
                     const Icon(Icons.edit_rounded, size: 18),
                     const SizedBox(width: AppDimens.space12),
                     Text(l10n.collectionAppearance),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'pin',
+                height: 40,
+                child: Row(
+                  children: [
+                    Icon(
+                      pinned ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+                      size: 18,
+                    ),
+                    const SizedBox(width: AppDimens.space12),
+                    Text(pinned ? l10n.homeUnpin : l10n.homePin),
                   ],
                 ),
               ),

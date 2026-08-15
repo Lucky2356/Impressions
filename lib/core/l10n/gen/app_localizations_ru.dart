@@ -520,6 +520,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get collectionAdded => 'Добавлено в подборку';
 
   @override
+  String get homeContinue => 'Продолжить начатое';
+
+  @override
+  String get homeYearAgo => 'Год назад';
+
+  @override
+  String get homeSuggestion => 'Может, сегодня?';
+
+  @override
+  String get homePinned => 'Закреплённое';
+
+  @override
+  String get homePin => 'Закрепить на главной';
+
+  @override
+  String get homeUnpin => 'Открепить';
+
+  @override
+  String get homePinnedDone => 'Закреплено на главной';
+
+  @override
+  String get homeUnpinned => 'Откреплено';
+
+  @override
   String get collectionAppearance => 'Оформление подборки';
 
   @override

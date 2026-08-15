@@ -956,6 +956,54 @@ abstract class AppLocalizations {
   /// **'Добавлено в подборку'**
   String get collectionAdded;
 
+  /// No description provided for @homeContinue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить начатое'**
+  String get homeContinue;
+
+  /// No description provided for @homeYearAgo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год назад'**
+  String get homeYearAgo;
+
+  /// No description provided for @homeSuggestion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Может, сегодня?'**
+  String get homeSuggestion;
+
+  /// No description provided for @homePinned.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закреплённое'**
+  String get homePinned;
+
+  /// No description provided for @homePin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрепить на главной'**
+  String get homePin;
+
+  /// No description provided for @homeUnpin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открепить'**
+  String get homeUnpin;
+
+  /// No description provided for @homePinnedDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закреплено на главной'**
+  String get homePinnedDone;
+
+  /// No description provided for @homeUnpinned.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откреплено'**
+  String get homeUnpinned;
+
   /// No description provided for @collectionAppearance.
   ///
   /// In ru, this message translates to:
