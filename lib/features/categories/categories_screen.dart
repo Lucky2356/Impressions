@@ -10,6 +10,7 @@ import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../design_system/design_system.dart';
@@ -272,7 +273,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
   void _select(CategoryRow cat) {
     _setSelected(cat.id);
     setState(() {
-      for (final id in cat.path.split('/')) {
+      for (final id in CategoryTree.pathIds(cat.path)) {
         _collapsed.remove(id);
       }
     });
@@ -446,8 +447,9 @@ class _ShelfPane extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final palette = c.profilePalette;
-    final byId = {for (final x in categories) x.id: x};
-    final opened = openedId == null ? null : byId[openedId];
+    final opened = openedId == null
+        ? null
+        : CategoryTree.byId(categories)[openedId];
 
     // Поиск ищет по всему дереву, а не только внутри открытой полки: искать
     // «Колбасы», стоя в «Местах», — нормальное желание.
@@ -456,7 +458,7 @@ class _ShelfPane extends StatelessWidget {
         ? categories
               .where((x) => x.normalizedName.contains(normalized))
               .toList()
-        : categories.where((x) => x.parentId == openedId).toList();
+        : CategoryTree.childrenOf(categories, openedId);
 
     return Container(
       color: c.background,
@@ -547,9 +549,10 @@ class _ShelfPane extends StatelessWidget {
                         itemCount: shown.length,
                         itemBuilder: (context, i) {
                           final cat = shown[i];
-                          final children = categories
-                              .where((x) => x.parentId == cat.id)
-                              .toList();
+                          final children = CategoryTree.childrenOf(
+                            categories,
+                            cat.id,
+                          );
                           final count = branchCounts[cat.id] ?? 0;
                           final tone = cat.color != null
                               ? Color(cat.color!)

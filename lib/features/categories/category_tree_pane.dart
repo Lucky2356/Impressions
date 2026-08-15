@@ -6,6 +6,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
 import 'categories_screen.dart';
 
@@ -81,7 +82,7 @@ class TreePane extends StatelessWidget {
       final keep = <String>{};
       for (final cat in categories) {
         if (cat.normalizedName.contains(normalized)) {
-          keep.addAll(cat.path.split('/'));
+          keep.addAll(CategoryTree.pathIds(cat.path));
         }
       }
       visible.addAll(categories.where((cat) => keep.contains(cat.id)));

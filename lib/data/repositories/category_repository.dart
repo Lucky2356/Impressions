@@ -4,6 +4,7 @@ import '../../core/config/app_config.dart';
 import '../../core/utils/ids.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
+import '../models/category_tree.dart';
 
 /// Ошибка недопустимой операции с деревом категорий (§7.1).
 class CategoryTreeException implements Exception {
@@ -19,7 +20,8 @@ class CategoryRepository {
   CategoryRepository(this.db);
   final AppDatabase db;
 
-  static const String _sep = '/';
+  /// Разделитель сегментов пути — тот же, которым дерево разбирают экраны.
+  static const String _sep = CategoryTree.separator;
 
   Future<CategoryRow?> byId(String id) {
     return (db.select(

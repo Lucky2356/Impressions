@@ -10,6 +10,7 @@ import '../../core/config/app_config.dart';
 import '../../core/utils/hashing.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
+import '../models/category_tree.dart';
 import '../repositories/entry_repository.dart';
 import 'image_service.dart';
 import 'key_service.dart';
@@ -258,17 +259,13 @@ class ExportService {
     final categories = await (db.select(
       db.categories,
     )..where((c) => c.profileId.equals(profileId))).get();
-    if (options.categoryId == null) return categories;
+    final rootId = options.categoryId;
+    if (rootId == null) return categories;
 
-    final root = categories
-        .where((c) => c.id == options.categoryId)
-        .firstOrNull;
-    if (root == null) return categories;
-
-    final prefix = '${root.path}/';
-    return categories
-        .where((c) => c.id == root.id || c.path.startsWith(prefix))
-        .toList();
+    // Ветки нет — выгружаем профиль целиком, как и раньше: молча отдать пустой
+    // пакет было бы хуже всего.
+    final branch = CategoryTree.branchOf(categories, rootId);
+    return branch.isEmpty ? categories : branch;
   }
 
   /// Записи в пределах выбранного объёма, без приватных (§25).

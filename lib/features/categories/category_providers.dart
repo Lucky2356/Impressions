@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 
@@ -91,7 +92,7 @@ final categoryBranchCountsProvider = FutureProvider<Map<String, int>>((
     final own = direct[cat.id] ?? 0;
     if (own == 0) continue;
     // Путь содержит саму категорию и всех её предков.
-    for (final ancestorId in cat.path.split('/')) {
+    for (final ancestorId in CategoryTree.pathIds(cat.path)) {
       final current = result[ancestorId];
       if (current != null) result[ancestorId] = current + own;
     }
@@ -112,7 +113,10 @@ final categoryEntriesProvider = FutureProvider.family<List<EntryView>, String>((
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
 
-  final ids = await _branchIds(ref, categoryId);
+  final ids = CategoryTree.branchIds(
+    await ref.watch(allCategoriesProvider.future),
+    categoryId,
+  );
   if (ids.isEmpty) return const [];
 
   return ref
@@ -135,22 +139,12 @@ final branchTypeCountsProvider =
           .watch(entryRepositoryProvider)
           .typeCountsInCategories(
             profile.id,
-            await _branchIds(ref, categoryId),
+            CategoryTree.branchIds(
+              await ref.watch(allCategoriesProvider.future),
+              categoryId,
+            ),
           );
     });
-
-/// Ветка целиком: сама категория и всё, что под ней.
-Future<List<String>> _branchIds(Ref ref, String categoryId) async {
-  final all = await ref.watch(allCategoriesProvider.future);
-  final selected = all.where((c) => c.id == categoryId).firstOrNull;
-  if (selected == null) return const [];
-
-  final prefix = '${selected.path}/';
-  return [
-    selected.id,
-    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-  ];
-}
 
 /// По несколько обложек на категорию — для карточек-полок.
 final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((
@@ -164,10 +158,10 @@ final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((
 
 /// Сортировка по дереву: сравниваем последовательности sortOrder предков.
 List<CategoryRow> _sortByTreeOrder(List<CategoryRow> rows) {
-  final byId = {for (final r in rows) r.id: r};
+  final byId = CategoryTree.byId(rows);
   List<int> key(CategoryRow row) {
     final result = <int>[];
-    for (final id in row.path.split('/')) {
+    for (final id in CategoryTree.pathIds(row.path)) {
       final node = byId[id];
       result.add(node?.sortOrder ?? 0);
     }

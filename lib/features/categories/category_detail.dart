@@ -7,6 +7,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
 import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
@@ -57,7 +58,7 @@ class CategoryDetail extends ConsumerWidget {
     final layout = context.layout;
 
     final all = ref.watch(allCategoriesProvider).value ?? const <CategoryRow>[];
-    final children = all.where((x) => x.parentId == category.id).toList();
+    final children = CategoryTree.childrenOf(all, category.id);
     final entries = ref.watch(categoryEntriesProvider(category.id));
     final direct = ref.watch(categoryDirectCountsProvider).value ?? const {};
     final branch = ref.watch(categoryBranchCountsProvider).value ?? const {};
@@ -67,10 +68,8 @@ class CategoryDetail extends ConsumerWidget {
         : c.profileColorFor(category.id);
 
     // Хлебные крошки строятся из материализованного пути.
-    final byId = {for (final x in all) x.id: x};
     final trail = [
-      for (final id in category.path.split('/'))
-        if (byId[id] case final node?) node.name,
+      for (final node in CategoryTree.breadcrumbOf(all, category)) node.name,
     ];
 
     return Column(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -451,13 +452,11 @@ Future<List<String>?> _categoryScope(Ref ref, CatalogState s) async {
   if (selectedId == null) return null;
   if (!s.includeSubcategories) return [selectedId];
 
-  final all = await ref.watch(allCategoriesProvider.future);
-  final selected = all.where((c) => c.id == selectedId).firstOrNull;
-  if (selected == null) return [selectedId];
-
-  final prefix = '${selected.path}/';
-  return [
-    selected.id,
-    ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-  ];
+  final branch = CategoryTree.branchIds(
+    await ref.watch(allCategoriesProvider.future),
+    selectedId,
+  );
+  // Категории может уже не быть — фильтр помнится между запусками. Отбор по
+  // ней всё равно должен остаться отбором, а не сняться сам собой.
+  return branch.isEmpty ? [selectedId] : branch;
 }

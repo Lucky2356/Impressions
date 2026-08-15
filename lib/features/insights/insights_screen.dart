@@ -11,6 +11,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/entry_stats.dart';
@@ -68,12 +69,10 @@ final profileInsightsProvider = FutureProvider<ProfileInsights>((ref) async {
   // «Продукты» выглядели бы пустыми, а всё лежало бы в «Колбасах».
   List<String>? categoryIds;
   if (category != null) {
-    final all = await ref.watch(allCategoriesProvider.future);
-    final prefix = '${category.path}/';
-    categoryIds = [
+    categoryIds = CategoryTree.branchIds(
+      await ref.watch(allCategoriesProvider.future),
       category.id,
-      ...all.where((c) => c.path.startsWith(prefix)).map((c) => c.id),
-    ];
+    );
   }
 
   final now = DateTime.now();
