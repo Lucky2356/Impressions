@@ -12,6 +12,7 @@ import '../../design_system/design_system.dart';
 import '../quick_add/quick_add_sheet.dart';
 import 'category_actions.dart';
 import 'category_branch_entries.dart';
+import 'category_palette.dart';
 import 'category_providers.dart';
 
 /// С какой ширины шапка ветки помещается в одну строку.
@@ -56,10 +57,7 @@ class CategoryBranchPage extends ConsumerWidget {
     final direct = ref.watch(categoryDirectCountsProvider).value ?? const {};
     final branch = ref.watch(categoryBranchCountsProvider).value ?? const {};
 
-    final tone = category.color != null
-        ? Color(category.color!)
-        : c.profileColorFor(category.id);
-
+    final tone = CategoryPalette.colorOf(category, all, c);
     final crumbs = CategoryTree.breadcrumbOf(all, category);
 
     return Column(
@@ -348,11 +346,12 @@ class CategoryShelves extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final palette = context.colors.profilePalette;
+    final c = context.colors;
     final actions = CategoryActions(ref, context);
     final branchCounts =
         ref.watch(categoryBranchCountsProvider).value ?? const {};
     final covers = ref.watch(categoryCoversProvider).value ?? const {};
+    final pinned = ref.watch(categoryCoverPathsProvider).value ?? const {};
 
     if (categories.isEmpty) {
       return EmptyState(
@@ -390,11 +389,9 @@ class CategoryShelves extends ConsumerWidget {
                 x.name,
             ];
             final count = branchCounts[cat.id] ?? 0;
-            // Цвет от самой категории, а не от её места в списке: при поиске
-            // один и тот же «Сыр» менял цвет вместе с номером строки.
-            final tone = cat.color != null
-                ? Color(cat.color!)
-                : palette[cat.id.hashCode.abs() % palette.length];
+            // Цвет от самой ветки, а не от её места в списке: при поиске один
+            // и тот же «Сыр» менял цвет вместе с номером строки.
+            final tone = CategoryPalette.colorOf(cat, allCategories, c);
 
             return Appear(
               index: i,
@@ -409,6 +406,7 @@ class CategoryShelves extends ConsumerWidget {
                   countLabel: l10n.categoryEntriesCount(count),
                   childNames: grandChildren.take(4).toList(),
                   covers: covers[cat.id] ?? const [],
+                  coverPath: pinned[cat.id],
                   // Одно нажатие — один исход: открыть ветку. Раньше карточка
                   // вела то вглубь, то в панель справа, в зависимости от того,
                   // есть ли внутри подкатегории.

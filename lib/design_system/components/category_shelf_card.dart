@@ -22,6 +22,7 @@ class CategoryShelfCard extends StatelessWidget {
     required this.countLabel,
     this.childNames = const [],
     this.covers = const [],
+    this.coverPath,
     this.selected = false,
     this.onTap,
   });
@@ -39,6 +40,9 @@ class CategoryShelfCard extends StatelessWidget {
 
   /// Пути к миниатюрам записей из ветки.
   final List<String> covers;
+
+  /// Закреплённая обложка ветки — в отличие от [covers], её выбрали руками.
+  final String? coverPath;
 
   final bool selected;
 
@@ -74,6 +78,7 @@ class CategoryShelfCard extends StatelessWidget {
             // название.
             Container(
               height: 72,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -87,6 +92,18 @@ class CategoryShelfCard extends StatelessWidget {
                   top: Radius.circular(16),
                 ),
               ),
+              // Закреплённая обложка — фоном под цветом, а не вместо него:
+              // цвет остаётся тем, по чему полка узнаётся издалека.
+              foregroundDecoration: coverPath == null
+                  ? null
+                  : BoxDecoration(
+                      image: DecorationImage(
+                        image: FileImage(File(coverPath!)),
+                        fit: BoxFit.cover,
+                        opacity: 0.5,
+                        onError: (_, _) {},
+                      ),
+                    ),
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimens.space12,
               ),

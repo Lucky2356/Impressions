@@ -606,6 +606,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get categoryAppearance => 'Appearance';
+
+  @override
+  String get categoryColor => 'Colour';
+
+  @override
+  String get categoryColorInherit => 'Same as parent';
+
+  @override
+  String get categoryCover => 'Branch cover';
+
+  @override
+  String get categoryCoverFromEntry => 'Use a photo from here';
+
+  @override
+  String get categoryCoverFromFile => 'Choose a file';
+
+  @override
+  String get categoryCoverRemove => 'Remove cover';
+
+  @override
+  String get categoryCoverPick => 'Pick a photo from this branch';
+
+  @override
+  String get categoryCoverNone => 'No photos in this branch yet';
+
+  @override
+  String get categoryDescriptionLabel => 'Description';
+
+  @override
+  String get categoryDescriptionHint => 'What goes on this shelf';
+
+  @override
+  String get categoryIconSearch => 'Find an icon';
+
+  @override
   String get categoryScopeHere => 'Here only';
 
   @override

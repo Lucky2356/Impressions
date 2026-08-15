@@ -1208,6 +1208,79 @@ class EntryRepository {
     ];
   }
 
+  /// Фотографии записей ветки — чтобы выбрать из них обложку самой ветке.
+  ///
+  /// Отдаёт идентификатор вложения вместе с путём: в базе у ветки хранится
+  /// идентификатор, а показывать надо файл.
+  Future<List<({String attachmentId, String path})>> branchPhotos(
+    List<String> categoryIds, {
+    int limit = 60,
+  }) async {
+    if (categoryIds.isEmpty) return const [];
+
+    final links = await (db.select(
+      db.entryCategories,
+    )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
+    final entryIds = {for (final l in links) l.entryId};
+    if (entryIds.isEmpty) return const [];
+
+    final entries =
+        await (db.select(db.profileEntries)
+              ..where((e) => e.id.isIn(entryIds) & e.archivedAt.isNull())
+              ..orderBy([
+                (e) => OrderingTerm(
+                  expression: e.createdAt,
+                  mode: OrderingMode.desc,
+                ),
+              ])
+              ..limit(limit))
+            .get();
+    if (entries.isEmpty) return const [];
+
+    final covers = await _coversFor(entries);
+    final byEntry = await _coverAttachmentIds(entries);
+    return [
+      for (final e in entries)
+        if (covers[e.id] case final path?)
+          if (byEntry[e.id] case final id?) (attachmentId: id, path: path),
+    ];
+  }
+
+  /// Идентификаторы обложек записей — пара к [_coversFor], который отдаёт пути.
+  Future<Map<String, String>> _coverAttachmentIds(
+    Iterable<ProfileEntryRow> entries,
+  ) async {
+    final revisionToEntry = <String, String>{
+      for (final e in entries)
+        if (e.currentRevisionId != null) e.currentRevisionId!: e.id,
+    };
+    if (revisionToEntry.isEmpty) return const {};
+
+    final links =
+        await (db.select(db.revisionAttachments)
+              ..where(
+                (ra) =>
+                    ra.entityKind.equals('entry') &
+                    ra.revisionId.isIn(revisionToEntry.keys),
+              )
+              ..orderBy([
+                (ra) => OrderingTerm(
+                  expression: ra.isPrimary,
+                  mode: OrderingMode.desc,
+                ),
+                (ra) => OrderingTerm(expression: ra.sortOrder),
+              ]))
+            .get();
+
+    final result = <String, String>{};
+    for (final link in links) {
+      final entryId = revisionToEntry[link.revisionId];
+      if (entryId == null) continue;
+      result.putIfAbsent(entryId, () => link.attachmentId);
+    }
+    return result;
+  }
+
   /// Несколько обложек на категорию — для карточек-полок (§7).
   ///
   /// Считаются по всей ветке: у корневой полки обычно нет собственных записей,

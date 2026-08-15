@@ -8,6 +8,7 @@ import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
+import 'category_palette.dart';
 
 /// Навигатор по дереву категорий: постоянная левая панель.
 ///
@@ -172,6 +173,7 @@ class TreePane extends StatelessWidget {
                       final cat = visible[i];
                       return CategoryTreeRow(
                         category: cat,
+                        tone: CategoryPalette.colorOf(cat, categories, c),
                         branchCount: branchCounts[cat.id] ?? 0,
                         childCount: childCount[cat.id] ?? 0,
                         hasChildren: hasChildren[cat.id] ?? false,
@@ -196,6 +198,7 @@ class CategoryTreeRow extends StatefulWidget {
   const CategoryTreeRow({
     super.key,
     required this.category,
+    required this.tone,
     required this.branchCount,
     required this.childCount,
     required this.hasChildren,
@@ -208,6 +211,10 @@ class CategoryTreeRow extends StatefulWidget {
   });
 
   final CategoryRow category;
+
+  /// Цвет ветки: считается снаружи по всему дереву — он наследуется.
+  final Color tone;
+
   final int branchCount;
   final int childCount;
   final bool hasChildren;
@@ -232,9 +239,7 @@ class CategoryTreeRowState extends State<CategoryTreeRow> {
     final c = context.colors;
     final l10n = AppLocalizations.of(context);
     final cat = widget.category;
-    final tone = cat.color != null
-        ? Color(cat.color!)
-        : c.profileColorFor(cat.id);
+    final tone = widget.tone;
     final isRoot = cat.level == 0;
 
     final tile = Material(

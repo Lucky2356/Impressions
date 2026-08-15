@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
@@ -7,6 +8,7 @@ import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../../data/services/image_service.dart';
 import '../catalog/catalog_providers.dart' show CatalogResults;
 
 /// Ветка, открытая на экране категорий.
@@ -315,6 +317,29 @@ final branchTypeCountsProvider =
             ),
           );
     });
+
+/// Пути закреплённых обложек веток по идентификатору категории.
+///
+/// В базе у ветки лежит идентификатор вложения, а карточке нужен файл. Одним
+/// запросом на всё дерево: спрашивать путь на каждую полку — это обращение к
+/// базе на каждую карточку сетки.
+final categoryCoverPathsProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
+  final cats = await ref.watch(allCategoriesProvider.future);
+  final byAttachment = {for (final c in cats) ?c.coverAttachmentId: c.id};
+  if (byAttachment.isEmpty) return const {};
+
+  final db = ref.watch(appDatabaseProvider);
+  final rows = await (db.select(
+    db.attachments,
+  )..where((a) => a.id.isIn(byAttachment.keys))).get();
+  final mediaDir = await ImageService(db).mediaDirectoryPath();
+  return {
+    for (final a in rows)
+      ?byAttachment[a.id]: p.join(mediaDir, a.thumbPath ?? a.storagePath),
+  };
+});
 
 /// По несколько обложек на категорию — для карточек-полок.
 final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((

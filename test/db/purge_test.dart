@@ -85,6 +85,74 @@ void main() {
       expect(await db.select(db.collections).get(), hasLength(1));
     });
 
+    test('фотография, закреплённая обложкой ветки, остаётся', () async {
+      // Держателем файла считается не только версия записи: ветка ссылается на
+      // вложение своим полем. Без этой проверки удаление записи насовсем
+      // уносило бы обложку прямо из-под ветки, которая на неё смотрит.
+      final db = openTestDb();
+      addTearDown(db.close);
+      final entries = EntryRepository(db, mediaDirectory: media);
+      final images = ImageService(db, mediaDirectory: media);
+      final cats = CategoryRepository(db);
+
+      final me = await ProfileRepository(db).createOwnProfile(firstName: 'Я');
+      final type = await entries.createObjectType(me.id, 'Продукты');
+      final branch = await cats.createRoot(me.id, 'Продукты');
+      final object = await entries.createObject(
+        typeId: type.id,
+        title: 'С фото',
+      );
+      final entry = await entries.createEntry(
+        profileId: me.id,
+        objectId: object.id,
+        primaryCategoryId: branch.id,
+      );
+      final photo = await images.addFromBytes(_jpeg(140)) as ImageAdded;
+      await images.attachToEntry(
+        entryId: entry.id,
+        attachmentId: photo.attachment.id,
+        revisionId: entry.currentRevisionId!,
+      );
+      await cats.updateAppearance(
+        branch.id,
+        coverAttachmentId: photo.attachment.id,
+      );
+      final file = File(
+        await images.absolutePath(photo.attachment.storagePath),
+      );
+
+      await PurgeService(db, mediaDirectory: media).purgeEntry(entry.id);
+
+      expect(await db.select(db.attachments).get(), hasLength(1));
+      expect(file.existsSync(), isTrue);
+    });
+
+    test('удалённая ветка отпускает свою обложку', () async {
+      final db = openTestDb();
+      addTearDown(db.close);
+      final images = ImageService(db, mediaDirectory: media);
+      final cats = CategoryRepository(db);
+
+      final me = await ProfileRepository(db).createOwnProfile(firstName: 'Я');
+      final branch = await cats.createRoot(me.id, 'Продукты');
+      final photo = await images.addFromBytes(_jpeg(160)) as ImageAdded;
+      await cats.updateAppearance(
+        branch.id,
+        coverAttachmentId: photo.attachment.id,
+      );
+      final file = File(
+        await images.absolutePath(photo.attachment.storagePath),
+      );
+      expect(file.existsSync(), isTrue);
+
+      await PurgeService(db, mediaDirectory: media).purgeCategory(branch.id);
+
+      // Иначе файл, который держала только эта ветка, остался бы на диске
+      // навсегда — на него уже никто не смотрит.
+      expect(await db.select(db.attachments).get(), isEmpty);
+      expect(file.existsSync(), isFalse);
+    });
+
     test('фотография, нужная другой записи, остаётся на месте', () async {
       final db = openTestDb();
       addTearDown(db.close);

@@ -1136,6 +1136,78 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @categoryAppearance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформление'**
+  String get categoryAppearance;
+
+  /// No description provided for @categoryColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвет'**
+  String get categoryColor;
+
+  /// No description provided for @categoryColorInherit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как у родителя'**
+  String get categoryColorInherit;
+
+  /// No description provided for @categoryCover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обложка ветки'**
+  String get categoryCover;
+
+  /// No description provided for @categoryCoverFromEntry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Взять из записи'**
+  String get categoryCoverFromEntry;
+
+  /// No description provided for @categoryCoverFromFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать файл'**
+  String get categoryCoverFromFile;
+
+  /// No description provided for @categoryCoverRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать обложку'**
+  String get categoryCoverRemove;
+
+  /// No description provided for @categoryCoverPick.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите фотографию из этой ветки'**
+  String get categoryCoverPick;
+
+  /// No description provided for @categoryCoverNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этой ветке пока нет фотографий'**
+  String get categoryCoverNone;
+
+  /// No description provided for @categoryDescriptionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get categoryDescriptionLabel;
+
+  /// No description provided for @categoryDescriptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что кладут на эту полку'**
+  String get categoryDescriptionHint;
+
+  /// No description provided for @categoryIconSearch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти значок'**
+  String get categoryIconSearch;
+
   /// No description provided for @categoryScopeHere.
   ///
   /// In ru, this message translates to:

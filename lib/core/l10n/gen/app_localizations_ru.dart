@@ -621,6 +621,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get categoryAppearance => 'Оформление';
+
+  @override
+  String get categoryColor => 'Цвет';
+
+  @override
+  String get categoryColorInherit => 'Как у родителя';
+
+  @override
+  String get categoryCover => 'Обложка ветки';
+
+  @override
+  String get categoryCoverFromEntry => 'Взять из записи';
+
+  @override
+  String get categoryCoverFromFile => 'Выбрать файл';
+
+  @override
+  String get categoryCoverRemove => 'Убрать обложку';
+
+  @override
+  String get categoryCoverPick => 'Выберите фотографию из этой ветки';
+
+  @override
+  String get categoryCoverNone => 'В этой ветке пока нет фотографий';
+
+  @override
+  String get categoryDescriptionLabel => 'Описание';
+
+  @override
+  String get categoryDescriptionHint => 'Что кладут на эту полку';
+
+  @override
+  String get categoryIconSearch => 'Найти значок';
+
+  @override
   String get categoryScopeHere => 'Только здесь';
 
   @override

@@ -34,9 +34,52 @@ class AppIcons {
     'bookmark': Icons.bookmark_rounded,
   };
 
+  /// Слова, по которым значок находится в выборе.
+  ///
+  /// Это не строки интерфейса, а таблица сопоставления: сам значок ничего не
+  /// подписывает, и искать его надо на обоих языках сразу — человек с
+  /// английским интерфейсом всё равно может набрать «кафе». Поэтому не в
+  /// `.arb`, а здесь.
+  static const Map<String, List<String>> _searchTerms = {
+    'folder': ['папка', 'ветка', 'folder'],
+    'grocery': ['продукты', 'магазин', 'еда', 'grocery', 'food', 'shop'],
+    'dish': ['блюдо', 'еда', 'ресторан', 'dish', 'food', 'restaurant'],
+    'place': ['место', 'точка', 'place', 'pin'],
+    'city': ['город', 'city', 'town'],
+    'movie': ['фильм', 'кино', 'movie', 'film'],
+    'series': ['сериал', 'телевизор', 'series', 'tv'],
+    'music': ['музыка', 'песня', 'music', 'song'],
+    'book': ['книга', 'чтение', 'book', 'reading'],
+    'game': ['игра', 'приставка', 'game', 'console'],
+    'goods': ['товар', 'покупка', 'goods', 'shopping'],
+    'other': ['другое', 'разное', 'other', 'misc'],
+    'cafe': ['кафе', 'кофе', 'cafe', 'coffee'],
+    'drink': ['напиток', 'питьё', 'drink', 'beverage'],
+    'sweets': ['сладости', 'торт', 'десерт', 'sweets', 'cake', 'dessert'],
+    'dairy': ['молочное', 'мороженое', 'dairy', 'icecream'],
+    'sausage': ['колбаса', 'мясо', 'sausage', 'meat'],
+    'cheese': ['сыр', 'выпечка', 'cheese', 'bread'],
+    'park': ['парк', 'природа', 'park', 'nature'],
+    'star': ['звезда', 'избранное', 'star', 'favourite'],
+    'heart': ['сердце', 'любимое', 'heart', 'love'],
+    'bookmark': ['закладка', 'метка', 'bookmark', 'tag'],
+  };
+
   static IconData byKey(String? key) =>
       _registry[key ?? fallbackKey] ?? _registry[fallbackKey]!;
 
   /// Ключи для выбора иконки пользователем.
   static List<String> get allKeys => _registry.keys.toList();
+
+  /// Ключи, подходящие под запрос. Пустой запрос — все.
+  static List<String> search(String query) {
+    final needle = query.trim().toLowerCase();
+    if (needle.isEmpty) return allKeys;
+    return [
+      for (final entry in _searchTerms.entries)
+        if (entry.key.contains(needle) ||
+            entry.value.any((word) => word.contains(needle)))
+          entry.key,
+    ];
+  }
 }

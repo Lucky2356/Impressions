@@ -156,14 +156,29 @@ class PurgeService {
       throw const PurgeException(PurgeRefusal.categoryHasChildren);
     }
 
+    final orphaned = <String>{};
     await db.transaction(() async {
+      // Ветка отпускает свою обложку: пока она на неё смотрела, файл считался
+      // занятым, и после удаления ветки он остался бы лежать навсегда.
+      final branch = await (db.select(
+        db.categories,
+      )..where((c) => c.id.equals(categoryId))).getSingleOrNull();
       await (db.delete(
         db.entryCategories,
       )..where((ec) => ec.categoryId.equals(categoryId))).go();
       await (db.delete(
         db.categories,
       )..where((c) => c.id.equals(categoryId))).go();
+
+      if (branch?.coverAttachmentId case final id?) {
+        final holders = await _pinnedCovers([id]);
+        final links = await (db.select(
+          db.revisionAttachments,
+        )..where((ra) => ra.attachmentId.equals(id))).get();
+        if (holders.isEmpty && links.isEmpty) orphaned.add(id);
+      }
     });
+    await _deleteAttachmentFiles(orphaned);
   }
 
   /// Удаляет подборку. Записи из неё не трогаем: подборка — только список.
@@ -211,7 +226,30 @@ class PurgeService {
         rows.map((r) => r.read(db.revisionAttachments.attachmentId)!),
       );
     }
+    stillUsed.addAll(await _pinnedCovers(candidates.toList()));
     return candidates.difference(stillUsed);
+  }
+
+  /// Вложения, закреплённые обложками ветки или подборки.
+  ///
+  /// Держателем файла считается не только версия записи: ветка и подборка
+  /// ссылаются на вложение своим полем, и без этой проверки удаление записи
+  /// насовсем уносило бы обложку у того, кто на неё смотрит.
+  Future<Set<String>> _pinnedCovers(List<String> attachmentIds) async {
+    if (attachmentIds.isEmpty) return const {};
+    final used = <String>{};
+    for (final chunk in chunked(attachmentIds)) {
+      final branches = await (db.select(
+        db.categories,
+      )..where((c) => c.coverAttachmentId.isIn(chunk))).get();
+      used.addAll([for (final c in branches) ?c.coverAttachmentId]);
+
+      final collections = await (db.select(
+        db.collections,
+      )..where((c) => c.coverAttachmentId.isIn(chunk))).get();
+      used.addAll([for (final c in collections) ?c.coverAttachmentId]);
+    }
+    return used;
   }
 
   /// Убирает теги, на которых после удаления записи никого не осталось.

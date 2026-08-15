@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
-import '../../core/domain/app_icons.dart';
 import '../../core/l10n/gen/app_localizations.dart';
-import '../../core/theme/app_dimens.dart';
 import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../design_system/design_system.dart';
 import '../quick_add/category_picker.dart';
+import 'category_editor_sheet.dart';
 import 'category_providers.dart';
 
 /// Всё, что можно сделать с веткой, — в одном месте.
@@ -73,40 +72,12 @@ class CategoryActions {
     _bump();
   }
 
-  Future<void> pickIcon(CategoryRow category) async {
-    final chosen = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(_l10n.categoryIcon),
-        contentPadding: const EdgeInsets.fromLTRB(
-          AppDimens.space20,
-          AppDimens.space16,
-          AppDimens.space20,
-          AppDimens.space20,
-        ),
-        children: [
-          SizedBox(
-            width: 360,
-            child: Wrap(
-              spacing: AppDimens.space8,
-              runSpacing: AppDimens.space8,
-              children: [
-                for (final key in AppIcons.allKeys)
-                  IconButton(
-                    onPressed: () => Navigator.of(ctx).pop(key),
-                    icon: Icon(AppIcons.byKey(key)),
-                    isSelected: key == category.icon,
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-    if (chosen == null) return;
-    await _repo.updateAppearance(category.id, icon: chosen);
-    _bump();
-  }
+  /// Оформление ветки: имя, описание, цвет, значок и обложка сразу.
+  ///
+  /// Отдельного пункта «значок» больше нет: выбирать цвет и значок по одному,
+  /// не видя результата, — то же самое, что подбирать одежду по частям.
+  Future<void> edit(CategoryRow category) =>
+      CategoryEditorSheet.show(context, category);
 
   Future<void> move(CategoryRow category) async {
     final picked = await CategoryPicker.show(context);
@@ -169,7 +140,7 @@ class CategoryActions {
       items: [
         PopupMenuItem(value: 'add', child: Text(l10n.categoryAddChild)),
         PopupMenuItem(value: 'rename', child: Text(l10n.categoryRename)),
-        PopupMenuItem(value: 'icon', child: Text(l10n.categoryIcon)),
+        PopupMenuItem(value: 'edit', child: Text(l10n.categoryAppearance)),
         PopupMenuItem(value: 'move', child: Text(l10n.categoryMove)),
         // Порядок задавался только полем в базе, которое никто не выставлял.
         PopupMenuItem(value: 'up', child: Text(l10n.categoryMoveUp)),
@@ -188,8 +159,8 @@ class CategoryActions {
         await createChild(category);
       case 'rename':
         await rename(category);
-      case 'icon':
-        await pickIcon(category);
+      case 'edit':
+        await edit(category);
       case 'move':
         await move(category);
       case 'up':

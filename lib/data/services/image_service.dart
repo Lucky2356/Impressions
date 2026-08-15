@@ -295,6 +295,18 @@ class ImageService {
   }
 
   /// Абсолютный путь к файлу вложения (в базе хранится только имя файла).
+  /// Путь файла по идентификатору вложения — миниатюра, если она есть.
+  ///
+  /// Нужен там, где в базе лежит идентификатор, а показать надо картинку:
+  /// например обложка ветки.
+  Future<String?> pathOfAttachment(String attachmentId) async {
+    final row = await (db.select(
+      db.attachments,
+    )..where((a) => a.id.equals(attachmentId))).getSingleOrNull();
+    if (row == null) return null;
+    return absolutePath(row.thumbPath ?? row.storagePath);
+  }
+
   Future<String> absolutePath(String storagePath) async {
     final dir = await _mediaDir();
     return p.join(dir.path, storagePath);
