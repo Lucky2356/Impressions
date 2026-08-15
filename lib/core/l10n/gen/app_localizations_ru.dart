@@ -520,6 +520,52 @@ class AppLocalizationsRu extends AppLocalizations {
   String get collectionAdded => 'Добавлено в подборку';
 
   @override
+  String get collectionAppearance => 'Оформление подборки';
+
+  @override
+  String get collectionDescriptionLabel => 'Описание';
+
+  @override
+  String get collectionDescriptionHint => 'Зачем эта подборка — одной строкой';
+
+  @override
+  String get collectionColor => 'Цвет';
+
+  @override
+  String get collectionColorAuto => 'Как получится';
+
+  @override
+  String get collectionCover => 'Обложка';
+
+  @override
+  String get collectionCoverNone => 'В подборке пока нет фотографий';
+
+  @override
+  String get collectionSmart => 'Живая подборка';
+
+  @override
+  String get collectionSmartAll => 'Все записи профиля';
+
+  @override
+  String get collectionSmartEmpty =>
+      'Под условие пока ничего не подходит. Записи появятся здесь сами, как только подойдут.';
+
+  @override
+  String get collectionSmartEditHint =>
+      'Условие живой подборки правится в каталоге: откройте её там, поменяйте фильтры и сохраните заново.';
+
+  @override
+  String get collectionOpenInCatalog => 'Открыть в каталоге';
+
+  @override
+  String get collectionFromFilter => 'Сохранить как подборку';
+
+  @override
+  String collectionFromFilterSaved(String name) {
+    return 'Подборка «$name» собрана';
+  }
+
+  @override
   String get photoAdd => 'Добавить фото';
 
   @override
@@ -1385,21 +1431,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get whatsNewNothing => 'Для этой версии описания нет';
-
-  @override
-  String get savedFiltersTitle => 'Отборы';
-
-  @override
-  String get savedFiltersSave => 'Сохранить отбор';
-
-  @override
-  String get savedFiltersName => 'Название отбора';
-
-  @override
-  String get savedFiltersEmpty => 'Сохранённых отборов пока нет';
-
-  @override
-  String get savedFiltersSaved => 'Отбор сохранён';
 
   @override
   String get recentSearches => 'Недавние запросы';

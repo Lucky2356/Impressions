@@ -1,15 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
-import 'package:impressions/features/catalog/saved_filters.dart';
+import 'package:impressions/features/collections/smart_collections.dart';
 import 'package:impressions/features/search/recent_store.dart';
 
 import 'query_counter.dart';
 
-/// Связи между записями, недавнее и сохранённые отборы.
+/// Связи между записями, недавнее и условие живой подборки.
 void main() {
   group('похожее рядом', () {
     late AppDatabase db;
@@ -133,40 +135,46 @@ void main() {
     });
   });
 
-  group('сохранённые отборы', () {
+  group('условие живой подборки', () {
+    CollectionRow collection(String? filterJson) => CollectionRow(
+      id: 'c1',
+      profileId: 'p1',
+      name: 'Любимое',
+      sortOrder: 0,
+      filterJson: filterJson,
+      createdAt: DateTime(2026, 1, 1),
+    );
+
     test('отбор переживает запись и чтение', () {
       const filters = CatalogState(
         typeId: 't1',
         relation: 'love',
+        status: 'done',
         withoutRating: true,
         sort: EntrySort.rating,
         reverseSort: true,
       );
-      const saved = SavedFilter(name: 'Любимое', filters: filters);
 
-      final restored = SavedFilter.fromJson(saved.toJson())!;
+      final restored = smartFilterOf(collection(jsonEncode(filters.toJson())))!;
 
-      expect(restored.name, 'Любимое');
-      expect(restored.filters.typeId, 't1');
-      expect(restored.filters.relation, 'love');
-      expect(restored.filters.withoutRating, isTrue);
-      expect(restored.filters.sort, EntrySort.rating);
-      expect(restored.filters.reverseSort, isTrue);
+      expect(restored.typeId, 't1');
+      expect(restored.relation, 'love');
+      expect(restored.status, 'done');
+      expect(restored.withoutRating, isTrue);
+      expect(restored.sort, EntrySort.rating);
+      expect(restored.reverseSort, isTrue);
     });
 
-    test('мусор в списке пропускается, остальное остаётся', () {
-      final list = SavedFilters.parse(
-        '[{"name":"Любимое","filters":{"relation":"love"}},'
-        '{"name":""},null,5]',
-      );
-
-      expect(list, hasLength(1));
-      expect(list.single.name, 'Любимое');
+    test('подборка без условия — ручная', () {
+      expect(smartFilterOf(collection(null)), isNull);
+      expect(smartFilterOf(collection('')), isNull);
     });
 
-    test('испорченная настройка не роняет список', () {
-      expect(SavedFilters.parse('не json'), isEmpty);
-      expect(SavedFilters.parse(null), isEmpty);
+    test('испорченное условие не роняет экран', () {
+      // Подборка могла приехать из пакета, собранного другой версией: это
+      // «ничего не находится», а не авария.
+      expect(smartFilterOf(collection('не json')), isNull);
+      expect(smartFilterOf(collection('[1,2,3]')), isNull);
     });
   });
 }

@@ -956,6 +956,90 @@ abstract class AppLocalizations {
   /// **'Добавлено в подборку'**
   String get collectionAdded;
 
+  /// No description provided for @collectionAppearance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформление подборки'**
+  String get collectionAppearance;
+
+  /// No description provided for @collectionDescriptionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get collectionDescriptionLabel;
+
+  /// No description provided for @collectionDescriptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зачем эта подборка — одной строкой'**
+  String get collectionDescriptionHint;
+
+  /// No description provided for @collectionColor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цвет'**
+  String get collectionColor;
+
+  /// No description provided for @collectionColorAuto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как получится'**
+  String get collectionColorAuto;
+
+  /// No description provided for @collectionCover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обложка'**
+  String get collectionCover;
+
+  /// No description provided for @collectionCoverNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'В подборке пока нет фотографий'**
+  String get collectionCoverNone;
+
+  /// No description provided for @collectionSmart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Живая подборка'**
+  String get collectionSmart;
+
+  /// No description provided for @collectionSmartAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все записи профиля'**
+  String get collectionSmartAll;
+
+  /// No description provided for @collectionSmartEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Под условие пока ничего не подходит. Записи появятся здесь сами, как только подойдут.'**
+  String get collectionSmartEmpty;
+
+  /// No description provided for @collectionSmartEditHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условие живой подборки правится в каталоге: откройте её там, поменяйте фильтры и сохраните заново.'**
+  String get collectionSmartEditHint;
+
+  /// No description provided for @collectionOpenInCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть в каталоге'**
+  String get collectionOpenInCatalog;
+
+  /// No description provided for @collectionFromFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить как подборку'**
+  String get collectionFromFilter;
+
+  /// No description provided for @collectionFromFilterSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подборка «{name}» собрана'**
+  String collectionFromFilterSaved(String name);
+
   /// No description provided for @photoAdd.
   ///
   /// In ru, this message translates to:
@@ -2443,36 +2527,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Для этой версии описания нет'**
   String get whatsNewNothing;
-
-  /// No description provided for @savedFiltersTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Отборы'**
-  String get savedFiltersTitle;
-
-  /// No description provided for @savedFiltersSave.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сохранить отбор'**
-  String get savedFiltersSave;
-
-  /// No description provided for @savedFiltersName.
-  ///
-  /// In ru, this message translates to:
-  /// **'Название отбора'**
-  String get savedFiltersName;
-
-  /// No description provided for @savedFiltersEmpty.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сохранённых отборов пока нет'**
-  String get savedFiltersEmpty;
-
-  /// No description provided for @savedFiltersSaved.
-  ///
-  /// In ru, this message translates to:
-  /// **'Отбор сохранён'**
-  String get savedFiltersSaved;
 
   /// No description provided for @recentSearches.
   ///

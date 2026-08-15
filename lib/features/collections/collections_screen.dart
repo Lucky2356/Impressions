@@ -3,16 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../app/navigation.dart';
+import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
+import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
+import '../catalog/catalog_providers.dart';
+import '../catalog/catalog_screen.dart';
+import '../categories/category_providers.dart';
 import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
+import '../entry/status_field.dart';
+import '../home/home_providers.dart';
+import 'collection_editor_sheet.dart';
 import 'collection_entry_picker.dart';
 import 'collection_providers.dart';
+import 'smart_collections.dart';
 
 /// Экран подборок (§27): ручные списки записей внутри профиля.
 /// Подборки не заменяют категории.
@@ -92,7 +102,6 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
           child: LayoutBuilder(
             builder: (context, cns) {
               final cols = (cns.maxWidth / 300).floor().clamp(1, 5);
-              final palette = c.profilePalette;
               return GridView.builder(
                 padding: EdgeInsets.fromLTRB(
                   context.layout.gutter,
@@ -109,12 +118,21 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                 itemCount: list.length,
                 itemBuilder: (context, i) {
                   final view = list[i];
-                  final color = palette[i % palette.length];
+                  // Цвет свой, а по умолчанию — от идентификатора подборки.
+                  // Раньше он брался по номеру в списке, и от появления новой
+                  // подборки перекрашивались все остальные.
+                  final color = view.collection.color == null
+                      ? c.profileColorFor(view.collection.id)
+                      : Color(view.collection.color!);
                   return CollectionCard(
                     title: view.collection.name,
                     tagLabel: l10n.collectionEntriesCount(view.entryCount),
                     tagColor: color,
-                    tagIcon: Icons.collections_bookmark_rounded,
+                    // Живая подборка помечена значком: список, который
+                    // меняется сам, должен об этом говорить.
+                    tagIcon: view.isSmart
+                        ? Icons.auto_awesome_rounded
+                        : Icons.collections_bookmark_rounded,
                     progress: view.entryCount == 0 ? 0 : 1,
                     progressLabel: view.collection.description ?? '',
                     onTap: () => setState(() => _openId = view.collection.id),
@@ -145,37 +163,47 @@ class _CollectionDetail extends ConsumerWidget {
         .value
         ?.where((v) => v.collection.id == collectionId)
         .firstOrNull;
+    final row = collection?.collection;
+    final smart = row == null ? null : smartFilterOf(row);
 
     return ScreenScaffold(
       header: ScreenHeader(
-        title: collection?.collection.name ?? l10n.collectionsTitle,
-        subtitle: collection?.collection.description,
+        title: row?.name ?? l10n.collectionsTitle,
+        subtitle: row?.description,
         leading: AppIconButton(
           icon: Icons.arrow_back_rounded,
           tooltip: l10n.commonBack,
           onPressed: onBack,
         ),
         actions: [
-          FilledButton.icon(
-            onPressed: () => CollectionEntryPicker.show(context, collectionId),
-            icon: const Icon(Icons.playlist_add_rounded, size: 20),
-            label: Text(l10n.collectionPickTitle),
-          ),
+          // Состав живой подборки задан условием: добавить в неё запись руками
+          // нельзя — можно только сделать так, чтобы запись под условие
+          // подошла.
+          if (smart == null)
+            FilledButton.icon(
+              onPressed: () =>
+                  CollectionEntryPicker.show(context, collectionId),
+              icon: const Icon(Icons.playlist_add_rounded, size: 20),
+              label: Text(l10n.collectionPickTitle),
+            )
+          else
+            FilledButton.icon(
+              onPressed: () {
+                ref.read(catalogStateProvider.notifier).apply(smart);
+                ref.read(navProvider.notifier).go(NavIds.catalog);
+              },
+              icon: const Icon(Icons.tune_rounded, size: 20),
+              label: Text(l10n.collectionOpenInCatalog),
+            ),
           PopupMenuButton<String>(
             tooltip: '',
             icon: Icon(Icons.more_horiz_rounded, color: c.textSecondary),
             onSelected: (v) async {
               final repo = ref.read(collectionRepositoryProvider);
-              if (v == 'rename') {
-                final name = await TextInputDialog.show(
-                  context,
-                  title: l10n.collectionRename,
-                  label: l10n.collectionNameLabel,
-                  initial: collection?.collection.name,
-                );
-                if (name == null) return;
-                await repo.rename(collectionId, name);
-                ref.read(dataRefreshProvider.notifier).bump();
+              if (v == 'edit') {
+                if (row != null) {
+                  await CollectionEditorSheet.show(context, row);
+                }
               } else if (v == 'archive') {
                 await repo.archive(collectionId);
                 ref.read(dataRefreshProvider.notifier).bump();
@@ -193,13 +221,13 @@ class _CollectionDetail extends ConsumerWidget {
             },
             itemBuilder: (_) => [
               PopupMenuItem(
-                value: 'rename',
+                value: 'edit',
                 height: 40,
                 child: Row(
                   children: [
                     const Icon(Icons.edit_rounded, size: 18),
                     const SizedBox(width: AppDimens.space12),
-                    Text(l10n.collectionRename),
+                    Text(l10n.collectionAppearance),
                   ],
                 ),
               ),
@@ -227,19 +255,55 @@ class _CollectionDetail extends ConsumerWidget {
         data: (list) {
           if (list.isEmpty) {
             return EmptyState(
-              icon: Icons.playlist_add_rounded,
+              icon: smart == null
+                  ? Icons.playlist_add_rounded
+                  : Icons.auto_awesome_rounded,
               title: l10n.collectionOpenEmpty,
-              message: l10n.collectionEmptyMessage,
-              action: FilledButton.icon(
-                onPressed: () =>
-                    CollectionEntryPicker.show(context, collectionId),
-                icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                label: Text(l10n.collectionPickTitle),
-              ),
+              message: smart == null
+                  ? l10n.collectionEmptyMessage
+                  : l10n.collectionSmartEmpty,
+              action: smart == null
+                  ? FilledButton.icon(
+                      onPressed: () =>
+                          CollectionEntryPicker.show(context, collectionId),
+                      icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                      label: Text(l10n.collectionPickTitle),
+                    )
+                  : null,
             );
           }
-          // Порядок в подборке ручной (§27): его хранит sortOrder, но задать
-          // его до сих пор было нечем — список просто выводился как есть.
+          // У живой подборки ручного порядка нет и быть не может: состав
+          // пересчитывается на каждый показ, а порядок задан сортировкой
+          // отбора. Перетаскивание, которое молча ничего не меняет, — хуже
+          // отсутствующего.
+          if (smart != null) {
+            return ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                context.layout.gutter,
+                AppDimens.space16,
+                context.layout.gutter,
+                AppDimens.space40,
+              ),
+              itemCount: list.length + 1,
+              itemBuilder: (context, i) {
+                if (i == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppDimens.space16),
+                    child: _SmartFilterNote(filter: smart),
+                  );
+                }
+                final e = list[i - 1];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppDimens.space8),
+                  child: EntryCardCompact(
+                    data: entryCardData(context, e),
+                    onTap: () => EntryDetailSheet.show(context, e.entryId),
+                  ),
+                );
+              },
+            );
+          }
+          // Порядок в ручной подборке хранит sortOrder (§27).
           return ReorderableListView.builder(
             padding: EdgeInsets.fromLTRB(
               context.layout.gutter,
@@ -299,6 +363,80 @@ class _CollectionDetail extends ConsumerWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Условие живой подборки словами.
+///
+/// Список, который меняется сам и не говорит почему, читается как сбой:
+/// человек видит, что записей стало меньше, и не знает, потерялись они или
+/// перестали подходить.
+class _SmartFilterNote extends ConsumerWidget {
+  const _SmartFilterNote({required this.filter});
+
+  final CatalogState filter;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    final types = ref.watch(objectTypesProvider).value ?? const [];
+    final categories = ref.watch(allCategoriesProvider).value ?? const [];
+    final tags = ref.watch(profileTagsProvider).value ?? const <TagRow>[];
+
+    final relation = Relation.byName(filter.relation);
+    final status = filter.status == null
+        ? null
+        : catalogStatusKeys(
+            l10n,
+          ).where((s) => s.key == filter.status).firstOrNull;
+
+    final words = smartFilterWords(
+      filter,
+      l10n,
+      typeName: types.where((t) => t.id == filter.typeId).firstOrNull?.name,
+      categoryName: categories
+          .where((cat) => cat.id == filter.categoryId)
+          .firstOrNull
+          ?.name,
+      tagNames: [
+        for (final tag in tags)
+          if (filter.tagIds.contains(tag.id)) tag.name,
+      ],
+      relationLabel: relation?.label(l10n),
+      statusLabel: status?.label,
+    );
+
+    return AppCard(
+      elevated: false,
+      child: Row(
+        children: [
+          Icon(Icons.auto_awesome_rounded, size: 18, color: c.accentPrimary),
+          const SizedBox(width: AppDimens.space12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.collectionSmart,
+                  style: context.text.labelSmall?.copyWith(
+                    color: c.textSecondary,
+                  ),
+                ),
+                Text(
+                  // Отбор без единого условия — это «все записи профиля»:
+                  // пустая строка выглядела бы обрывом.
+                  words.isEmpty ? l10n.collectionSmartAll : words.join(' · '),
+                  style: context.text.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

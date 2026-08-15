@@ -506,6 +506,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionAdded => 'Added to the collection';
 
   @override
+  String get collectionAppearance => 'Collection look';
+
+  @override
+  String get collectionDescriptionLabel => 'Description';
+
+  @override
+  String get collectionDescriptionHint =>
+      'What this collection is for, in one line';
+
+  @override
+  String get collectionColor => 'Colour';
+
+  @override
+  String get collectionColorAuto => 'Pick for me';
+
+  @override
+  String get collectionCover => 'Cover';
+
+  @override
+  String get collectionCoverNone => 'No photos in this collection yet';
+
+  @override
+  String get collectionSmart => 'Live collection';
+
+  @override
+  String get collectionSmartAll => 'Every entry in the profile';
+
+  @override
+  String get collectionSmartEmpty =>
+      'Nothing matches the condition yet. Entries will show up here on their own once they do.';
+
+  @override
+  String get collectionSmartEditHint =>
+      'A live collection\'s condition is edited in the catalogue: open it there, change the filters and save again.';
+
+  @override
+  String get collectionOpenInCatalog => 'Open in the catalogue';
+
+  @override
+  String get collectionFromFilter => 'Save as a collection';
+
+  @override
+  String collectionFromFilterSaved(String name) {
+    return 'Collection “$name” assembled';
+  }
+
+  @override
   String get photoAdd => 'Add photo';
 
   @override
@@ -1363,21 +1410,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whatsNewNothing => 'There is no description for this version';
-
-  @override
-  String get savedFiltersTitle => 'Saved filters';
-
-  @override
-  String get savedFiltersSave => 'Save these filters';
-
-  @override
-  String get savedFiltersName => 'Name';
-
-  @override
-  String get savedFiltersEmpty => 'No saved filters yet';
-
-  @override
-  String get savedFiltersSaved => 'Filters saved';
 
   @override
   String get recentSearches => 'Recent searches';

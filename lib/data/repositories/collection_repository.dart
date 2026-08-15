@@ -10,10 +10,22 @@ class CollectionView {
   const CollectionView({required this.collection, required this.entryCount});
   final CollectionRow collection;
   final int entryCount;
+
+  /// Живая: состав задан условием, а не руками.
+  bool get isSmart => collection.filterJson != null;
 }
 
-/// Репозиторий подборок (§27). Подборки создаются внутри профиля и не
-/// заменяют категории: это ручные списки с собственным порядком.
+/// Репозиторий подборок (§27).
+///
+/// Подборки бывают двух видов и не заменяют категории. Ручная — список с
+/// собственным порядком, собранный руками. Живая — сохранённый отбор каталога:
+/// её состав пересчитывается на каждый показ, поэтому ручного порядка у неё
+/// нет и быть не может.
+///
+/// До 1.16.0 сохранённый отбор и подборка были двумя разными механизмами:
+/// первый жил в настройках и умел только применяться к каталогу, вторая — в
+/// базе и только вручную. Разница между ними была не в сути, а в том, кто их
+/// когда написал.
 class CollectionRepository {
   CollectionRepository(this.db);
   final AppDatabase db;
@@ -23,6 +35,7 @@ class CollectionRepository {
     String name, {
     String? description,
     int? color,
+    String? filterJson,
   }) async {
     final id = Ids.newId();
     final maxOrder = await _nextSortOrder(profileId);
@@ -35,6 +48,7 @@ class CollectionRepository {
             name: name,
             description: Value(description),
             color: Value(color),
+            filterJson: Value(filterJson),
             sortOrder: Value(maxOrder),
             createdAt: DateTime.now(),
           ),
@@ -56,6 +70,41 @@ class CollectionRepository {
     return (db.update(db.collections)..where((c) => c.id.equals(id))).write(
       CollectionsCompanion(name: Value(name)),
     );
+  }
+
+  /// Оформление подборки: описание, цвет, обложка, условие отбора.
+  ///
+  /// Три первых столбца были в схеме с самого начала и не редактировались
+  /// ниоткуда. Сентинель, как в категориях: `null` здесь значит именно null —
+  /// «убрать обложку», «цвет по умолчанию», — а «не трогать» выражается тем,
+  /// что поле не передали.
+  Future<void> updateAppearance(
+    String id, {
+    Object? description = _unset,
+    Object? color = _unset,
+    Object? coverAttachmentId = _unset,
+    Object? filterJson = _unset,
+  }) {
+    Value<T?> val<T>(Object? v) =>
+        identical(v, _unset) ? const Value.absent() : Value(v as T?);
+
+    return (db.update(db.collections)..where((c) => c.id.equals(id))).write(
+      CollectionsCompanion(
+        description: val<String>(description),
+        color: val<int>(color),
+        coverAttachmentId: val<String>(coverAttachmentId),
+        filterJson: val<String>(filterJson),
+      ),
+    );
+  }
+
+  /// Маркер «поле не передано» — позволяет отличить null от отсутствия.
+  static const Object _unset = Object();
+
+  Future<CollectionRow?> byId(String id) {
+    return (db.select(
+      db.collections,
+    )..where((c) => c.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> archive(String id) {

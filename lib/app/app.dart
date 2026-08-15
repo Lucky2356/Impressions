@@ -16,6 +16,7 @@ import '../data/services/launch_service.dart';
 import '../data/services/update_service.dart';
 import '../design_system/design_system.dart';
 import '../features/barcode/barcode_scan_sheet.dart';
+import '../features/collections/smart_collections.dart';
 import '../features/exchange/import_screen.dart';
 import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
@@ -234,6 +235,29 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
     await WhatsNewDialog.show(context, entry);
   }
 
+  /// Сохранённые отборы становятся живыми подборками — один раз.
+  ///
+  /// Отбор и подборка отвечали на один вопрос «покажи вот эти записи», но
+  /// жили в разных местах: первый строчкой в настройках, вторая в базе. После
+  /// переезда настройка стирается, поэтому повторный запуск ничего не делает.
+  Future<void> _migrateSavedFilters() async {
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+    try {
+      final moved = await migrateSavedFiltersToCollections(
+        profileId: profile.id,
+        settings: ref.read(settingsRepositoryProvider),
+        collections: ref.read(collectionRepositoryProvider),
+      );
+      if (moved > 0 && mounted) {
+        ref.read(dataRefreshProvider.notifier).bump();
+      }
+    } catch (_) {
+      // Переезд удобства не стоит того, чтобы из-за него не открылось
+      // приложение: следующий запуск попробует снова.
+    }
+  }
+
   Future<void> _run() async {
     // Чем открыли приложение: файл обмена или ярлык со значка.
     _handleLaunch(
@@ -255,6 +279,7 @@ class _StartupTasksState extends ConsumerState<_StartupTasks> {
 
     await _showTourIfNeeded();
     await _showWhatsNewIfNeeded(freshInstall: freshInstall, version: version);
+    await _migrateSavedFilters();
 
     // Копия и сетевые проверки друг от друга не зависят. Раньше они стояли
     // цепочкой, и обновление ждало, пока допишется zip всей базы: на большом

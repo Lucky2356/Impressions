@@ -1,19 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_state.dart';
+import '../../app/data_refresh.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
+import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'catalog_providers.dart';
 import 'catalog_screen.dart';
-import 'saved_filters.dart';
 
 class FilterBar extends ConsumerWidget {
   const FilterBar({
@@ -318,9 +322,12 @@ class FilterBar extends ConsumerWidget {
           icon: const Icon(Icons.close_rounded, size: 16),
           label: Text(l10n.catalogResetFilters),
         ),
-      // Именованные отборы: «без оценки в Продуктах» собирали заново каждый
-      // раз, хотя это те же несколько переключателей.
-      const SavedFiltersButton(),
+      // Отбор становится подборкой: «без оценки в Продуктах» собирали заново
+      // каждый раз, хотя это те же несколько переключателей. Раньше рядом
+      // жили «сохранённые отборы» — свой список в настройках, умевший только
+      // применяться к каталогу; теперь сохранённый отбор — это подборка,
+      // которую видно, можно назвать, оформить и открыть списком.
+      if (hasFilters) const SaveAsCollectionButton(),
     ];
 
     // Решаем по месту, а не по ширине окна: каталог может стоять рядом с
@@ -451,86 +458,46 @@ class FilterToggle extends StatelessWidget {
   }
 }
 
-/// Сохранённые отборы: применить, сохранить текущий, удалить.
-class SavedFiltersButton extends ConsumerWidget {
-  const SavedFiltersButton({super.key});
+/// Сохраняет нынешний отбор живой подборкой (§27).
+///
+/// Живая подборка и есть сохранённый отбор — только у неё есть имя, цвет,
+/// обложка и своё место в разделе, а не строчка в выпадающем меню.
+class SaveAsCollectionButton extends ConsumerWidget {
+  const SaveAsCollectionButton({super.key});
 
-  Future<void> _saveCurrent(BuildContext context, WidgetRef ref) async {
+  Future<void> _save(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+
     final name = await TextInputDialog.show(
       context,
-      title: l10n.savedFiltersSave,
-      label: l10n.savedFiltersName,
+      title: l10n.collectionFromFilter,
+      label: l10n.collectionNameLabel,
     );
-    if (name == null || !context.mounted) return;
+    if (name == null || name.trim().isEmpty || !context.mounted) return;
 
+    // Запрос в поиске в условие не попадает: он набирается на минуту, а
+    // подборка остаётся. `toJson` его и не пишет.
     await ref
-        .read(savedFiltersProvider.notifier)
-        .save(name, ref.read(catalogStateProvider));
+        .read(collectionRepositoryProvider)
+        .create(
+          profile.id,
+          name.trim(),
+          filterJson: jsonEncode(ref.read(catalogStateProvider).toJson()),
+        );
+    ref.read(dataRefreshProvider.notifier).bump();
     if (!context.mounted) return;
-    showMessage(context, l10n.savedFiltersSaved);
+    showMessage(context, l10n.collectionFromFilterSaved(name.trim()));
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final saved =
-        ref.watch(savedFiltersProvider).value ?? const <SavedFilter>[];
-
-    return PopupMenuButton<String>(
-      tooltip: l10n.savedFiltersTitle,
-      onSelected: (value) {
-        if (value == '__save__') {
-          _saveCurrent(context, ref);
-          return;
-        }
-        final filter = saved.where((f) => f.name == value).firstOrNull;
-        if (filter != null) {
-          ref.read(catalogStateProvider.notifier).apply(filter.filters);
-        }
-      },
-      itemBuilder: (_) => [
-        for (final filter in saved)
-          PopupMenuItem(
-            value: filter.name,
-            child: Row(
-              children: [
-                const Icon(Icons.filter_alt_rounded, size: 18),
-                const SizedBox(width: AppDimens.space8),
-                Expanded(
-                  child: Text(
-                    filter.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                // Удаление — рядом со строкой: отдельный экран ради этого
-                // заводить не за чем.
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    ref.read(savedFiltersProvider.notifier).remove(filter.name);
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.all(AppDimens.space4),
-                    child: Icon(Icons.close_rounded, size: 16),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (saved.isEmpty)
-          PopupMenuItem(enabled: false, child: Text(l10n.savedFiltersEmpty)),
-        const PopupMenuDivider(),
-        PopupMenuItem(value: '__save__', child: Text(l10n.savedFiltersSave)),
-      ],
-      child: IgnorePointer(
-        child: TextButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.bookmarks_outlined, size: 16),
-          label: Text(l10n.savedFiltersTitle),
-        ),
-      ),
+    return TextButton.icon(
+      onPressed: () => _save(context, ref),
+      icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+      label: Text(l10n.collectionFromFilter),
     );
   }
 }

@@ -1298,7 +1298,19 @@ class EntryRepository {
     final links = await (db.select(
       db.entryCategories,
     )..where((ec) => ec.categoryId.isIn(categoryIds))).get();
-    final entryIds = {for (final l in links) l.entryId};
+    return photosOfEntries([for (final l in links) l.entryId], limit: limit);
+  }
+
+  /// Фотографии заданных записей — чтобы выбрать из них обложку.
+  ///
+  /// Ветка и подборка спрашивают одно и то же, только состав задают по-разному:
+  /// одна путём, другая списком. Правило «берём главный снимок каждой записи»
+  /// живёт здесь в одном экземпляре.
+  Future<List<({String attachmentId, String path})>> photosOfEntries(
+    List<String> ids, {
+    int limit = 60,
+  }) async {
+    final entryIds = ids.toSet();
     if (entryIds.isEmpty) return const [];
 
     final entries =

@@ -407,7 +407,7 @@ class CatalogFeed extends AsyncNotifier<CatalogResults> {
         .read(entryRepositoryProvider)
         .entryPage(
           profile.id,
-          categoryIds: await _categoryScope(ref, s),
+          categoryIds: await categoryScopeOf(ref, s),
           tagIds: s.tagIds.isEmpty ? null : s.tagIds,
           relation: s.relation,
           status: s.status,
@@ -464,7 +464,10 @@ final catalogResultsProvider = FutureProvider<CatalogResults>(
 );
 
 /// Категории, попадающие под отбор: сама выбранная и, если попрошено, ветка.
-Future<List<String>?> _categoryScope(Ref ref, CatalogState s) async {
+///
+/// Публичная: тот же отбор считает живая подборка — это сохранённый отбор
+/// каталога, и разбирать ветку по-своему она не должна.
+Future<List<String>?> categoryScopeOf(Ref ref, CatalogState s) async {
   final selectedId = s.categoryId;
   if (selectedId == null) return null;
   if (!s.includeSubcategories) return [selectedId];
