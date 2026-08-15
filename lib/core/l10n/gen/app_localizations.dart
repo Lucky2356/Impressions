@@ -956,6 +956,144 @@ abstract class AppLocalizations {
   /// **'Добавлено в подборку'**
   String get collectionAdded;
 
+  /// No description provided for @yearTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Итоги года'**
+  String get yearTitle;
+
+  /// No description provided for @yearOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Итоги года'**
+  String get yearOpen;
+
+  /// No description provided for @yearPrevious.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предыдущий год'**
+  String get yearPrevious;
+
+  /// No description provided for @yearNext.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следующий год'**
+  String get yearNext;
+
+  /// No description provided for @yearYours.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш {year}'**
+  String yearYours(String year);
+
+  /// No description provided for @yearImpressions.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} впечатление} few{{count} впечатления} many{{count} впечатлений} other{{count} впечатлений}}'**
+  String yearImpressions(int count);
+
+  /// No description provided for @yearAverage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Средняя оценка {value} — по {count} записям'**
+  String yearAverage(String value, int count);
+
+  /// No description provided for @yearFinished.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Доведено до конца: {count}} other{Доведено до конца: {count}}}'**
+  String yearFinished(int count);
+
+  /// No description provided for @yearNewCategories.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Заведена {count} новая ветка} few{Заведено {count} новые ветки} many{Заведено {count} новых веток} other{Заведено {count} новых веток}}'**
+  String yearNewCategories(int count);
+
+  /// No description provided for @yearBest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лучшее за год'**
+  String get yearBest;
+
+  /// No description provided for @yearWhereAndWhen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где и когда'**
+  String get yearWhereAndWhen;
+
+  /// No description provided for @yearTopCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любимая ветка'**
+  String get yearTopCategory;
+
+  /// No description provided for @yearBusiestMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Самый насыщенный месяц'**
+  String get yearBusiestMonth;
+
+  /// No description provided for @yearEdges.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начало и конец'**
+  String get yearEdges;
+
+  /// No description provided for @yearFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первое впечатление года'**
+  String get yearFirst;
+
+  /// No description provided for @yearLast.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последнее впечатление года'**
+  String get yearLast;
+
+  /// No description provided for @yearSaveImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить картинкой'**
+  String get yearSaveImage;
+
+  /// No description provided for @yearImageSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картинка готова'**
+  String get yearImageSaved;
+
+  /// No description provided for @yearImageType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картинка PNG'**
+  String get yearImageType;
+
+  /// No description provided for @yearEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год пока пуст'**
+  String get yearEmptyTitle;
+
+  /// No description provided for @yearEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'За {year} записей нет. Заведите первую — и здесь появятся итоги.'**
+  String yearEmptyMessage(String year);
+
+  /// No description provided for @notificationYearTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Итоги года готовы'**
+  String get notificationYearTitle;
+
+  /// No description provided for @notificationYearBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посмотрите, каким был {year}'**
+  String notificationYearBody(String year);
+
   /// No description provided for @homeContinue.
   ///
   /// In ru, this message translates to:

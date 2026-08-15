@@ -13,7 +13,14 @@ import '../../data/providers.dart';
 import '../../data/repositories/settings_repository.dart';
 
 /// Что за событие показывает уведомление.
-enum NotificationKind { incoming, appUpdate, products, import, backup }
+enum NotificationKind {
+  incoming,
+  appUpdate,
+  products,
+  import,
+  backup,
+  yearReview,
+}
 
 /// Событие для центра уведомлений.
 class AppNotification {
@@ -177,6 +184,35 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     }
   }
 
+  // Итоги прошедшего года — весь январь.
+  //
+  // Собираются из уже готовых данных, как и остальные уведомления, поэтому
+  // условие здесь — просто «сейчас январь и в профиле что-то есть». Гасится
+  // общей отметкой «прочитано», и до следующего января не возвращается.
+  final now = DateTime.now();
+  if (profile != null && now.month == 1) {
+    final hasEntries =
+        await (db.select(db.profileEntries)
+              ..where((e) => e.profileId.equals(profile.id))
+              ..limit(1))
+            .getSingleOrNull() !=
+        null;
+    if (hasEntries) {
+      final at = DateTime(now.year);
+      result.add(
+        AppNotification(
+          kind: NotificationKind.yearReview,
+          title: '${now.year - 1}',
+          body: '',
+          icon: Icons.celebration_outlined,
+          at: at,
+          unread: unread(at),
+          target: NavIds.insights,
+        ),
+      );
+    }
+  }
+
   result.sort((a, b) => b.at.compareTo(a.at));
   return result;
 });
@@ -241,6 +277,7 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.products => l10n.notificationProductsTitle,
       NotificationKind.import => l10n.notificationImportTitle,
       NotificationKind.backup => l10n.notificationBackupTitle,
+      NotificationKind.yearReview => l10n.notificationYearTitle,
     };
 
     final dateFormat = localeDate(context, 'd MMMM, HH:mm');
@@ -259,6 +296,9 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.backup => l10n.notificationBackupBody(
         dateFormat.format(n.at),
       ),
+      // Год лежит в заголовке события: считать его заново в панели значило бы
+      // получить другой ответ первого января в полночь.
+      NotificationKind.yearReview => l10n.notificationYearBody(n.title),
     };
 
     return Container(

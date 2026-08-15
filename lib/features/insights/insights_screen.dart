@@ -19,6 +19,7 @@ import '../../design_system/design_system.dart';
 import '../catalog/catalog_providers.dart';
 import '../categories/category_providers.dart';
 import '../quick_add/category_picker.dart';
+import '../year/year_screen.dart';
 
 /// Срез статистики: за какой срок и по какой ветке считать.
 ///
@@ -124,6 +125,15 @@ class InsightsScreen extends ConsumerWidget {
         title: l10n.insightsTitle,
         subtitle: l10n.insightsSubtitle(data.total),
         bottom: const _ScopeBar(),
+        actions: [
+          // Итоги года стоят рядом со статистикой, но отвечают на другой
+          // вопрос: не «каковы мои вкусы», а «каким был этот год».
+          OutlinedButton.icon(
+            onPressed: () => YearScreen.show(context),
+            icon: const Icon(Icons.celebration_outlined, size: 18),
+            label: Text(l10n.yearOpen),
+          ),
+        ],
       ),
       child: ListView(
         padding: EdgeInsets.fromLTRB(

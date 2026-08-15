@@ -520,6 +520,111 @@ class AppLocalizationsRu extends AppLocalizations {
   String get collectionAdded => 'Добавлено в подборку';
 
   @override
+  String get yearTitle => 'Итоги года';
+
+  @override
+  String get yearOpen => 'Итоги года';
+
+  @override
+  String get yearPrevious => 'Предыдущий год';
+
+  @override
+  String get yearNext => 'Следующий год';
+
+  @override
+  String yearYours(String year) {
+    return 'Ваш $year';
+  }
+
+  @override
+  String yearImpressions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count впечатлений',
+      many: '$count впечатлений',
+      few: '$count впечатления',
+      one: '$count впечатление',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearAverage(String value, int count) {
+    return 'Средняя оценка $value — по $count записям';
+  }
+
+  @override
+  String yearFinished(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Доведено до конца: $count',
+      one: 'Доведено до конца: $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearNewCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Заведено $count новых веток',
+      many: 'Заведено $count новых веток',
+      few: 'Заведено $count новые ветки',
+      one: 'Заведена $count новая ветка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearBest => 'Лучшее за год';
+
+  @override
+  String get yearWhereAndWhen => 'Где и когда';
+
+  @override
+  String get yearTopCategory => 'Любимая ветка';
+
+  @override
+  String get yearBusiestMonth => 'Самый насыщенный месяц';
+
+  @override
+  String get yearEdges => 'Начало и конец';
+
+  @override
+  String get yearFirst => 'Первое впечатление года';
+
+  @override
+  String get yearLast => 'Последнее впечатление года';
+
+  @override
+  String get yearSaveImage => 'Сохранить картинкой';
+
+  @override
+  String get yearImageSaved => 'Картинка готова';
+
+  @override
+  String get yearImageType => 'Картинка PNG';
+
+  @override
+  String get yearEmptyTitle => 'Год пока пуст';
+
+  @override
+  String yearEmptyMessage(String year) {
+    return 'За $year записей нет. Заведите первую — и здесь появятся итоги.';
+  }
+
+  @override
+  String get notificationYearTitle => 'Итоги года готовы';
+
+  @override
+  String notificationYearBody(String year) {
+    return 'Посмотрите, каким был $year';
+  }
+
+  @override
   String get homeContinue => 'Продолжить начатое';
 
   @override

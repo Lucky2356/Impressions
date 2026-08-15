@@ -506,6 +506,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionAdded => 'Added to the collection';
 
   @override
+  String get yearTitle => 'Year in review';
+
+  @override
+  String get yearOpen => 'Year in review';
+
+  @override
+  String get yearPrevious => 'Previous year';
+
+  @override
+  String get yearNext => 'Next year';
+
+  @override
+  String yearYours(String year) {
+    return 'Your $year';
+  }
+
+  @override
+  String yearImpressions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count impressions',
+      one: '$count impression',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearAverage(String value, int count) {
+    return 'Average rating $value across $count entries';
+  }
+
+  @override
+  String yearFinished(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Finished: $count',
+      one: 'Finished: $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearNewCategories(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new branches started',
+      one: '$count new branch started',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearBest => 'The best of the year';
+
+  @override
+  String get yearWhereAndWhen => 'Where and when';
+
+  @override
+  String get yearTopCategory => 'Favourite branch';
+
+  @override
+  String get yearBusiestMonth => 'Busiest month';
+
+  @override
+  String get yearEdges => 'First and last';
+
+  @override
+  String get yearFirst => 'First impression of the year';
+
+  @override
+  String get yearLast => 'Last impression of the year';
+
+  @override
+  String get yearSaveImage => 'Save as an image';
+
+  @override
+  String get yearImageSaved => 'The image is ready';
+
+  @override
+  String get yearImageType => 'PNG image';
+
+  @override
+  String get yearEmptyTitle => 'This year is still empty';
+
+  @override
+  String yearEmptyMessage(String year) {
+    return 'There are no entries for $year. Add the first one and the review will appear here.';
+  }
+
+  @override
+  String get notificationYearTitle => 'Your year in review is ready';
+
+  @override
+  String notificationYearBody(String year) {
+    return 'See what $year was like';
+  }
+
+  @override
   String get homeContinue => 'Pick up where you left off';
 
   @override
