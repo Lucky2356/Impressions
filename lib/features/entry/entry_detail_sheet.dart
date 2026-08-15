@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/utils/dates.dart';
+import '../../core/domain/entry_status.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
@@ -22,6 +23,7 @@ import 'entry_object_dialogs.dart';
 import 'entry_photos.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
+import 'status_field.dart';
 
 /// Карточка записи: путь категорий, отношение, оценка, заметка, история версий
 /// с восстановлением (§18) и архивирование (§24).
@@ -50,6 +52,17 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   bool _noteInitialised = false;
   bool _showHistory = false;
 
+  /// Прогресс: сколько пройдено и сколько всего.
+  ///
+  /// Записывается не на каждую цифру, а когда курсор ушёл из полей: иначе
+  /// «12» из «120» успело бы стать отдельной версией записи (§18), и история
+  /// заросла бы промежуточными числами.
+  final _progressCurrent = TextEditingController();
+  final _progressTotal = TextEditingController();
+  final _progressFocus = FocusNode();
+  bool _progressInitialised = false;
+  String _savedProgress = '';
+
   /// Текст заметки, который уже лежит в базе.
   ///
   /// Заметка сохранялась только по кнопке: закрыли карточку крестиком, свайпом
@@ -68,12 +81,18 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     _noteFocus.addListener(() {
       if (!_noteFocus.hasFocus) _saveNoteIfChanged();
     });
+    _progressFocus.addListener(() {
+      if (!_progressFocus.hasFocus) _saveProgressIfChanged();
+    });
   }
 
   @override
   void dispose() {
     _noteFocus.dispose();
     _note.dispose();
+    _progressFocus.dispose();
+    _progressCurrent.dispose();
+    _progressTotal.dispose();
     super.dispose();
   }
 
@@ -90,7 +109,10 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     // заметку надёжнее всего здесь, а не в каждом обработчике.
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) _saveNoteIfChanged();
+        if (didPop) {
+          _saveNoteIfChanged();
+          _saveProgressIfChanged();
+        }
       },
       child: _content(context, l10n, c, detail),
     );
@@ -114,6 +136,13 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
           _savedNote = _note.text;
           _noteInitialised = true;
         }
+        if (!_progressInitialised) {
+          _progressCurrent.text = d.entry.progressCurrent?.toString() ?? '';
+          _progressTotal.text = d.entry.progressTotal?.toString() ?? '';
+          _savedProgress = _progressKey();
+          _progressInitialised = true;
+        }
+        final statuses = EntryStatus.decode(d.type.statusesJson);
         final relation = Relation.byName(d.entry.relation);
         final revisionDate = localeDate(context, 'd MMMM y, HH:mm');
         // Чужую запись нельзя редактировать: мнение принадлежит её автору (§6.2).
@@ -313,6 +342,34 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                     const SizedBox(height: AppDimens.space20),
                   ],
 
+                  // Стадия и прогресс идут перед отношением: сначала «дошли ли
+                  // вы до этого», потом «понравилось ли». Раньше первый вопрос
+                  // задавался вторым — отношением «Хочу попробовать», — и
+                  // сказать «уже смотрю, но пока без мнения» было нечем.
+                  StatusField(
+                    statuses: statuses,
+                    value: d.entry.status,
+                    onChanged: isOwn
+                        ? (key) => _setStatus(d.entry.id, key)
+                        : null,
+                    showEmptyHint: isOwn,
+                  ),
+                  if (statuses.isNotEmpty)
+                    const SizedBox(height: AppDimens.space20),
+                  if (d.type.progressUnit != null) ...[
+                    Focus(
+                      focusNode: _progressFocus,
+                      child: ProgressField(
+                        unit: d.type.progressUnit!,
+                        current: _progressCurrent,
+                        total: _progressTotal,
+                        enabled: isOwn,
+                        onEditingComplete: () => _saveProgressIfChanged(),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.space20),
+                  ],
+
                   // Отношение
                   Text(
                     l10n.quickAddRelationLabel,
@@ -488,6 +545,35 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         .read(entryRepositoryProvider)
         .updateEntry(entryId, relation: r?.name);
     _bump();
+  }
+
+  Future<void> _setStatus(String entryId, String? key) async {
+    await ref.read(entryRepositoryProvider).updateEntry(entryId, status: key);
+    _bump();
+  }
+
+  /// Что сейчас набрано в полях прогресса — одной строкой для сравнения.
+  String _progressKey() => '${_progressCurrent.text}/${_progressTotal.text}';
+
+  /// Дописывает прогресс, если его меняли.
+  ///
+  /// Без сравнения с сохранённым каждое закрытие карточки заводило бы новую
+  /// версию записи (§18) — ровно та же ловушка, что и с заметкой.
+  void _saveProgressIfChanged() {
+    if (!_progressInitialised) return;
+    if (_progressKey() == _savedProgress) return;
+    _savedProgress = _progressKey();
+
+    final repo = ref.read(entryRepositoryProvider);
+    repo
+        .updateEntry(
+          widget.entryId,
+          progressCurrent: progressValueOf(_progressCurrent),
+          progressTotal: progressValueOf(_progressTotal),
+        )
+        .then((_) {
+          if (mounted) _bump();
+        });
   }
 
   Future<void> _setRating(String entryId, double? value) async {

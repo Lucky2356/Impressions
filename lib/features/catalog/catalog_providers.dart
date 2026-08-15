@@ -21,6 +21,7 @@ class CatalogState {
     this.includeSubcategories = true,
     this.tagIds = const [],
     this.relation,
+    this.status,
     this.search = '',
     this.sort = EntrySort.recent,
     this.reverseSort = false,
@@ -38,6 +39,11 @@ class CatalogState {
   /// Выбранные теги: запись подходит, если помечена хотя бы одним (§7.2).
   final List<String> tagIds;
   final String? relation;
+
+  /// Ключ стадии: «что я сейчас смотрю», «что задумано». Общий для всех типов,
+  /// поэтому один отбор работает и в книгах, и в фильмах.
+  final String? status;
+
   final String search;
   final EntrySort sort;
 
@@ -60,6 +66,7 @@ class CatalogState {
       search.isNotEmpty ||
       typeId != null ||
       relation != null ||
+      status != null ||
       categoryId != null ||
       tagIds.isNotEmpty ||
       withoutRating ||
@@ -73,6 +80,7 @@ class CatalogState {
     bool? includeSubcategories,
     List<String>? tagIds,
     Object? relation = _unset,
+    Object? status = _unset,
     String? search,
     EntrySort? sort,
     bool? reverseSort,
@@ -92,6 +100,7 @@ class CatalogState {
       relation: identical(relation, _unset)
           ? this.relation
           : relation as String?,
+      status: identical(status, _unset) ? this.status : status as String?,
       search: search ?? this.search,
       sort: sort ?? this.sort,
       reverseSort: reverseSort ?? this.reverseSort,
@@ -112,6 +121,7 @@ class CatalogState {
     'categoryId': categoryId,
     'includeSubcategories': includeSubcategories,
     'relation': relation,
+    'status': status,
     'tagIds': tagIds,
     'sort': sort.name,
     'reverseSort': reverseSort,
@@ -135,6 +145,7 @@ class CatalogState {
       includeSubcategories:
           json['includeSubcategories'] as bool? ?? base.includeSubcategories,
       relation: text('relation'),
+      status: text('status'),
       tagIds: switch (json['tagIds']) {
         final List<Object?> list => [
           for (final id in list)
@@ -222,6 +233,11 @@ class CatalogController extends Notifier<CatalogState> {
 
   void setRelation(String? r) {
     state = state.copyWith(relation: r);
+    _persist();
+  }
+
+  void setStatus(String? key) {
+    state = state.copyWith(status: key);
     _persist();
   }
 
@@ -394,6 +410,7 @@ class CatalogFeed extends AsyncNotifier<CatalogResults> {
           categoryIds: await _categoryScope(ref, s),
           tagIds: s.tagIds.isEmpty ? null : s.tagIds,
           relation: s.relation,
+          status: s.status,
           typeId: s.typeId,
           search: s.search,
           sort: s.sort,

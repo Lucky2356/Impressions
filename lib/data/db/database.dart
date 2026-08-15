@@ -105,6 +105,10 @@ class AppDatabase extends _$AppDatabase {
       // проход проставляет его тем же правилом, каким угадывали, — у
       // заведённых раньше деревьев ничего не меняется, но теперь это видно и
       // можно поправить.
+      //
+      // Там же «Хочу попробовать» переезжает из отношения в стадию: до схемы 7
+      // отношение подменяло собой стадию, и сказать «уже смотрю, но пока без
+      // мнения» было нечем. Переход односторонний.
       if (from < 7) {
         await m.addColumn(categories, categories.defaultTypeId);
         await m.addColumn(categories, categories.coverAttachmentId);
@@ -115,6 +119,7 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(collections, collections.filterJson);
         await assignDefaultTypesByName();
         await seedBuiltInStatuses();
+        await migrateWantToTryToStatus();
       }
       await _createIndexes();
     },
@@ -209,6 +214,34 @@ class AppDatabase extends _$AppDatabase {
       touched++;
     }
     return touched;
+  }
+
+  /// Переносит «Хочу попробовать» из отношения в стадию.
+  ///
+  /// До схемы 7 стадию изображало отношение: `relation = 'wantToTry'` значило
+  /// не «нравится», а «ещё не дошли». Из-за этого запись не могла быть
+  /// одновременно начатой и без мнения, а доли отношений в статистике считали
+  /// вместе то, что несравнимо.
+  ///
+  /// Отношение при этом стирается: «хочу попробовать» — не мнение о вещи, а
+  /// отметка, что мнения ещё нет. Перенос односторонний.
+  ///
+  /// Второй оператор — про перенос между профилями: чужая запись получала
+  /// `status = 'wantToTry'`, то есть ключ отношения в колонке стадии.
+  /// Возвращает, сколько записей тронуто.
+  Future<int> migrateWantToTryToStatus() async {
+    final moved = await customUpdate(
+      'UPDATE profile_entries SET status = ?1, relation = NULL '
+      "WHERE relation = 'wantToTry'",
+      variables: [Variable<String>(EntryStatus.planned)],
+      updates: {profileEntries},
+    );
+    final renamed = await customUpdate(
+      "UPDATE profile_entries SET status = ?1 WHERE status = 'wantToTry'",
+      variables: [Variable<String>(EntryStatus.planned)],
+      updates: {profileEntries},
+    );
+    return moved + renamed;
   }
 
   /// Полнотекстовый поиск заметок записей (FTS5) + триггеры синхронизации.

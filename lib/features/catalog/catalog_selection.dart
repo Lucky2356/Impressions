@@ -11,6 +11,7 @@ import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import '../collections/collection_picker.dart';
+import '../entry/status_field.dart';
 import '../quick_add/category_picker.dart';
 
 /// Выделенные в каталоге записи.
@@ -185,6 +186,24 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     showMessage(context, l10n.bulkDone(count));
   }
 
+  /// Ставит стадию всей пачке.
+  ///
+  /// Разбирая полсотни новых записей, стадию проставляют одну и ту же — и до
+  /// сих пор это делалось по одной через карточку. Ключ общий для всех типов,
+  /// поэтому пачка может быть разнородной: и книги, и фильмы разом.
+  Future<void> _setStatus(String? key) async {
+    final l10n = AppLocalizations.of(context);
+    final count = ref.read(catalogSelectionProvider).length;
+
+    await _run(
+      (ids) =>
+          ref.read(entryRepositoryProvider).updateEntries(ids, status: key),
+    );
+
+    if (!mounted) return;
+    showMessage(context, l10n.bulkDone(count));
+  }
+
   /// Ставит оценку всей пачке — тем же выбором, что и в карточке.
   Future<void> _setRating() async {
     final l10n = AppLocalizations.of(context);
@@ -289,6 +308,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _RelationButton(enabled: !_busy, onSelected: _setRelation),
+                  _StatusButton(enabled: !_busy, onSelected: _setStatus),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _setRating,
                     icon: const Icon(Icons.star_border_rounded, size: 18),
@@ -338,7 +358,51 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
   }
 }
 
-/// Кнопка «Отношение» со списком из шести значений.
+/// Кнопка «Стадия» с тремя общими стадиями и пунктом «убрать».
+class _StatusButton extends StatelessWidget {
+  const _StatusButton({required this.enabled, required this.onSelected});
+
+  final bool enabled;
+  final ValueChanged<String?> onSelected;
+
+  /// Значение пункта «убрать стадию»: `null` в `PopupMenuItem` означало бы
+  /// «ничего не выбрано» и обработчик бы не вызвался.
+  static const String _clear = '__clear__';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return PopupMenuButton<String>(
+      enabled: enabled,
+      tooltip: l10n.bulkStatus,
+      onSelected: (value) => onSelected(value == _clear ? null : value),
+      itemBuilder: (_) => [
+        for (final status in catalogStatusKeys(l10n))
+          PopupMenuItem(
+            value: status.key,
+            height: 40,
+            child: Text(status.label),
+          ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: _clear,
+          height: 40,
+          child: Text(l10n.bulkStatusClear),
+        ),
+      ],
+      child: IgnorePointer(
+        child: OutlinedButton.icon(
+          onPressed: enabled ? () {} : null,
+          icon: const Icon(Icons.timeline_rounded, size: 18),
+          label: Text(l10n.bulkStatus),
+        ),
+      ),
+    );
+  }
+}
+
+/// Кнопка «Отношение» со списком из пяти значений.
 class _RelationButton extends StatelessWidget {
   const _RelationButton({required this.enabled, required this.onSelected});
 
@@ -359,8 +423,8 @@ class _RelationButton extends StatelessWidget {
           PopupMenuItem(
             value: r,
             height: 40,
-            // Меню Material шире 280 точек не бывает, а «Хочу попробовать»
-            // со значком в эту ширину не помещается.
+            // Меню Material шире 280 точек не бывает, а длинная метка со
+            // значком в эту ширину не помещается.
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

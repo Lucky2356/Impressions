@@ -5,6 +5,7 @@ import 'package:archive/archive.dart';
 import 'package:drift/drift.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/domain/entry_status.dart';
 import '../../core/utils/hashing.dart';
 import '../../core/utils/ids.dart';
 import '../db/database.dart';
@@ -777,6 +778,12 @@ class ImportService {
       final id = e['id'] as String?;
       if (id == null) continue;
 
+      // Пакет, собранный до схемы 7, несёт «Хочу попробовать» отношением.
+      // Внутри база такого отношения больше не знает, и запись осталась бы с
+      // пустым мнением и без стадии — то есть просто потеряла бы пометку.
+      final legacyWant =
+          e['relation'] == 'wantToTry' || e['status'] == 'wantToTry';
+
       await db
           .into(db.profileEntries)
           .insertOnConflictUpdate(
@@ -784,9 +791,13 @@ class ImportService {
               id: id,
               profileId: preview.profileId,
               objectId: e['objectId'] as String? ?? '',
-              relation: Value(e['relation'] as String?),
+              relation: Value(
+                e['relation'] == 'wantToTry' ? null : e['relation'] as String?,
+              ),
               rating: Value((e['rating'] as num?)?.toDouble()),
-              status: Value(e['status'] as String?),
+              status: Value(
+                legacyWant ? EntryStatus.planned : e['status'] as String?,
+              ),
               progressCurrent: Value(e['progressCurrent'] as int?),
               progressTotal: Value(e['progressTotal'] as int?),
               shortNote: Value(e['shortNote'] as String?),

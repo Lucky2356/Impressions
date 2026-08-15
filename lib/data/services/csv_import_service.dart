@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../core/domain/entry_status.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
 import '../repositories/category_repository.dart';
@@ -267,6 +268,7 @@ class CsvImportService {
           profileId: profileId,
           objectId: object.id,
           relation: relationOf(row.relation),
+          status: statusOf(row.relation),
           rating: row.rating,
           detailedNote: row.note,
           impressionDate: row.impressionDate,
@@ -299,7 +301,6 @@ class CsvImportService {
       'neutral': ['нейтрально', 'neutral', 'нормально'],
       'dislike': ['не нравится', 'dislike', 'плохо'],
       'avoid': ['избегаю', 'avoid'],
-      'wantToTry': ['хочу попробовать', 'want', 'попробовать'],
     };
 
     for (final entry in words.entries) {
@@ -309,6 +310,22 @@ class CsvImportService {
       }
     }
     return null;
+  }
+
+  /// Стадия из той же колонки, что и отношение.
+  ///
+  /// «Хочу попробовать» в чужой таблице стоит там же, где «Нравится», но
+  /// значит другое: не мнение о вещи, а что мнения ещё нет. Поэтому одна
+  /// колонка файла разбирается дважды — в отношение и в стадию, — и «хочу»
+  /// попадает только во вторую.
+  static String? statusOf(String? value) {
+    if (value == null) return null;
+    final normalized = Normalize.forMatch(value);
+    if (normalized.isEmpty) return null;
+
+    const words = ['хочу попробовать', 'хочу', 'want', 'попробовать'];
+    final planned = words.any((w) => normalized == w || normalized.contains(w));
+    return planned ? EntryStatus.planned : null;
   }
 
   /// Разбор CSV по RFC 4180 с автоопределением разделителя.

@@ -15,6 +15,9 @@ class QuickAddDraft {
     this.categoryId,
     this.relation,
     this.rating,
+    this.status,
+    this.progressCurrent,
+    this.progressTotal,
     this.showDetails = false,
     this.barcode,
     this.creator,
@@ -34,6 +37,13 @@ class QuickAddDraft {
   final String? categoryId;
   final String? relation;
   final double? rating;
+
+  /// Ключ стадии: «дошли ли вы до этого».
+  final String? status;
+
+  final int? progressCurrent;
+  final int? progressTotal;
+
   final bool showDetails;
   final String? barcode;
   final String? creator;
@@ -52,6 +62,9 @@ class QuickAddDraft {
       categoryId == null &&
       relation == null &&
       rating == null &&
+      status == null &&
+      progressCurrent == null &&
+      progressTotal == null &&
       barcode == null &&
       creator == null &&
       impressionDate == null &&
@@ -67,6 +80,9 @@ class QuickAddDraft {
     'categoryId': categoryId,
     'relation': relation,
     'rating': rating,
+    'status': status,
+    'progressCurrent': progressCurrent,
+    'progressTotal': progressTotal,
     'showDetails': showDetails,
     'barcode': barcode,
     'creator': creator,
@@ -96,6 +112,15 @@ class QuickAddDraft {
       relation: text('relation'),
       rating: switch (json['rating']) {
         final num value => value.toDouble(),
+        _ => null,
+      },
+      status: text('status'),
+      progressCurrent: switch (json['progressCurrent']) {
+        final num value => value.toInt(),
+        _ => null,
+      },
+      progressTotal: switch (json['progressTotal']) {
+        final num value => value.toInt(),
         _ => null,
       },
       showDetails: json['showDetails'] == true,

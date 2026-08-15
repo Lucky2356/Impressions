@@ -5,14 +5,18 @@ import '../theme/app_colors.dart';
 
 /// Отношение профиля к объекту (§10).
 ///
+/// Отвечает только на вопрос «понравилось ли». «Хочу попробовать» жило здесь
+/// же и отвечало на другой — «дошли ли вы до этого», — из-за чего запись не
+/// могла быть одновременно начатой и без мнения. Это переехало в стадию
+/// (`EntryStatus`), а у запланированной записи отношения просто нет.
+///
 /// Внутренние значения английские, интерфейс — русский (метки берутся из l10n).
 enum Relation {
   love,
   like,
   neutral,
   dislike,
-  avoid,
-  wantToTry;
+  avoid;
 
   /// Отношение по его записанному в базе имени; null — не задано или чужое.
   ///
@@ -32,7 +36,6 @@ enum Relation {
     Relation.neutral => l10n.relationNeutral,
     Relation.dislike => l10n.relationDislike,
     Relation.avoid => l10n.relationAvoid,
-    Relation.wantToTry => l10n.relationWantToTry,
   };
 
   /// Акцентный цвет отношения (не единственный носитель смысла — §30: рядом
@@ -43,7 +46,6 @@ enum Relation {
     Relation.neutral => c.textMuted,
     Relation.dislike => c.sand,
     Relation.avoid => c.lavender,
-    Relation.wantToTry => c.lavender,
   };
 
   IconData get icon => switch (this) {
@@ -52,6 +54,5 @@ enum Relation {
     Relation.neutral => Icons.remove_rounded,
     Relation.dislike => Icons.thumb_down_alt_rounded,
     Relation.avoid => Icons.block_rounded,
-    Relation.wantToTry => Icons.bookmark_add_rounded,
   };
 }

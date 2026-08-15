@@ -9,6 +9,7 @@ import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
+import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'catalog_providers.dart';
 import 'catalog_screen.dart';
@@ -48,6 +49,7 @@ class FilterBar extends ConsumerWidget {
       state.typeId != null,
       state.categoryId != null,
       state.relation != null,
+      state.status != null,
       state.tagIds.isNotEmpty,
       state.withoutRating,
       state.withoutCategory,
@@ -132,6 +134,22 @@ class FilterBar extends ConsumerWidget {
         ],
         onChanged: controller.setRelation,
         active: state.relation != null,
+      ),
+      // Стадия отвечает на другой вопрос, чем отношение: «дошли ли вы до
+      // этого». Названия у типов свои, а ключи общие — поэтому в отборе стоят
+      // три общих стадии, а не объединение всех наборов.
+      AppDropdown<String?>(
+        label: l10n.catalogStatusLabel,
+        icon: Icons.timeline_rounded,
+        value: state.status,
+        expand: true,
+        items: [
+          DropdownMenuItem(value: null, child: Text(l10n.catalogAllStatuses)),
+          for (final entry in catalogStatusKeys(l10n))
+            DropdownMenuItem(value: entry.key, child: Text(entry.label)),
+        ],
+        onChanged: controller.setStatus,
+        active: state.status != null,
       ),
       AppDropdown<EntrySort>(
         label: l10n.catalogSortLabel,

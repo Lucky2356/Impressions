@@ -1220,6 +1220,78 @@ abstract class AppLocalizations {
   /// **'серия, страница, час — пусто, если считать нечего'**
   String get progressUnitHint;
 
+  /// No description provided for @statusLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадия'**
+  String get statusLabel;
+
+  /// No description provided for @statusNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не начато'**
+  String get statusNone;
+
+  /// No description provided for @statusTypeHasNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'У этого типа стадий нет — задать их можно в настройках типа'**
+  String get statusTypeHasNone;
+
+  /// No description provided for @progressLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс'**
+  String get progressLabel;
+
+  /// No description provided for @progressOf.
+  ///
+  /// In ru, this message translates to:
+  /// **'{current} {unit} из {total}'**
+  String progressOf(int current, String unit, int total);
+
+  /// No description provided for @progressCurrentOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'{current} {unit}'**
+  String progressCurrentOnly(int current, String unit);
+
+  /// No description provided for @progressCurrentLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пройдено'**
+  String get progressCurrentLabel;
+
+  /// No description provided for @progressTotalLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всего'**
+  String get progressTotalLabel;
+
+  /// No description provided for @catalogStatusLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадия'**
+  String get catalogStatusLabel;
+
+  /// No description provided for @catalogAllStatuses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любая стадия'**
+  String get catalogAllStatuses;
+
+  /// No description provided for @bulkStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадия'**
+  String get bulkStatus;
+
+  /// No description provided for @bulkStatusClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать стадию'**
+  String get bulkStatusClear;
+
   /// No description provided for @categoryDefaultType.
   ///
   /// In ru, this message translates to:
@@ -3218,12 +3290,6 @@ abstract class AppLocalizations {
   /// **'Избегаю'**
   String get relationAvoid;
 
-  /// No description provided for @relationWantToTry.
-  ///
-  /// In ru, this message translates to:
-  /// **'Хочу попробовать'**
-  String get relationWantToTry;
-
   /// No description provided for @entryAddToMyProfile.
   ///
   /// In ru, this message translates to:
@@ -3887,7 +3953,7 @@ abstract class AppLocalizations {
   /// No description provided for @wishlistEmptyMessage.
   ///
   /// In ru, this message translates to:
-  /// **'Отмечайте отношением «Хочу попробовать» то, до чего ещё не дошли руки, — оно соберётся здесь.'**
+  /// **'Ставьте записи стадию «Задумано» тому, до чего ещё не дошли руки, — оно соберётся здесь.'**
   String get wishlistEmptyMessage;
 
   /// No description provided for @wishlistMarkTried.

@@ -668,6 +668,47 @@ class AppLocalizationsRu extends AppLocalizations {
       'серия, страница, час — пусто, если считать нечего';
 
   @override
+  String get statusLabel => 'Стадия';
+
+  @override
+  String get statusNone => 'Не начато';
+
+  @override
+  String get statusTypeHasNone =>
+      'У этого типа стадий нет — задать их можно в настройках типа';
+
+  @override
+  String get progressLabel => 'Прогресс';
+
+  @override
+  String progressOf(int current, String unit, int total) {
+    return '$current $unit из $total';
+  }
+
+  @override
+  String progressCurrentOnly(int current, String unit) {
+    return '$current $unit';
+  }
+
+  @override
+  String get progressCurrentLabel => 'Пройдено';
+
+  @override
+  String get progressTotalLabel => 'Всего';
+
+  @override
+  String get catalogStatusLabel => 'Стадия';
+
+  @override
+  String get catalogAllStatuses => 'Любая стадия';
+
+  @override
+  String get bulkStatus => 'Стадия';
+
+  @override
+  String get bulkStatusClear => 'Убрать стадию';
+
+  @override
   String get categoryDefaultType => 'Тип по умолчанию';
 
   @override
@@ -1913,9 +1954,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get relationAvoid => 'Избегаю';
 
   @override
-  String get relationWantToTry => 'Хочу попробовать';
-
-  @override
   String get entryAddToMyProfile => 'Добавить в мой профиль';
 
   @override
@@ -2345,7 +2383,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get wishlistEmptyMessage =>
-      'Отмечайте отношением «Хочу попробовать» то, до чего ещё не дошли руки, — оно соберётся здесь.';
+      'Ставьте записи стадию «Задумано» тому, до чего ещё не дошли руки, — оно соберётся здесь.';
 
   @override
   String get wishlistMarkTried => 'Попробовал';

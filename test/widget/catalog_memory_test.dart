@@ -43,6 +43,7 @@ void main() {
     first.read(catalogStateProvider.notifier)
       ..setType('t1')
       ..setRelation('love')
+      ..setStatus('inProgress')
       ..setSort(EntrySort.rating)
       ..toggleSortDirection()
       ..setWithoutRating(true);
@@ -54,6 +55,7 @@ void main() {
 
     expect(state.typeId, 't1');
     expect(state.relation, 'love');
+    expect(state.status, 'inProgress');
     expect(state.sort, EntrySort.rating);
     expect(state.reverseSort, isTrue);
     expect(state.withoutRating, isTrue);

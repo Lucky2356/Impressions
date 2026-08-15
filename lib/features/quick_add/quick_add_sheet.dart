@@ -8,6 +8,7 @@ import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/domain/custom_fields.dart';
+import '../../core/domain/entry_status.dart';
 import '../../core/domain/relation.dart';
 import '../../core/utils/normalize.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -24,6 +25,7 @@ import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
 import '../categories/category_providers.dart';
 import '../entry/pending_photos_field.dart';
+import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
 import 'quick_add_draft.dart';
@@ -102,6 +104,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   final List<CategoryRow> _extraCategories = [];
   Relation? _relation;
   double? _rating;
+
+  /// Стадия записи (§10): «дошли ли вы до этого».
+  ///
+  /// Отдельно от отношения: заводя задумку, человек ставит стадию и не ставит
+  /// мнения — раньше для этого приходилось выбирать отношение «Хочу
+  /// попробовать», то есть отвечать не на тот вопрос.
+  String? _status;
+
+  /// Прогресс, если тип знает, в чём его считать.
+  final _progressCurrent = TextEditingController();
+  final _progressTotal = TextEditingController();
+
   bool _showDetails = false;
   bool _busy = false;
 
@@ -157,6 +171,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     // отмечается изменённым отдельно.
     _title.addListener(_scheduleDraftSave);
     _note.addListener(_scheduleDraftSave);
+    _progressCurrent.addListener(_scheduleDraftSave);
+    _progressTotal.addListener(_scheduleDraftSave);
     _restoreDraft();
   }
 
@@ -214,6 +230,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     _titleFocus.dispose();
     _title.dispose();
     _note.dispose();
+    _progressCurrent.dispose();
+    _progressTotal.dispose();
     super.dispose();
   }
 
@@ -271,14 +289,15 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     // Слушатели полей сняты на время подстановки: иначе первое же присвоение
     // запустило бы запись наполовину восстановленного черновика.
-    _title.removeListener(_scheduleDraftSave);
-    _note.removeListener(_scheduleDraftSave);
+    _pauseFieldListeners();
     _title.text = draft.title;
     _note.text = draft.note;
-    _title.addListener(_scheduleDraftSave);
-    _note.addListener(_scheduleDraftSave);
+    _progressCurrent.text = draft.progressCurrent?.toString() ?? '';
+    _progressTotal.text = draft.progressTotal?.toString() ?? '';
+    _resumeFieldListeners();
 
     super.setState(() {
+      _status = draft.status;
       _typeId = draft.typeId;
       _typePicked = draft.typePicked;
       _category = category;
@@ -347,6 +366,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     categoryId: _category?.id,
     relation: _relation?.name,
     rating: _rating,
+    status: _status,
+    progressCurrent: progressValueOf(_progressCurrent),
+    progressTotal: progressValueOf(_progressTotal),
     showDetails: _showDetails,
     barcode: _barcode,
     creator: _creator,
@@ -355,6 +377,22 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     tags: List.of(_tags),
     collectionId: _collectionId,
   );
+
+  /// Снимает слушателей полей на время подстановки: иначе первое же
+  /// присвоение запустило бы запись наполовину восстановленного черновика.
+  void _pauseFieldListeners() {
+    _title.removeListener(_scheduleDraftSave);
+    _note.removeListener(_scheduleDraftSave);
+    _progressCurrent.removeListener(_scheduleDraftSave);
+    _progressTotal.removeListener(_scheduleDraftSave);
+  }
+
+  void _resumeFieldListeners() {
+    _title.addListener(_scheduleDraftSave);
+    _note.addListener(_scheduleDraftSave);
+    _progressCurrent.addListener(_scheduleDraftSave);
+    _progressTotal.addListener(_scheduleDraftSave);
+  }
 
   /// Пишет черновик с задержкой: на каждую букву в базу ходить незачем.
   void _scheduleDraftSave() {
@@ -397,6 +435,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     _clearDraft();
     _title.clear();
     _note.clear();
+    _progressCurrent.clear();
+    _progressTotal.clear();
     // Форма остаётся открытой: то, что человек наберёт дальше, снова надо
     // беречь.
     _draftOff = false;
@@ -405,6 +445,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _category = widget.initialCategory;
       _relation = null;
       _rating = null;
+      _status = null;
       _barcode = null;
       _creator = null;
       _customValues.clear();
@@ -438,16 +479,17 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
   /// Готовит форму к следующей записи: место остаётся, остальное очищается.
   void _resetForNext() {
-    _title.removeListener(_scheduleDraftSave);
-    _note.removeListener(_scheduleDraftSave);
+    _pauseFieldListeners();
     _title.clear();
     _note.clear();
-    _title.addListener(_scheduleDraftSave);
-    _note.addListener(_scheduleDraftSave);
+    _progressCurrent.clear();
+    _progressTotal.clear();
+    _resumeFieldListeners();
 
     super.setState(() {
       _rating = null;
       _relation = null;
+      _status = null;
       _photos = const [];
       _tags.clear();
       _barcode = null;
@@ -503,6 +545,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         objectId: object.id,
         relation: _relation?.name,
         rating: _rating,
+        status: _status,
+        progressCurrent: progressValueOf(_progressCurrent),
+        progressTotal: progressValueOf(_progressTotal),
         detailedNote: _note.text.trim().isEmpty ? null : _note.text.trim(),
         impressionDate: _impressionDate,
         primaryCategoryId: _category?.id,
@@ -724,6 +769,13 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _typeId = fromBranch?.typeId ?? _typeId ?? typeList.first.id;
     }
 
+    // Стадии и единица прогресса — свойства типа, поэтому смена типа меняет и
+    // набор чипов. Стадия, которой у нового типа нет, не показывается вовсе:
+    // выбранной она выглядела бы, не будучи ни одной из предложенных.
+    final type = typeList.where((t) => t.id == _typeId).firstOrNull;
+    final statuses = EntryStatus.decode(type?.statusesJson);
+    final progressUnit = type?.progressUnit;
+
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -854,6 +906,15 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       onChanged: (v) => setState(() {
                         _typeId = v;
                         _typePicked = true;
+                        // Ключи стадий общие, но набор у каждого типа свой:
+                        // «Читаю» в товарах взяться неоткуда.
+                        final next = typeList
+                            .where((t) => t.id == v)
+                            .firstOrNull;
+                        final keys = EntryStatus.decode(
+                          next?.statusesJson,
+                        ).map((s) => s.key);
+                        if (!keys.contains(_status)) _status = null;
                       }),
                     );
                     final categoryField = CategoryField(
@@ -909,6 +970,18 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                   style: context.text.labelSmall?.copyWith(color: c.textMuted),
                 ),
                 const SizedBox(height: AppDimens.space16),
+                // Стадия перед отношением: заводя задумку, человек отвечает
+                // «ещё не дошёл» и не отвечает «понравилось». Раньше для
+                // первого приходилось выбирать отношение «Хочу попробовать».
+                if (statuses.isNotEmpty) ...[
+                  StatusField(
+                    statuses: statuses,
+                    value: _status,
+                    onChanged: (key) => setState(() => _status = key),
+                    showEmptyHint: false,
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                ],
                 Text(
                   l10n.quickAddRelationLabel,
                   style: context.text.labelSmall?.copyWith(
@@ -998,7 +1071,19 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                     onPick: _pickDate,
                     onClear: () => setState(() => _impressionDate = null),
                   ),
-                  const SizedBox(height: AppDimens.space20),
+                  const SizedBox(height: AppDimens.space16),
+                  // Прогресс — под «Подробностями»: у большинства записей его
+                  // не ведут, а форма и так плотная.
+                  if (progressUnit != null) ...[
+                    ProgressField(
+                      unit: progressUnit,
+                      current: _progressCurrent,
+                      total: _progressTotal,
+                      enabled: !_busy,
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                  ],
+                  const SizedBox(height: AppDimens.space4),
                   // Теги и подборка — прямо здесь. Раньше за каждым из них
                   // приходилось открывать уже сохранённую запись.
                   TagsField(

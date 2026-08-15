@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/domain/entry_status.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
@@ -14,21 +15,24 @@ import '../../design_system/design_system.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 
-/// Записи с отношением «Хочу попробовать».
+/// Записи на стадии «Задумано».
+///
+/// Раньше отбирались по отношению «Хочу попробовать»: отношение подменяло
+/// собой стадию, и запись не могла быть одновременно начатой и без мнения.
 final wishlistProvider = FutureProvider<List<EntryView>>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(profile.id, relation: Relation.wantToTry.name);
+      .entryViews(profile.id, status: EntryStatus.planned);
 });
 
 /// Список «Хочу попробовать» — то, ради чего заметку и заводят.
 ///
-/// Отношение существовало и считалось на главной, но работать с ним было
-/// негде: чтобы отметить попробованное, приходилось искать запись в каталоге и
-/// вручную менять отношение.
+/// Задуманное считалось на главной, но работать с ним было негде: чтобы
+/// отметить попробованное, приходилось искать запись в каталоге и менять всё
+/// руками.
 class WishlistScreen extends ConsumerWidget {
   const WishlistScreen({super.key});
 
@@ -100,6 +104,9 @@ class WishlistTile extends ConsumerWidget {
               ? Relation.love.name
               : (rating >= 5 ? Relation.like.name : Relation.dislike.name),
           rating: rating,
+          // Ключ завершающей стадии общий для всех типов, поэтому список может
+          // быть разнородным: «Прочитал» и «Попробовал» — одно и то же «done».
+          status: EntryStatus.doneKey,
           impressionDate: DateTime.now(),
         );
     ref.read(dataRefreshProvider.notifier).bump();
@@ -115,7 +122,7 @@ class WishlistTile extends ConsumerWidget {
       child: Row(
         children: [
           EntryThumb(
-            icon: Relation.wantToTry.icon,
+            icon: Icons.bookmark_add_rounded,
             color: c.lavender,
             imagePath: entry.coverPath,
           ),

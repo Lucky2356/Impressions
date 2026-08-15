@@ -92,9 +92,19 @@ void main() {
   test('отношение узнаётся по русской метке и по внутреннему имени', () {
     expect(CsvImportService.relationOf('Обожаю'), 'love');
     expect(CsvImportService.relationOf('нравится'), 'like');
-    expect(CsvImportService.relationOf('wantToTry'), 'wantToTry');
     expect(CsvImportService.relationOf('что-то своё'), isNull);
     expect(CsvImportService.relationOf(null), isNull);
+  });
+
+  test('«хочу попробовать» из той же колонки читается стадией', () {
+    // В чужой таблице «Хочу попробовать» стоит там же, где «Нравится», но
+    // значит другое: не мнение о вещи, а что мнения ещё нет.
+    expect(CsvImportService.statusOf('Хочу попробовать'), 'planned');
+    expect(CsvImportService.statusOf('want'), 'planned');
+    expect(CsvImportService.relationOf('Хочу попробовать'), isNull);
+
+    expect(CsvImportService.statusOf('Обожаю'), isNull);
+    expect(CsvImportService.statusOf(null), isNull);
   });
 
   test('пустой файл не роняет разбор', () {

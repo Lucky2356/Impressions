@@ -22,6 +22,10 @@ class RevisionService {
     'relation': e.relation,
     'rating': e.rating,
     'status': e.status,
+    // Прогресс — такая же часть состояния записи, как оценка: без него
+    // восстановленная версия вернула бы «Читаю», но с чужой страницей.
+    'progressCurrent': e.progressCurrent,
+    'progressTotal': e.progressTotal,
     'shortNote': e.shortNote,
     'detailedNote': e.detailedNote,
     'impressionDate': e.impressionDate?.toIso8601String(),
@@ -329,6 +333,8 @@ class RevisionService {
         relation: Value(payload['relation'] as String?),
         rating: Value((payload['rating'] as num?)?.toDouble()),
         status: Value(payload['status'] as String?),
+        progressCurrent: Value(payload['progressCurrent'] as int?),
+        progressTotal: Value(payload['progressTotal'] as int?),
         shortNote: Value(payload['shortNote'] as String?),
         detailedNote: Value(payload['detailedNote'] as String?),
         privacy: Value(payload['privacy'] as String? ?? 'shareable'),

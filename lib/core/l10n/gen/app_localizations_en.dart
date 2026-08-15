@@ -653,6 +653,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'episode, page, hour — leave empty if there is nothing to count';
 
   @override
+  String get statusLabel => 'Stage';
+
+  @override
+  String get statusNone => 'Not started';
+
+  @override
+  String get statusTypeHasNone =>
+      'This type has no stages — you can set them up in the type settings';
+
+  @override
+  String get progressLabel => 'Progress';
+
+  @override
+  String progressOf(int current, String unit, int total) {
+    return '$current $unit of $total';
+  }
+
+  @override
+  String progressCurrentOnly(int current, String unit) {
+    return '$current $unit';
+  }
+
+  @override
+  String get progressCurrentLabel => 'Done';
+
+  @override
+  String get progressTotalLabel => 'Total';
+
+  @override
+  String get catalogStatusLabel => 'Stage';
+
+  @override
+  String get catalogAllStatuses => 'Any stage';
+
+  @override
+  String get bulkStatus => 'Stage';
+
+  @override
+  String get bulkStatusClear => 'Clear stage';
+
+  @override
   String get categoryDefaultType => 'Default type';
 
   @override
@@ -1867,9 +1908,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get relationAvoid => 'Avoid it';
 
   @override
-  String get relationWantToTry => 'Want to try';
-
-  @override
   String get entryAddToMyProfile => 'Add to my profile';
 
   @override
@@ -2285,7 +2323,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wishlistEmptyMessage =>
-      'Mark whatever you have not got round to with the “Want to try” attitude and it will gather here.';
+      'Give the “Planned” stage to whatever you have not got round to and it will gather here.';
 
   @override
   String get wishlistMarkTried => 'Tried it';

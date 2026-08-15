@@ -15,6 +15,10 @@ class EntryView {
     this.relation,
     this.rating,
     this.status,
+    this.statusLabel,
+    this.progressCurrent,
+    this.progressTotal,
+    this.progressUnit,
     this.impressionDate,
     this.createdAt,
     this.coverPath,
@@ -38,7 +42,22 @@ class EntryView {
 
   final String? relation;
   final double? rating;
+
+  /// Ключ стадии: общий для всех типов, по нему работает отбор.
   final String? status;
+
+  /// Название стадии у типа этой записи: «Читаю», «Смотрю», «Попробовал».
+  ///
+  /// Считается вместе со строкой, а не по ней: тип уже прочитан для названия,
+  /// и второй запрос на карточку был бы запросом на запись.
+  final String? statusLabel;
+
+  /// Сколько пройдено и сколько всего — «3 серия из 12».
+  final int? progressCurrent;
+  final int? progressTotal;
+
+  /// В чём тип считает прогресс: серия, страница, час. null — считать нечего.
+  final String? progressUnit;
 
   /// Когда впечатление случилось, а не когда запись завели.
   final DateTime? impressionDate;
@@ -73,13 +92,18 @@ class ProfileStats {
     required this.entries,
     required this.categories,
     required this.collections,
-    required this.wantToTry,
+    required this.planned,
   });
 
   final int entries;
   final int categories;
   final int collections;
-  final int wantToTry;
+
+  /// Сколько задумано, но ещё не начато.
+  ///
+  /// Раньше считалось по отношению «Хочу попробовать» — то есть по мнению о
+  /// вещи, которого ещё нет. Теперь это стадия.
+  final int planned;
 }
 
 /// Развёрнутая статистика профиля (§14).

@@ -8,6 +8,7 @@ import 'app_card.dart';
 import 'cover_image.dart';
 import 'rating_view.dart';
 import 'relation_chip.dart';
+import 'status_chip.dart';
 
 /// Презентационные данные карточки записи. Слой данных (Drift) отображается
 /// в эту модель, чтобы дизайн-компоненты не зависели от БД.
@@ -28,6 +29,13 @@ class EntryCardData {
   final List<String> categoryPath;
   final Relation? relation;
   final double? rating;
+
+  /// Стадия записи, при необходимости с прогрессом: «Читаю · 3 серия из 12».
+  ///
+  /// Показывается вместо отношения, а не рядом: на карточку помещается один
+  /// значок, а вопросы эти взаимодополняющие — у записи с мнением впечатление
+  /// уже состоялось, а у записи без мнения важно как раз то, на какой она
+  /// стадии.
   final String? statusLabel;
   final String? imagePath;
   final Color? seedColor;
@@ -161,9 +169,13 @@ class EntryCard extends StatelessWidget {
                       relation: data.relation!,
                       compact: true,
                     ),
+                  )
+                else if (data.statusLabel != null)
+                  Flexible(
+                    child: StatusChip(label: data.statusLabel!, compact: true),
                   ),
                 if (data.rating != null) ...[
-                  if (data.relation != null)
+                  if (data.relation != null || data.statusLabel != null)
                     const SizedBox(width: AppDimens.space4),
                   RatingView(value: data.rating, compact: true),
                 ],
@@ -241,7 +253,9 @@ class EntryCardCompact extends StatelessWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (data.relation != null)
-                        RelationChip(relation: data.relation!, compact: true),
+                        RelationChip(relation: data.relation!, compact: true)
+                      else if (data.statusLabel != null)
+                        StatusChip(label: data.statusLabel!, compact: true),
                       if (data.rating != null)
                         RatingView(value: data.rating, compact: true),
                     ],

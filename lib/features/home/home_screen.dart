@@ -43,7 +43,8 @@ class HomeScreen extends ConsumerWidget {
     // Боковая колонка занимала свои 360 точек даже пустой: справа оставалась
     // мёртвая полоса, и содержимое главной стояло не по центру окна.
     final hasWishlist =
-        (ref.watch(wantToTryProvider).value ?? const <EntryView>[]).isNotEmpty;
+        (ref.watch(plannedEntriesProvider).value ?? const <EntryView>[])
+            .isNotEmpty;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -132,7 +133,7 @@ class _MainColumn extends ConsumerWidget {
               ),
               SummaryItem(
                 label: l10n.sectionWantToTry,
-                value: '${stats.wantToTry}',
+                value: '${stats.planned}',
                 icon: Icons.bookmark_add_rounded,
                 color: c.chartRed,
                 onTap: () => ref.read(navProvider.notifier).go(NavIds.wishlist),
@@ -293,7 +294,7 @@ class _SidePanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final want = ref.watch(wantToTryProvider).value ?? const <EntryView>[];
+    final want = ref.watch(plannedEntriesProvider).value ?? const <EntryView>[];
 
     if (want.isEmpty) return const SizedBox.shrink();
 

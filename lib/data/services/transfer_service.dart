@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/domain/entry_status.dart';
 import '../../core/utils/normalize.dart';
 import '../db/database.dart';
 import '../repositories/category_repository.dart';
@@ -66,8 +67,12 @@ class TransferService {
   final CategoryRepository _categories;
   final EntryRepository _entries;
 
-  /// Статус по умолчанию для перенесённой записи (§12).
-  static const String defaultStatus = 'wantToTry';
+  /// Стадия по умолчанию для перенесённой записи (§12).
+  ///
+  /// Взятая у другого профиля запись — именно задумка: чужое мнение не
+  /// копируется, а своего ещё нет. Раньше сюда писался ключ отношения
+  /// (`wantToTry`), то есть в колонке стадии лежало значение не из того набора.
+  static const String defaultStatus = EntryStatus.planned;
 
   /// Деревья категорий, уже прочитанные этой службой.
   ///

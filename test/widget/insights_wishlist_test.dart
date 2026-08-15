@@ -37,7 +37,6 @@ ProfileInsights _rich() => ProfileInsights(
     'neutral': 40,
     'dislike': 30,
     'avoid': 12,
-    'wantToTry': 18,
   },
   topCategories: const [
     (id: 'c1', name: 'Продукты питания и напитки', count: 120),
@@ -58,7 +57,8 @@ EntryView _wish(String title) => EntryView(
   title: title,
   typeName: 'Продукты',
   categoryPath: const ['Продукты', 'Колбасы'],
-  relation: 'wantToTry',
+  status: 'planned',
+  statusLabel: 'Хочу попробовать',
 );
 
 void main() {

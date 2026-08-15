@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
+import '../../core/domain/entry_status.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
@@ -41,14 +42,17 @@ final recentEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   return ref.watch(entryRepositoryProvider).entryViews(profile.id, limit: 10);
 });
 
-/// Записи со статусом «Хочу попробовать».
-final wantToTryProvider = FutureProvider<List<EntryView>>((ref) async {
+/// Задуманное: записи на стадии «Задумано».
+///
+/// Раньше отбиралось по отношению «Хочу попробовать» — то есть по мнению,
+/// которого у задумки как раз ещё нет.
+final plannedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(profile.id, relation: 'wantToTry', limit: 5);
+      .entryViews(profile.id, status: EntryStatus.planned, limit: 5);
 });
 
 /// Корневые категории активного профиля.

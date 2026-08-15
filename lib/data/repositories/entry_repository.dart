@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/domain/entry_status.dart';
 import '../../core/utils/chunks.dart';
 import '../../core/utils/ids.dart';
 import '../../core/utils/normalize.dart';
@@ -206,6 +207,8 @@ class EntryRepository {
     String? relation,
     double? rating,
     String? status,
+    int? progressCurrent,
+    int? progressTotal,
     String? shortNote,
     String? detailedNote,
     String privacy = 'shareable',
@@ -225,6 +228,8 @@ class EntryRepository {
               relation: Value(relation),
               rating: Value(rating),
               status: Value(status),
+              progressCurrent: Value(progressCurrent),
+              progressTotal: Value(progressTotal),
               shortNote: Value(shortNote),
               detailedNote: Value(detailedNote),
               privacy: Value(privacy),
@@ -252,6 +257,8 @@ class EntryRepository {
     Object? relation = _unset,
     Object? rating = _unset,
     Object? status = _unset,
+    Object? progressCurrent = _unset,
+    Object? progressTotal = _unset,
     Object? shortNote = _unset,
     Object? detailedNote = _unset,
     String? privacy,
@@ -271,6 +278,8 @@ class EntryRepository {
         relation: val<String>(relation),
         rating: val<double>(rating),
         status: val<String>(status),
+        progressCurrent: val<int>(progressCurrent),
+        progressTotal: val<int>(progressTotal),
         shortNote: val<String>(shortNote),
         detailedNote: val<String>(detailedNote),
         privacy: privacy == null ? const Value.absent() : Value(privacy),
@@ -720,6 +729,7 @@ class EntryRepository {
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
+    String? status,
     String? typeId,
     String? search,
     bool withoutRating = false,
@@ -741,6 +751,11 @@ class EntryRepository {
     }
     if (relation != null) {
       where.add(db.profileEntries.relation.equals(relation));
+    }
+    // Ключ стадии общий для всех типов, поэтому «что сейчас в процессе»
+    // спрашивается одним условием, а не отдельно про книги, фильмы и продукты.
+    if (status != null) {
+      where.add(db.profileEntries.status.equals(status));
     }
     if (typeId != null) {
       where.add(db.objects.typeId.equals(typeId));
@@ -840,6 +855,7 @@ class EntryRepository {
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
+    String? status,
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
@@ -856,6 +872,7 @@ class EntryRepository {
       categoryIds: categoryIds,
       tagIds: tagIds,
       relation: relation,
+      status: status,
       typeId: typeId,
       search: search,
       withoutRating: withoutRating,
@@ -878,6 +895,7 @@ class EntryRepository {
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
+    String? status,
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
@@ -894,6 +912,7 @@ class EntryRepository {
       categoryIds: categoryIds,
       tagIds: tagIds,
       relation: relation,
+      status: status,
       typeId: typeId,
       search: search,
       sort: sort,
@@ -920,6 +939,7 @@ class EntryRepository {
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
+    String? status,
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
@@ -938,6 +958,7 @@ class EntryRepository {
       categoryIds: categoryIds,
       tagIds: tagIds,
       relation: relation,
+      status: status,
       typeId: typeId,
       search: search,
       sort: sort,
@@ -1137,6 +1158,7 @@ class EntryRepository {
     List<String>? categoryIds,
     List<String>? tagIds,
     String? relation,
+    String? status,
     String? typeId,
     String? search,
     EntrySort sort = EntrySort.recent,
@@ -1154,6 +1176,7 @@ class EntryRepository {
       categoryIds: categoryIds,
       tagIds: tagIds,
       relation: relation,
+      status: status,
       typeId: typeId,
       search: search,
       withoutRating: withoutRating,
@@ -1221,12 +1244,24 @@ class EntryRepository {
       ];
     }
 
+    // Названия стадий у каждого типа свои, а разбор JSON стоит заметно
+    // дороже чтения поля: на странице в шестьдесят карточек типов обычно
+    // два-три, поэтому разбираем каждый по одному разу.
+    final statusesByType = <String, List<EntryStatus>>{};
+    List<EntryStatus> statusesOf(ObjectTypeRow type) =>
+        statusesByType[type.id] ??= EntryStatus.decode(type.statusesJson);
+
     return [
       for (final r in rows)
         () {
           final entry = r.readTable(db.profileEntries);
           final obj = r.readTable(db.objects);
           final type = r.readTable(db.objectTypes);
+          final status = entry.status == null
+              ? null
+              : statusesOf(
+                  type,
+                ).where((s) => s.key == entry.status).firstOrNull;
           return EntryView(
             entryId: entry.id,
             objectId: obj.id,
@@ -1238,6 +1273,10 @@ class EntryRepository {
             relation: entry.relation,
             rating: entry.rating,
             status: entry.status,
+            statusLabel: status?.name,
+            progressCurrent: entry.progressCurrent,
+            progressTotal: entry.progressTotal,
+            progressUnit: type.progressUnit,
             impressionDate: entry.impressionDate,
             createdAt: entry.createdAt,
             coverPath: covers[entry.id],

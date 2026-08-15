@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/domain/entry_status.dart';
 import '../models/entry_view.dart';
 import 'entry_repository.dart';
 
@@ -45,13 +46,15 @@ extension EntryStats on EntryRepository {
           .getSingle(),
     );
 
-    final wantCount = await countOf(
+    // Задуманное считается по стадии, а не по отношению: «хочу попробовать» —
+    // не мнение о вещи, а отметка, что мнения ещё нет.
+    final plannedCount = await countOf(
       (db.selectOnly(db.profileEntries)
             ..addColumns([db.profileEntries.id.count()])
             ..where(
               db.profileEntries.profileId.equals(profileId) &
                   db.profileEntries.archivedAt.isNull() &
-                  db.profileEntries.relation.equals('wantToTry'),
+                  db.profileEntries.status.equals(EntryStatus.planned),
             ))
           .map((r) => r.read(db.profileEntries.id.count()) ?? 0)
           .getSingle(),
@@ -61,7 +64,7 @@ extension EntryStats on EntryRepository {
       entries: entriesCount,
       categories: categoriesCount,
       collections: collectionsCount,
-      wantToTry: wantCount,
+      planned: plannedCount,
     );
   }
 

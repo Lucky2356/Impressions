@@ -17,7 +17,6 @@ import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/collections/collections_screen.dart';
 import 'package:impressions/features/compare/compare_screen.dart';
 import 'package:impressions/features/exchange/incoming_screen.dart';
-import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/insights/insights_screen.dart';
 import 'package:impressions/features/profiles/profiles_screen.dart';
 import 'package:impressions/features/quick_add/category_picker.dart';
@@ -55,7 +54,8 @@ void main() {
     title: title,
     typeName: 'Продукты',
     categoryPath: const ['Продукты', 'Колбасы'],
-    relation: 'wantToTry',
+    status: 'planned',
+    statusLabel: 'Хочу попробовать',
     rating: 8,
   );
 
@@ -149,7 +149,9 @@ void main() {
       ProviderScope(
         overrides: [
           ...base(),
-          wantToTryProvider.overrideWith(
+          // Экран читает `wishlistProvider`; подмена соседнего провайдера
+          // главной оставляла его пустым, и тест смотрел на пустое состояние.
+          wishlistProvider.overrideWith(
             (ref) async => [
               entry('e1', 'Длинное название для проверки переноса'),
             ],

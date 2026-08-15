@@ -126,6 +126,84 @@ void main() {
     });
   });
 
+  group('«Хочу попробовать» переезжает в стадию', () {
+    /// Заводит запись прямо в таблице: репозиторий такого отношения уже не
+    /// знает, а миграции достаются именно такие строки — из старой базы.
+    Future<String> legacyEntry(
+      String profileId,
+      String objectId, {
+      String? relation,
+      String? status,
+    }) async {
+      final id = 'e-$profileId-$objectId-${relation ?? status}';
+      await db
+          .into(db.profileEntries)
+          .insert(
+            ProfileEntriesCompanion.insert(
+              id: id,
+              profileId: profileId,
+              objectId: objectId,
+              relation: Value(relation),
+              status: Value(status),
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          );
+      return id;
+    }
+
+    Future<ProfileEntryRow> reloadEntry(String id) => (db.select(
+      db.profileEntries,
+    )..where((e) => e.id.equals(id))).getSingle();
+
+    test('отношение становится стадией, а мнение стирается', () async {
+      final me = await profiles.createOwnProfile(firstName: 'Задумки');
+      final type = await entries.createObjectType(me.id, 'Фильмы');
+      final object = await entries.createObject(
+        typeId: type.id,
+        title: 'Не смотрел',
+      );
+
+      final want = await legacyEntry(me.id, object.id, relation: 'wantToTry');
+      final liked = await legacyEntry(me.id, object.id, relation: 'like');
+
+      expect(await db.migrateWantToTryToStatus(), 1);
+
+      final moved = await reloadEntry(want);
+      expect(moved.status, EntryStatus.planned);
+      // «Хочу попробовать» — не мнение о вещи, а отметка, что мнения ещё нет.
+      expect(moved.relation, isNull);
+
+      // Настоящее отношение остаётся нетронутым.
+      final kept = await reloadEntry(liked);
+      expect(kept.relation, 'like');
+      expect(kept.status, isNull);
+    });
+
+    test('перенесённая запись получает нормальный ключ стадии', () async {
+      final me = await profiles.createOwnProfile(firstName: 'Перенос');
+      final type = await entries.createObjectType(me.id, 'Книги');
+      final object = await entries.createObject(
+        typeId: type.id,
+        title: 'Чужая',
+      );
+      // Перенос между профилями писал в колонку стадии ключ отношения.
+      final id = await legacyEntry(me.id, object.id, status: 'wantToTry');
+
+      expect(await db.migrateWantToTryToStatus(), 1);
+      expect((await reloadEntry(id)).status, EntryStatus.planned);
+    });
+
+    test('повторный проход больше ничего не трогает', () async {
+      final me = await profiles.createOwnProfile(firstName: 'Дважды');
+      final type = await entries.createObjectType(me.id, 'Игры');
+      final object = await entries.createObject(typeId: type.id, title: 'Игра');
+      await legacyEntry(me.id, object.id, relation: 'wantToTry');
+
+      expect(await db.migrateWantToTryToStatus(), 1);
+      expect(await db.migrateWantToTryToStatus(), 0);
+    });
+  });
+
   test('первый запуск сразу связывает ветку с её типом', () async {
     final me = await profiles.createOwnProfile(firstName: 'Первый запуск');
     await SeedService(db).seedForProfile(

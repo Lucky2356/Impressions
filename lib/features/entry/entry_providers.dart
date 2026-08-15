@@ -14,7 +14,7 @@ class EntryDetail {
   const EntryDetail({
     required this.entry,
     required this.object,
-    required this.typeName,
+    required this.type,
     required this.categoryPath,
     required this.extraCategories,
     required this.history,
@@ -23,7 +23,14 @@ class EntryDetail {
 
   final ProfileEntryRow entry;
   final ObjectRow object;
-  final String typeName;
+
+  /// Тип записи целиком, а не одно название: у него же лежат набор стадий и
+  /// единица прогресса, и второй запрос за ними был бы запросом за тем, что
+  /// уже прочитано.
+  final ObjectTypeRow type;
+
+  String get typeName => type.name;
+
   final List<String> categoryPath;
 
   /// Дополнительные категории (§7.2): запись лежит и здесь тоже.
@@ -98,7 +105,7 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
   return EntryDetail(
     entry: entry,
     object: object,
-    typeName: type.name,
+    type: type,
     categoryPath: path,
     extraCategories: extras,
     history: history,
