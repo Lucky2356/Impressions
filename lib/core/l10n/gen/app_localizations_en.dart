@@ -606,6 +606,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get statusesTitle => 'Stages';
+
+  @override
+  String statusesEditFor(String name) {
+    return 'Stages of “$name”';
+  }
+
+  @override
+  String get statusesHint =>
+      'A stage answers “have you got to it yet”, while the relation answers “did you like it”. Each type names its own.';
+
+  @override
+  String get statusesEmpty =>
+      'This type has no stages: an entry counts as done right away.';
+
+  @override
+  String get statusesAllUsed => 'All three stages are already there';
+
+  @override
+  String get statusAdd => 'Add a stage';
+
+  @override
+  String get statusRemove => 'Remove the stage';
+
+  @override
+  String get statusRename => 'Rename the stage';
+
+  @override
+  String get statusNameLabel => 'Stage name';
+
+  @override
+  String get statusStagePlanned => 'Planned';
+
+  @override
+  String get statusStageInProgress => 'In progress';
+
+  @override
+  String get statusStageDone => 'Done';
+
+  @override
+  String get progressUnitLabel => 'What progress counts in';
+
+  @override
+  String get progressUnitHint =>
+      'episode, page, hour — leave empty if there is nothing to count';
+
+  @override
   String get categoryDefaultType => 'Default type';
 
   @override

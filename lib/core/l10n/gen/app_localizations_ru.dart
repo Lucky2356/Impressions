@@ -621,6 +621,53 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get statusesTitle => 'Стадии';
+
+  @override
+  String statusesEditFor(String name) {
+    return 'Стадии типа «$name»';
+  }
+
+  @override
+  String get statusesHint =>
+      'Стадия отвечает на вопрос «дошли ли вы до этого», а отношение — «понравилось ли». Названия у каждого типа свои.';
+
+  @override
+  String get statusesEmpty =>
+      'У этого типа стадий нет: запись сразу считается состоявшейся.';
+
+  @override
+  String get statusesAllUsed => 'Все три стадии уже заведены';
+
+  @override
+  String get statusAdd => 'Добавить стадию';
+
+  @override
+  String get statusRemove => 'Убрать стадию';
+
+  @override
+  String get statusRename => 'Переименовать стадию';
+
+  @override
+  String get statusNameLabel => 'Название стадии';
+
+  @override
+  String get statusStagePlanned => 'Задумано';
+
+  @override
+  String get statusStageInProgress => 'В процессе';
+
+  @override
+  String get statusStageDone => 'Состоялось';
+
+  @override
+  String get progressUnitLabel => 'В чём считать прогресс';
+
+  @override
+  String get progressUnitHint =>
+      'серия, страница, час — пусто, если считать нечего';
+
+  @override
   String get categoryDefaultType => 'Тип по умолчанию';
 
   @override

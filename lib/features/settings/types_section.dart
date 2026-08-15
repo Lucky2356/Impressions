@@ -12,6 +12,7 @@ import '../../data/db/database.dart';
 import '../../data/providers.dart';
 import '../../design_system/design_system.dart';
 import 'fields_editor.dart';
+import 'statuses_editor.dart';
 
 /// Типы объектов активного профиля, включая скрытые.
 final allObjectTypesProvider = FutureProvider<List<ObjectTypeRow>>((ref) async {
@@ -161,6 +162,11 @@ class TypesSection extends ConsumerWidget {
                   icon: Icons.list_alt_rounded,
                   tooltip: l10n.fieldsTitle,
                   onPressed: () => FieldsEditor.show(context, types[i]),
+                ),
+                AppIconButton(
+                  icon: Icons.timeline_rounded,
+                  tooltip: l10n.statusesTitle,
+                  onPressed: () => StatusesEditor.show(context, types[i]),
                 ),
                 AppIconButton(
                   icon: types[i].hidden

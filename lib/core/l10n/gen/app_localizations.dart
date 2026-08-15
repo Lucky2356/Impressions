@@ -1136,6 +1136,90 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @statusesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадии'**
+  String get statusesTitle;
+
+  /// No description provided for @statusesEditFor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадии типа «{name}»'**
+  String statusesEditFor(String name);
+
+  /// No description provided for @statusesHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадия отвечает на вопрос «дошли ли вы до этого», а отношение — «понравилось ли». Названия у каждого типа свои.'**
+  String get statusesHint;
+
+  /// No description provided for @statusesEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'У этого типа стадий нет: запись сразу считается состоявшейся.'**
+  String get statusesEmpty;
+
+  /// No description provided for @statusesAllUsed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все три стадии уже заведены'**
+  String get statusesAllUsed;
+
+  /// No description provided for @statusAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить стадию'**
+  String get statusAdd;
+
+  /// No description provided for @statusRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать стадию'**
+  String get statusRemove;
+
+  /// No description provided for @statusRename.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переименовать стадию'**
+  String get statusRename;
+
+  /// No description provided for @statusNameLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Название стадии'**
+  String get statusNameLabel;
+
+  /// No description provided for @statusStagePlanned.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задумано'**
+  String get statusStagePlanned;
+
+  /// No description provided for @statusStageInProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'В процессе'**
+  String get statusStageInProgress;
+
+  /// No description provided for @statusStageDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Состоялось'**
+  String get statusStageDone;
+
+  /// No description provided for @progressUnitLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'В чём считать прогресс'**
+  String get progressUnitLabel;
+
+  /// No description provided for @progressUnitHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'серия, страница, час — пусто, если считать нечего'**
+  String get progressUnitHint;
+
   /// No description provided for @categoryDefaultType.
   ///
   /// In ru, this message translates to:
