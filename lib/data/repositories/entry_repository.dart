@@ -391,6 +391,30 @@ class EntryRepository {
   Future<void> addCategory(String entryId, String categoryId) =>
       _link(entryId, categoryId, primary: false);
 
+  /// Убирает дополнительную категорию.
+  ///
+  /// Основную не трогает: запись без основной категории теряет путь, и в
+  /// каталоге у неё вместо крошек оказывается пустота.
+  Future<void> removeCategory(String entryId, String categoryId) async {
+    await (db.delete(db.entryCategories)..where(
+          (ec) =>
+              ec.entryId.equals(entryId) &
+              ec.categoryId.equals(categoryId) &
+              ec.isPrimary.equals(false),
+        ))
+        .go();
+  }
+
+  /// Дополнительные категории записи — всё, кроме основной (§7.2).
+  Future<List<String>> extraCategoriesOf(String entryId) async {
+    final links =
+        await (db.select(db.entryCategories)..where(
+              (ec) => ec.entryId.equals(entryId) & ec.isPrimary.equals(false),
+            ))
+            .get();
+    return [for (final l in links) l.categoryId];
+  }
+
   // ---- Теги (§7.2) ----
   //
   // Теги — свободные метки без вложенности. Это отдельный от категорий
@@ -1210,6 +1234,7 @@ class EntryRepository {
             typeName: type.name,
             subtitle: obj.creator ?? obj.summary,
             categoryPath: pathNamesFor(primaryByEntry[entry.id]),
+            primaryCategoryId: primaryByEntry[entry.id],
             relation: entry.relation,
             rating: entry.rating,
             status: entry.status,

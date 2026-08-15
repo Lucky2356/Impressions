@@ -11,6 +11,7 @@ class EntryView {
     required this.typeName,
     this.subtitle,
     this.categoryPath = const [],
+    this.primaryCategoryId,
     this.relation,
     this.rating,
     this.status,
@@ -27,6 +28,13 @@ class EntryView {
 
   /// Названия категорий от корня к основной категории записи.
   final List<String> categoryPath;
+
+  /// Основная категория записи.
+  ///
+  /// Нужна, чтобы отличить запись, попавшую в список ветки дополнительной
+  /// категорией: путь у неё ведёт в другое место, и без пометки это выглядит
+  /// как ошибка отбора.
+  final String? primaryCategoryId;
 
   final String? relation;
   final double? rating;

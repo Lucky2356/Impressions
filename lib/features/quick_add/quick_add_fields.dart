@@ -352,3 +352,71 @@ class ImpressionDateField extends StatelessWidget {
     );
   }
 }
+
+/// Дополнительные полки в форме добавления (§7.2).
+///
+/// Свёрнуто по умолчанию: форма и так плотная, а вторая полка нужна изредка.
+/// Основную категорию задаёт поле выше — она же определяет путь записи.
+class ExtraCategoriesField extends StatefulWidget {
+  const ExtraCategoriesField({
+    super.key,
+    required this.categories,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<CategoryRow> categories;
+  final VoidCallback onAdd;
+  final void Function(String categoryId) onRemove;
+
+  @override
+  State<ExtraCategoriesField> createState() => ExtraCategoriesFieldState();
+}
+
+class ExtraCategoriesFieldState extends State<ExtraCategoriesField> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final open = _open || widget.categories.isNotEmpty;
+
+    if (!open) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => setState(() => _open = true),
+          icon: const Icon(Icons.add_rounded, size: 16),
+          label: Text(l10n.categoryExtra),
+          style: TextButton.styleFrom(foregroundColor: c.textSecondary),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: AppDimens.space8,
+      runSpacing: AppDimens.space8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          l10n.categoryExtra,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        ),
+        for (final category in widget.categories)
+          Chip(
+            label: Text(category.name),
+            visualDensity: VisualDensity.compact,
+            onDeleted: () => widget.onRemove(category.id),
+            deleteButtonTooltipMessage: l10n.categoryExtraRemove,
+          ),
+        ActionChip(
+          avatar: const Icon(Icons.add_rounded, size: 16),
+          label: Text(l10n.categoryExtraAdd),
+          visualDensity: VisualDensity.compact,
+          onPressed: widget.onAdd,
+        ),
+      ],
+    );
+  }
+}

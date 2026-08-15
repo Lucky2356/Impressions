@@ -97,6 +97,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   bool _typePicked = false;
 
   CategoryRow? _category;
+
+  /// Ещё полки, на которых должна лежать запись (§7.2).
+  final List<CategoryRow> _extraCategories = [];
   Relation? _relation;
   double? _rating;
   bool _showDetails = false;
@@ -503,6 +506,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         detailedNote: _note.text.trim().isEmpty ? null : _note.text.trim(),
         impressionDate: _impressionDate,
         primaryCategoryId: _category?.id,
+        extraCategoryIds: [for (final x in _extraCategories) x.id],
       );
 
       for (final name in _tags) {
@@ -672,6 +676,20 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           DuplicateDialog(candidates: candidates.take(5).toList()),
     );
     return result ?? const DuplicateAnswer.cancelled();
+  }
+
+  /// Добавляет ещё одну полку, не предлагая уже занятые.
+  Future<void> _pickExtraCategory() async {
+    final taken = {?_category?.id, for (final x in _extraCategories) x.id};
+    final picked = await CategoryPicker.show(
+      context,
+      title: AppLocalizations.of(context).categoryExtraAdd,
+      allowClear: false,
+      excludeIds: taken,
+    );
+    final category = picked?.category;
+    if (category == null) return;
+    setState(() => _extraCategories.add(category));
   }
 
   /// Тип, подсказанный выбранной категорией; null — подсказки нет.
@@ -879,6 +897,16 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       ],
                     );
                   },
+                ),
+                const SizedBox(height: AppDimens.space8),
+                // Дополнительные полки прячутся за ссылкой: форма и так
+                // плотная, а нужны они изредка.
+                ExtraCategoriesField(
+                  categories: _extraCategories,
+                  onAdd: _pickExtraCategory,
+                  onRemove: (id) => setState(
+                    () => _extraCategories.removeWhere((x) => x.id == id),
+                  ),
                 ),
                 const SizedBox(height: AppDimens.space8),
                 Text(

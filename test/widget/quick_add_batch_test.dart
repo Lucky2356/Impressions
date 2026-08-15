@@ -33,7 +33,9 @@ void main() {
   tearDown(() => db.close());
 
   Future<void> openSheet(WidgetTester tester, Widget sheet) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 900));
+    // Окно повыше: с раскрытыми подробностями форма длинная, а проверяем мы
+    // здесь не вёрстку, а то, что сохраняется.
+    await tester.binding.setSurfaceSize(const Size(1280, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(

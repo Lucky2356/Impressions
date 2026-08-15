@@ -16,6 +16,7 @@ class EntryDetail {
     required this.object,
     required this.typeName,
     required this.categoryPath,
+    required this.extraCategories,
     required this.history,
     this.recommendedBy,
   });
@@ -24,6 +25,13 @@ class EntryDetail {
   final ObjectRow object;
   final String typeName;
   final List<String> categoryPath;
+
+  /// Дополнительные категории (§7.2): запись лежит и здесь тоже.
+  ///
+  /// Схема их поддерживала с самого начала, но интерфейс знал только про
+  /// основную: положить запись на две полки было нечем.
+  final List<CategoryRow> extraCategories;
+
   final List<ProfileEntryRevisionRow> history;
 
   /// Имя того, кто посоветовал эту запись; null — завели сами.
@@ -68,6 +76,16 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
           db,
         ).breadcrumb(primary.categoryId)).map((c) => c.name).toList();
 
+  final extraIds = [
+    for (final l in links)
+      if (!l.isPrimary) l.categoryId,
+  ];
+  final extras = extraIds.isEmpty
+      ? const <CategoryRow>[]
+      : await (db.select(
+          db.categories,
+        )..where((c) => c.id.isIn(extraIds))).get();
+
   final history = await RevisionService(db).entryHistory(entryId);
 
   final source = entry.recommendedByProfileId;
@@ -82,6 +100,7 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
     object: object,
     typeName: type.name,
     categoryPath: path,
+    extraCategories: extras,
     history: history,
     recommendedBy: recommender?.firstName,
   );

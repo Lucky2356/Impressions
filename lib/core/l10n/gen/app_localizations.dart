@@ -1136,6 +1136,36 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @categoryPrimary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основная категория'**
+  String get categoryPrimary;
+
+  /// No description provided for @categoryExtra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё категории'**
+  String get categoryExtra;
+
+  /// No description provided for @categoryExtraAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Положить ещё на полку'**
+  String get categoryExtraAdd;
+
+  /// No description provided for @categoryExtraRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать с этой полки'**
+  String get categoryExtraRemove;
+
+  /// No description provided for @categoryExtraBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительная категория'**
+  String get categoryExtraBadge;
+
   /// No description provided for @categoryMerge.
   ///
   /// In ru, this message translates to:

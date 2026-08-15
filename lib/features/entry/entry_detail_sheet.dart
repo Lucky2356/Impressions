@@ -193,6 +193,17 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       ],
                     ),
                   ),
+                  if (isOwn || d.extraCategories.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimens.space8),
+                      child: _ExtraCategories(
+                        categories: d.extraCategories,
+                        onAdd: isOwn ? () => _addCategory(d.entry.id) : null,
+                        onRemove: isOwn
+                            ? (id) => _removeCategory(d.entry.id, id)
+                            : null,
+                      ),
+                    ),
                   const SizedBox(height: AppDimens.space12),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,6 +503,35 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     await ref
         .read(entryRepositoryProvider)
         .setPrimaryCategory(entryId, category.id);
+    _bump();
+  }
+
+  /// Кладёт запись ещё на одну полку (§7.2).
+  ///
+  /// Основная категория остаётся прежней: она задаёт путь записи, а
+  /// дополнительные — просто ещё места, где её найдут.
+  Future<void> _addCategory(String entryId) async {
+    final entries = ref.read(entryRepositoryProvider);
+    final taken = {
+      ?await entries.primaryCategoryOf(entryId),
+      ...await entries.extraCategoriesOf(entryId),
+    };
+    if (!mounted) return;
+
+    final picked = await CategoryPicker.show(
+      context,
+      title: AppLocalizations.of(context).categoryExtraAdd,
+      allowClear: false,
+      excludeIds: taken,
+    );
+    final category = picked?.category;
+    if (category == null) return;
+    await entries.addCategory(entryId, category.id);
+    _bump();
+  }
+
+  Future<void> _removeCategory(String entryId, String categoryId) async {
+    await ref.read(entryRepositoryProvider).removeCategory(entryId, categoryId);
     _bump();
   }
 
@@ -844,6 +884,53 @@ class _SimilarEntries extends ConsumerWidget {
         const SizedBox(height: AppDimens.space8),
         Divider(color: c.divider),
         const SizedBox(height: AppDimens.space8),
+      ],
+    );
+  }
+}
+
+/// Дополнительные категории записи (§7.2).
+///
+/// Основная остаётся крошками выше — иерархия делает разницу очевидной без
+/// объяснений: путь один, а полок, на которых запись лежит, может быть
+/// несколько.
+class _ExtraCategories extends StatelessWidget {
+  const _ExtraCategories({required this.categories, this.onAdd, this.onRemove});
+
+  final List<CategoryRow> categories;
+  final VoidCallback? onAdd;
+  final void Function(String categoryId)? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+
+    return Wrap(
+      spacing: AppDimens.space8,
+      runSpacing: AppDimens.space8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (categories.isNotEmpty)
+          Text(
+            l10n.categoryExtra,
+            style: context.text.labelSmall?.copyWith(color: c.textMuted),
+          ),
+        for (final category in categories)
+          Chip(
+            label: Text(category.name),
+            visualDensity: VisualDensity.compact,
+            onDeleted: onRemove == null ? null : () => onRemove!(category.id),
+            deleteButtonTooltipMessage: l10n.categoryExtraRemove,
+          ),
+        if (onAdd != null)
+          ActionChip(
+            avatar: const Icon(Icons.add_rounded, size: 16),
+            label: Text(categories.isEmpty ? l10n.categoryExtra : ''),
+            visualDensity: VisualDensity.compact,
+            tooltip: l10n.categoryExtraAdd,
+            onPressed: onAdd,
+          ),
       ],
     );
   }

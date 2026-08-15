@@ -101,10 +101,16 @@ class BranchEntriesGrid extends StatelessWidget {
   const BranchEntriesGrid({
     super.key,
     required this.entries,
+    required this.branchIds,
     this.draggable = true,
   });
 
   final List<EntryView> entries;
+
+  /// Ветка, содержимое которой показано. По ней видно, кто попал сюда
+  /// дополнительной категорией: у такой записи путь ведёт совсем в другое
+  /// место, и без пометки это выглядит как ошибка.
+  final Set<String> branchIds;
 
   /// Можно ли утащить запись в другую ветку. На телефоне дерева на экране нет,
   /// и тащить некуда — там перенос делается через меню записи.
@@ -128,9 +134,13 @@ class BranchEntriesGrid extends StatelessWidget {
           itemCount: entries.length,
           itemBuilder: (context, i) {
             final e = entries[i];
-            final card = EntryCardCompact(
-              data: entryCardData(context, e),
-              onTap: () => EntryDetailSheet.show(context, e.entryId),
+            final card = _maybeBadged(
+              context,
+              entry: e,
+              child: EntryCardCompact(
+                data: entryCardData(context, e),
+                onTap: () => EntryDetailSheet.show(context, e.entryId),
+              ),
             );
             if (!draggable) return card;
             return CategoryDraggable(
@@ -143,6 +153,42 @@ class BranchEntriesGrid extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  /// Помечает запись, которая лежит здесь дополнительной категорией.
+  ///
+  /// Основная категория задаёт путь на карточке. Если он ведёт в другую ветку,
+  /// запись в этом списке выглядит попавшей по ошибке — пометка объясняет, что
+  /// она тут нарочно.
+  Widget _maybeBadged(
+    BuildContext context, {
+    required EntryView entry,
+    required Widget child,
+  }) {
+    // Путь пуст — основной категории нет вовсе, и сравнивать не с чем.
+    if (entry.categoryPath.isEmpty) return child;
+    if (entry.primaryCategoryId case final id? when branchIds.contains(id)) {
+      return child;
+    }
+
+    final l10n = AppLocalizations.of(context);
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: AppDimens.space4,
+          right: AppDimens.space4,
+          child: Tooltip(
+            message: l10n.categoryExtraBadge,
+            child: Icon(
+              Icons.link_rounded,
+              size: 14,
+              color: context.colors.textMuted,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

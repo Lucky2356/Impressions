@@ -621,6 +621,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get categoryPrimary => 'Основная категория';
+
+  @override
+  String get categoryExtra => 'Ещё категории';
+
+  @override
+  String get categoryExtraAdd => 'Положить ещё на полку';
+
+  @override
+  String get categoryExtraRemove => 'Убрать с этой полки';
+
+  @override
+  String get categoryExtraBadge => 'Дополнительная категория';
+
+  @override
   String get categoryMerge => 'Объединить с…';
 
   @override

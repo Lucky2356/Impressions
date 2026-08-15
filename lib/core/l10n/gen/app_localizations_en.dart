@@ -606,6 +606,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get categoryPrimary => 'Primary category';
+
+  @override
+  String get categoryExtra => 'More categories';
+
+  @override
+  String get categoryExtraAdd => 'Put on another shelf';
+
+  @override
+  String get categoryExtraRemove => 'Take off this shelf';
+
+  @override
+  String get categoryExtraBadge => 'Extra category';
+
+  @override
   String get categoryMerge => 'Merge with…';
 
   @override

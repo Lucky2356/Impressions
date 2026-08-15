@@ -15,13 +15,20 @@ Future<T?> showAdaptiveSheet<T>(
   double? height,
   double? heightFactor,
 }) {
-  final wide = MediaQuery.sizeOf(context).width >= AppDimens.breakpointExpanded;
+  final screen = MediaQuery.sizeOf(context);
+  final wide = screen.width >= AppDimens.breakpointExpanded;
   if (wide) {
     return showDialog<T>(
       context: context,
       builder: (ctx) => Dialog(
         clipBehavior: Clip.antiAlias,
-        child: SizedBox(width: width, height: height, child: builder(ctx)),
+        child: ConstrainedBox(
+          // Диалог растёт по содержимому, и на невысоком окне длинная форма
+          // уезжала нижним краем за экран вместе с кнопкой «Сохранить»:
+          // прокрутка внутри упиралась в то, что прокручивать уже некуда.
+          constraints: BoxConstraints(maxHeight: screen.height * 0.9),
+          child: SizedBox(width: width, height: height, child: builder(ctx)),
+        ),
       ),
     );
   }

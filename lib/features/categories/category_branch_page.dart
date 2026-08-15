@@ -136,6 +136,10 @@ class CategoryBranchPage extends ConsumerWidget {
                       const SizedBox(height: AppDimens.space12),
                       BranchEntriesGrid(
                         entries: found.items,
+                        branchIds: CategoryTree.branchIds(
+                          all,
+                          category.id,
+                        ).toSet(),
                         // Тащить запись есть куда только там, где рядом видно
                         // дерево: на телефоне для этого есть пункт меню.
                         draggable: layout.isWide,
