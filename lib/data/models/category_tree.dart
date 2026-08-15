@@ -65,4 +65,27 @@ class CategoryTree {
     for (final c in all)
       if (c.parentId == parentId) c,
   ];
+
+  /// Тип по умолчанию для новой записи в этой ветке — и ветка, откуда он взят.
+  ///
+  /// Ищется вверх по дереву: у самой категории, потом у родителя и так до
+  /// корня. Ближний предок точнее дальнего — «Места / Парки» получает тип от
+  /// «Парков», если он там задан, и только иначе от «Мест».
+  ///
+  /// До 1.16.0 тип угадывался по совпадению названий категории и типа. Правило
+  /// работало ровно потому, что первый запуск заводит одноимённую пару, но
+  /// жило в коде: увидеть его было негде, поправить — тоже. Теперь это поле
+  /// ветки, а «откуда взят» возвращается вместе с ним, чтобы форма могла это
+  /// показать.
+  static ({String typeId, CategoryRow from})? defaultTypeFor(
+    Iterable<CategoryRow> all,
+    CategoryRow category,
+  ) {
+    for (final node in breadcrumbOf(all, category).reversed) {
+      if (node.defaultTypeId case final typeId?) {
+        return (typeId: typeId, from: node);
+      }
+    }
+    return null;
+  }
 }

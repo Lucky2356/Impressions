@@ -1136,6 +1136,42 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @categoryDefaultType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип по умолчанию'**
+  String get categoryDefaultType;
+
+  /// No description provided for @categoryDefaultTypeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'С него начинается новая запись в этой ветке'**
+  String get categoryDefaultTypeHint;
+
+  /// No description provided for @categoryDefaultTypeNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не задан'**
+  String get categoryDefaultTypeNone;
+
+  /// No description provided for @categoryDefaultTypeFrom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип взят из «{name}»'**
+  String categoryDefaultTypeFrom(String name);
+
+  /// No description provided for @categoryDefaultTypeSuggest.
+  ///
+  /// In ru, this message translates to:
+  /// **'В ветке чаще всего «{name}». Сделать типом по умолчанию?'**
+  String categoryDefaultTypeSuggest(String name);
+
+  /// No description provided for @categoryDefaultTypeApply.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделать'**
+  String get categoryDefaultTypeApply;
+
   /// No description provided for @categoryPrimary.
   ///
   /// In ru, this message translates to:

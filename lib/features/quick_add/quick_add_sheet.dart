@@ -14,6 +14,7 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
+import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/draft_repository.dart';
@@ -27,7 +28,6 @@ import '../home/home_providers.dart';
 import 'category_picker.dart';
 import 'quick_add_draft.dart';
 import 'quick_add_fields.dart';
-import 'type_for_category.dart';
 
 /// Быстрое добавление записи (§11).
 ///
@@ -692,32 +692,22 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     setState(() => _extraCategories.add(category));
   }
 
-  /// Тип, подсказанный выбранной категорией; null — подсказки нет.
-  String? _guessType(List<ObjectTypeRow> types) {
+  /// Тип, заданный веткой, и откуда он взят; null — ветка ничего не говорит.
+  ///
+  /// Раньше тип угадывался по совпадению названий категории и типа. Правило
+  /// жило в коде, нигде не показывалось и не правилось — теперь это поле
+  /// ветки, и форма говорит, из какой именно.
+  ({String typeId, CategoryRow from})? _branchType(List<ObjectTypeRow> types) {
     final category = _category;
-    if (category == null) return null;
+    if (category == null || types.isEmpty) return null;
     final categories = ref.watch(allCategoriesProvider).value ?? const [];
 
-    // Сначала по имени ветки: это попадает почти всегда и ничего не читает.
-    final byName = typeForCategory(
-      category: category,
-      categories: categories,
-      types: types,
-    );
-    if (byName != null) return byName;
-
-    // И только если имя ничего не сказало — смотрим, что в ветке уже лежит.
-    // Перевес типа считает база: сами записи ветки форме не нужны.
-    final counts =
-        ref.watch(branchTypeCountsProvider(category.id)).value ??
-        const <String, int>{};
-    if (counts.isEmpty) return null;
-    return typeForCategory(
-      category: category,
-      categories: categories,
-      types: types,
-      branchTypeCounts: counts,
-    );
+    final found = CategoryTree.defaultTypeFor(categories, category);
+    if (found == null) return null;
+    // Тип мог быть убран из профиля: ссылка обнулится не сразу, а подставлять
+    // несуществующее нельзя.
+    if (!types.any((t) => t.id == found.typeId)) return null;
+    return found;
   }
 
   @override
@@ -729,8 +719,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     // Тип по категории, а не первый из списка: форма, открытая из «Мест ›
     // Парков», предлагала «Продукты» просто потому, что этот тип идёт первым.
+    final fromBranch = _branchType(typeList);
     if (!_typePicked && typeList.isNotEmpty) {
-      _typeId = _guessType(typeList) ?? _typeId ?? typeList.first.id;
+      _typeId = fromBranch?.typeId ?? _typeId ?? typeList.first.id;
     }
 
     return SafeArea(
@@ -910,7 +901,11 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 ),
                 const SizedBox(height: AppDimens.space8),
                 Text(
-                  l10n.quickAddTypeVsCategory,
+                  // Подстановка типа больше не догадка: видно, какая ветка её
+                  // задала, и туда же можно пойти и поправить.
+                  fromBranch == null || _typePicked
+                      ? l10n.quickAddTypeVsCategory
+                      : l10n.categoryDefaultTypeFrom(fromBranch.from.name),
                   style: context.text.labelSmall?.copyWith(color: c.textMuted),
                 ),
                 const SizedBox(height: AppDimens.space16),

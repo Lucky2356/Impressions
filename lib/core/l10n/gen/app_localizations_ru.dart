@@ -621,6 +621,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get categoryDefaultType => 'Тип по умолчанию';
+
+  @override
+  String get categoryDefaultTypeHint =>
+      'С него начинается новая запись в этой ветке';
+
+  @override
+  String get categoryDefaultTypeNone => 'Не задан';
+
+  @override
+  String categoryDefaultTypeFrom(String name) {
+    return 'Тип взят из «$name»';
+  }
+
+  @override
+  String categoryDefaultTypeSuggest(String name) {
+    return 'В ветке чаще всего «$name». Сделать типом по умолчанию?';
+  }
+
+  @override
+  String get categoryDefaultTypeApply => 'Сделать';
+
+  @override
   String get categoryPrimary => 'Основная категория';
 
   @override

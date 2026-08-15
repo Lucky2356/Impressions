@@ -14,6 +14,7 @@ import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
 import '../../design_system/design_system.dart';
 import '../entry/photo_source.dart';
+import '../home/home_providers.dart';
 import 'category_palette.dart';
 import 'category_providers.dart';
 
@@ -52,6 +53,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
   late String? _icon = widget.category.icon;
   late int? _color = widget.category.color;
   late String? _coverId = widget.category.coverAttachmentId;
+  late String? _typeId = widget.category.defaultTypeId;
 
   ImageService get _images => ImageService(ref.read(appDatabaseProvider));
 
@@ -171,6 +173,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
       color: _color,
       description: description.isEmpty ? null : description,
       coverAttachmentId: _coverId,
+      defaultTypeId: _typeId,
     );
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
@@ -226,6 +229,10 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
                   ),
                 ),
                 const SizedBox(height: AppDimens.space20),
+                SectionHeader(title: l10n.categoryDefaultType),
+                const SizedBox(height: AppDimens.space12),
+                _defaultTypeField(l10n),
+                const SizedBox(height: AppDimens.space20),
                 SectionHeader(title: l10n.categoryColor),
                 const SizedBox(height: AppDimens.space12),
                 ColorSwatches(
@@ -279,6 +286,80 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Тип по умолчанию и подсказка по содержимому ветки.
+  ///
+  /// Подсказку показываем, а не применяем сами: раньше «самый частый тип в
+  /// ветке» подставлялся молча, и объяснить, почему форма предложила именно
+  /// его, было нечем.
+  Widget _defaultTypeField(AppLocalizations l10n) {
+    final types =
+        ref.watch(objectTypesProvider).value ?? const <ObjectTypeRow>[];
+    final counts =
+        ref.watch(branchTypeCountsProvider(widget.category.id)).value ??
+        const <String, int>{};
+
+    // Перевес считает база и отдаёт по имени типа: сами записи ветки редактору
+    // не нужны.
+    ObjectTypeRow? popular;
+    var best = 0;
+    for (final type in types) {
+      final count = counts[type.name] ?? 0;
+      if (count > best) {
+        popular = type;
+        best = count;
+      }
+    }
+    final suggest = popular != null && popular.id != _typeId;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppDropdown<String?>(
+          label: l10n.categoryDefaultType,
+          value: types.any((t) => t.id == _typeId) ? _typeId : null,
+          showLabel: false,
+          icon: Icons.category_rounded,
+          expand: true,
+          onChanged: (v) => setState(() => _typeId = v),
+          items: [
+            DropdownMenuItem(
+              value: null,
+              child: Text(l10n.categoryDefaultTypeNone),
+            ),
+            for (final type in types)
+              DropdownMenuItem(value: type.id, child: Text(type.name)),
+          ],
+        ),
+        const SizedBox(height: AppDimens.space8),
+        Text(
+          l10n.categoryDefaultTypeHint,
+          style: context.text.labelSmall?.copyWith(
+            color: context.colors.textMuted,
+          ),
+        ),
+        if (suggest) ...[
+          const SizedBox(height: AppDimens.space8),
+          Wrap(
+            spacing: AppDimens.space8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                l10n.categoryDefaultTypeSuggest(popular.name),
+                style: context.text.labelSmall?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+              ),
+              TextButton(
+                onPressed: () => setState(() => _typeId = popular!.id),
+                child: Text(l10n.categoryDefaultTypeApply),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 

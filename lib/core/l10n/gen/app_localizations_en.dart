@@ -606,6 +606,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get categoryDefaultType => 'Default type';
+
+  @override
+  String get categoryDefaultTypeHint =>
+      'New entries in this branch start with it';
+
+  @override
+  String get categoryDefaultTypeNone => 'Not set';
+
+  @override
+  String categoryDefaultTypeFrom(String name) {
+    return 'Type taken from “$name”';
+  }
+
+  @override
+  String categoryDefaultTypeSuggest(String name) {
+    return 'Most entries here are “$name”. Make it the default type?';
+  }
+
+  @override
+  String get categoryDefaultTypeApply => 'Set it';
+
+  @override
   String get categoryPrimary => 'Primary category';
 
   @override

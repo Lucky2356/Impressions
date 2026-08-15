@@ -120,30 +120,32 @@ void main() {
         .first;
   }
 
-  testWidgets('тип подставляется по ветке, а не первым из списка', (
-    tester,
-  ) async {
-    // «Продукты» заведены в setUp и идут первыми — раньше форма предлагала их
-    // и в «Местах», просто потому что этот тип создан раньше.
-    await entries.createObjectType(me.id, 'Места', sortOrder: 1);
+  testWidgets('тип берётся из ветки, а не первым из списка', (tester) async {
+    // «Продукты» заведены в setUp и идут первыми — без указания ветки форма
+    // предлагала бы их и в «Местах», просто потому что этот тип создан раньше.
+    final places = await entries.createObjectType(me.id, 'Места', sortOrder: 1);
     final categories = CategoryRepository(db);
-    final places = await categories.createRoot(me.id, 'Места');
-    final parks = await categories.createChild(places.id, 'Парки');
+    final root = await categories.createRoot(
+      me.id,
+      'Места',
+      defaultTypeId: places.id,
+    );
+    final parks = await categories.createChild(root.id, 'Парки');
 
     await openSheet(tester, initial: parks);
 
+    // Своего типа у «Парков» нет — берётся тип родителя, и форма говорит чей.
     expect(shownType(tester), 'Места');
-    expect(find.text('Парки'), findsOneWidget);
+    expect(find.text('Тип взят из «Места»'), findsOneWidget);
   });
 
-  testWidgets('выбранный человеком тип не перебивается подсказкой', (
-    tester,
-  ) async {
-    await entries.createObjectType(me.id, 'Места', sortOrder: 1);
-    final categories = CategoryRepository(db);
-    final places = await categories.createRoot(me.id, 'Места');
+  testWidgets('выбранный человеком тип не перебивается веткой', (tester) async {
+    final places = await entries.createObjectType(me.id, 'Места', sortOrder: 1);
+    final root = await CategoryRepository(
+      db,
+    ).createRoot(me.id, 'Места', defaultTypeId: places.id);
 
-    await openSheet(tester, initial: places);
+    await openSheet(tester, initial: root);
     expect(shownType(tester), 'Места');
 
     await tapVisible(tester, find.byType(DropdownButtonFormField<String>));
@@ -151,13 +153,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(shownType(tester), 'Продукты');
+    // Подпись про ветку уходит: тип теперь выбран руками, а не подставлен.
+    expect(find.text('Тип взят из «Места»'), findsNothing);
   });
 
-  testWidgets('в своей категории тип берётся у соседних записей', (
-    tester,
-  ) async {
-    // Имя ветки не совпадает ни с одним типом — тогда смотрим, что в ней уже
-    // лежит. «Отпуск» с местами внутри должен предлагать «Места».
+  testWidgets('ветка без своего типа ничего не навязывает', (tester) async {
+    // Раньше форма смотрела, что уже лежит в ветке, и подставляла самый частый
+    // тип молча — объяснить этот выбор было нечем.
     final places = await entries.createObjectType(me.id, 'Места', sortOrder: 1);
     final vacation = await CategoryRepository(db).createRoot(me.id, 'Отпуск');
     final object = await entries.createObject(
@@ -173,7 +175,7 @@ void main() {
     await openSheet(tester, initial: vacation);
     await tester.pumpAndSettle();
 
-    expect(shownType(tester), 'Места');
+    expect(shownType(tester), 'Продукты');
   });
 
   testWidgets('без категории тип остаётся первым из списка', (tester) async {
