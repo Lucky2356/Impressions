@@ -60,6 +60,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final actions = CategoryActions(ref, context);
     final branch = ref.watch(categoryBranchCountsProvider).value ?? const {};
     final collapsed = ref.watch(collapsedCategoriesProvider);
+    final selection = ref.watch(treeSelectionProvider);
+    final selector = ref.read(treeSelectionProvider.notifier);
 
     return TreePane(
       onDrop: !acceptsDrops
@@ -91,6 +93,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
       onCollapseAll: () => ref
           .read(collapsedCategoriesProvider.notifier)
           .collapseAll([for (final c in categories) c.id]),
+      selection: selection,
+      onStartSelection: selector.start,
+      onCancelSelection: selector.stop,
+      onToggleSelected: (cat) => selector.toggle(cat.id),
+      onMoveSelected: () => actions.moveSelected(selection ?? const {}),
+      onArchiveSelected: () => actions.archiveSelected(selection ?? const {}),
     );
   }
 

@@ -36,6 +36,12 @@ class TreePane extends StatelessWidget {
     required this.onExpandAll,
     required this.onCollapseAll,
     this.onDrop,
+    this.selection,
+    this.onToggleSelected,
+    this.onStartSelection,
+    this.onCancelSelection,
+    this.onMoveSelected,
+    this.onArchiveSelected,
   });
 
   final List<CategoryRow> categories;
@@ -55,6 +61,18 @@ class TreePane extends StatelessWidget {
   /// Приём брошенного груза. Без него дерево просто не принимает перетаскивание
   /// — например в листе на телефоне, где тащить нечем.
   final void Function(CategoryDropPayload, CategoryRow, DropEdge)? onDrop;
+
+  /// Выделенные ветки; `null` — режим выделения выключен.
+  ///
+  /// Перетаскивание годится, когда ветку переносят одну. Разложить семь веток
+  /// в две другие — это семь бросков, и любой промах приходится отменять
+  /// отдельно.
+  final Set<String>? selection;
+  final ValueChanged<CategoryRow>? onToggleSelected;
+  final VoidCallback? onStartSelection;
+  final VoidCallback? onCancelSelection;
+  final VoidCallback? onMoveSelected;
+  final VoidCallback? onArchiveSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +156,14 @@ class TreePane extends StatelessWidget {
                       tooltip: l10n.categoryCollapseAll,
                       onPressed: onCollapseAll,
                     ),
+                    if (onStartSelection != null)
+                      AppIconButton(
+                        icon: Icons.checklist_rounded,
+                        tooltip: l10n.categorySelectMany,
+                        onPressed: selection == null
+                            ? onStartSelection
+                            : onCancelSelection,
+                      ),
                     AppIconButton(
                       icon: Icons.add_rounded,
                       tooltip: l10n.categoryAddRoot,
@@ -177,13 +203,109 @@ class TreePane extends StatelessWidget {
                     isLastChild: isLastChild,
                     collapsed: collapsed,
                     selectedId: selectedId,
+                    selection: selection,
                     onToggle: onToggle,
                     onSelect: onSelect,
+                    onToggleSelected: onToggleSelected,
                     onAddChild: onAddChild,
-                    onDrop: onDrop,
+                    // В режиме выделения перетаскивания нет: одно движение
+                    // мышью не может означать и «выбрать», и «перенести».
+                    onDrop: selection == null ? onDrop : null,
                   ),
           ),
+          if (selection != null)
+            _SelectionBar(
+              count: selection!.length,
+              onMove: onMoveSelected,
+              onArchive: onArchiveSelected,
+              onCancel: onCancelSelection,
+            ),
         ],
+      ),
+    );
+  }
+}
+
+/// Панель действий над выделенными ветками.
+class _SelectionBar extends StatelessWidget {
+  const _SelectionBar({
+    required this.count,
+    required this.onMove,
+    required this.onArchive,
+    required this.onCancel,
+  });
+
+  final int count;
+  final VoidCallback? onMove;
+  final VoidCallback? onArchive;
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final enabled = count > 0;
+
+    return Material(
+      color: c.accentSoft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.space12,
+          vertical: AppDimens.space8,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                AppIconButton(
+                  icon: Icons.close_rounded,
+                  tooltip: l10n.bulkCancel,
+                  onPressed: onCancel,
+                ),
+                const SizedBox(width: AppDimens.space8),
+                Expanded(
+                  child: Text(
+                    l10n.categorySelectedCount(count),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.labelLarge,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimens.space8),
+            // Кнопки под счётчиком, а не рядом: панель живёт в узкой колонке
+            // дерева, и в строку они не помещаются.
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: enabled ? onMove : null,
+                    icon: const Icon(Icons.drive_file_move_rounded, size: 18),
+                    label: Text(
+                      l10n.categoryMove,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimens.space8),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: enabled ? onArchive : null,
+                    icon: const Icon(Icons.archive_rounded, size: 18),
+                    label: Text(
+                      l10n.bulkArchive,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -200,8 +322,10 @@ class _TreeList extends StatefulWidget {
     required this.isLastChild,
     required this.collapsed,
     required this.selectedId,
+    required this.selection,
     required this.onToggle,
     required this.onSelect,
+    required this.onToggleSelected,
     required this.onAddChild,
     required this.onDrop,
   });
@@ -214,8 +338,10 @@ class _TreeList extends StatefulWidget {
   final Map<String, bool> isLastChild;
   final Set<String> collapsed;
   final String? selectedId;
+  final Set<String>? selection;
   final ValueChanged<String> onToggle;
   final ValueChanged<CategoryRow> onSelect;
+  final ValueChanged<CategoryRow>? onToggleSelected;
   final ValueChanged<CategoryRow> onAddChild;
   final void Function(CategoryDropPayload, CategoryRow, DropEdge)? onDrop;
 
@@ -268,9 +394,14 @@ class _TreeListState extends State<_TreeList> {
           hasChildren: widget.hasChildren[cat.id] ?? false,
           collapsed: widget.collapsed.contains(cat.id),
           selected: cat.id == widget.selectedId,
+          checked: widget.selection?.contains(cat.id),
           isLast: widget.isLastChild[cat.id] ?? true,
           onToggle: () => widget.onToggle(cat.id),
-          onSelect: () => widget.onSelect(cat),
+          // В режиме выделения нажатие на строку выбирает, а не переходит:
+          // иначе галочку приходилось бы ловить в 20 точек шириной.
+          onSelect: () => widget.selection == null
+              ? widget.onSelect(cat)
+              : widget.onToggleSelected?.call(cat),
           onAddChild: () => widget.onAddChild(cat),
           onDrop: widget.onDrop == null
               ? null
@@ -314,6 +445,7 @@ class CategoryTreeRow extends StatefulWidget {
     required this.onToggle,
     required this.onSelect,
     required this.onAddChild,
+    this.checked,
     this.onDrop,
     this.canDrop,
   });
@@ -328,6 +460,10 @@ class CategoryTreeRow extends StatefulWidget {
   final bool hasChildren;
   final bool collapsed;
   final bool selected;
+
+  /// Стоит ли галочка; `null` — режим выделения выключен и её нет вовсе.
+  final bool? checked;
+
   final bool isLast;
   final VoidCallback onToggle;
   final VoidCallback onSelect;
@@ -369,6 +505,18 @@ class CategoryTreeRowState extends State<CategoryTreeRow> {
           ),
           child: Row(
             children: [
+              if (widget.checked case final checked?) ...[
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: checked,
+                    visualDensity: VisualDensity.compact,
+                    onChanged: (_) => widget.onSelect(),
+                  ),
+                ),
+                const SizedBox(width: AppDimens.space4),
+              ],
               SizedBox(
                 width: 20,
                 child: widget.hasChildren

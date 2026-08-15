@@ -230,6 +230,76 @@ class CategoryActions {
     showMessage(context, l10n.categoryMovedCount(moved));
   }
 
+  /// Переносит выделенные в дереве ветки в общую новую (§7.1).
+  ///
+  /// Целью не предлагаются ни сами выделенные ветки, ни их потомки: перенести
+  /// ветку внутрь себя нельзя, и молча отказывать после выбора хуже, чем не
+  /// предлагать. Вложенные друг в друга выделения `moveMany` разбирает сам —
+  /// перенос родителя уже уносит с собой детей.
+  Future<void> moveSelected(Iterable<String> ids) async {
+    final l10n = _l10n;
+    final selected = ids.toList();
+    if (selected.isEmpty) return;
+
+    final all = await ref.read(allCategoriesProvider.future);
+    final excluded = <String>{
+      for (final id in selected) ...CategoryTree.branchIds(all, id),
+    };
+    if (!context.mounted) return;
+
+    final picked = await CategoryPicker.show(
+      context,
+      title: l10n.categoryMoveSelected,
+      allowClear: true,
+      excludeIds: excluded,
+    );
+    if (picked == null) return;
+    // «Убрать категорию» здесь значит «сделать корневой»: у ветки без родителя
+    // это единственное осмысленное чтение.
+    final targetId = picked.cleared ? null : picked.category?.id;
+    if (!picked.cleared && targetId == null) return;
+
+    try {
+      final moved = await _repo.moveMany(selected, targetId);
+      ref.read(treeSelectionProvider.notifier).stop();
+      _bump();
+      if (!context.mounted) return;
+      showMessage(context, l10n.categoryMovedCount(moved));
+    } on CategoryTreeException catch (e) {
+      if (!context.mounted) return;
+      showMessage(context, e.message);
+    }
+  }
+
+  /// Убирает выделенные ветки в архив — с возможностью вернуть.
+  Future<void> archiveSelected(Iterable<String> ids) async {
+    final l10n = _l10n;
+    final selected = ids.toList();
+    if (selected.isEmpty) return;
+
+    for (final id in selected) {
+      await _repo.archive(id);
+    }
+    ref.read(treeSelectionProvider.notifier).stop();
+    // Уходит и выбранная ветка — оставаться на архивной некуда.
+    if (selected.contains(ref.read(selectedCategoryProvider))) {
+      ref.read(selectedCategoryProvider.notifier).back();
+    }
+    _bump();
+    if (!context.mounted) return;
+
+    showUndoSnackBar(
+      context,
+      message: l10n.categoryArchivedCount(selected.length),
+      onUndo: () async {
+        for (final id in selected) {
+          await _repo.restore(id);
+        }
+        _bump();
+      },
+    );
+  }
+
   /// Переносит все записи ветки в другую ветку.
   Future<void> moveEntries(CategoryRow source) async {
     final l10n = _l10n;

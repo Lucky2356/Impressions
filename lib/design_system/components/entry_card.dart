@@ -32,10 +32,10 @@ class EntryCardData {
 
   /// Стадия записи, при необходимости с прогрессом: «Читаю · 3 серия из 12».
   ///
-  /// Показывается вместо отношения, а не рядом: на карточку помещается один
-  /// значок, а вопросы эти взаимодополняющие — у записи с мнением впечатление
-  /// уже состоялось, а у записи без мнения важно как раз то, на какой она
-  /// стадии.
+  /// Стоит рядом с отношением, а не вместо него: это разные вопросы — «дошли
+  /// ли вы до этого» и «понравилось ли», — и книга, которую вы читаете и уже
+  /// оценили, должна показывать оба ответа. В сетке места в нижней строке нет,
+  /// поэтому там стадия лежит поверх обложки.
   final String? statusLabel;
   final String? imagePath;
   final Color? seedColor;
@@ -134,11 +134,31 @@ class EntryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            CoverImage(
-              title: data.title,
-              imagePath: data.imagePath,
-              seedColor: data.seedColor,
-              borderRadius: AppDimens.brSm,
+            // Стадия поверх обложки: нижняя строка карточки занята отношением
+            // и оценкой, а высота ячейки задана заранее — третий значок в неё
+            // не влезает, и вырасти ей некуда.
+            Stack(
+              children: [
+                CoverImage(
+                  title: data.title,
+                  imagePath: data.imagePath,
+                  seedColor: data.seedColor,
+                  borderRadius: AppDimens.brSm,
+                ),
+                if (data.statusLabel != null)
+                  Positioned(
+                    left: AppDimens.space4,
+                    top: AppDimens.space4,
+                    right: AppDimens.space4,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: StatusChip(
+                        label: data.statusLabel!,
+                        compact: true,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: AppDimens.space8),
             if (showPath)
@@ -169,13 +189,9 @@ class EntryCard extends StatelessWidget {
                       relation: data.relation!,
                       compact: true,
                     ),
-                  )
-                else if (data.statusLabel != null)
-                  Flexible(
-                    child: StatusChip(label: data.statusLabel!, compact: true),
                   ),
                 if (data.rating != null) ...[
-                  if (data.relation != null || data.statusLabel != null)
+                  if (data.relation != null)
                     const SizedBox(width: AppDimens.space4),
                   RatingView(value: data.rating, compact: true),
                 ],
@@ -194,7 +210,11 @@ class EntryCard extends StatelessWidget {
 /// категории, названия в две строки и строки метаданных. Экраны должны брать
 /// это значение, а не подбирать своё: подобранное вручную оказалось на восемь
 /// точек меньше нужного, и карточки с длинным названием переполнялись.
-const double entryCardCompactHeight = 112;
+///
+/// С 1.17.0 в строке метаданных стоят и отношение, и стадия, и оценка: на
+/// узком экране они переносятся на вторую строку, и место под неё заложено
+/// здесь.
+const double entryCardCompactHeight = 136;
 
 /// Компактная карточка записи (§3.4): строка с миниатюрой слева.
 class EntryCardCompact extends StatelessWidget {
@@ -252,9 +272,11 @@ class EntryCardCompact extends StatelessWidget {
                     runSpacing: AppDimens.space4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
+                      // Здесь места хватает на всё: строка переносится, а
+                      // высота карточки под неё уже заложена.
                       if (data.relation != null)
-                        RelationChip(relation: data.relation!, compact: true)
-                      else if (data.statusLabel != null)
+                        RelationChip(relation: data.relation!, compact: true),
+                      if (data.statusLabel != null)
                         StatusChip(label: data.statusLabel!, compact: true),
                       if (data.rating != null)
                         RatingView(value: data.rating, compact: true),

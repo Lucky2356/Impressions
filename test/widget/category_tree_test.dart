@@ -136,4 +136,64 @@ void main() {
     expect(find.text('Колбасы'), findsOneWidget);
     expect(find.text('Фильмы'), findsNothing);
   });
+
+  group('выделение нескольких веток', () {
+    /// Включает режим выделения и отмечает названные ветки.
+    Future<void> select(WidgetTester tester, List<String> names) async {
+      await tester.tap(find.byIcon(Icons.checklist_rounded));
+      await tester.pumpAndSettle();
+      for (final name in names) {
+        await tester.tap(find.text(name));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    testWidgets('галочки появляются только в своём режиме', (tester) async {
+      await pumpTree(tester);
+      expect(find.byType(Checkbox), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.checklist_rounded));
+      await tester.pumpAndSettle();
+
+      // По галочке на каждую видимую ветку.
+      expect(find.byType(Checkbox), findsNWidgets(4));
+      expect(find.text('Выбрано 0 веток'), findsOneWidget);
+    });
+
+    testWidgets('нажатие на строку отмечает, а не переходит', (tester) async {
+      await pumpTree(tester);
+      await select(tester, ['Колбасы', 'Фильмы']);
+
+      expect(find.text('Выбрано 2 ветки'), findsOneWidget);
+      // Повторное нажатие снимает отметку.
+      await tester.tap(find.text('Фильмы'));
+      await tester.pumpAndSettle();
+      expect(find.text('Выбрана 1 ветка'), findsOneWidget);
+    });
+
+    testWidgets('без выделенного действия недоступны', (tester) async {
+      await pumpTree(tester);
+      await tester.tap(find.byIcon(Icons.checklist_rounded));
+      await tester.pumpAndSettle();
+
+      final move = tester.widget<OutlinedButton>(
+        find.ancestor(
+          of: find.text('Переместить'),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      expect(move.onPressed, isNull);
+    });
+
+    testWidgets('выход из режима снимает выделение', (tester) async {
+      await pumpTree(tester);
+      await select(tester, ['Колбасы']);
+
+      await tester.tap(find.byIcon(Icons.checklist_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.textContaining('Выбран'), findsNothing);
+    });
+  });
 }

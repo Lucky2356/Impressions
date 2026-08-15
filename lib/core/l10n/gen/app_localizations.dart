@@ -470,6 +470,30 @@ abstract class AppLocalizations {
   /// **'Категория убрана в архив'**
   String get categoryArchived;
 
+  /// No description provided for @categorySelectMany.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать несколько'**
+  String get categorySelectMany;
+
+  /// No description provided for @categoryMoveSelected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести выбранные'**
+  String get categoryMoveSelected;
+
+  /// No description provided for @categorySelectedCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Выбрана {count} ветка} few{Выбрано {count} ветки} many{Выбрано {count} веток} other{Выбрано {count} веток}}'**
+  String categorySelectedCount(int count);
+
+  /// No description provided for @categoryArchivedCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} ветка убрана в архив} few{{count} ветки убраны в архив} many{{count} веток убрано в архив} other{{count} веток убрано в архив}}'**
+  String categoryArchivedCount(int count);
+
   /// No description provided for @categoryNameLabel.
   ///
   /// In ru, this message translates to:

@@ -81,6 +81,34 @@ class CollapsedCategories extends Notifier<Set<String>> {
   void collapseAll(Iterable<String> ids) => state = {...ids};
 }
 
+/// Выделенные в дереве ветки; `null` — режим выделения выключен.
+///
+/// Одно состояние, а не два провайдера «включён ли режим» и «что выбрано»:
+/// иначе выключение режима и очистка выделения — две записи, которые однажды
+/// разъедутся, и на экране останется панель «Выбрано 0».
+///
+/// До 1.17.0 массовый перенос делался пунктом «Перенести подкатегории…»: он
+/// брал всех детей ветки целиком, и выбрать три ветки из семи было нечем.
+class TreeSelection extends Notifier<Set<String>?> {
+  @override
+  Set<String>? build() => null;
+
+  bool get active => state != null;
+
+  void start() => state = const {};
+  void stop() => state = null;
+
+  void toggle(String id) {
+    final next = {...?state};
+    if (!next.remove(id)) next.add(id);
+    state = next;
+  }
+}
+
+final treeSelectionProvider = NotifierProvider<TreeSelection, Set<String>?>(
+  TreeSelection.new,
+);
+
 /// Как показывать содержимое ветки: за что считать «здесь» и в каком порядке.
 class CategoryBranchState {
   const CategoryBranchState({

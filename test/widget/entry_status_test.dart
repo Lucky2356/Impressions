@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:impressions/app/app_state.dart';
 import 'package:impressions/core/domain/entry_status.dart';
+import 'package:impressions/core/domain/relation.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/providers.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
@@ -136,34 +137,42 @@ void main() {
     expect(find.text('Смотрю'), findsNothing);
   });
 
-  testWidgets('стадия видна на карточке списка, когда мнения ещё нет', (
+  testWidgets('стадия стоит рядом с отношением, а не вместо него', (
     tester,
   ) async {
+    // Книга, которую читают и уже оценили, отвечает на оба вопроса сразу:
+    // «дошли ли вы до этого» и «понравилось ли».
     await pump(
       tester,
       const _Cards(
-        planned: EntryCardData(title: 'Твин Пикс', statusLabel: 'Смотрю · 3'),
-        rated: EntryCardData(title: 'Фарго', rating: 8),
+        data: EntryCardData(
+          title: 'Твин Пикс',
+          statusLabel: 'Смотрю · 3 серия',
+          relation: Relation.like,
+          rating: 8,
+        ),
       ),
     );
 
-    expect(find.text('Смотрю · 3'), findsOneWidget);
+    expect(find.text('Смотрю · 3 серия'), findsNWidgets(2));
+    // Отношение никуда не делось ни в списке, ни в сетке.
+    expect(find.byType(RelationChip), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
   });
 }
 
-/// Две карточки рядом: с мнением и без него.
+/// Одна и та же запись обоими видами карточки.
 class _Cards extends StatelessWidget {
-  const _Cards({required this.planned, required this.rated});
+  const _Cards({required this.data});
 
-  final EntryCardData planned;
-  final EntryCardData rated;
+  final EntryCardData data;
 
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      EntryCardCompact(data: planned),
-      EntryCardCompact(data: rated),
+      EntryCardCompact(data: data),
+      SizedBox(width: 200, height: 320, child: EntryCard(data: data)),
     ],
   );
 }

@@ -204,6 +204,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryArchived => 'Category moved to the archive';
 
   @override
+  String get categorySelectMany => 'Select several';
+
+  @override
+  String get categoryMoveSelected => 'Move the selected';
+
+  @override
+  String categorySelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count branches selected',
+      one: '$count branch selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryArchivedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count branches moved to the archive',
+      one: '$count branch moved to the archive',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryNameLabel => 'Category name';
 
   @override

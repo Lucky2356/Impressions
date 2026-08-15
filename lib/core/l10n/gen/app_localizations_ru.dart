@@ -206,6 +206,38 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryArchived => 'Категория убрана в архив';
 
   @override
+  String get categorySelectMany => 'Выбрать несколько';
+
+  @override
+  String get categoryMoveSelected => 'Перенести выбранные';
+
+  @override
+  String categorySelectedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Выбрано $count веток',
+      many: 'Выбрано $count веток',
+      few: 'Выбрано $count ветки',
+      one: 'Выбрана $count ветка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryArchivedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count веток убрано в архив',
+      many: '$count веток убрано в архив',
+      few: '$count ветки убраны в архив',
+      one: '$count ветка убрана в архив',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryNameLabel => 'Название категории';
 
   @override
