@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'object_tables.dart';
 import 'profile_tables.dart';
 
 /// Категория (§7, §17). Дерево: adjacency list (`parentId`) + materialized
@@ -22,6 +23,24 @@ class Categories extends Table {
 
   /// Материализованный путь из id через «/» (включая собственный id).
   TextColumn get path => text()();
+
+  /// Тип объекта, с которого начинается новая запись в этой ветке (§9).
+  ///
+  /// Ссылка со `setNull`, а не `restrict` как у остальных: тип можно убрать, и
+  /// ветка от этого не должна становиться неудаляемой — она просто перестанет
+  /// подсказывать тип.
+  TextColumn get defaultTypeId => text().nullable().references(
+    ObjectTypes,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+
+  /// Закреплённая обложка ветки.
+  ///
+  /// Без внешнего ключа — как `collections.cover_attachment_id`: обложка это
+  /// украшение, и она не должна мешать удалить фотографию насовсем. Ссылку на
+  /// исчезнувшее вложение находит и чинит проверка данных.
+  TextColumn get coverAttachmentId => text().nullable()();
   TextColumn get currentRevisionId => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get archivedAt => dateTime().nullable()();

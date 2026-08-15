@@ -5,7 +5,9 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:drift/drift.dart' show Value;
 import 'package:impressions/core/config/app_config.dart';
+import 'package:impressions/core/domain/entry_status.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/repositories/category_repository.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
@@ -41,6 +43,100 @@ _seedSource() async {
 }
 
 void main() {
+  test('тип ветки, статусы и прогресс переезжают вместе с профилем', () async {
+    final db = openTestDb();
+    addTearDown(db.close);
+    final profiles = ProfileRepository(db);
+    final cats = CategoryRepository(db);
+    final entries = EntryRepository(db);
+
+    final me = await profiles.createOwnProfile(firstName: 'Я');
+    final type = await entries.createObjectType(
+      me.id,
+      'Сериалы',
+      statusesJson: EntryStatus.encode(
+        BuiltInStatuses.forTypeName('Сериалы')!.statuses,
+      ),
+      progressUnit: 'серия',
+    );
+    final branch = await cats.createRoot(
+      me.id,
+      'Сериалы',
+      defaultTypeId: type.id,
+    );
+    final obj = await entries.createObject(typeId: type.id, title: 'Кухня');
+    final entry = await entries.createEntry(
+      profileId: me.id,
+      objectId: obj.id,
+      status: EntryStatus.inProgress,
+      primaryCategoryId: branch.id,
+    );
+    await (db.update(
+      db.profileEntries,
+    )..where((e) => e.id.equals(entry.id))).write(
+      const ProfileEntriesCompanion(
+        progressCurrent: Value(3),
+        progressTotal: Value(12),
+      ),
+    );
+
+    final exported = await ExportService(
+      db,
+    ).export(me.id, const ExportOptions());
+
+    final target = openTestDb();
+    addTearDown(target.close);
+    final importer = ImportService(target);
+    await importer.apply(
+      await importer.inspect(Uint8List.fromList(exported.bytes)),
+    );
+
+    final imported = (await ProfileRepository(target).all()).single;
+    final movedType = (await EntryRepository(
+      target,
+    ).objectTypes(imported.id)).single;
+    final movedBranch = (await CategoryRepository(
+      target,
+    ).roots(imported.id)).single;
+    final movedEntry = (await (target.select(
+      target.profileEntries,
+    )..where((e) => e.profileId.equals(imported.id))).get()).single;
+
+    expect(movedBranch.defaultTypeId, movedType.id);
+    expect(movedType.progressUnit, 'серия');
+    expect(EntryStatus.decode(movedType.statusesJson), hasLength(3));
+    expect(movedEntry.status, EntryStatus.inProgress);
+    expect(movedEntry.progressCurrent, 3);
+    expect(movedEntry.progressTotal, 12);
+  });
+
+  test('ветка не тянет за собой тип, которого нет в пакете', () async {
+    // Так бывает при выгрузке одной ветки и при обрезанном пакете. Раньше
+    // такое поле уронило бы весь импорт на первой же категории.
+    final source = await _seedSource();
+    addTearDown(source.db.close);
+
+    final exported = await ExportService(
+      source.db,
+    ).export(source.profileId, const ExportOptions());
+
+    final target = openTestDb();
+    addTearDown(target.close);
+    final importer = ImportService(target);
+    final preview = await importer.inspect(Uint8List.fromList(exported.bytes));
+    // Ветка ссылается на тип, которого в пакете нет.
+    for (final c in preview.payload.categories) {
+      c['defaultTypeId'] = 'нет-такого-типа';
+    }
+
+    await importer.apply(preview);
+
+    final imported = (await ProfileRepository(target).all()).single;
+    final roots = await CategoryRepository(target).roots(imported.id);
+    expect(roots, isNotEmpty);
+    expect(roots.every((c) => c.defaultTypeId == null), isTrue);
+  });
+
   test('сквозной сценарий §36: экспорт → импорт в чистую базу', () async {
     final source = await _seedSource();
     addTearDown(source.db.close);

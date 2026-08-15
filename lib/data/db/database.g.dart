@@ -2768,6 +2768,28 @@ class $ObjectTypesTable extends ObjectTypes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _statusesJsonMeta = const VerificationMeta(
+    'statusesJson',
+  );
+  @override
+  late final GeneratedColumn<String> statusesJson = GeneratedColumn<String>(
+    'statuses_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _progressUnitMeta = const VerificationMeta(
+    'progressUnit',
+  );
+  @override
+  late final GeneratedColumn<String> progressUnit = GeneratedColumn<String>(
+    'progress_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2802,6 +2824,8 @@ class $ObjectTypesTable extends ObjectTypes
     builtIn,
     hidden,
     fieldsSchema,
+    statusesJson,
+    progressUnit,
     createdAt,
     archivedAt,
   ];
@@ -2888,6 +2912,24 @@ class $ObjectTypesTable extends ObjectTypes
         ),
       );
     }
+    if (data.containsKey('statuses_json')) {
+      context.handle(
+        _statusesJsonMeta,
+        statusesJson.isAcceptableOrUnknown(
+          data['statuses_json']!,
+          _statusesJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('progress_unit')) {
+      context.handle(
+        _progressUnitMeta,
+        progressUnit.isAcceptableOrUnknown(
+          data['progress_unit']!,
+          _progressUnitMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2951,6 +2993,14 @@ class $ObjectTypesTable extends ObjectTypes
         DriftSqlType.string,
         data['${effectivePrefix}fields_schema'],
       ),
+      statusesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}statuses_json'],
+      ),
+      progressUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}progress_unit'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2981,6 +3031,17 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
 
   /// JSON-схема пользовательских полей типа (§9).
   final String? fieldsSchema;
+
+  /// Статусы типа (§10) списком JSON: ключ, название, «завершающий ли».
+  ///
+  /// Ключи общие для всех типов (`planned`, `inProgress`, `done`) — иначе
+  /// отбор «что сейчас в процессе» пришлось бы задавать отдельно для книг,
+  /// фильмов и продуктов. Названия у каждого типа свои: «Прочитал» и
+  /// «Попробовал» — про разное.
+  final String? statusesJson;
+
+  /// В чём измеряется прогресс: «серия», «страница», «час».
+  final String? progressUnit;
   final DateTime createdAt;
   final DateTime? archivedAt;
   const ObjectTypeRow({
@@ -2994,6 +3055,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
     required this.builtIn,
     required this.hidden,
     this.fieldsSchema,
+    this.statusesJson,
+    this.progressUnit,
     required this.createdAt,
     this.archivedAt,
   });
@@ -3015,6 +3078,12 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
     map['hidden'] = Variable<bool>(hidden);
     if (!nullToAbsent || fieldsSchema != null) {
       map['fields_schema'] = Variable<String>(fieldsSchema);
+    }
+    if (!nullToAbsent || statusesJson != null) {
+      map['statuses_json'] = Variable<String>(statusesJson);
+    }
+    if (!nullToAbsent || progressUnit != null) {
+      map['progress_unit'] = Variable<String>(progressUnit);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || archivedAt != null) {
@@ -3039,6 +3108,12 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
       fieldsSchema: fieldsSchema == null && nullToAbsent
           ? const Value.absent()
           : Value(fieldsSchema),
+      statusesJson: statusesJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(statusesJson),
+      progressUnit: progressUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressUnit),
       createdAt: Value(createdAt),
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
@@ -3062,6 +3137,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
       builtIn: serializer.fromJson<bool>(json['builtIn']),
       hidden: serializer.fromJson<bool>(json['hidden']),
       fieldsSchema: serializer.fromJson<String?>(json['fieldsSchema']),
+      statusesJson: serializer.fromJson<String?>(json['statusesJson']),
+      progressUnit: serializer.fromJson<String?>(json['progressUnit']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
     );
@@ -3080,6 +3157,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
       'builtIn': serializer.toJson<bool>(builtIn),
       'hidden': serializer.toJson<bool>(hidden),
       'fieldsSchema': serializer.toJson<String?>(fieldsSchema),
+      'statusesJson': serializer.toJson<String?>(statusesJson),
+      'progressUnit': serializer.toJson<String?>(progressUnit),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
     };
@@ -3096,6 +3175,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
     bool? builtIn,
     bool? hidden,
     Value<String?> fieldsSchema = const Value.absent(),
+    Value<String?> statusesJson = const Value.absent(),
+    Value<String?> progressUnit = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
   }) => ObjectTypeRow(
@@ -3109,6 +3190,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
     builtIn: builtIn ?? this.builtIn,
     hidden: hidden ?? this.hidden,
     fieldsSchema: fieldsSchema.present ? fieldsSchema.value : this.fieldsSchema,
+    statusesJson: statusesJson.present ? statusesJson.value : this.statusesJson,
+    progressUnit: progressUnit.present ? progressUnit.value : this.progressUnit,
     createdAt: createdAt ?? this.createdAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
   );
@@ -3128,6 +3211,12 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
       fieldsSchema: data.fieldsSchema.present
           ? data.fieldsSchema.value
           : this.fieldsSchema,
+      statusesJson: data.statusesJson.present
+          ? data.statusesJson.value
+          : this.statusesJson,
+      progressUnit: data.progressUnit.present
+          ? data.progressUnit.value
+          : this.progressUnit,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
@@ -3148,6 +3237,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
           ..write('builtIn: $builtIn, ')
           ..write('hidden: $hidden, ')
           ..write('fieldsSchema: $fieldsSchema, ')
+          ..write('statusesJson: $statusesJson, ')
+          ..write('progressUnit: $progressUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt')
           ..write(')'))
@@ -3166,6 +3257,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
     builtIn,
     hidden,
     fieldsSchema,
+    statusesJson,
+    progressUnit,
     createdAt,
     archivedAt,
   );
@@ -3183,6 +3276,8 @@ class ObjectTypeRow extends DataClass implements Insertable<ObjectTypeRow> {
           other.builtIn == this.builtIn &&
           other.hidden == this.hidden &&
           other.fieldsSchema == this.fieldsSchema &&
+          other.statusesJson == this.statusesJson &&
+          other.progressUnit == this.progressUnit &&
           other.createdAt == this.createdAt &&
           other.archivedAt == this.archivedAt);
 }
@@ -3198,6 +3293,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
   final Value<bool> builtIn;
   final Value<bool> hidden;
   final Value<String?> fieldsSchema;
+  final Value<String?> statusesJson;
+  final Value<String?> progressUnit;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
   final Value<int> rowid;
@@ -3212,6 +3309,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
     this.builtIn = const Value.absent(),
     this.hidden = const Value.absent(),
     this.fieldsSchema = const Value.absent(),
+    this.statusesJson = const Value.absent(),
+    this.progressUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3227,6 +3326,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
     this.builtIn = const Value.absent(),
     this.hidden = const Value.absent(),
     this.fieldsSchema = const Value.absent(),
+    this.statusesJson = const Value.absent(),
+    this.progressUnit = const Value.absent(),
     required DateTime createdAt,
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3246,6 +3347,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
     Expression<bool>? builtIn,
     Expression<bool>? hidden,
     Expression<String>? fieldsSchema,
+    Expression<String>? statusesJson,
+    Expression<String>? progressUnit,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
     Expression<int>? rowid,
@@ -3261,6 +3364,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
       if (builtIn != null) 'built_in': builtIn,
       if (hidden != null) 'hidden': hidden,
       if (fieldsSchema != null) 'fields_schema': fieldsSchema,
+      if (statusesJson != null) 'statuses_json': statusesJson,
+      if (progressUnit != null) 'progress_unit': progressUnit,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3278,6 +3383,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
     Value<bool>? builtIn,
     Value<bool>? hidden,
     Value<String?>? fieldsSchema,
+    Value<String?>? statusesJson,
+    Value<String?>? progressUnit,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
     Value<int>? rowid,
@@ -3293,6 +3400,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
       builtIn: builtIn ?? this.builtIn,
       hidden: hidden ?? this.hidden,
       fieldsSchema: fieldsSchema ?? this.fieldsSchema,
+      statusesJson: statusesJson ?? this.statusesJson,
+      progressUnit: progressUnit ?? this.progressUnit,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
       rowid: rowid ?? this.rowid,
@@ -3332,6 +3441,12 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
     if (fieldsSchema.present) {
       map['fields_schema'] = Variable<String>(fieldsSchema.value);
     }
+    if (statusesJson.present) {
+      map['statuses_json'] = Variable<String>(statusesJson.value);
+    }
+    if (progressUnit.present) {
+      map['progress_unit'] = Variable<String>(progressUnit.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3357,6 +3472,8 @@ class ObjectTypesCompanion extends UpdateCompanion<ObjectTypeRow> {
           ..write('builtIn: $builtIn, ')
           ..write('hidden: $hidden, ')
           ..write('fieldsSchema: $fieldsSchema, ')
+          ..write('statusesJson: $statusesJson, ')
+          ..write('progressUnit: $progressUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt, ')
           ..write('rowid: $rowid')
@@ -4974,6 +5091,32 @@ class $CategoriesTable extends Categories
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _defaultTypeIdMeta = const VerificationMeta(
+    'defaultTypeId',
+  );
+  @override
+  late final GeneratedColumn<String> defaultTypeId = GeneratedColumn<String>(
+    'default_type_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES object_types (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _coverAttachmentIdMeta = const VerificationMeta(
+    'coverAttachmentId',
+  );
+  @override
+  late final GeneratedColumn<String> coverAttachmentId =
+      GeneratedColumn<String>(
+        'cover_attachment_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _currentRevisionIdMeta = const VerificationMeta(
     'currentRevisionId',
   );
@@ -5021,6 +5164,8 @@ class $CategoriesTable extends Categories
     sortOrder,
     level,
     path,
+    defaultTypeId,
+    coverAttachmentId,
     currentRevisionId,
     createdAt,
     archivedAt,
@@ -5116,6 +5261,24 @@ class $CategoriesTable extends Categories
     } else if (isInserting) {
       context.missing(_pathMeta);
     }
+    if (data.containsKey('default_type_id')) {
+      context.handle(
+        _defaultTypeIdMeta,
+        defaultTypeId.isAcceptableOrUnknown(
+          data['default_type_id']!,
+          _defaultTypeIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cover_attachment_id')) {
+      context.handle(
+        _coverAttachmentIdMeta,
+        coverAttachmentId.isAcceptableOrUnknown(
+          data['cover_attachment_id']!,
+          _coverAttachmentIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('current_revision_id')) {
       context.handle(
         _currentRevisionIdMeta,
@@ -5192,6 +5355,14 @@ class $CategoriesTable extends Categories
         DriftSqlType.string,
         data['${effectivePrefix}path'],
       )!,
+      defaultTypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_type_id'],
+      ),
+      coverAttachmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cover_attachment_id'],
+      ),
       currentRevisionId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}current_revision_id'],
@@ -5229,6 +5400,20 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
 
   /// Материализованный путь из id через «/» (включая собственный id).
   final String path;
+
+  /// Тип объекта, с которого начинается новая запись в этой ветке (§9).
+  ///
+  /// Ссылка со `setNull`, а не `restrict` как у остальных: тип можно убрать, и
+  /// ветка от этого не должна становиться неудаляемой — она просто перестанет
+  /// подсказывать тип.
+  final String? defaultTypeId;
+
+  /// Закреплённая обложка ветки.
+  ///
+  /// Без внешнего ключа — как `collections.cover_attachment_id`: обложка это
+  /// украшение, и она не должна мешать удалить фотографию насовсем. Ссылку на
+  /// исчезнувшее вложение находит и чинит проверка данных.
+  final String? coverAttachmentId;
   final String? currentRevisionId;
   final DateTime createdAt;
   final DateTime? archivedAt;
@@ -5244,6 +5429,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     required this.sortOrder,
     required this.level,
     required this.path,
+    this.defaultTypeId,
+    this.coverAttachmentId,
     this.currentRevisionId,
     required this.createdAt,
     this.archivedAt,
@@ -5270,6 +5457,12 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     map['sort_order'] = Variable<int>(sortOrder);
     map['level'] = Variable<int>(level);
     map['path'] = Variable<String>(path);
+    if (!nullToAbsent || defaultTypeId != null) {
+      map['default_type_id'] = Variable<String>(defaultTypeId);
+    }
+    if (!nullToAbsent || coverAttachmentId != null) {
+      map['cover_attachment_id'] = Variable<String>(coverAttachmentId);
+    }
     if (!nullToAbsent || currentRevisionId != null) {
       map['current_revision_id'] = Variable<String>(currentRevisionId);
     }
@@ -5299,6 +5492,12 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       sortOrder: Value(sortOrder),
       level: Value(level),
       path: Value(path),
+      defaultTypeId: defaultTypeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultTypeId),
+      coverAttachmentId: coverAttachmentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverAttachmentId),
       currentRevisionId: currentRevisionId == null && nullToAbsent
           ? const Value.absent()
           : Value(currentRevisionId),
@@ -5326,6 +5525,10 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       level: serializer.fromJson<int>(json['level']),
       path: serializer.fromJson<String>(json['path']),
+      defaultTypeId: serializer.fromJson<String?>(json['defaultTypeId']),
+      coverAttachmentId: serializer.fromJson<String?>(
+        json['coverAttachmentId'],
+      ),
       currentRevisionId: serializer.fromJson<String?>(
         json['currentRevisionId'],
       ),
@@ -5348,6 +5551,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'level': serializer.toJson<int>(level),
       'path': serializer.toJson<String>(path),
+      'defaultTypeId': serializer.toJson<String?>(defaultTypeId),
+      'coverAttachmentId': serializer.toJson<String?>(coverAttachmentId),
       'currentRevisionId': serializer.toJson<String?>(currentRevisionId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
@@ -5366,6 +5571,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     int? sortOrder,
     int? level,
     String? path,
+    Value<String?> defaultTypeId = const Value.absent(),
+    Value<String?> coverAttachmentId = const Value.absent(),
     Value<String?> currentRevisionId = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
@@ -5381,6 +5588,12 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     sortOrder: sortOrder ?? this.sortOrder,
     level: level ?? this.level,
     path: path ?? this.path,
+    defaultTypeId: defaultTypeId.present
+        ? defaultTypeId.value
+        : this.defaultTypeId,
+    coverAttachmentId: coverAttachmentId.present
+        ? coverAttachmentId.value
+        : this.coverAttachmentId,
     currentRevisionId: currentRevisionId.present
         ? currentRevisionId.value
         : this.currentRevisionId,
@@ -5404,6 +5617,12 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       level: data.level.present ? data.level.value : this.level,
       path: data.path.present ? data.path.value : this.path,
+      defaultTypeId: data.defaultTypeId.present
+          ? data.defaultTypeId.value
+          : this.defaultTypeId,
+      coverAttachmentId: data.coverAttachmentId.present
+          ? data.coverAttachmentId.value
+          : this.coverAttachmentId,
       currentRevisionId: data.currentRevisionId.present
           ? data.currentRevisionId.value
           : this.currentRevisionId,
@@ -5428,6 +5647,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
           ..write('sortOrder: $sortOrder, ')
           ..write('level: $level, ')
           ..write('path: $path, ')
+          ..write('defaultTypeId: $defaultTypeId, ')
+          ..write('coverAttachmentId: $coverAttachmentId, ')
           ..write('currentRevisionId: $currentRevisionId, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt')
@@ -5448,6 +5669,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
     sortOrder,
     level,
     path,
+    defaultTypeId,
+    coverAttachmentId,
     currentRevisionId,
     createdAt,
     archivedAt,
@@ -5467,6 +5690,8 @@ class CategoryRow extends DataClass implements Insertable<CategoryRow> {
           other.sortOrder == this.sortOrder &&
           other.level == this.level &&
           other.path == this.path &&
+          other.defaultTypeId == this.defaultTypeId &&
+          other.coverAttachmentId == this.coverAttachmentId &&
           other.currentRevisionId == this.currentRevisionId &&
           other.createdAt == this.createdAt &&
           other.archivedAt == this.archivedAt);
@@ -5484,6 +5709,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
   final Value<int> sortOrder;
   final Value<int> level;
   final Value<String> path;
+  final Value<String?> defaultTypeId;
+  final Value<String?> coverAttachmentId;
   final Value<String?> currentRevisionId;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
@@ -5500,6 +5727,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     this.sortOrder = const Value.absent(),
     this.level = const Value.absent(),
     this.path = const Value.absent(),
+    this.defaultTypeId = const Value.absent(),
+    this.coverAttachmentId = const Value.absent(),
     this.currentRevisionId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
@@ -5517,6 +5746,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     this.sortOrder = const Value.absent(),
     this.level = const Value.absent(),
     required String path,
+    this.defaultTypeId = const Value.absent(),
+    this.coverAttachmentId = const Value.absent(),
     this.currentRevisionId = const Value.absent(),
     required DateTime createdAt,
     this.archivedAt = const Value.absent(),
@@ -5539,6 +5770,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     Expression<int>? sortOrder,
     Expression<int>? level,
     Expression<String>? path,
+    Expression<String>? defaultTypeId,
+    Expression<String>? coverAttachmentId,
     Expression<String>? currentRevisionId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
@@ -5556,6 +5789,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (level != null) 'level': level,
       if (path != null) 'path': path,
+      if (defaultTypeId != null) 'default_type_id': defaultTypeId,
+      if (coverAttachmentId != null) 'cover_attachment_id': coverAttachmentId,
       if (currentRevisionId != null) 'current_revision_id': currentRevisionId,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
@@ -5575,6 +5810,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     Value<int>? sortOrder,
     Value<int>? level,
     Value<String>? path,
+    Value<String?>? defaultTypeId,
+    Value<String?>? coverAttachmentId,
     Value<String?>? currentRevisionId,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
@@ -5592,6 +5829,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
       sortOrder: sortOrder ?? this.sortOrder,
       level: level ?? this.level,
       path: path ?? this.path,
+      defaultTypeId: defaultTypeId ?? this.defaultTypeId,
+      coverAttachmentId: coverAttachmentId ?? this.coverAttachmentId,
       currentRevisionId: currentRevisionId ?? this.currentRevisionId,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
@@ -5635,6 +5874,12 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
     if (path.present) {
       map['path'] = Variable<String>(path.value);
     }
+    if (defaultTypeId.present) {
+      map['default_type_id'] = Variable<String>(defaultTypeId.value);
+    }
+    if (coverAttachmentId.present) {
+      map['cover_attachment_id'] = Variable<String>(coverAttachmentId.value);
+    }
     if (currentRevisionId.present) {
       map['current_revision_id'] = Variable<String>(currentRevisionId.value);
     }
@@ -5664,6 +5909,8 @@ class CategoriesCompanion extends UpdateCompanion<CategoryRow> {
           ..write('sortOrder: $sortOrder, ')
           ..write('level: $level, ')
           ..write('path: $path, ')
+          ..write('defaultTypeId: $defaultTypeId, ')
+          ..write('coverAttachmentId: $coverAttachmentId, ')
           ..write('currentRevisionId: $currentRevisionId, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt, ')
@@ -6814,6 +7061,28 @@ class $ProfileEntriesTable extends ProfileEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _progressCurrentMeta = const VerificationMeta(
+    'progressCurrent',
+  );
+  @override
+  late final GeneratedColumn<int> progressCurrent = GeneratedColumn<int>(
+    'progress_current',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _progressTotalMeta = const VerificationMeta(
+    'progressTotal',
+  );
+  @override
+  late final GeneratedColumn<int> progressTotal = GeneratedColumn<int>(
+    'progress_total',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _shortNoteMeta = const VerificationMeta(
     'shortNote',
   );
@@ -6961,6 +7230,8 @@ class $ProfileEntriesTable extends ProfileEntries
     relation,
     rating,
     status,
+    progressCurrent,
+    progressTotal,
     shortNote,
     detailedNote,
     impressionDate,
@@ -7023,6 +7294,24 @@ class $ProfileEntriesTable extends ProfileEntries
       context.handle(
         _statusMeta,
         status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('progress_current')) {
+      context.handle(
+        _progressCurrentMeta,
+        progressCurrent.isAcceptableOrUnknown(
+          data['progress_current']!,
+          _progressCurrentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('progress_total')) {
+      context.handle(
+        _progressTotalMeta,
+        progressTotal.isAcceptableOrUnknown(
+          data['progress_total']!,
+          _progressTotalMeta,
+        ),
       );
     }
     if (data.containsKey('short_note')) {
@@ -7156,6 +7445,14 @@ class $ProfileEntriesTable extends ProfileEntries
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       ),
+      progressCurrent: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_current'],
+      ),
+      progressTotal: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}progress_total'],
+      ),
       shortNote: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}short_note'],
@@ -7224,8 +7521,12 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
   /// Оценка 0..10 с шагом 0.5 (§10), необязательна.
   final double? rating;
 
-  /// Статус (зависит от типа, хранится текстом).
+  /// Статус (§10): ключ из набора, заданного типом объекта.
   final String? status;
+
+  /// Прогресс: сколько пройдено и сколько всего. Единица — у типа.
+  final int? progressCurrent;
+  final int? progressTotal;
   final String? shortNote;
   final String? detailedNote;
   final DateTime? impressionDate;
@@ -7252,6 +7553,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
     this.relation,
     this.rating,
     this.status,
+    this.progressCurrent,
+    this.progressTotal,
     this.shortNote,
     this.detailedNote,
     this.impressionDate,
@@ -7279,6 +7582,12 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
     }
     if (!nullToAbsent || status != null) {
       map['status'] = Variable<String>(status);
+    }
+    if (!nullToAbsent || progressCurrent != null) {
+      map['progress_current'] = Variable<int>(progressCurrent);
+    }
+    if (!nullToAbsent || progressTotal != null) {
+      map['progress_total'] = Variable<int>(progressTotal);
     }
     if (!nullToAbsent || shortNote != null) {
       map['short_note'] = Variable<String>(shortNote);
@@ -7329,6 +7638,12 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
       status: status == null && nullToAbsent
           ? const Value.absent()
           : Value(status),
+      progressCurrent: progressCurrent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressCurrent),
+      progressTotal: progressTotal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(progressTotal),
       shortNote: shortNote == null && nullToAbsent
           ? const Value.absent()
           : Value(shortNote),
@@ -7374,6 +7689,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
       relation: serializer.fromJson<String?>(json['relation']),
       rating: serializer.fromJson<double?>(json['rating']),
       status: serializer.fromJson<String?>(json['status']),
+      progressCurrent: serializer.fromJson<int?>(json['progressCurrent']),
+      progressTotal: serializer.fromJson<int?>(json['progressTotal']),
       shortNote: serializer.fromJson<String?>(json['shortNote']),
       detailedNote: serializer.fromJson<String?>(json['detailedNote']),
       impressionDate: serializer.fromJson<DateTime?>(json['impressionDate']),
@@ -7404,6 +7721,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
       'relation': serializer.toJson<String?>(relation),
       'rating': serializer.toJson<double?>(rating),
       'status': serializer.toJson<String?>(status),
+      'progressCurrent': serializer.toJson<int?>(progressCurrent),
+      'progressTotal': serializer.toJson<int?>(progressTotal),
       'shortNote': serializer.toJson<String?>(shortNote),
       'detailedNote': serializer.toJson<String?>(detailedNote),
       'impressionDate': serializer.toJson<DateTime?>(impressionDate),
@@ -7428,6 +7747,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
     Value<String?> relation = const Value.absent(),
     Value<double?> rating = const Value.absent(),
     Value<String?> status = const Value.absent(),
+    Value<int?> progressCurrent = const Value.absent(),
+    Value<int?> progressTotal = const Value.absent(),
     Value<String?> shortNote = const Value.absent(),
     Value<String?> detailedNote = const Value.absent(),
     Value<DateTime?> impressionDate = const Value.absent(),
@@ -7447,6 +7768,12 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
     relation: relation.present ? relation.value : this.relation,
     rating: rating.present ? rating.value : this.rating,
     status: status.present ? status.value : this.status,
+    progressCurrent: progressCurrent.present
+        ? progressCurrent.value
+        : this.progressCurrent,
+    progressTotal: progressTotal.present
+        ? progressTotal.value
+        : this.progressTotal,
     shortNote: shortNote.present ? shortNote.value : this.shortNote,
     detailedNote: detailedNote.present ? detailedNote.value : this.detailedNote,
     impressionDate: impressionDate.present
@@ -7480,6 +7807,12 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
       relation: data.relation.present ? data.relation.value : this.relation,
       rating: data.rating.present ? data.rating.value : this.rating,
       status: data.status.present ? data.status.value : this.status,
+      progressCurrent: data.progressCurrent.present
+          ? data.progressCurrent.value
+          : this.progressCurrent,
+      progressTotal: data.progressTotal.present
+          ? data.progressTotal.value
+          : this.progressTotal,
       shortNote: data.shortNote.present ? data.shortNote.value : this.shortNote,
       detailedNote: data.detailedNote.present
           ? data.detailedNote.value
@@ -7522,6 +7855,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
           ..write('relation: $relation, ')
           ..write('rating: $rating, ')
           ..write('status: $status, ')
+          ..write('progressCurrent: $progressCurrent, ')
+          ..write('progressTotal: $progressTotal, ')
           ..write('shortNote: $shortNote, ')
           ..write('detailedNote: $detailedNote, ')
           ..write('impressionDate: $impressionDate, ')
@@ -7546,6 +7881,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
     relation,
     rating,
     status,
+    progressCurrent,
+    progressTotal,
     shortNote,
     detailedNote,
     impressionDate,
@@ -7569,6 +7906,8 @@ class ProfileEntryRow extends DataClass implements Insertable<ProfileEntryRow> {
           other.relation == this.relation &&
           other.rating == this.rating &&
           other.status == this.status &&
+          other.progressCurrent == this.progressCurrent &&
+          other.progressTotal == this.progressTotal &&
           other.shortNote == this.shortNote &&
           other.detailedNote == this.detailedNote &&
           other.impressionDate == this.impressionDate &&
@@ -7590,6 +7929,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
   final Value<String?> relation;
   final Value<double?> rating;
   final Value<String?> status;
+  final Value<int?> progressCurrent;
+  final Value<int?> progressTotal;
   final Value<String?> shortNote;
   final Value<String?> detailedNote;
   final Value<DateTime?> impressionDate;
@@ -7610,6 +7951,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
     this.relation = const Value.absent(),
     this.rating = const Value.absent(),
     this.status = const Value.absent(),
+    this.progressCurrent = const Value.absent(),
+    this.progressTotal = const Value.absent(),
     this.shortNote = const Value.absent(),
     this.detailedNote = const Value.absent(),
     this.impressionDate = const Value.absent(),
@@ -7631,6 +7974,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
     this.relation = const Value.absent(),
     this.rating = const Value.absent(),
     this.status = const Value.absent(),
+    this.progressCurrent = const Value.absent(),
+    this.progressTotal = const Value.absent(),
     this.shortNote = const Value.absent(),
     this.detailedNote = const Value.absent(),
     this.impressionDate = const Value.absent(),
@@ -7655,6 +8000,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
     Expression<String>? relation,
     Expression<double>? rating,
     Expression<String>? status,
+    Expression<int>? progressCurrent,
+    Expression<int>? progressTotal,
     Expression<String>? shortNote,
     Expression<String>? detailedNote,
     Expression<DateTime>? impressionDate,
@@ -7676,6 +8023,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
       if (relation != null) 'relation': relation,
       if (rating != null) 'rating': rating,
       if (status != null) 'status': status,
+      if (progressCurrent != null) 'progress_current': progressCurrent,
+      if (progressTotal != null) 'progress_total': progressTotal,
       if (shortNote != null) 'short_note': shortNote,
       if (detailedNote != null) 'detailed_note': detailedNote,
       if (impressionDate != null) 'impression_date': impressionDate,
@@ -7701,6 +8050,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
     Value<String?>? relation,
     Value<double?>? rating,
     Value<String?>? status,
+    Value<int?>? progressCurrent,
+    Value<int?>? progressTotal,
     Value<String?>? shortNote,
     Value<String?>? detailedNote,
     Value<DateTime?>? impressionDate,
@@ -7722,6 +8073,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
       relation: relation ?? this.relation,
       rating: rating ?? this.rating,
       status: status ?? this.status,
+      progressCurrent: progressCurrent ?? this.progressCurrent,
+      progressTotal: progressTotal ?? this.progressTotal,
       shortNote: shortNote ?? this.shortNote,
       detailedNote: detailedNote ?? this.detailedNote,
       impressionDate: impressionDate ?? this.impressionDate,
@@ -7759,6 +8112,12 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
+    }
+    if (progressCurrent.present) {
+      map['progress_current'] = Variable<int>(progressCurrent.value);
+    }
+    if (progressTotal.present) {
+      map['progress_total'] = Variable<int>(progressTotal.value);
     }
     if (shortNote.present) {
       map['short_note'] = Variable<String>(shortNote.value);
@@ -7815,6 +8174,8 @@ class ProfileEntriesCompanion extends UpdateCompanion<ProfileEntryRow> {
           ..write('relation: $relation, ')
           ..write('rating: $rating, ')
           ..write('status: $status, ')
+          ..write('progressCurrent: $progressCurrent, ')
+          ..write('progressTotal: $progressTotal, ')
           ..write('shortNote: $shortNote, ')
           ..write('detailedNote: $detailedNote, ')
           ..write('impressionDate: $impressionDate, ')
@@ -9117,6 +9478,17 @@ class $CollectionsTable extends Collections
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _filterJsonMeta = const VerificationMeta(
+    'filterJson',
+  );
+  @override
+  late final GeneratedColumn<String> filterJson = GeneratedColumn<String>(
+    'filter_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -9148,6 +9520,7 @@ class $CollectionsTable extends Collections
     coverAttachmentId,
     color,
     sortOrder,
+    filterJson,
     createdAt,
     archivedAt,
   ];
@@ -9214,6 +9587,12 @@ class $CollectionsTable extends Collections
         sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
       );
     }
+    if (data.containsKey('filter_json')) {
+      context.handle(
+        _filterJsonMeta,
+        filterJson.isAcceptableOrUnknown(data['filter_json']!, _filterJsonMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -9265,6 +9644,10 @@ class $CollectionsTable extends Collections
         DriftSqlType.int,
         data['${effectivePrefix}sort_order'],
       )!,
+      filterJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}filter_json'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -9290,6 +9673,10 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
   final String? coverAttachmentId;
   final int? color;
   final int sortOrder;
+
+  /// Условие живой подборки (§27) — сохранённый отбор каталога в JSON.
+  /// `null` — подборка ручная, состав задан руками в `collection_entries`.
+  final String? filterJson;
   final DateTime createdAt;
   final DateTime? archivedAt;
   const CollectionRow({
@@ -9300,6 +9687,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
     this.coverAttachmentId,
     this.color,
     required this.sortOrder,
+    this.filterJson,
     required this.createdAt,
     this.archivedAt,
   });
@@ -9319,6 +9707,9 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
       map['color'] = Variable<int>(color);
     }
     map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || filterJson != null) {
+      map['filter_json'] = Variable<String>(filterJson);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || archivedAt != null) {
       map['archived_at'] = Variable<DateTime>(archivedAt);
@@ -9341,6 +9732,9 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
           ? const Value.absent()
           : Value(color),
       sortOrder: Value(sortOrder),
+      filterJson: filterJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(filterJson),
       createdAt: Value(createdAt),
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
@@ -9363,6 +9757,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
       ),
       color: serializer.fromJson<int?>(json['color']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      filterJson: serializer.fromJson<String?>(json['filterJson']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
     );
@@ -9378,6 +9773,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
       'coverAttachmentId': serializer.toJson<String?>(coverAttachmentId),
       'color': serializer.toJson<int?>(color),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'filterJson': serializer.toJson<String?>(filterJson),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
     };
@@ -9391,6 +9787,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
     Value<String?> coverAttachmentId = const Value.absent(),
     Value<int?> color = const Value.absent(),
     int? sortOrder,
+    Value<String?> filterJson = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
   }) => CollectionRow(
@@ -9403,6 +9800,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
         : this.coverAttachmentId,
     color: color.present ? color.value : this.color,
     sortOrder: sortOrder ?? this.sortOrder,
+    filterJson: filterJson.present ? filterJson.value : this.filterJson,
     createdAt: createdAt ?? this.createdAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
   );
@@ -9419,6 +9817,9 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
           : this.coverAttachmentId,
       color: data.color.present ? data.color.value : this.color,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      filterJson: data.filterJson.present
+          ? data.filterJson.value
+          : this.filterJson,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
@@ -9436,6 +9837,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
           ..write('coverAttachmentId: $coverAttachmentId, ')
           ..write('color: $color, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('filterJson: $filterJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt')
           ..write(')'))
@@ -9451,6 +9853,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
     coverAttachmentId,
     color,
     sortOrder,
+    filterJson,
     createdAt,
     archivedAt,
   );
@@ -9465,6 +9868,7 @@ class CollectionRow extends DataClass implements Insertable<CollectionRow> {
           other.coverAttachmentId == this.coverAttachmentId &&
           other.color == this.color &&
           other.sortOrder == this.sortOrder &&
+          other.filterJson == this.filterJson &&
           other.createdAt == this.createdAt &&
           other.archivedAt == this.archivedAt);
 }
@@ -9477,6 +9881,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
   final Value<String?> coverAttachmentId;
   final Value<int?> color;
   final Value<int> sortOrder;
+  final Value<String?> filterJson;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
   final Value<int> rowid;
@@ -9488,6 +9893,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
     this.coverAttachmentId = const Value.absent(),
     this.color = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.filterJson = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9500,6 +9906,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
     this.coverAttachmentId = const Value.absent(),
     this.color = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.filterJson = const Value.absent(),
     required DateTime createdAt,
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9515,6 +9922,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
     Expression<String>? coverAttachmentId,
     Expression<int>? color,
     Expression<int>? sortOrder,
+    Expression<String>? filterJson,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
     Expression<int>? rowid,
@@ -9527,6 +9935,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
       if (coverAttachmentId != null) 'cover_attachment_id': coverAttachmentId,
       if (color != null) 'color': color,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (filterJson != null) 'filter_json': filterJson,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9541,6 +9950,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
     Value<String?>? coverAttachmentId,
     Value<int?>? color,
     Value<int>? sortOrder,
+    Value<String?>? filterJson,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
     Value<int>? rowid,
@@ -9553,6 +9963,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
       coverAttachmentId: coverAttachmentId ?? this.coverAttachmentId,
       color: color ?? this.color,
       sortOrder: sortOrder ?? this.sortOrder,
+      filterJson: filterJson ?? this.filterJson,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
       rowid: rowid ?? this.rowid,
@@ -9583,6 +9994,9 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
+    if (filterJson.present) {
+      map['filter_json'] = Variable<String>(filterJson.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -9605,6 +10019,7 @@ class CollectionsCompanion extends UpdateCompanion<CollectionRow> {
           ..write('coverAttachmentId: $coverAttachmentId, ')
           ..write('color: $color, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('filterJson: $filterJson, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt, ')
           ..write('rowid: $rowid')
@@ -13057,6 +13472,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     settings,
     drafts,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'object_types',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('categories', kind: UpdateKind.update)],
+    ),
+  ]);
 }
 
 typedef $$ProfilesTableCreateCompanionBuilder =
@@ -15469,6 +15894,8 @@ typedef $$ObjectTypesTableCreateCompanionBuilder =
       Value<bool> builtIn,
       Value<bool> hidden,
       Value<String?> fieldsSchema,
+      Value<String?> statusesJson,
+      Value<String?> progressUnit,
       required DateTime createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -15485,6 +15912,8 @@ typedef $$ObjectTypesTableUpdateCompanionBuilder =
       Value<bool> builtIn,
       Value<bool> hidden,
       Value<String?> fieldsSchema,
+      Value<String?> statusesJson,
+      Value<String?> progressUnit,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -15525,6 +15954,24 @@ final class $$ObjectTypesTableReferences
     ).filter((f) => f.typeId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_objectsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$CategoriesTable, List<CategoryRow>>
+  _categoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.categories,
+    aliasName: 'object_types__id__categories__default_type_id',
+  );
+
+  $$CategoriesTableProcessedTableManager get categoriesRefs {
+    final manager = $$CategoriesTableTableManager(
+      $_db,
+      $_db.categories,
+    ).filter((f) => f.defaultTypeId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_categoriesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -15585,6 +16032,16 @@ class $$ObjectTypesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get statusesJson => $composableBuilder(
+    column: $table.statusesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -15634,6 +16091,31 @@ class $$ObjectTypesTableFilterComposer
           }) => $$ObjectsTableFilterComposer(
             $db: $db,
             $table: $db.objects,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> categoriesRefs(
+    Expression<bool> Function($$CategoriesTableFilterComposer f) f,
+  ) {
+    final $$CategoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.defaultTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.categories,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -15695,6 +16177,16 @@ class $$ObjectTypesTableOrderingComposer
 
   ColumnOrderings<String> get fieldsSchema => $composableBuilder(
     column: $table.fieldsSchema,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get statusesJson => $composableBuilder(
+    column: $table.statusesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -15772,6 +16264,16 @@ class $$ObjectTypesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get statusesJson => $composableBuilder(
+    column: $table.statusesJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get progressUnit => $composableBuilder(
+    column: $table.progressUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -15827,6 +16329,31 @@ class $$ObjectTypesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> categoriesRefs<T extends Object>(
+    Expression<T> Function($$CategoriesTableAnnotationComposer a) f,
+  ) {
+    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.defaultTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ObjectTypesTableTableManager
@@ -15842,7 +16369,11 @@ class $$ObjectTypesTableTableManager
           $$ObjectTypesTableUpdateCompanionBuilder,
           (ObjectTypeRow, $$ObjectTypesTableReferences),
           ObjectTypeRow,
-          PrefetchHooks Function({bool profileId, bool objectsRefs})
+          PrefetchHooks Function({
+            bool profileId,
+            bool objectsRefs,
+            bool categoriesRefs,
+          })
         > {
   $$ObjectTypesTableTableManager(_$AppDatabase db, $ObjectTypesTable table)
     : super(
@@ -15867,6 +16398,8 @@ class $$ObjectTypesTableTableManager
                 Value<bool> builtIn = const Value.absent(),
                 Value<bool> hidden = const Value.absent(),
                 Value<String?> fieldsSchema = const Value.absent(),
+                Value<String?> statusesJson = const Value.absent(),
+                Value<String?> progressUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15881,6 +16414,8 @@ class $$ObjectTypesTableTableManager
                 builtIn: builtIn,
                 hidden: hidden,
                 fieldsSchema: fieldsSchema,
+                statusesJson: statusesJson,
+                progressUnit: progressUnit,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,
@@ -15897,6 +16432,8 @@ class $$ObjectTypesTableTableManager
                 Value<bool> builtIn = const Value.absent(),
                 Value<bool> hidden = const Value.absent(),
                 Value<String?> fieldsSchema = const Value.absent(),
+                Value<String?> statusesJson = const Value.absent(),
+                Value<String?> progressUnit = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15911,6 +16448,8 @@ class $$ObjectTypesTableTableManager
                 builtIn: builtIn,
                 hidden: hidden,
                 fieldsSchema: fieldsSchema,
+                statusesJson: statusesJson,
+                progressUnit: progressUnit,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,
@@ -15923,67 +16462,100 @@ class $$ObjectTypesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({profileId = false, objectsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (objectsRefs) db.objects],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (profileId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.profileId,
-                                referencedTable: $$ObjectTypesTableReferences
-                                    ._profileIdTable(db),
-                                referencedColumn: $$ObjectTypesTableReferences
-                                    ._profileIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({
+                profileId = false,
+                objectsRefs = false,
+                categoriesRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (objectsRefs) db.objects,
+                    if (categoriesRefs) db.categories,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (profileId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.profileId,
+                                    referencedTable:
+                                        $$ObjectTypesTableReferences
+                                            ._profileIdTable(db),
+                                    referencedColumn:
+                                        $$ObjectTypesTableReferences
+                                            ._profileIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (objectsRefs)
+                        await $_getPrefetchedData<
+                          ObjectTypeRow,
+                          $ObjectTypesTable,
+                          ObjectRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ObjectTypesTableReferences
+                              ._objectsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ObjectTypesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).objectsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.typeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (categoriesRefs)
+                        await $_getPrefetchedData<
+                          ObjectTypeRow,
+                          $ObjectTypesTable,
+                          CategoryRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ObjectTypesTableReferences
+                              ._categoriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ObjectTypesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).categoriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.defaultTypeId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (objectsRefs)
-                    await $_getPrefetchedData<
-                      ObjectTypeRow,
-                      $ObjectTypesTable,
-                      ObjectRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ObjectTypesTableReferences
-                          ._objectsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$ObjectTypesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).objectsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.typeId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -16000,7 +16572,11 @@ typedef $$ObjectTypesTableProcessedTableManager =
       $$ObjectTypesTableUpdateCompanionBuilder,
       (ObjectTypeRow, $$ObjectTypesTableReferences),
       ObjectTypeRow,
-      PrefetchHooks Function({bool profileId, bool objectsRefs})
+      PrefetchHooks Function({
+        bool profileId,
+        bool objectsRefs,
+        bool categoriesRefs,
+      })
     >;
 typedef $$ObjectsTableCreateCompanionBuilder =
     ObjectsCompanion Function({
@@ -17147,6 +17723,8 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       Value<int> sortOrder,
       Value<int> level,
       required String path,
+      Value<String?> defaultTypeId,
+      Value<String?> coverAttachmentId,
       Value<String?> currentRevisionId,
       required DateTime createdAt,
       Value<DateTime?> archivedAt,
@@ -17165,6 +17743,8 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<int> sortOrder,
       Value<int> level,
       Value<String> path,
+      Value<String?> defaultTypeId,
+      Value<String?> coverAttachmentId,
       Value<String?> currentRevisionId,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
@@ -17186,6 +17766,24 @@ final class $$CategoriesTableReferences
       $_db.profiles,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_profileIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ObjectTypesTable _defaultTypeIdTable(_$AppDatabase db) => db
+      .objectTypes
+      .createAlias('categories__default_type_id__object_types__id');
+
+  $$ObjectTypesTableProcessedTableManager? get defaultTypeId {
+    final $_column = $_itemColumn<String>('default_type_id');
+    if ($_column == null) return null;
+    final manager = $$ObjectTypesTableTableManager(
+      $_db,
+      $_db.objectTypes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_defaultTypeIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -17293,6 +17891,11 @@ class $$CategoriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get coverAttachmentId => $composableBuilder(
+    column: $table.coverAttachmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get currentRevisionId => $composableBuilder(
     column: $table.currentRevisionId,
     builder: (column) => ColumnFilters(column),
@@ -17322,6 +17925,29 @@ class $$CategoriesTableFilterComposer
           }) => $$ProfilesTableFilterComposer(
             $db: $db,
             $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ObjectTypesTableFilterComposer get defaultTypeId {
+    final $$ObjectTypesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.defaultTypeId,
+      referencedTable: $db.objectTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ObjectTypesTableFilterComposer(
+            $db: $db,
+            $table: $db.objectTypes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17441,6 +18067,11 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get coverAttachmentId => $composableBuilder(
+    column: $table.coverAttachmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get currentRevisionId => $composableBuilder(
     column: $table.currentRevisionId,
     builder: (column) => ColumnOrderings(column),
@@ -17470,6 +18101,29 @@ class $$CategoriesTableOrderingComposer
           }) => $$ProfilesTableOrderingComposer(
             $db: $db,
             $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ObjectTypesTableOrderingComposer get defaultTypeId {
+    final $$ObjectTypesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.defaultTypeId,
+      referencedTable: $db.objectTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ObjectTypesTableOrderingComposer(
+            $db: $db,
+            $table: $db.objectTypes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17523,6 +18177,11 @@ class $$CategoriesTableAnnotationComposer
   GeneratedColumn<String> get path =>
       $composableBuilder(column: $table.path, builder: (column) => column);
 
+  GeneratedColumn<String> get coverAttachmentId => $composableBuilder(
+    column: $table.coverAttachmentId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get currentRevisionId => $composableBuilder(
     column: $table.currentRevisionId,
     builder: (column) => column,
@@ -17550,6 +18209,29 @@ class $$CategoriesTableAnnotationComposer
           }) => $$ProfilesTableAnnotationComposer(
             $db: $db,
             $table: $db.profiles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ObjectTypesTableAnnotationComposer get defaultTypeId {
+    final $$ObjectTypesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.defaultTypeId,
+      referencedTable: $db.objectTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ObjectTypesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.objectTypes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17626,6 +18308,7 @@ class $$CategoriesTableTableManager
           CategoryRow,
           PrefetchHooks Function({
             bool profileId,
+            bool defaultTypeId,
             bool categoryRevisionsRefs,
             bool entryCategoriesRefs,
           })
@@ -17654,6 +18337,8 @@ class $$CategoriesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> level = const Value.absent(),
                 Value<String> path = const Value.absent(),
+                Value<String?> defaultTypeId = const Value.absent(),
+                Value<String?> coverAttachmentId = const Value.absent(),
                 Value<String?> currentRevisionId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
@@ -17670,6 +18355,8 @@ class $$CategoriesTableTableManager
                 sortOrder: sortOrder,
                 level: level,
                 path: path,
+                defaultTypeId: defaultTypeId,
+                coverAttachmentId: coverAttachmentId,
                 currentRevisionId: currentRevisionId,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
@@ -17688,6 +18375,8 @@ class $$CategoriesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<int> level = const Value.absent(),
                 required String path,
+                Value<String?> defaultTypeId = const Value.absent(),
+                Value<String?> coverAttachmentId = const Value.absent(),
                 Value<String?> currentRevisionId = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> archivedAt = const Value.absent(),
@@ -17704,6 +18393,8 @@ class $$CategoriesTableTableManager
                 sortOrder: sortOrder,
                 level: level,
                 path: path,
+                defaultTypeId: defaultTypeId,
+                coverAttachmentId: coverAttachmentId,
                 currentRevisionId: currentRevisionId,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
@@ -17720,6 +18411,7 @@ class $$CategoriesTableTableManager
           prefetchHooksCallback:
               ({
                 profileId = false,
+                defaultTypeId = false,
                 categoryRevisionsRefs = false,
                 entryCategoriesRefs = false,
               }) {
@@ -17755,6 +18447,20 @@ class $$CategoriesTableTableManager
                                     referencedColumn:
                                         $$CategoriesTableReferences
                                             ._profileIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (defaultTypeId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.defaultTypeId,
+                                    referencedTable: $$CategoriesTableReferences
+                                        ._defaultTypeIdTable(db),
+                                    referencedColumn:
+                                        $$CategoriesTableReferences
+                                            ._defaultTypeIdTable(db)
                                             .id,
                                   )
                                   as T;
@@ -17828,6 +18534,7 @@ typedef $$CategoriesTableProcessedTableManager =
       CategoryRow,
       PrefetchHooks Function({
         bool profileId,
+        bool defaultTypeId,
         bool categoryRevisionsRefs,
         bool entryCategoriesRefs,
       })
@@ -18696,6 +19403,8 @@ typedef $$ProfileEntriesTableCreateCompanionBuilder =
       Value<String?> relation,
       Value<double?> rating,
       Value<String?> status,
+      Value<int?> progressCurrent,
+      Value<int?> progressTotal,
       Value<String?> shortNote,
       Value<String?> detailedNote,
       Value<DateTime?> impressionDate,
@@ -18718,6 +19427,8 @@ typedef $$ProfileEntriesTableUpdateCompanionBuilder =
       Value<String?> relation,
       Value<double?> rating,
       Value<String?> status,
+      Value<int?> progressCurrent,
+      Value<int?> progressTotal,
       Value<String?> shortNote,
       Value<String?> detailedNote,
       Value<DateTime?> impressionDate,
@@ -18887,6 +19598,16 @@ class $$ProfileEntriesTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -19127,6 +19848,16 @@ class $$ProfileEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get shortNote => $composableBuilder(
     column: $table.shortNote,
     builder: (column) => ColumnOrderings(column),
@@ -19254,6 +19985,16 @@ class $$ProfileEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get progressCurrent => $composableBuilder(
+    column: $table.progressCurrent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get progressTotal => $composableBuilder(
+    column: $table.progressTotal,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get shortNote =>
       $composableBuilder(column: $table.shortNote, builder: (column) => column);
@@ -19501,6 +20242,8 @@ class $$ProfileEntriesTableTableManager
                 Value<String?> relation = const Value.absent(),
                 Value<double?> rating = const Value.absent(),
                 Value<String?> status = const Value.absent(),
+                Value<int?> progressCurrent = const Value.absent(),
+                Value<int?> progressTotal = const Value.absent(),
                 Value<String?> shortNote = const Value.absent(),
                 Value<String?> detailedNote = const Value.absent(),
                 Value<DateTime?> impressionDate = const Value.absent(),
@@ -19521,6 +20264,8 @@ class $$ProfileEntriesTableTableManager
                 relation: relation,
                 rating: rating,
                 status: status,
+                progressCurrent: progressCurrent,
+                progressTotal: progressTotal,
                 shortNote: shortNote,
                 detailedNote: detailedNote,
                 impressionDate: impressionDate,
@@ -19543,6 +20288,8 @@ class $$ProfileEntriesTableTableManager
                 Value<String?> relation = const Value.absent(),
                 Value<double?> rating = const Value.absent(),
                 Value<String?> status = const Value.absent(),
+                Value<int?> progressCurrent = const Value.absent(),
+                Value<int?> progressTotal = const Value.absent(),
                 Value<String?> shortNote = const Value.absent(),
                 Value<String?> detailedNote = const Value.absent(),
                 Value<DateTime?> impressionDate = const Value.absent(),
@@ -19563,6 +20310,8 @@ class $$ProfileEntriesTableTableManager
                 relation: relation,
                 rating: rating,
                 status: status,
+                progressCurrent: progressCurrent,
+                progressTotal: progressTotal,
                 shortNote: shortNote,
                 detailedNote: detailedNote,
                 impressionDate: impressionDate,
@@ -20967,6 +21716,7 @@ typedef $$CollectionsTableCreateCompanionBuilder =
       Value<String?> coverAttachmentId,
       Value<int?> color,
       Value<int> sortOrder,
+      Value<String?> filterJson,
       required DateTime createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -20980,6 +21730,7 @@ typedef $$CollectionsTableUpdateCompanionBuilder =
       Value<String?> coverAttachmentId,
       Value<int?> color,
       Value<int> sortOrder,
+      Value<String?> filterJson,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -21064,6 +21815,11 @@ class $$CollectionsTableFilterComposer
 
   ColumnFilters<int> get sortOrder => $composableBuilder(
     column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -21165,6 +21921,11 @@ class $$CollectionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -21229,6 +21990,11 @@ class $$CollectionsTableAnnotationComposer
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get filterJson => $composableBuilder(
+    column: $table.filterJson,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -21323,6 +22089,7 @@ class $$CollectionsTableTableManager
                 Value<String?> coverAttachmentId = const Value.absent(),
                 Value<int?> color = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<String?> filterJson = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -21334,6 +22101,7 @@ class $$CollectionsTableTableManager
                 coverAttachmentId: coverAttachmentId,
                 color: color,
                 sortOrder: sortOrder,
+                filterJson: filterJson,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,
@@ -21347,6 +22115,7 @@ class $$CollectionsTableTableManager
                 Value<String?> coverAttachmentId = const Value.absent(),
                 Value<int?> color = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
+                Value<String?> filterJson = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -21358,6 +22127,7 @@ class $$CollectionsTableTableManager
                 coverAttachmentId: coverAttachmentId,
                 color: color,
                 sortOrder: sortOrder,
+                filterJson: filterJson,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,

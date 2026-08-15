@@ -80,7 +80,7 @@ void main() {
     await old.customStatement(
       'DROP INDEX IF EXISTS idx_revision_attachments_attachment',
     );
-    await old.customStatement('PRAGMA user_version = 5');
+    await pretendSchemaVersion(old, 5);
     await old.close();
 
     final fresh = AppDatabase.forTesting(NativeDatabase(file));

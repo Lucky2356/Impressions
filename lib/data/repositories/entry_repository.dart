@@ -35,6 +35,8 @@ class EntryRepository {
     int? color,
     bool builtIn = false,
     int sortOrder = 0,
+    String? statusesJson,
+    String? progressUnit,
   }) async {
     final id = Ids.newId();
     await db
@@ -49,6 +51,8 @@ class EntryRepository {
             color: Value(color),
             builtIn: Value(builtIn),
             sortOrder: Value(sortOrder),
+            statusesJson: Value(statusesJson),
+            progressUnit: Value(progressUnit),
             createdAt: DateTime.now(),
           ),
         );

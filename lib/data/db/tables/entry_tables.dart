@@ -19,8 +19,12 @@ class ProfileEntries extends Table {
   /// Оценка 0..10 с шагом 0.5 (§10), необязательна.
   RealColumn get rating => real().nullable()();
 
-  /// Статус (зависит от типа, хранится текстом).
+  /// Статус (§10): ключ из набора, заданного типом объекта.
   TextColumn get status => text().nullable()();
+
+  /// Прогресс: сколько пройдено и сколько всего. Единица — у типа.
+  IntColumn get progressCurrent => integer().nullable()();
+  IntColumn get progressTotal => integer().nullable()();
   TextColumn get shortNote => text().nullable()();
   TextColumn get detailedNote => text().nullable()();
   DateTimeColumn get impressionDate => dateTime().nullable()();

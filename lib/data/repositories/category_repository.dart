@@ -37,6 +37,7 @@ class CategoryRepository {
     String? icon,
     int? color,
     int? sortOrder,
+    String? defaultTypeId,
   }) async {
     final id = Ids.newId();
     final row = CategoriesCompanion.insert(
@@ -51,6 +52,7 @@ class CategoryRepository {
       sortOrder: Value(sortOrder ?? await _nextSortOrder(profileId, null)),
       level: const Value(0),
       path: id,
+      defaultTypeId: Value(defaultTypeId),
       createdAt: DateTime.now(),
     );
     await db.into(db.categories).insert(row);

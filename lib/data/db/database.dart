@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../core/domain/entry_status.dart';
 import '../../core/utils/normalize.dart';
 import 'connection.dart';
 import 'tables/attachment_tables.dart';
@@ -52,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -95,6 +96,26 @@ class AppDatabase extends _$AppDatabase {
       // 6: индекс по вложению (создаётся ниже общим списком). Удаление записи
       // насовсем спрашивает про каждую её фотографию, не смотрит ли на неё
       // кто-то ещё, — а искать это приходилось перебором всей таблицы связей.
+      //
+      // 7: у ветки появились свой тип и обложка, у типа — статусы и единица
+      // прогресса, у записи — сам прогресс, у подборки — условие отбора.
+      //
+      // Тип записи форма угадывала по названию категории на каждое открытие:
+      // правило жило в коде, нигде не показывалось и не правилось. Разовый
+      // проход проставляет его тем же правилом, каким угадывали, — у
+      // заведённых раньше деревьев ничего не меняется, но теперь это видно и
+      // можно поправить.
+      if (from < 7) {
+        await m.addColumn(categories, categories.defaultTypeId);
+        await m.addColumn(categories, categories.coverAttachmentId);
+        await m.addColumn(objectTypes, objectTypes.statusesJson);
+        await m.addColumn(objectTypes, objectTypes.progressUnit);
+        await m.addColumn(profileEntries, profileEntries.progressCurrent);
+        await m.addColumn(profileEntries, profileEntries.progressTotal);
+        await m.addColumn(collections, collections.filterJson);
+        await assignDefaultTypesByName();
+        await seedBuiltInStatuses();
+      }
       await _createIndexes();
     },
     beforeOpen: (details) async {
@@ -145,6 +166,49 @@ class AppDatabase extends _$AppDatabase {
     for (final s in stmts) {
       await customStatement(s);
     }
+  }
+
+  /// Проставляет ветке тип по совпадению названий — то же правило, каким его
+  /// угадывала форма до схемы 7.
+  ///
+  /// Работает ровно потому, что первый запуск заводит одноимённые тип и
+  /// корневую категорию. Возвращает, скольким веткам проставила.
+  Future<int> assignDefaultTypesByName() {
+    // `EXISTS` обязателен: без него подзапрос вернёт NULL там, где типа нет,
+    // и затрёт уже проставленное.
+    const match =
+        'SELECT t.id FROM object_types t '
+        ' WHERE t.profile_id = categories.profile_id '
+        '   AND t.normalized_name = categories.normalized_name '
+        '   AND t.archived_at IS NULL LIMIT 1';
+    return customUpdate(
+      'UPDATE categories SET default_type_id = ($match) '
+      'WHERE default_type_id IS NULL AND EXISTS ($match)',
+      updates: {categories},
+    );
+  }
+
+  /// Раздаёт встроенным типам стартовые статусы и единицу прогресса.
+  ///
+  /// Только тем, у кого их ещё нет: пользователь мог убрать набор нарочно, и
+  /// возвращать его при каждом обновлении было бы навязчиво.
+  Future<int> seedBuiltInStatuses() async {
+    final types = await (select(
+      objectTypes,
+    )..where((t) => t.statusesJson.isNull())).get();
+    var touched = 0;
+    for (final type in types) {
+      final defaults = BuiltInStatuses.forTypeName(type.name);
+      if (defaults == null) continue;
+      await (update(objectTypes)..where((t) => t.id.equals(type.id))).write(
+        ObjectTypesCompanion(
+          statusesJson: Value(EntryStatus.encode(defaults.statuses)),
+          progressUnit: Value(defaults.progressUnit),
+        ),
+      );
+      touched++;
+    }
+    return touched;
   }
 
   /// Полнотекстовый поиск заметок записей (FTS5) + триггеры синхронизации.

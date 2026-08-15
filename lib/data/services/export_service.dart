@@ -441,6 +441,12 @@ class ExportService {
       }
     }
 
+    // Обложки веток — по хешу файла и только из того, что реально уехало.
+    final shaById = {for (final a in attachments) a.id: a.sha256};
+    final coverShaByCategory = <String, String>{
+      for (final c in categories) c.id: ?shaById[c.coverAttachmentId],
+    };
+
     final devices = await (db.select(
       db.profileDevices,
     )..where((d) => d.profileId.equals(profileId))).get();
@@ -481,6 +487,12 @@ class ExportService {
             'sortOrder': c.sortOrder,
             'level': c.level,
             'path': c.path,
+            'defaultTypeId': c.defaultTypeId,
+            // Обложка едет по хешу файла, а не по идентификатору: на той
+            // стороне у того же снимка будет свой id (вложения дедуплицируются
+            // по SHA-256). Если фотография в объём не попала — например,
+            // приватная запись отсеялась, — обложку не кладём вовсе.
+            'coverSha': coverShaByCategory[c.id],
             'archivedAt': c.archivedAt?.toUtc().toIso8601String(),
             'createdAt': c.createdAt.toUtc().toIso8601String(),
           },
@@ -496,6 +508,8 @@ class ExportService {
             'color': t.color,
             'sortOrder': t.sortOrder,
             'builtIn': t.builtIn,
+            'statusesJson': t.statusesJson,
+            'progressUnit': t.progressUnit,
           },
         for (final o in objects)
           {
@@ -520,6 +534,8 @@ class ExportService {
             'relation': e.relation,
             'rating': e.rating,
             'status': e.status,
+            'progressCurrent': e.progressCurrent,
+            'progressTotal': e.progressTotal,
             'shortNote': e.privacy == privacyNoNote ? null : e.shortNote,
             'detailedNote': e.privacy == privacyNoNote ? null : e.detailedNote,
             'impressionDate': e.impressionDate?.toUtc().toIso8601String(),

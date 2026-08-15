@@ -1,8 +1,12 @@
+import '../../core/domain/entry_status.dart';
 import '../db/database.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/entry_repository.dart';
 
 /// Описание встроенного типа для стартового набора (§8).
+///
+/// Статусы и единица прогресса берутся по названию из [BuiltInStatuses] —
+/// тем же справочником пользуется обновление базы до схемы 7.
 class StarterType {
   const StarterType(this.name, this.iconKey, this.starterChildren);
   final String name;
@@ -10,6 +14,8 @@ class StarterType {
 
   /// Необязательные стартовые подкатегории.
   final List<String> starterChildren;
+
+  StatusDefaults? get statusDefaults => BuiltInStatuses.forTypeName(name);
 }
 
 /// Создание стартовых типов и категорий при первом запуске (§8).
@@ -61,19 +67,27 @@ class SeedService {
       for (final type in starterTypes) {
         if (onlyTypes != null && !onlyTypes.contains(type.name)) continue;
 
-        await _entries.createObjectType(
+        final objectType = await _entries.createObjectType(
           profileId,
           type.name,
           icon: type.iconKey,
           builtIn: true,
           sortOrder: order,
+          statusesJson: EntryStatus.encode(
+            type.statusDefaults?.statuses ?? const [],
+          ),
+          progressUnit: type.statusDefaults?.progressUnit,
         );
 
+        // Тип ветки задаётся сразу: раньше форма угадывала его по совпадению
+        // названий — правило работало ровно из-за этой пары и нигде не было
+        // видно.
         final root = await _cats.createRoot(
           profileId,
           type.name,
           icon: type.iconKey,
           sortOrder: order,
+          defaultTypeId: objectType.id,
         );
 
         if (withStarterSubcategories) {

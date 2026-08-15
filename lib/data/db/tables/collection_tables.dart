@@ -14,6 +14,10 @@ class Collections extends Table {
   TextColumn get coverAttachmentId => text().nullable()();
   IntColumn get color => integer().nullable()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  /// Условие живой подборки (§27) — сохранённый отбор каталога в JSON.
+  /// `null` — подборка ручная, состав задан руками в `collection_entries`.
+  TextColumn get filterJson => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get archivedAt => dateTime().nullable()();
 

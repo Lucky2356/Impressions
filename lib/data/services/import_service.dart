@@ -589,8 +589,10 @@ class ImportService {
 
     await db.transaction(() async {
       await _applyProfile(preview);
-      await _applyCategories(preview);
+      // Типы идут раньше категорий: ветка ссылается на свой тип по умолчанию,
+      // и пока типа нет, ссылку записать некуда.
       await _applyObjects(preview);
+      await _applyCategories(preview, attachmentIdBySha);
       await _applyEntries(preview);
       await _applyRevisions(preview, attachmentIdBySha);
 
@@ -683,10 +685,26 @@ class ImportService {
     );
   }
 
-  Future<void> _applyCategories(ImportPreview preview) async {
+  Future<void> _applyCategories(
+    ImportPreview preview,
+    Map<String, String> attachmentIdBySha,
+  ) async {
+    // Тип и обложка — украшения ветки, и пакет может ссылаться на то, чего в
+    // нём нет: выгрузка одной ветки, отсеянная приватная фотография, обрезанный
+    // файл. Пишем их, только если цель на месте, иначе весь импорт свалился бы
+    // на одной категории.
+    final knownTypes = {
+      for (final t in await (db.select(
+        db.objectTypes,
+      )..where((t) => t.profileId.equals(preview.profileId))).get())
+        t.id,
+    };
+
     for (final c in preview.payload.categories) {
       final id = c['id'] as String?;
       if (id == null) continue;
+      final typeId = c['defaultTypeId'] as String?;
+      final coverSha = c['coverSha'] as String?;
       final companion = CategoriesCompanion.insert(
         id: id,
         profileId: preview.profileId,
@@ -699,6 +717,10 @@ class ImportService {
         sortOrder: Value(c['sortOrder'] as int? ?? 0),
         level: Value(c['level'] as int? ?? 0),
         path: c['path'] as String? ?? id,
+        defaultTypeId: Value(knownTypes.contains(typeId) ? typeId : null),
+        coverAttachmentId: Value(
+          coverSha == null ? null : attachmentIdBySha[coverSha],
+        ),
         archivedAt: Value(_parseDate(c['archivedAt'])),
         createdAt: _parseDate(c['createdAt']) ?? DateTime.now(),
       );
@@ -724,6 +746,8 @@ class ImportService {
                 color: Value(o['color'] as int?),
                 sortOrder: Value(o['sortOrder'] as int? ?? 0),
                 builtIn: Value(o['builtIn'] as bool? ?? false),
+                statusesJson: Value(o['statusesJson'] as String?),
+                progressUnit: Value(o['progressUnit'] as String?),
                 createdAt: DateTime.now(),
               ),
             );
@@ -763,6 +787,8 @@ class ImportService {
               relation: Value(e['relation'] as String?),
               rating: Value((e['rating'] as num?)?.toDouble()),
               status: Value(e['status'] as String?),
+              progressCurrent: Value(e['progressCurrent'] as int?),
+              progressTotal: Value(e['progressTotal'] as int?),
               shortNote: Value(e['shortNote'] as String?),
               detailedNote: Value(e['detailedNote'] as String?),
               impressionDate: Value(_parseDate(e['impressionDate'])),

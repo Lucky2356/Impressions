@@ -19,6 +19,17 @@ class ObjectTypes extends Table {
 
   /// JSON-схема пользовательских полей типа (§9).
   TextColumn get fieldsSchema => text().nullable()();
+
+  /// Статусы типа (§10) списком JSON: ключ, название, «завершающий ли».
+  ///
+  /// Ключи общие для всех типов (`planned`, `inProgress`, `done`) — иначе
+  /// отбор «что сейчас в процессе» пришлось бы задавать отдельно для книг,
+  /// фильмов и продуктов. Названия у каждого типа свои: «Прочитал» и
+  /// «Попробовал» — про разное.
+  TextColumn get statusesJson => text().nullable()();
+
+  /// В чём измеряется прогресс: «серия», «страница», «час».
+  TextColumn get progressUnit => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get archivedAt => dateTime().nullable()();
 

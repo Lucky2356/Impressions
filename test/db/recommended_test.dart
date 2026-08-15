@@ -106,7 +106,7 @@ void main() {
     raw.execute(
       "INSERT INTO profile_relationships VALUES ('r1', 'a', 'b', null, null, 0)",
     );
-    raw.execute('PRAGMA user_version = 3');
+    await pretendSchemaVersion(db, 3);
     await db.close();
 
     // Открытие поднимает схему до 4.
@@ -146,7 +146,7 @@ void main() {
     raw.execute(
       "INSERT INTO recommendations VALUES ('r1', 'p1', 'o1', 'p2', null, 0)",
     );
-    raw.execute('PRAGMA user_version = 4');
+    await pretendSchemaVersion(db, 4);
     await db.close();
 
     db = AppDatabase.forTesting(
