@@ -8,21 +8,23 @@ import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
-import 'categories_screen.dart';
 
-/// Левая панель: дерево категорий с направляющими линиями.
+/// Навигатор по дереву категорий: постоянная левая панель.
+///
+/// Раньше дерево было одним из двух режимов обзора и подменяло собой полки.
+/// Из-за этого одно и то же нажатие давало разный результат, а переключатель
+/// приходилось дублировать в обеих панелях, чтобы из дерева можно было
+/// вернуться. Теперь дерево только водит по веткам, а что внутри — показывает
+/// страница ветки.
 class TreePane extends StatelessWidget {
   const TreePane({
     super.key,
     required this.categories,
     required this.branchCounts,
-    required this.directCounts,
     required this.collapsed,
     required this.query,
     required this.selectedId,
     required this.searchController,
-    required this.mode,
-    required this.onModeChanged,
     required this.onQuery,
     required this.onToggle,
     required this.onSelect,
@@ -34,13 +36,10 @@ class TreePane extends StatelessWidget {
 
   final List<CategoryRow> categories;
   final Map<String, int> branchCounts;
-  final Map<String, int> directCounts;
   final Set<String> collapsed;
   final String query;
   final String? selectedId;
   final TextEditingController searchController;
-  final CategoryViewMode mode;
-  final ValueChanged<CategoryViewMode> onModeChanged;
   final ValueChanged<String> onQuery;
   final ValueChanged<String> onToggle;
   final ValueChanged<CategoryRow> onSelect;
@@ -121,10 +120,6 @@ class TreePane extends StatelessWidget {
                         style: context.text.headlineSmall,
                       ),
                     ),
-                    // Переключатель режима есть и здесь: без него, уйдя в дерево,
-                    // нельзя было вернуться на полки — сам переключатель исчезал.
-                    CategoryModeToggle(mode: mode, onChanged: onModeChanged),
-                    const SizedBox(width: AppDimens.space8),
                     AppIconButton(
                       icon: Icons.unfold_more_rounded,
                       tooltip: l10n.categoryExpandAll,

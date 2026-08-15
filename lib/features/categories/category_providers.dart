@@ -7,6 +7,7 @@ import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
+import '../catalog/catalog_providers.dart' show CatalogResults;
 
 /// Ветка, открытая на экране категорий.
 ///
@@ -18,10 +19,102 @@ final selectedCategoryProvider = NotifierProvider<SelectedCategory, String?>(
 );
 
 class SelectedCategory extends Notifier<String?> {
+  /// Откуда пришли: по этому следу «Назад» поднимается на уровень вверх, а не
+  /// выбрасывает в корень с середины дерева.
+  final _history = <String>[];
+
   @override
   String? build() => null;
 
-  void select(String? id) => state = id;
+  void select(String? id) {
+    final current = state;
+    if (current == id) return;
+    if (current != null) _history.add(current);
+    state = id;
+  }
+
+  /// Шаг назад. `false` — возвращаться уже некуда.
+  bool back() {
+    if (_history.isEmpty) {
+      if (state == null) return false;
+      state = null;
+      return true;
+    }
+    state = _history.removeLast();
+    return true;
+  }
+
+  /// Сбрасывает и выбор, и след — например при смене профиля.
+  void clear() {
+    _history.clear();
+    state = null;
+  }
+}
+
+/// Свёрнутые узлы дерева.
+///
+/// В провайдере, а не в состоянии экрана: разделы живут в `KeyedSubtree` и при
+/// переключении уничтожаются вместе со своим `State`. Свёрнутое дерево
+/// разворачивалось само, стоило сходить в каталог и обратно.
+final collapsedCategoriesProvider =
+    NotifierProvider<CollapsedCategories, Set<String>>(CollapsedCategories.new);
+
+class CollapsedCategories extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => const {};
+
+  void toggle(String id) {
+    final next = {...state};
+    if (!next.remove(id)) next.add(id);
+    state = next;
+  }
+
+  /// Разворачивает перечисленные узлы — например всех предков выбранной ветки.
+  void expand(Iterable<String> ids) {
+    final next = {...state}..removeAll(ids);
+    if (next.length != state.length) state = next;
+  }
+
+  void expandAll() => state = const {};
+  void collapseAll(Iterable<String> ids) => state = {...ids};
+}
+
+/// Как показывать содержимое ветки: за что считать «здесь» и в каком порядке.
+class CategoryBranchState {
+  const CategoryBranchState({
+    this.subtree = true,
+    this.sort = EntrySort.recent,
+    this.reverseSort = false,
+  });
+
+  /// Вся ветка или только записи, лежащие непосредственно в этой категории.
+  final bool subtree;
+  final EntrySort sort;
+  final bool reverseSort;
+
+  CategoryBranchState copyWith({
+    bool? subtree,
+    EntrySort? sort,
+    bool? reverseSort,
+  }) => CategoryBranchState(
+    subtree: subtree ?? this.subtree,
+    sort: sort ?? this.sort,
+    reverseSort: reverseSort ?? this.reverseSort,
+  );
+}
+
+final categoryBranchStateProvider =
+    NotifierProvider<CategoryBranchView, CategoryBranchState>(
+      CategoryBranchView.new,
+    );
+
+class CategoryBranchView extends Notifier<CategoryBranchState> {
+  @override
+  CategoryBranchState build() => const CategoryBranchState();
+
+  void setSubtree(bool value) => state = state.copyWith(subtree: value);
+  void setSort(EntrySort value) => state = state.copyWith(sort: value);
+  void setReverse(bool value) => state = state.copyWith(reverseSort: value);
 }
 
 /// Все неархивные категории активного профиля, отсортированные так, чтобы
@@ -100,35 +193,112 @@ final categoryBranchCountsProvider = FutureProvider<Map<String, int>>((
   return result;
 });
 
-/// Записи выбранной ветки категорий.
+/// Сколько записей за раз просит страница ветки.
+const int categoryPageSize = 60;
+
+/// Записи ветки: показанная часть и сколько их всего.
 ///
-/// Живут прямо на экране категорий, а не через фильтр каталога: подстановка
-/// фильтра в другой раздел незаметно меняла его состояние, и добавленные потом
-/// записи «пропадали» из каталога.
-final categoryEntriesProvider = FutureProvider.family<List<EntryView>, String>((
-  ref,
-  categoryId,
-) async {
-  ref.watch(dataRefreshProvider);
-  final profile = ref.watch(activeProfileProvider);
-  if (profile == null) return const [];
+/// Раньше страница ветки поднимала все записи разом, с обложками. На «Продукты»
+/// в три тысячи записей это означало три тысячи строк ради первого экрана — и
+/// заново на каждую правку любой из них.
+final categoryFeedProvider =
+    AsyncNotifierProvider<CategoryFeed, CatalogResults>(CategoryFeed.new);
 
-  final ids = CategoryTree.branchIds(
-    await ref.watch(allCategoriesProvider.future),
-    categoryId,
-  );
-  if (ids.isEmpty) return const [];
+class CategoryFeed extends AsyncNotifier<CatalogResults> {
+  /// Под какие условия набран нынешний список.
+  ///
+  /// Обновление данных не сбрасывает набранную глубину: иначе правка записи
+  /// возвращала бы человека в начало длинного списка прямо под рукой.
+  ({String? id, CategoryBranchState view})? _shownFor;
+  int _depth = categoryPageSize;
+  bool _loadingMore = false;
 
-  return ref
-      .watch(entryRepositoryProvider)
-      .entryViews(profile.id, categoryIds: ids);
-});
+  @override
+  Future<CatalogResults> build() {
+    ref.watch(dataRefreshProvider);
+    ref.watch(activeProfileProvider);
+    ref.watch(allCategoriesProvider);
+
+    final key = (
+      id: ref.watch(selectedCategoryProvider),
+      view: ref.watch(categoryBranchStateProvider),
+    );
+    if (_shownFor?.id != key.id || !identical(_shownFor?.view, key.view)) {
+      _shownFor = key;
+      _depth = categoryPageSize;
+    }
+    return _window(limit: _depth, offset: 0);
+  }
+
+  Future<CatalogResults> _window({
+    required int limit,
+    required int offset,
+  }) async {
+    final profile = ref.read(activeProfileProvider);
+    final categoryId = ref.read(selectedCategoryProvider);
+    if (profile == null || categoryId == null) {
+      return const CatalogResults(items: [], total: 0);
+    }
+
+    final view = ref.read(categoryBranchStateProvider);
+    final all = await ref.read(allCategoriesProvider.future);
+    final ids = view.subtree
+        ? CategoryTree.branchIds(all, categoryId)
+        : <String>[categoryId];
+    if (ids.isEmpty) return const CatalogResults(items: [], total: 0);
+
+    final page = await ref
+        .read(entryRepositoryProvider)
+        .entryPage(
+          profile.id,
+          categoryIds: ids,
+          sort: view.sort,
+          reverseSort: view.reverseSort,
+          limit: limit,
+          offset: offset,
+        );
+    return CatalogResults(items: page.items, total: page.total);
+  }
+
+  /// Подгружает следующую страницу.
+  Future<void> more() async {
+    if (_loadingMore) return;
+    final shown = state.value;
+    if (shown == null || !shown.hasMore) return;
+
+    _loadingMore = true;
+    try {
+      final next = await _window(
+        limit: categoryPageSize,
+        offset: shown.items.length,
+      );
+      // Пока страница ехала, список мог смениться целиком.
+      final now = state.value;
+      if (now == null || now.items.length != shown.items.length) return;
+
+      _depth = now.items.length + next.items.length;
+      state = AsyncData(
+        CatalogResults(items: [...now.items, ...next.items], total: next.total),
+      );
+    } finally {
+      _loadingMore = false;
+    }
+  }
+}
+
+/// Видимая часть записей ветки вместе с общим числом.
+///
+/// Отдельно от [categoryFeedProvider] — по образцу каталога: экранам и тестам
+/// есть что читать и чем подменять, не зная о том, как список набирается по
+/// страницам.
+final categoryBranchResultsProvider = FutureProvider<CatalogResults>(
+  (ref) => ref.watch(categoryFeedProvider.future),
+);
 
 /// Сколько записей каждого типа лежит в ветке.
 ///
-/// Отдельно от [categoryEntriesProvider]: форме нужен только перевес типа,
-/// а тот поднимает всю ветку с обложками — на каждое открытие формы и на
-/// каждую смену категории в ней.
+/// Отдельно от [categoryEntriesProvider]: подсказке нужен только перевес типа,
+/// а тот поднимает всю ветку с обложками.
 final branchTypeCountsProvider =
     FutureProvider.family<Map<String, int>, String>((ref, categoryId) async {
       ref.watch(dataRefreshProvider);

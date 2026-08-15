@@ -24,8 +24,6 @@ class CategoryShelfCard extends StatelessWidget {
     this.covers = const [],
     this.selected = false,
     this.onTap,
-    this.onShowEntries,
-    this.showEntriesTooltip,
   });
 
   final String name;
@@ -43,12 +41,11 @@ class CategoryShelfCard extends StatelessWidget {
   final List<String> covers;
 
   final bool selected;
-  final VoidCallback? onTap;
 
-  /// Показать записи самой полки. Нажатие на карточку с подкатегориями уводит
-  /// вглубь, поэтому до собственных записей нужен отдельный ход.
-  final VoidCallback? onShowEntries;
-  final String? showEntriesTooltip;
+  /// Нажатие открывает ветку — и её подкатегории, и её записи сразу. Отдельной
+  /// кнопки «показать записи» больше нет: раньше она была нужна потому, что
+  /// нажатие на карточку с подкатегориями уводило вглубь мимо них.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -120,17 +117,6 @@ class CategoryShelfCard extends StatelessWidget {
                           errorBuilder: (_, _, _) =>
                               const SizedBox(width: 36, height: 36),
                         ),
-                      ),
-                    ),
-                  if (onShowEntries != null)
-                    IconButton(
-                      onPressed: onShowEntries,
-                      visualDensity: VisualDensity.compact,
-                      tooltip: showEntriesTooltip,
-                      icon: Icon(
-                        Icons.format_list_bulleted_rounded,
-                        size: 18,
-                        color: c.textSecondary,
                       ),
                     ),
                 ],

@@ -355,9 +355,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// раздела на главную. Возвращает false, когда подниматься уже некуда.
   bool _stepBack() {
     final section = ref.read(navProvider);
+    // В категориях поднимаемся по крошкам на уровень вверх, а не выбрасываем
+    // в корень: до 1.16.0 «Назад» с третьего уровня дерева стоило одного
+    // нажатия и всего спуска заново.
     if (section == NavIds.categories &&
-        ref.read(selectedCategoryProvider) != null) {
-      ref.read(selectedCategoryProvider.notifier).select(null);
+        ref.read(selectedCategoryProvider.notifier).back()) {
       return true;
     }
     if (section != NavIds.home) {

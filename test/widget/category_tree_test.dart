@@ -90,11 +90,6 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-
-    // Дерево — второй режим: по умолчанию показываются полки.
-    final l10n = await AppLocalizations.delegate.load(const Locale('ru'));
-    await tester.tap(find.byTooltip(l10n.categoryViewTree).first);
-    await tester.pumpAndSettle();
   }
 
   testWidgets('свёрнутая ветка прячет и детей, и внуков', (tester) async {

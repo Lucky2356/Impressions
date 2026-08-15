@@ -621,13 +621,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
-  String get categoryShowEntries => 'Показать записи';
+  String get categoryScopeHere => 'Только здесь';
 
   @override
-  String get categoryViewShelves => 'Полками';
+  String get categoryScopeBranch => 'Вся ветка';
 
   @override
-  String get categoryViewTree => 'Деревом';
+  String get categoryShowMore => 'Показать ещё';
+
+  @override
+  String get categoryOpenTree => 'Показать дерево';
 
   @override
   String get categoryShelfEmptyTitle => 'Внутри пока пусто';
@@ -1808,7 +1811,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get categoryPickMessage =>
-      'Слева — дерево категорий. Выберите ветку, чтобы увидеть, что в ней лежит.';
+      'Выберите ветку слева, чтобы увидеть, что в ней лежит: её подкатегории и её записи.';
 
   @override
   String get catalogTypeLabel => 'Тип';

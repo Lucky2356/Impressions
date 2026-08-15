@@ -1,0 +1,189 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/l10n/gen/app_localizations.dart';
+import '../../core/theme/app_dimens.dart';
+import '../../core/theme/theme_context.dart';
+import '../../data/models/entry_view.dart';
+import '../../design_system/design_system.dart';
+import '../entry/entry_card_data.dart';
+import '../entry/entry_detail_sheet.dart';
+import 'category_providers.dart';
+
+/// Панель над списком записей ветки: охват и порядок.
+///
+/// Переключатель «только здесь / вся ветка» стоит рядом со списком, а не в
+/// настройках: вопрос «а это всё или только верхняя полка» возникает прямо в
+/// момент чтения списка.
+class BranchEntriesBar extends ConsumerWidget {
+  const BranchEntriesBar({super.key, required this.total});
+
+  /// Сколько записей всего под нынешним охватом.
+  final int total;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final view = ref.watch(categoryBranchStateProvider);
+    final notifier = ref.read(categoryBranchStateProvider.notifier);
+
+    return Wrap(
+      spacing: AppDimens.space8,
+      runSpacing: AppDimens.space8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SegmentedToggle<bool>(
+          value: view.subtree,
+          onChanged: notifier.setSubtree,
+          segments: [
+            SegmentData(
+              value: false,
+              icon: Icons.folder_open_rounded,
+              tooltip: l10n.categoryScopeHere,
+            ),
+            SegmentData(
+              value: true,
+              icon: Icons.account_tree_rounded,
+              tooltip: l10n.categoryScopeBranch,
+            ),
+          ],
+        ),
+        AppDropdown<EntrySort>(
+          label: l10n.catalogSortLabel,
+          value: view.sort,
+          showLabel: false,
+          icon: Icons.swap_vert_rounded,
+          onChanged: (v) => v == null ? null : notifier.setSort(v),
+          items: [
+            DropdownMenuItem(
+              value: EntrySort.recent,
+              child: Text(l10n.catalogSortRecent),
+            ),
+            DropdownMenuItem(
+              value: EntrySort.title,
+              child: Text(l10n.catalogSortTitle),
+            ),
+            DropdownMenuItem(
+              value: EntrySort.rating,
+              child: Text(l10n.catalogSortRating),
+            ),
+            DropdownMenuItem(
+              value: EntrySort.impressionDate,
+              child: Text(l10n.catalogSortImpression),
+            ),
+          ],
+        ),
+        AppIconButton(
+          icon: view.reverseSort
+              ? Icons.arrow_upward_rounded
+              : Icons.arrow_downward_rounded,
+          tooltip: view.reverseSort
+              ? l10n.catalogSortReversed
+              : l10n.catalogSortNatural,
+          onPressed: () => notifier.setReverse(!view.reverseSort),
+        ),
+        Text(
+          l10n.categoryEntriesCount(total),
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+/// Записи ветки сеткой компактных карточек.
+///
+/// Сеткой, а не колонкой: на широком экране карточка во всю ширину окна
+/// выглядит нелепо, а места пропадает много.
+class BranchEntriesGrid extends StatelessWidget {
+  const BranchEntriesGrid({super.key, required this.entries});
+
+  final List<EntryView> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, cns) {
+        final columns = (cns.maxWidth / 380).floor().clamp(1, 4);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: AppDimens.space8,
+            crossAxisSpacing: AppDimens.space8,
+            mainAxisExtent: 104,
+          ),
+          itemCount: entries.length,
+          itemBuilder: (context, i) {
+            final e = entries[i];
+            return EntryCardCompact(
+              data: entryCardData(context, e),
+              onTap: () => EntryDetailSheet.show(context, e.entryId),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Заглушка пустой ветки: единственный видимый выход отсюда — завести запись.
+class BranchEmpty extends StatelessWidget {
+  const BranchEmpty({super.key, required this.onAdd});
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.space32),
+      decoration: BoxDecoration(
+        color: c.surfaceMuted,
+        borderRadius: AppDimens.brLg,
+        border: Border.all(color: c.border),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.inbox_rounded, size: 30, color: c.textMuted),
+          const SizedBox(height: AppDimens.space12),
+          Text(
+            l10n.categoryBranchEmpty,
+            style: context.text.bodyMedium?.copyWith(color: c.textSecondary),
+          ),
+          const SizedBox(height: AppDimens.space16),
+          FilledButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: Text(l10n.commonAdd),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Кнопка «показать ещё» под неполным списком.
+///
+/// Ленты внутри прокручиваемой страницы не хватает: подгрузка по прокрутке
+/// требует своего скролла, а он здесь один на всю страницу ветки.
+class BranchLoadMore extends ConsumerWidget {
+  const BranchLoadMore({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppDimens.space16),
+      child: Center(
+        child: OutlinedButton(
+          onPressed: () => ref.read(categoryFeedProvider.notifier).more(),
+          child: Text(l10n.categoryShowMore),
+        ),
+      ),
+    );
+  }
+}

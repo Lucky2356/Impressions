@@ -606,13 +606,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
-  String get categoryShowEntries => 'Show entries';
+  String get categoryScopeHere => 'Here only';
 
   @override
-  String get categoryViewShelves => 'Shelves';
+  String get categoryScopeBranch => 'Whole branch';
 
   @override
-  String get categoryViewTree => 'Tree';
+  String get categoryShowMore => 'Show more';
+
+  @override
+  String get categoryOpenTree => 'Show tree';
 
   @override
   String get categoryShelfEmptyTitle => 'Nothing inside yet';
@@ -1760,7 +1763,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryPickMessage =>
-      'The category tree is on the left. Pick a branch to see what is inside it.';
+      'Pick a branch on the left to see what is inside it — its subcategories and its entries.';
 
   @override
   String get catalogTypeLabel => 'Type';

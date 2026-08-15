@@ -10,7 +10,8 @@ import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/data/providers.dart';
 import 'package:impressions/data/repositories/collection_repository.dart';
 import 'package:impressions/features/archive/archive_screen.dart';
-import 'package:impressions/features/categories/category_detail.dart';
+import 'package:impressions/features/catalog/catalog_providers.dart';
+import 'package:impressions/features/categories/category_branch_page.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/collections/collections_screen.dart';
@@ -204,20 +205,12 @@ void main() {
             (ref) async => [category('c1', 'Фильмы')],
           ),
           categoryDirectCountsProvider.overrideWith((ref) async => const {}),
-          categoryEntriesProvider.overrideWith((ref, id) async => const []),
+          categoryBranchResultsProvider.overrideWith(
+            (ref) async => const CatalogResults(items: [], total: 0),
+          ),
         ],
         child: app(
-          CategoryDetail(
-            category: category('c1', 'Фильмы'),
-            onOpenChild: (_) {},
-            onAddChild: () {},
-            onRename: () {},
-            onIcon: () {},
-            onMove: () {},
-            onReorder: ({required up}) {},
-            onArchive: () {},
-            onBack: () {},
-          ),
+          CategoryBranchPage(category: category('c1', 'Фильмы'), onBack: () {}),
         ),
       ),
     );

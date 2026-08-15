@@ -1136,23 +1136,29 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
-  /// No description provided for @categoryShowEntries.
+  /// No description provided for @categoryScopeHere.
   ///
   /// In ru, this message translates to:
-  /// **'Показать записи'**
-  String get categoryShowEntries;
+  /// **'Только здесь'**
+  String get categoryScopeHere;
 
-  /// No description provided for @categoryViewShelves.
+  /// No description provided for @categoryScopeBranch.
   ///
   /// In ru, this message translates to:
-  /// **'Полками'**
-  String get categoryViewShelves;
+  /// **'Вся ветка'**
+  String get categoryScopeBranch;
 
-  /// No description provided for @categoryViewTree.
+  /// No description provided for @categoryShowMore.
   ///
   /// In ru, this message translates to:
-  /// **'Деревом'**
-  String get categoryViewTree;
+  /// **'Показать ещё'**
+  String get categoryShowMore;
+
+  /// No description provided for @categoryOpenTree.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать дерево'**
+  String get categoryOpenTree;
 
   /// No description provided for @categoryShelfEmptyTitle.
   ///
@@ -3017,7 +3023,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryPickMessage.
   ///
   /// In ru, this message translates to:
-  /// **'Слева — дерево категорий. Выберите ветку, чтобы увидеть, что в ней лежит.'**
+  /// **'Выберите ветку слева, чтобы увидеть, что в ней лежит: её подкатегории и её записи.'**
   String get categoryPickMessage;
 
   /// No description provided for @catalogTypeLabel.

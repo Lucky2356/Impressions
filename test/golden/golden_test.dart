@@ -12,7 +12,7 @@ import 'package:impressions/design_system/design_system.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
-import 'package:impressions/features/categories/category_detail.dart';
+import 'package:impressions/features/categories/category_branch_page.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/home/home_providers.dart';
 
@@ -168,20 +168,12 @@ void main() {
             ...baseOverrides(),
             allCategoriesProvider.overrideWith((ref) async => [films]),
             categoryDirectCountsProvider.overrideWith((ref) async => const {}),
-            categoryEntriesProvider.overrideWith((ref, id) async => const []),
+            categoryBranchResultsProvider.overrideWith(
+              (ref) async => const CatalogResults(items: [], total: 0),
+            ),
           ],
           child: golden(
-            CategoryDetail(
-              category: films,
-              onOpenChild: (_) {},
-              onAddChild: () {},
-              onRename: () {},
-              onIcon: () {},
-              onMove: () {},
-              onReorder: ({required up}) {},
-              onArchive: () {},
-              onBack: () {},
-            ),
+            CategoryBranchPage(category: films, onBack: () {}),
             brightness: brightness,
           ),
         ),
@@ -189,7 +181,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await expectLater(
-        find.byType(CategoryDetail),
+        find.byType(CategoryBranchPage),
         matchesGoldenFile('goldens/category_branch_phone_$suffix.png'),
       );
     });

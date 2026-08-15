@@ -12,6 +12,7 @@ import 'package:impressions/design_system/design_system.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
 import 'package:impressions/features/categories/categories_screen.dart';
+import 'package:impressions/features/categories/category_branch_page.dart';
 import 'package:impressions/features/categories/category_tree_pane.dart';
 import 'package:impressions/features/categories/category_providers.dart';
 import 'package:impressions/features/collections/collection_providers.dart';
@@ -267,58 +268,47 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('полками показывает корневые категории со счётчиком', (
+    testWidgets('дерево видно сразу, без переключения режимов', (tester) async {
+      await pumpTwoLevels(tester);
+      await tester.pumpAndSettle();
+
+      // До 1.16.0 обзор начинался с полок, а дерево было вторым режимом.
+      expect(find.byType(CategoryTreeRow), findsNWidgets(2));
+      expect(find.text('Продукты'), findsWidgets);
+      expect(find.text('Колбасы'), findsWidgets);
+    });
+
+    testWidgets('ветка открывается из дерева и показывает подкатегории', (
       tester,
     ) async {
       await pumpTwoLevels(tester);
-
-      // По умолчанию — полки: карточка корневой категории с числом записей по
-      // ветке и перечнем подкатегорий.
-      expect(find.byType(CategoryShelfCard), findsOneWidget);
-      expect(find.text('Продукты'), findsWidgets);
-      expect(find.text('3 записи'), findsOneWidget);
-      expect(find.text('Колбасы'), findsOneWidget);
-    });
-
-    testWidgets('полка с подкатегориями раскрывается нажатием', (tester) async {
-      await pumpTwoLevels(tester);
-
-      await tester.tap(find.byType(CategoryShelfCard));
       await tester.pumpAndSettle();
 
-      // Внутри «Продуктов» лежат «Колбасы» — теперь они и есть полка.
+      // Пока ветка не выбрана, справа подсказка, а не пустота.
+      expect(find.byType(CategoryBranchPage), findsNothing);
+
+      await tester.tap(find.text('Продукты').first);
+      await tester.pumpAndSettle();
+
+      // Одно нажатие — один исход: открылась страница ветки, а в ней полкой
+      // лежит подкатегория со счётчиком по своей ветке.
+      expect(find.byType(CategoryBranchPage), findsOneWidget);
       expect(find.widgetWithText(CategoryShelfCard, 'Колбасы'), findsOneWidget);
+      expect(find.text('3 записи'), findsOneWidget);
     });
 
-    testWidgets('переключение на дерево показывает вложенность', (
+    testWidgets('навигатор и страница ветки видны одновременно', (
       tester,
     ) async {
       await pumpTwoLevels(tester);
-
-      await tester.tap(find.byTooltip('Деревом'));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.text('Колбасы').first);
+      await tester.pumpAndSettle();
+
+      // Дерево не подменяется содержимым: по нему видно, где мы находимся.
       expect(find.byType(CategoryTreeRow), findsNWidgets(2));
-      expect(find.text('Продукты'), findsWidgets);
-      expect(find.text('Колбасы'), findsOneWidget);
-    });
-
-    testWidgets('из дерева можно вернуться на полки', (tester) async {
-      await pumpTwoLevels(tester);
-
-      await tester.tap(find.byTooltip('Деревом'));
-      await tester.pumpAndSettle();
-      expect(find.byType(CategoryTreeRow), findsNWidgets(2));
-
-      // Переключатель обязан остаться на экране: раньше он был только в полках,
-      // и уйдя в дерево, вернуться было нечем.
-      expect(find.byType(CategoryModeToggle), findsOneWidget);
-
-      await tester.tap(find.byTooltip('Полками'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CategoryShelfCard), findsOneWidget);
-      expect(find.byType(CategoryTreeRow), findsNothing);
+      expect(find.byType(CategoryBranchPage), findsOneWidget);
     });
 
     testWidgets('пустое дерево предлагает создать категорию', (tester) async {
