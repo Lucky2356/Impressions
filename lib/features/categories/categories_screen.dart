@@ -42,17 +42,37 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     await showAdaptiveSheet<void>(
       context,
       heightFactor: 0.9,
-      builder: (sheetContext) =>
-          _tree(categories, onSelected: () => Navigator.of(sheetContext).pop()),
+      // На телефоне дерево живёт в листе: тащить сюда нечего — источник
+      // перетаскивания остался на закрытой странице.
+      builder: (sheetContext) => _tree(
+        categories,
+        acceptsDrops: false,
+        onSelected: () => Navigator.of(sheetContext).pop(),
+      ),
     );
   }
 
-  Widget _tree(List<CategoryRow> categories, {VoidCallback? onSelected}) {
+  Widget _tree(
+    List<CategoryRow> categories, {
+    VoidCallback? onSelected,
+    bool acceptsDrops = true,
+  }) {
     final actions = CategoryActions(ref, context);
     final branch = ref.watch(categoryBranchCountsProvider).value ?? const {};
     final collapsed = ref.watch(collapsedCategoriesProvider);
 
     return TreePane(
+      onDrop: !acceptsDrops
+          ? null
+          : (payload, target, edge) => actions.drop(
+              payload: payload,
+              target: target,
+              edge: edge,
+              siblingsOfTarget: CategoryTree.childrenOf(
+                categories,
+                target.parentId,
+              ),
+            ),
       categories: categories,
       branchCounts: branch,
       collapsed: collapsed,

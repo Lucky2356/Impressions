@@ -8,6 +8,7 @@ import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
 import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
+import 'category_drag.dart';
 import 'category_providers.dart';
 
 /// Панель над списком записей ветки: охват и порядок.
@@ -97,9 +98,17 @@ class BranchEntriesBar extends ConsumerWidget {
 /// Сеткой, а не колонкой: на широком экране карточка во всю ширину окна
 /// выглядит нелепо, а места пропадает много.
 class BranchEntriesGrid extends StatelessWidget {
-  const BranchEntriesGrid({super.key, required this.entries});
+  const BranchEntriesGrid({
+    super.key,
+    required this.entries,
+    this.draggable = true,
+  });
 
   final List<EntryView> entries;
+
+  /// Можно ли утащить запись в другую ветку. На телефоне дерева на экране нет,
+  /// и тащить некуда — там перенос делается через меню записи.
+  final bool draggable;
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +128,17 @@ class BranchEntriesGrid extends StatelessWidget {
           itemCount: entries.length,
           itemBuilder: (context, i) {
             final e = entries[i];
-            return EntryCardCompact(
+            final card = EntryCardCompact(
               data: entryCardData(context, e),
               onTap: () => EntryDetailSheet.show(context, e.entryId),
+            );
+            if (!draggable) return card;
+            return CategoryDraggable(
+              payload: EntryDrag(entryId: e.entryId, title: e.title),
+              label: e.title,
+              icon: Icons.description_rounded,
+              tone: context.colors.accentPrimary,
+              child: card,
             );
           },
         );

@@ -134,7 +134,12 @@ class CategoryBranchPage extends ConsumerWidget {
                     children: [
                       BranchEntriesBar(total: found.total),
                       const SizedBox(height: AppDimens.space12),
-                      BranchEntriesGrid(entries: found.items),
+                      BranchEntriesGrid(
+                        entries: found.items,
+                        // Тащить запись есть куда только там, где рядом видно
+                        // дерево: на телефоне для этого есть пункт меню.
+                        draggable: layout.isWide,
+                      ),
                       if (found.hasMore) const BranchLoadMore(),
                     ],
                   );

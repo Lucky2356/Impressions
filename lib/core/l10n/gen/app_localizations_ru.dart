@@ -621,6 +621,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get categoryDragHint => 'Перетащите, чтобы переместить';
+
+  @override
+  String categoryMovedTo(String name) {
+    return 'Перенесено в «$name»';
+  }
+
+  @override
   String get categoryAppearance => 'Оформление';
 
   @override

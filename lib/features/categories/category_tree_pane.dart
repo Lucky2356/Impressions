@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
@@ -8,6 +9,7 @@ import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
 import '../../data/models/category_tree.dart';
 import '../../design_system/design_system.dart';
+import 'category_drag.dart';
 import 'category_palette.dart';
 
 /// Навигатор по дереву категорий: постоянная левая панель.
@@ -33,6 +35,7 @@ class TreePane extends StatelessWidget {
     required this.onCreateRoot,
     required this.onExpandAll,
     required this.onCollapseAll,
+    this.onDrop,
   });
 
   final List<CategoryRow> categories;
@@ -48,6 +51,10 @@ class TreePane extends StatelessWidget {
   final VoidCallback onCreateRoot;
   final VoidCallback onExpandAll;
   final VoidCallback onCollapseAll;
+
+  /// Приём брошенного груза. Без него дерево просто не принимает перетаскивание
+  /// — например в листе на телефоне, где тащить нечем.
+  final void Function(CategoryDropPayload, CategoryRow, DropEdge)? onDrop;
 
   @override
   Widget build(BuildContext context) {
@@ -161,34 +168,133 @@ class TreePane extends StatelessWidget {
                       ),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimens.space12,
-                      AppDimens.space12,
-                      AppDimens.space12,
-                      AppDimens.space40,
-                    ),
-                    itemCount: visible.length,
-                    itemBuilder: (context, i) {
-                      final cat = visible[i];
-                      return CategoryTreeRow(
-                        category: cat,
-                        tone: CategoryPalette.colorOf(cat, categories, c),
-                        branchCount: branchCounts[cat.id] ?? 0,
-                        childCount: childCount[cat.id] ?? 0,
-                        hasChildren: hasChildren[cat.id] ?? false,
-                        collapsed: collapsed.contains(cat.id),
-                        selected: cat.id == selectedId,
-                        isLast: isLastChild[cat.id] ?? true,
-                        onToggle: () => onToggle(cat.id),
-                        onSelect: () => onSelect(cat),
-                        onAddChild: () => onAddChild(cat),
-                      );
-                    },
+                : _TreeList(
+                    visible: visible,
+                    all: categories,
+                    branchCounts: branchCounts,
+                    childCount: childCount,
+                    hasChildren: hasChildren,
+                    isLastChild: isLastChild,
+                    collapsed: collapsed,
+                    selectedId: selectedId,
+                    onToggle: onToggle,
+                    onSelect: onSelect,
+                    onAddChild: onAddChild,
+                    onDrop: onDrop,
                   ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Список строк дерева с прокруткой у краёв во время перетаскивания.
+class _TreeList extends StatefulWidget {
+  const _TreeList({
+    required this.visible,
+    required this.all,
+    required this.branchCounts,
+    required this.childCount,
+    required this.hasChildren,
+    required this.isLastChild,
+    required this.collapsed,
+    required this.selectedId,
+    required this.onToggle,
+    required this.onSelect,
+    required this.onAddChild,
+    required this.onDrop,
+  });
+
+  final List<CategoryRow> visible;
+  final List<CategoryRow> all;
+  final Map<String, int> branchCounts;
+  final Map<String, int> childCount;
+  final Map<String, bool> hasChildren;
+  final Map<String, bool> isLastChild;
+  final Set<String> collapsed;
+  final String? selectedId;
+  final ValueChanged<String> onToggle;
+  final ValueChanged<CategoryRow> onSelect;
+  final ValueChanged<CategoryRow> onAddChild;
+  final void Function(CategoryDropPayload, CategoryRow, DropEdge)? onDrop;
+
+  @override
+  State<_TreeList> createState() => _TreeListState();
+}
+
+class _TreeListState extends State<_TreeList> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Полоска у края: пока над ней висит груз, список едет.
+  Widget _edge({required bool forward}) {
+    return DropZone<CategoryDropPayload>(
+      onWillAccept: (_) => true,
+      onAccept: (_) {},
+      builder: (context, active) => DropAutoScroll(
+        active: active,
+        controller: _controller,
+        forward: forward,
+        child: const SizedBox(height: 24, width: double.infinity),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final list = ListView.builder(
+      controller: _controller,
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.space12,
+        AppDimens.space12,
+        AppDimens.space12,
+        AppDimens.space40,
+      ),
+      itemCount: widget.visible.length,
+      itemBuilder: (context, i) {
+        final cat = widget.visible[i];
+        return CategoryTreeRow(
+          category: cat,
+          tone: CategoryPalette.colorOf(cat, widget.all, c),
+          branchCount: widget.branchCounts[cat.id] ?? 0,
+          childCount: widget.childCount[cat.id] ?? 0,
+          hasChildren: widget.hasChildren[cat.id] ?? false,
+          collapsed: widget.collapsed.contains(cat.id),
+          selected: cat.id == widget.selectedId,
+          isLast: widget.isLastChild[cat.id] ?? true,
+          onToggle: () => widget.onToggle(cat.id),
+          onSelect: () => widget.onSelect(cat),
+          onAddChild: () => widget.onAddChild(cat),
+          onDrop: widget.onDrop == null
+              ? null
+              : (payload, edge) => widget.onDrop!(payload, cat, edge),
+          canDrop: widget.onDrop == null
+              ? null
+              : (payload, edge) => canDropOn(
+                  payload: payload,
+                  target: cat,
+                  edge: edge,
+                  all: widget.all,
+                  maxDepth: AppConfig.hardMaxCategoryDepth,
+                ),
+        );
+      },
+    );
+
+    if (widget.onDrop == null) return list;
+    return Stack(
+      children: [
+        Positioned.fill(child: list),
+        Positioned(top: 0, left: 0, right: 0, child: _edge(forward: false)),
+        Positioned(bottom: 0, left: 0, right: 0, child: _edge(forward: true)),
+      ],
     );
   }
 }
@@ -208,6 +314,8 @@ class CategoryTreeRow extends StatefulWidget {
     required this.onToggle,
     required this.onSelect,
     required this.onAddChild,
+    this.onDrop,
+    this.canDrop,
   });
 
   final CategoryRow category;
@@ -224,6 +332,10 @@ class CategoryTreeRow extends StatefulWidget {
   final VoidCallback onToggle;
   final VoidCallback onSelect;
   final VoidCallback onAddChild;
+
+  /// Приём броска; `null` — строка перетаскивание не поддерживает.
+  final void Function(CategoryDropPayload, DropEdge)? onDrop;
+  final bool Function(CategoryDropPayload, DropEdge)? canDrop;
 
   @override
   State<CategoryTreeRow> createState() => CategoryTreeRowState();
@@ -313,26 +425,102 @@ class CategoryTreeRowState extends State<CategoryTreeRow> {
       ),
     );
 
+    final withGuides = isRoot
+        ? tile
+        : CustomPaint(
+            painter: TreeGuidePainter(
+              level: cat.level,
+              indent: _indent,
+              isLast: widget.isLast,
+              color: c.border,
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(left: cat.level * _indent),
+              child: tile,
+            ),
+          );
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 1),
-        child: isRoot
-            ? tile
-            : CustomPaint(
-                painter: TreeGuidePainter(
-                  level: cat.level,
-                  indent: _indent,
-                  isLast: widget.isLast,
-                  color: c.border,
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(left: cat.level * _indent),
-                  child: tile,
-                ),
+        child: widget.onDrop == null
+            ? withGuides
+            : CategoryDraggable(
+                payload: CategoryDrag(cat),
+                label: cat.name,
+                icon: AppIcons.byKey(cat.icon),
+                tone: tone,
+                child: _withDropZones(context, withGuides, tone),
               ),
       ),
+    );
+  }
+
+  /// Три зоны на строке: сверху «поставить перед», снизу «после», посередине
+  /// «положить внутрь».
+  ///
+  /// Три зоны, а не вычисление координат в одном таргете: их видно в дереве
+  /// виджетов, по ним можно попасть в тесте, и каждая сама решает, принимает
+  /// ли она груз.
+  Widget _withDropZones(BuildContext context, Widget row, Color tone) {
+    Widget line(DropEdge edge, {required bool top}) =>
+        DropZone<CategoryDropPayload>(
+          onWillAccept: (payload) => widget.canDrop!(payload, edge),
+          onAccept: (payload) => widget.onDrop!(payload, edge),
+          builder: (context, active) => Container(
+            height: dropEdgeHeight,
+            decoration: active
+                ? BoxDecoration(
+                    border: Border(
+                      top: top
+                          ? BorderSide(color: tone, width: 2)
+                          : BorderSide.none,
+                      bottom: top
+                          ? BorderSide.none
+                          : BorderSide(color: tone, width: 2),
+                    ),
+                  )
+                : null,
+          ),
+        );
+
+    return Stack(
+      children: [
+        DropZone<CategoryDropPayload>(
+          onWillAccept: (payload) => widget.canDrop!(payload, DropEdge.into),
+          onAccept: (payload) => widget.onDrop!(payload, DropEdge.into),
+          builder: (context, active) => DropHoverExpand(
+            // Свёрнутая ветка раскрывается сама, если над ней подержать груз:
+            // иначе положить внутрь неё нечего, не бросив груз сначала.
+            active: active && widget.collapsed && widget.hasChildren,
+            onExpand: widget.onToggle,
+            child: Container(
+              decoration: active
+                  ? BoxDecoration(
+                      color: tone.withValues(alpha: 0.14),
+                      borderRadius: AppDimens.brSm,
+                      border: Border.all(color: tone, width: 1.5),
+                    )
+                  : null,
+              child: row,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: line(DropEdge.before, top: true),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: line(DropEdge.after, top: false),
+        ),
+      ],
     );
   }
 }

@@ -1136,6 +1136,18 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @categoryDragHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перетащите, чтобы переместить'**
+  String get categoryDragHint;
+
+  /// No description provided for @categoryMovedTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенесено в «{name}»'**
+  String categoryMovedTo(String name);
+
   /// No description provided for @categoryAppearance.
   ///
   /// In ru, this message translates to:

@@ -606,6 +606,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get categoryDragHint => 'Drag to move';
+
+  @override
+  String categoryMovedTo(String name) {
+    return 'Moved to “$name”';
+  }
+
+  @override
   String get categoryAppearance => 'Appearance';
 
   @override

@@ -10,6 +10,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/category_repository.dart';
 import '../../design_system/design_system.dart';
 import '../quick_add/category_picker.dart';
+import 'category_drag.dart';
 import 'category_editor_sheet.dart';
 import 'category_providers.dart';
 
@@ -91,6 +92,63 @@ class CategoryActions {
       if (!context.mounted) return;
       showMessage(context, e.message);
     }
+  }
+
+  /// Принимает брошенный груз: ветку — на место, запись — в ветку.
+  ///
+  /// Перетаскивание не должно быть единственным путём: то же самое делают
+  /// пункты меню и Ctrl+стрелки. Здесь только приём броска.
+  Future<void> drop({
+    required CategoryDropPayload payload,
+    required CategoryRow target,
+    required DropEdge edge,
+    required List<CategoryRow> siblingsOfTarget,
+  }) async {
+    switch (payload) {
+      case EntryDrag(entryId: final entryId):
+        await _moveEntry(entryId, target);
+      case CategoryDrag(category: final moved):
+        try {
+          if (edge == DropEdge.into) {
+            await _repo.moveTo(moved.id, newParentId: target.id);
+          } else {
+            final order = [for (final c in siblingsOfTarget) c.id]
+              ..remove(moved.id);
+            final at = order.indexOf(target.id);
+            await _repo.moveTo(
+              moved.id,
+              newParentId: target.parentId,
+              index: edge == DropEdge.before ? at : at + 1,
+            );
+          }
+          _bump();
+        } on CategoryTreeException catch (e) {
+          if (!context.mounted) return;
+          showMessage(context, e.message);
+        }
+    }
+  }
+
+  /// Переносит запись в другую ветку с возможностью вернуть как было.
+  Future<void> _moveEntry(String entryId, CategoryRow target) async {
+    final l10n = _l10n;
+    final entries = ref.read(entryRepositoryProvider);
+    // Прежнюю основную категорию запоминаем до переноса — иначе возвращать
+    // будет некуда.
+    final previous = await entries.primaryCategoryOf(entryId);
+    await entries.setPrimaryCategory(entryId, target.id);
+    _bump();
+    if (!context.mounted) return;
+    showUndoSnackBar(
+      context,
+      message: l10n.categoryMovedTo(target.name),
+      onUndo: () async {
+        if (previous != null) {
+          await entries.setPrimaryCategory(entryId, previous);
+        }
+        _bump();
+      },
+    );
   }
 
   Future<void> reorder(CategoryRow category, {required bool up}) async {

@@ -13,6 +13,7 @@ export 'components/color_swatches.dart';
 export 'components/confirm_dialog.dart';
 export 'components/cover_image.dart';
 export 'components/cover_progress.dart';
+export 'components/drop_zone.dart';
 export 'components/empty_state.dart';
 export 'components/entry_card.dart';
 export 'components/entry_thumb.dart';

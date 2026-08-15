@@ -333,6 +333,19 @@ class EntryRepository {
   }
 
   /// Устанавливает основную категорию записи, снимая прежнюю основную.
+  /// Основная категория записи — та, по которой строится её путь.
+  ///
+  /// Нужна там, где перенос надо уметь отменить: без прежнего значения
+  /// «Вернуть» некуда возвращать.
+  Future<String?> primaryCategoryOf(String entryId) async {
+    final link =
+        await (db.select(db.entryCategories)..where(
+              (ec) => ec.entryId.equals(entryId) & ec.isPrimary.equals(true),
+            ))
+            .getSingleOrNull();
+    return link?.categoryId;
+  }
+
   Future<void> setPrimaryCategory(String entryId, String categoryId) async {
     await db.transaction(() async {
       await (db.update(db.entryCategories)
