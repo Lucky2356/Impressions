@@ -621,6 +621,55 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogFilters => 'Фильтры';
 
   @override
+  String get categoryMerge => 'Объединить с…';
+
+  @override
+  String get categoryMergeTitle => 'С какой веткой объединить';
+
+  @override
+  String categoryMergeMessage(String name) {
+    return 'Записи и подкатегории переедут в выбранную ветку, а «$name» уйдёт в архив. Отменить одним нажатием будет нельзя.';
+  }
+
+  @override
+  String get categoryMergeAction => 'Объединить';
+
+  @override
+  String get categoryMergeDone => 'Ветки объединены';
+
+  @override
+  String get categoryMoveChildren => 'Перенести подкатегории…';
+
+  @override
+  String get categoryMoveEntries => 'Перенести записи…';
+
+  @override
+  String categoryMovedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Перенесено $count веток',
+      many: 'Перенесено $count веток',
+      few: 'Перенесено $count ветки',
+      one: 'Перенесена $count ветка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryMovedEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Перенесено $count записей',
+      many: 'Перенесено $count записей',
+      few: 'Перенесено $count записи',
+      one: 'Перенесена $count запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryDragHint => 'Перетащите, чтобы переместить';
 
   @override

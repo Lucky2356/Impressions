@@ -18,14 +18,42 @@ class CategoryPickResult {
 
 /// Выбор категории из дерева профиля с быстрым поиском (§11).
 class CategoryPicker extends ConsumerStatefulWidget {
-  const CategoryPicker({super.key});
+  const CategoryPicker({
+    super.key,
+    this.title,
+    this.allowClear = true,
+    this.excludeIds = const {},
+  });
 
-  static Future<CategoryPickResult?> show(BuildContext context) {
+  /// Заголовок. По умолчанию — «Выбрать категорию».
+  final String? title;
+
+  /// Показывать ли «Без категории». При выборе цели переноса выбирать нечего:
+  /// перенести «в никуда» нельзя.
+  final bool allowClear;
+
+  /// Что не предлагать: например саму ветку и её потомков при объединении.
+  final Set<String> excludeIds;
+
+  static Future<CategoryPickResult?> show(
+    BuildContext context, {
+    String? title,
+    bool allowClear = true,
+    Set<String> excludeIds = const {},
+  }) {
     return showDialog<CategoryPickResult>(
       context: context,
-      builder: (_) => const Dialog(
+      builder: (_) => Dialog(
         clipBehavior: Clip.antiAlias,
-        child: SizedBox(width: 480, height: 560, child: CategoryPicker()),
+        child: SizedBox(
+          width: 480,
+          height: 560,
+          child: CategoryPicker(
+            title: title,
+            allowClear: allowClear,
+            excludeIds: excludeIds,
+          ),
+        ),
       ),
     );
   }
@@ -51,7 +79,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
             children: [
               Expanded(
                 child: Text(
-                  l10n.quickAddPickCategory,
+                  widget.title ?? l10n.quickAddPickCategory,
                   style: context.text.headlineSmall,
                 ),
               ),
@@ -74,13 +102,14 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
           ),
         ),
         const SizedBox(height: AppDimens.space8),
-        ListTile(
-          leading: Icon(Icons.block_rounded, color: c.textMuted),
-          title: Text(l10n.quickAddNoCategory),
-          onTap: () => Navigator.of(
-            context,
-          ).pop(const CategoryPickResult(null, cleared: true)),
-        ),
+        if (widget.allowClear)
+          ListTile(
+            leading: Icon(Icons.block_rounded, color: c.textMuted),
+            title: Text(l10n.quickAddNoCategory),
+            onTap: () => Navigator.of(
+              context,
+            ).pop(const CategoryPickResult(null, cleared: true)),
+          ),
         Divider(height: 1, color: c.divider),
         Expanded(
           child: categories.when(
@@ -88,11 +117,18 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
             error: (e, _) => ErrorState(error: e),
             data: (list) {
               final byId = {for (final cat in list) cat.id: cat};
-              final filtered = _query.isEmpty
+              final allowed = widget.excludeIds.isEmpty
                   ? list
-                  : list
-                        .where((cat) => cat.normalizedName.contains(_query))
-                        .toList();
+                  : [
+                      for (final cat in list)
+                        if (!widget.excludeIds.contains(cat.id)) cat,
+                    ];
+              final filtered = _query.isEmpty
+                  ? allowed
+                  : [
+                      for (final cat in allowed)
+                        if (cat.normalizedName.contains(_query)) cat,
+                    ];
               if (filtered.isEmpty) {
                 return Center(
                   child: Text(

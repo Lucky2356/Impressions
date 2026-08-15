@@ -1136,6 +1136,60 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get catalogFilters;
 
+  /// No description provided for @categoryMerge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объединить с…'**
+  String get categoryMerge;
+
+  /// No description provided for @categoryMergeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'С какой веткой объединить'**
+  String get categoryMergeTitle;
+
+  /// No description provided for @categoryMergeMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи и подкатегории переедут в выбранную ветку, а «{name}» уйдёт в архив. Отменить одним нажатием будет нельзя.'**
+  String categoryMergeMessage(String name);
+
+  /// No description provided for @categoryMergeAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объединить'**
+  String get categoryMergeAction;
+
+  /// No description provided for @categoryMergeDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ветки объединены'**
+  String get categoryMergeDone;
+
+  /// No description provided for @categoryMoveChildren.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести подкатегории…'**
+  String get categoryMoveChildren;
+
+  /// No description provided for @categoryMoveEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести записи…'**
+  String get categoryMoveEntries;
+
+  /// No description provided for @categoryMovedCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Перенесена {count} ветка} few{Перенесено {count} ветки} many{Перенесено {count} веток} other{Перенесено {count} веток}}'**
+  String categoryMovedCount(int count);
+
+  /// No description provided for @categoryMovedEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Перенесена {count} запись} few{Перенесено {count} записи} many{Перенесено {count} записей} other{Перенесено {count} записей}}'**
+  String categoryMovedEntries(int count);
+
   /// No description provided for @categoryDragHint.
   ///
   /// In ru, this message translates to:

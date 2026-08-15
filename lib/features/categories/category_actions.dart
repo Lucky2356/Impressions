@@ -151,6 +151,110 @@ class CategoryActions {
     );
   }
 
+  /// Ветка и всё, что под ней, — то, что нельзя предлагать целью переноса.
+  Future<Set<String>> _branchOf(CategoryRow category) async {
+    final all = await ref.read(allCategoriesProvider.future);
+    return CategoryTree.branchIds(all, category.id).toSet();
+  }
+
+  /// Спрашивает ветку-цель, не предлагая саму ветку и её потомков.
+  Future<CategoryRow?> _pickTarget(CategoryRow source, String title) async {
+    // Ветку считаем до показа диалога: иначе между чтением и открытием
+    // оказывается ожидание, и контекст успевает устареть.
+    final excluded = await _branchOf(source);
+    if (!context.mounted) return null;
+    final picked = await CategoryPicker.show(
+      context,
+      title: title,
+      allowClear: false,
+      excludeIds: excluded,
+    );
+    return picked?.category;
+  }
+
+  /// Сводит ветку в другую (§7.1).
+  ///
+  /// Спрашиваем до, а не предлагаем «Вернуть» после: разложить сведённое
+  /// обратно одним нажатием нельзя, и обещать этого не следует.
+  Future<void> merge(CategoryRow source) async {
+    final l10n = _l10n;
+    final target = await _pickTarget(source, l10n.categoryMergeTitle);
+    if (target == null || !context.mounted) return;
+
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: l10n.categoryMerge,
+      message: l10n.categoryMergeMessage(source.name),
+      confirmLabel: l10n.categoryMergeAction,
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    try {
+      await _repo.merge(sourceId: source.id, targetId: target.id);
+      // Сведённая ветка ушла в архив — оставаться на ней некуда.
+      if (ref.read(selectedCategoryProvider) == source.id) {
+        ref.read(selectedCategoryProvider.notifier).select(target.id);
+      }
+      _bump();
+      if (!context.mounted) return;
+      showMessage(context, l10n.categoryMergeDone);
+    } on CategoryTreeException catch (e) {
+      if (!context.mounted) return;
+      showMessage(context, e.message);
+    }
+  }
+
+  /// Переносит подкатегории ветки в другую ветку разом.
+  ///
+  /// Пересобрать дерево, перетаскивая по одной, — долго; а объединение здесь
+  /// не годится: саму ветку убирать не хотят.
+  Future<void> moveChildren(CategoryRow source) async {
+    final l10n = _l10n;
+    final children = await _repo.children(source.id, includeArchived: true);
+    if (children.isEmpty) {
+      if (!context.mounted) return;
+      showMessage(context, l10n.categoryShelfEmptyTitle);
+      return;
+    }
+    if (!context.mounted) return;
+    final target = await _pickTarget(source, l10n.categoryMoveChildren);
+    if (target == null) return;
+
+    final moved = await _repo.moveMany([
+      for (final c in children) c.id,
+    ], target.id);
+    _bump();
+    if (!context.mounted) return;
+    showMessage(context, l10n.categoryMovedCount(moved));
+  }
+
+  /// Переносит все записи ветки в другую ветку.
+  Future<void> moveEntries(CategoryRow source) async {
+    final l10n = _l10n;
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+
+    final entries = ref.read(entryRepositoryProvider);
+    final ids = await entries.matchingEntryIds(
+      profile.id,
+      categoryIds: await _branchOf(source).then((s) => s.toList()),
+    );
+    if (ids.isEmpty) {
+      if (!context.mounted) return;
+      showMessage(context, l10n.categoryBranchEmpty);
+      return;
+    }
+    if (!context.mounted) return;
+    final target = await _pickTarget(source, l10n.categoryMoveEntries);
+    if (target == null) return;
+
+    await entries.setPrimaryCategories(ids, target.id);
+    _bump();
+    if (!context.mounted) return;
+    showMessage(context, l10n.categoryMovedEntries(ids.length));
+  }
+
   Future<void> reorder(CategoryRow category, {required bool up}) async {
     final moved = await _repo.reorder(category.id, up: up);
     if (!context.mounted) return;
@@ -203,6 +307,15 @@ class CategoryActions {
         // Порядок задавался только полем в базе, которое никто не выставлял.
         PopupMenuItem(value: 'up', child: Text(l10n.categoryMoveUp)),
         PopupMenuItem(value: 'down', child: Text(l10n.categoryMoveDown)),
+        PopupMenuItem(
+          value: 'moveChildren',
+          child: Text(l10n.categoryMoveChildren),
+        ),
+        PopupMenuItem(
+          value: 'moveEntries',
+          child: Text(l10n.categoryMoveEntries),
+        ),
+        PopupMenuItem(value: 'merge', child: Text(l10n.categoryMerge)),
         PopupMenuItem(value: 'archive', child: Text(l10n.categoryArchive)),
       ],
     );
@@ -225,6 +338,12 @@ class CategoryActions {
         await reorder(category, up: true);
       case 'down':
         await reorder(category, up: false);
+      case 'moveChildren':
+        await moveChildren(category);
+      case 'moveEntries':
+        await moveEntries(category);
+      case 'merge':
+        await merge(category);
       case 'archive':
         await archive(category);
     }

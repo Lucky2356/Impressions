@@ -606,6 +606,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogFilters => 'Filters';
 
   @override
+  String get categoryMerge => 'Merge with…';
+
+  @override
+  String get categoryMergeTitle => 'Which branch to merge into';
+
+  @override
+  String categoryMergeMessage(String name) {
+    return 'Entries and subcategories will move to the branch you pick, and “$name” goes to the archive. This cannot be undone with one tap.';
+  }
+
+  @override
+  String get categoryMergeAction => 'Merge';
+
+  @override
+  String get categoryMergeDone => 'Branches merged';
+
+  @override
+  String get categoryMoveChildren => 'Move subcategories…';
+
+  @override
+  String get categoryMoveEntries => 'Move entries…';
+
+  @override
+  String categoryMovedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count branches moved',
+      one: '$count branch moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String categoryMovedEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries moved',
+      one: '$count entry moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryDragHint => 'Drag to move';
 
   @override

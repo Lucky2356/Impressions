@@ -273,6 +273,18 @@ class _Header extends StatelessWidget {
             _item('up', Icons.arrow_upward_rounded, l10n.categoryMoveUp),
             _item('down', Icons.arrow_downward_rounded, l10n.categoryMoveDown),
             const PopupMenuDivider(),
+            _item(
+              'moveChildren',
+              Icons.folder_copy_rounded,
+              l10n.categoryMoveChildren,
+            ),
+            _item(
+              'moveEntries',
+              Icons.move_down_rounded,
+              l10n.categoryMoveEntries,
+            ),
+            _item('merge', Icons.merge_rounded, l10n.categoryMerge),
+            const PopupMenuDivider(),
             _item('archive', Icons.archive_rounded, l10n.categoryArchive),
           ],
         );
@@ -319,7 +331,11 @@ class _Header extends StatelessWidget {
         children: [
           Icon(icon, size: 18),
           const SizedBox(width: AppDimens.space12),
-          Text(label),
+          // Без Flexible длинная подпись вроде «Перенести подкатегории…»
+          // вылезает за край всплывающего меню.
+          Flexible(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
         ],
       ),
     );
