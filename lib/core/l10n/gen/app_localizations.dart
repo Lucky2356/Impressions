@@ -3050,6 +3050,90 @@ abstract class AppLocalizations {
   /// **'о приложении версия лицензия горячие клавиши'**
   String get settingsWordsAbout;
 
+  /// No description provided for @settingsPickTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите раздел'**
+  String get settingsPickTitle;
+
+  /// No description provided for @settingsPickMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слева — всё, что можно настроить. Раздел откроется здесь.'**
+  String get settingsPickMessage;
+
+  /// No description provided for @settingsSubtitleAppearance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тема и язык'**
+  String get settingsSubtitleAppearance;
+
+  /// No description provided for @settingsSubtitleBehaviour.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подкатегории в списках, перенос записей'**
+  String get settingsSubtitleBehaviour;
+
+  /// No description provided for @settingsSubtitleBackups.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копии, расписание и восстановление'**
+  String get settingsSubtitleBackups;
+
+  /// No description provided for @settingsSubtitleNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Штрихкоды, товарные базы, обновления'**
+  String get settingsSubtitleNetwork;
+
+  /// No description provided for @settingsSubtitleTypes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наборы полей и стадий'**
+  String get settingsSubtitleTypes;
+
+  /// No description provided for @settingsSubtitleTags.
+  ///
+  /// In ru, this message translates to:
+  /// **'Метки записей'**
+  String get settingsSubtitleTags;
+
+  /// No description provided for @settingsSubtitleDevices.
+  ///
+  /// In ru, this message translates to:
+  /// **'С кем налажен обмен'**
+  String get settingsSubtitleDevices;
+
+  /// No description provided for @settingsSubtitleDbEncryption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль на саму базу'**
+  String get settingsSubtitleDbEncryption;
+
+  /// No description provided for @settingsSubtitleKeyStorage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где лежит закрытый ключ'**
+  String get settingsSubtitleKeyStorage;
+
+  /// No description provided for @settingsSubtitleDoctor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти и починить расхождения'**
+  String get settingsSubtitleDoctor;
+
+  /// No description provided for @settingsSubtitleErrorLog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что пошло не так'**
+  String get settingsSubtitleErrorLog;
+
+  /// No description provided for @settingsSubtitleAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия, обучение, горячие клавиши'**
+  String get settingsSubtitleAbout;
+
   /// No description provided for @settingsAppearance.
   ///
   /// In ru, this message translates to:

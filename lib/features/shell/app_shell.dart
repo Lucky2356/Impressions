@@ -362,6 +362,12 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.read(selectedCategoryProvider.notifier).back()) {
       return true;
     }
+    // В настройках — из открытого раздела к списку разделов: выкидывать на
+    // главную из «Резервных копий» значит потерять и место в настройках.
+    if (section == NavIds.settings &&
+        ref.read(selectedSettingsSectionProvider.notifier).back()) {
+      return true;
+    }
     if (section != NavIds.home) {
       _go(NavIds.home);
       return true;

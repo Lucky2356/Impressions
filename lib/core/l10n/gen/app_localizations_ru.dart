@@ -1863,6 +1863,50 @@ class AppLocalizationsRu extends AppLocalizations {
       'о приложении версия лицензия горячие клавиши';
 
   @override
+  String get settingsPickTitle => 'Выберите раздел';
+
+  @override
+  String get settingsPickMessage =>
+      'Слева — всё, что можно настроить. Раздел откроется здесь.';
+
+  @override
+  String get settingsSubtitleAppearance => 'Тема и язык';
+
+  @override
+  String get settingsSubtitleBehaviour =>
+      'Подкатегории в списках, перенос записей';
+
+  @override
+  String get settingsSubtitleBackups => 'Копии, расписание и восстановление';
+
+  @override
+  String get settingsSubtitleNetwork => 'Штрихкоды, товарные базы, обновления';
+
+  @override
+  String get settingsSubtitleTypes => 'Наборы полей и стадий';
+
+  @override
+  String get settingsSubtitleTags => 'Метки записей';
+
+  @override
+  String get settingsSubtitleDevices => 'С кем налажен обмен';
+
+  @override
+  String get settingsSubtitleDbEncryption => 'Пароль на саму базу';
+
+  @override
+  String get settingsSubtitleKeyStorage => 'Где лежит закрытый ключ';
+
+  @override
+  String get settingsSubtitleDoctor => 'Найти и починить расхождения';
+
+  @override
+  String get settingsSubtitleErrorLog => 'Что пошло не так';
+
+  @override
+  String get settingsSubtitleAbout => 'Версия, обучение, горячие клавиши';
+
+  @override
   String get settingsAppearance => 'Оформление';
 
   @override

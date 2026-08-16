@@ -9,20 +9,15 @@ import '../../core/config/app_config.dart';
 import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/utils/normalize.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/changelog_service.dart';
 import '../../design_system/design_system.dart';
 import '../onboarding/app_tour.dart';
-import 'backups_section.dart';
-import 'db_encryption_section.dart';
-import 'devices_section.dart';
-import 'doctor_section.dart';
-import 'error_log_section.dart';
 import 'network_section.dart';
-import 'tags_section.dart';
-import 'types_section.dart';
+import 'settings_sections.dart';
 import 'whats_new_dialog.dart';
 
 /// Значение настройки «при переносе записей» (§7.4).
@@ -45,97 +40,37 @@ final includeSubcategoriesProvider = FutureProvider<bool>((ref) async {
 /// Ширина колонки настроек: формы шире читать неудобно.
 const double _settingsMaxWidth = 880;
 
-/// Раздел настроек: название, слова для поиска и сам виджет.
-///
-/// Названия и слова объявлены здесь, рядом со списком разделов, а не внутри
-/// каждого виджета: иначе список поиска расходится с показанным, как когда-то
-/// разошлись справка и настройки по горячим клавишам ([appHotkeys]).
-typedef _Section = ({String title, String words, Widget widget});
+/// Ширина списка разделов в широкой раскладке.
+const double _settingsListWidth = 320;
 
-/// Разделы в порядке показа.
+/// Какой раздел настроек открыт; null — открыт список.
 ///
-/// Порядок — по тому, как часто настройку меняют. Сверху то, за чем сюда
-/// заходят: вид, поведение списков, сохранность данных и обновления. Ниже —
-/// то, что настраивают один раз или никогда. Сведения в конце.
-List<_Section> _mainSections(AppLocalizations l10n) => [
-  (
-    title: l10n.settingsAppearance,
-    words: l10n.settingsWordsAppearance,
-    widget: const _AppearanceSection(),
-  ),
-  (
-    title: l10n.settingsBehaviour,
-    words: l10n.settingsWordsBehaviour,
-    widget: const _BehaviourSection(),
-  ),
-  (
-    title: l10n.backupsTitle,
-    words: l10n.settingsWordsBackups,
-    widget: const BackupsSection(),
-  ),
-  (
-    title: l10n.settingsNetworkTitle,
-    words: l10n.settingsWordsNetwork,
-    widget: const NetworkSection(),
-  ),
-];
+/// В провайдере, а не в `State`: разделы живут в `KeyedSubtree` внутри
+/// `AnimatedSwitcher` и при переходе уничтожаются вместе со своим состоянием.
+final selectedSettingsSectionProvider =
+    NotifierProvider<SelectedSettingsSection, String?>(
+      SelectedSettingsSection.new,
+    );
 
-/// Разделы под чертой «Дополнительно».
-List<_Section> _advancedSections(AppLocalizations l10n) => [
-  (
-    title: l10n.typesTitle,
-    words: l10n.settingsWordsTypes,
-    widget: const TypesSection(),
-  ),
-  (
-    title: l10n.tagsTitle,
-    words: l10n.settingsWordsTags,
-    widget: const TagsSection(),
-  ),
-  (
-    title: l10n.devicesTitle,
-    words: l10n.settingsWordsDevices,
-    widget: const DevicesSection(),
-  ),
-  (
-    title: l10n.dbEncryptionTitle,
-    words: l10n.settingsWordsDbEncryption,
-    widget: const DbEncryptionSection(),
-  ),
-  (
-    title: l10n.keyStorageTitle,
-    words: l10n.settingsWordsKeyStorage,
-    widget: const KeyStorageSection(),
-  ),
-  (
-    title: l10n.doctorTitle,
-    words: l10n.settingsWordsDoctor,
-    widget: const DoctorSection(),
-  ),
-  (
-    title: l10n.errorLogTitle,
-    words: l10n.settingsWordsErrorLog,
-    widget: const ErrorLogSection(),
-  ),
-  (
-    title: l10n.settingsAbout,
-    words: l10n.settingsWordsAbout,
-    widget: const _AboutSection(),
-  ),
-];
+class SelectedSettingsSection extends Notifier<String?> {
+  @override
+  String? build() => null;
 
-/// Подходит ли раздел под запрос.
-///
-/// Слова запроса ищутся по названию и объявленным словам: «копи» находит
-/// резервные копии, «ёлк» и «елк» — одно и то же.
-bool _matches(_Section section, String query) {
-  final q = Normalize.forMatch(query);
-  if (q.isEmpty) return true;
-  final haystack = Normalize.forMatch('${section.title} ${section.words}');
-  return q.split(' ').every(haystack.contains);
+  void select(String id) => state = id;
+
+  /// Возврат к списку. false — возвращаться было некуда.
+  bool back() {
+    if (state == null) return false;
+    state = null;
+    return true;
+  }
 }
 
-/// Настройки приложения: оформление, поведение, данные, сведения.
+/// Настройки приложения: список разделов, раздел открывается отдельно.
+///
+/// До 1.18.0 все двенадцать разделов лежали в одной ленте раскрытыми: чтобы
+/// дойти до «Типов объектов», надо было прокрутить резервные копии и товарные
+/// базы целиком. Поиск это спасал только тогда, когда знаешь нужное слово.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -155,27 +90,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final layout = context.layout;
+    final selected = settingsSectionById(
+      l10n,
+      ref.watch(selectedSettingsSectionProvider),
+    );
+
+    if (layout.isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(width: _settingsListWidth, child: _list(l10n)),
+          VerticalDivider(width: 1, color: c.border),
+          Expanded(
+            child: selected == null
+                ? EmptyState(
+                    icon: Icons.settings_rounded,
+                    title: l10n.settingsPickTitle,
+                    message: l10n.settingsPickMessage,
+                  )
+                : _SectionPage(section: selected),
+          ),
+        ],
+      );
+    }
+
+    if (selected != null) {
+      return _SectionPage(
+        section: selected,
+        onBack: () => ref.read(selectedSettingsSectionProvider.notifier).back(),
+      );
+    }
+    return _list(l10n);
+  }
+
+  Widget _list(AppLocalizations l10n) {
     final query = _search.text;
     final main = [
-      for (final s in _mainSections(l10n))
-        if (_matches(s, query)) s,
+      for (final s in mainSettingsSections(l10n))
+        if (matchesSettingsSection(s, query)) s,
     ];
     final advanced = [
-      for (final s in _advancedSections(l10n))
-        if (_matches(s, query)) s,
+      for (final s in advancedSettingsSections(l10n))
+        if (matchesSettingsSection(s, query)) s,
     ];
     final searching = Normalize.forMatch(query).isNotEmpty;
+    final selectedId = ref.watch(selectedSettingsSectionProvider);
 
-    // Настройки — колонка форм, она уже общей ширины контента. Одна и та же
-    // ширина задаётся шапке и содержимому, иначе заголовок и группы стоят с
-    // разным отступом слева.
+    // Список ширину не ограничивает: в широкой раскладке он и так стоит в
+    // колонке в 320 точек, а на телефоне занимает экран целиком.
     return ScreenScaffold(
-      maxWidth: _settingsMaxWidth,
       header: ScreenHeader(
         title: l10n.navSettings,
-        maxWidth: _settingsMaxWidth,
-        // Разделов десять, и чтобы найти переключатель, надо было помнить, в
-        // каком он из них, и прокручивать всю ленту.
+        constrain: false,
         bottom: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
           child: AppSearchField(
@@ -185,7 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ),
-      // Ширину задаёт сам каркас: он же ставит колонку по общему левому краю.
+      constrain: false,
       child: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimens.space24,
@@ -199,8 +167,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               message: l10n.settingsSearchEmptyHint,
             ),
           for (final s in main) ...[
-            s.widget,
-            const SizedBox(height: AppDimens.space24),
+            _SectionTile(section: s, selected: s.id == selectedId),
+            const SizedBox(height: AppDimens.space8),
           ],
           // При поиске черта «Дополнительно» только мешает: разделов на
           // экране и так один-два.
@@ -210,10 +178,99 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: AppDimens.space16),
           ],
           for (final s in advanced) ...[
-            s.widget,
-            const SizedBox(height: AppDimens.space24),
+            _SectionTile(section: s, selected: s.id == selectedId),
+            const SizedBox(height: AppDimens.space8),
           ],
           const SizedBox(height: AppDimens.space16),
+        ],
+      ),
+    );
+  }
+}
+
+/// Строка списка: значок, название и чем этот раздел занимается.
+///
+/// Подпись здесь не украшение: без неё «Проверка данных» и «Журнал ошибок»
+/// различаются только на слух, и выбирать пришлось бы наугад.
+class _SectionTile extends ConsumerWidget {
+  const _SectionTile({required this.section, required this.selected});
+
+  final SettingsSection section;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    return AppCard(
+      onTap: () =>
+          ref.read(selectedSettingsSectionProvider.notifier).select(section.id),
+      padding: const EdgeInsets.all(AppDimens.space16),
+      selected: selected,
+      child: Row(
+        children: [
+          Icon(
+            section.icon,
+            size: 22,
+            color: selected ? c.accentPrimary : c.textSecondary,
+          ),
+          const SizedBox(width: AppDimens.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(section.title, style: context.text.titleMedium),
+                const SizedBox(height: AppDimens.space2),
+                Text(
+                  section.subtitle,
+                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: c.textMuted),
+        ],
+      ),
+    );
+  }
+}
+
+/// Открытый раздел: своя шапка и содержимое под ней.
+class _SectionPage extends StatelessWidget {
+  const _SectionPage({required this.section, this.onBack});
+
+  final SettingsSection section;
+
+  /// Возврат к списку — только в узкой раскладке, где список не виден.
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ScreenScaffold(
+      maxWidth: _settingsMaxWidth,
+      header: ScreenHeader(
+        title: section.title,
+        maxWidth: _settingsMaxWidth,
+        leading: onBack == null
+            ? null
+            : AppIconButton(
+                icon: Icons.arrow_back_rounded,
+                tooltip: l10n.commonBack,
+                onPressed: onBack!,
+              ),
+      ),
+      child: ListView(
+        // У каждого раздела своё положение прокрутки: вернулись в «Резервные
+        // копии» — и они там же, где их оставили.
+        key: PageStorageKey('settings-${section.id}'),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.space24,
+          vertical: AppDimens.space16,
+        ),
+        children: [
+          section.widget,
+          const SizedBox(height: AppDimens.space40),
         ],
       ),
     );
@@ -243,8 +300,8 @@ class _AdvancedHeader extends StatelessWidget {
   }
 }
 
-class _AppearanceSection extends ConsumerWidget {
-  const _AppearanceSection();
+class AppearanceSection extends ConsumerWidget {
+  const AppearanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -350,8 +407,8 @@ class _LanguagePicker extends ConsumerWidget {
   }
 }
 
-class _BehaviourSection extends ConsumerWidget {
-  const _BehaviourSection();
+class BehaviourSection extends ConsumerWidget {
+  const BehaviourSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -454,8 +511,8 @@ Future<void> _openWhatsNew(BuildContext context, WidgetRef ref) async {
   await WhatsNewDialog.show(context, entry);
 }
 
-class _AboutSection extends ConsumerWidget {
-  const _AboutSection();
+class AboutSection extends ConsumerWidget {
+  const AboutSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

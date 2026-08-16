@@ -10,6 +10,7 @@ import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/providers.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/categories/category_providers.dart';
+import 'package:impressions/features/settings/settings_screen.dart';
 import 'package:impressions/features/shell/app_shell.dart';
 
 import '../db/test_db.dart';
@@ -98,6 +99,25 @@ void main() {
     // Сначала закрывается ветка, раздел остаётся прежним.
     expect(container.read(selectedCategoryProvider), isNull);
     expect(container.read(navProvider), NavIds.categories);
+
+    await pressBack(tester);
+    expect(container.read(navProvider), NavIds.home);
+  });
+
+  testWidgets('из раздела настроек «Назад» возвращает к списку', (
+    tester,
+  ) async {
+    await pumpShell(tester);
+    container.read(navProvider.notifier).go(NavIds.settings);
+    container.read(selectedSettingsSectionProvider.notifier).select('backups');
+    await tester.pumpAndSettle();
+
+    await pressBack(tester);
+
+    // Сначала закрывается раздел: выкинуть на главную из «Резервных копий»
+    // значит потерять и место в настройках.
+    expect(container.read(selectedSettingsSectionProvider), isNull);
+    expect(container.read(navProvider), NavIds.settings);
 
     await pressBack(tester);
     expect(container.read(navProvider), NavIds.home);

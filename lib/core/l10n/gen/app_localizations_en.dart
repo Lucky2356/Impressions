@@ -1812,6 +1812,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsWordsAbout => 'about version licence hotkeys';
 
   @override
+  String get settingsPickTitle => 'Pick a section';
+
+  @override
+  String get settingsPickMessage =>
+      'Everything you can change is on the left. The section opens here.';
+
+  @override
+  String get settingsSubtitleAppearance => 'Theme and language';
+
+  @override
+  String get settingsSubtitleBehaviour =>
+      'Subcategories in lists, transferring entries';
+
+  @override
+  String get settingsSubtitleBackups => 'Copies, schedule and restoring';
+
+  @override
+  String get settingsSubtitleNetwork => 'Barcodes, product databases, updates';
+
+  @override
+  String get settingsSubtitleTypes => 'Field and stage sets';
+
+  @override
+  String get settingsSubtitleTags => 'Labels for entries';
+
+  @override
+  String get settingsSubtitleDevices => 'Who you exchange files with';
+
+  @override
+  String get settingsSubtitleDbEncryption =>
+      'A password on the database itself';
+
+  @override
+  String get settingsSubtitleKeyStorage => 'Where the private key lives';
+
+  @override
+  String get settingsSubtitleDoctor => 'Find and repair inconsistencies';
+
+  @override
+  String get settingsSubtitleErrorLog => 'What went wrong';
+
+  @override
+  String get settingsSubtitleAbout => 'Version, tour, hotkeys';
+
+  @override
   String get settingsAppearance => 'Appearance';
 
   @override
