@@ -158,7 +158,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       children: [
         // Зона выбора/перетаскивания файла.
         Container(
-          height: 140,
+          // Не жёсткие 140, а не меньше 140: при крупном системном шрифте
+          // подсказка и кнопка в такую высоту не помещались.
+          constraints: const BoxConstraints(minHeight: 140),
+          padding: const EdgeInsets.symmetric(vertical: AppDimens.space16),
           decoration: BoxDecoration(
             color: _dragging ? c.accentSoft : c.surfaceMuted,
             borderRadius: AppDimens.brLg,

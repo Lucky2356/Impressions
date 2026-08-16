@@ -159,11 +159,16 @@ class _ProfileTile extends ConsumerWidget {
                     ),
                     if (isActive) ...[
                       const SizedBox(width: AppDimens.space8),
-                      StatusChip(
-                        label: l10n.profileActiveBadge,
-                        icon: Icons.check_rounded,
-                        compact: true,
-                        color: c.accentPrimary,
+                      // Пометка тоже умеет сжиматься: при крупном системном
+                      // шрифте имя и «Активный» вместе в строку не влезали, и
+                      // сжиматься было позволено только имени.
+                      Flexible(
+                        child: StatusChip(
+                          label: l10n.profileActiveBadge,
+                          icon: Icons.check_rounded,
+                          compact: true,
+                          color: c.accentPrimary,
+                        ),
                       ),
                     ],
                   ],

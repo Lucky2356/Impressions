@@ -13,7 +13,11 @@ class ProfileEntries extends Table {
   TextColumn get objectId =>
       text().references(Objects, #id, onDelete: KeyAction.restrict)();
 
-  /// Отношение (§10): love | like | neutral | dislike | avoid | wantToTry.
+  /// Отношение (§10): love | like | neutral | dislike | avoid.
+  ///
+  /// `wantToTry` жил здесь до схемы 7 и означал стадию, а не мнение; при
+  /// переходе он переехал в [status]. В старых базах он ещё встречается —
+  /// разбирает его миграция.
   TextColumn get relation => text().nullable()();
 
   /// Оценка 0..10 с шагом 0.5 (§10), необязательна.

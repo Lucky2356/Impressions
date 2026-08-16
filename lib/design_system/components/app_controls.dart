@@ -350,7 +350,11 @@ class SegmentedToggle<T> extends StatelessWidget {
         ),
       );
       final tipped = Tooltip(message: s.tooltip, child: child);
-      return expand ? Expanded(child: tipped) : tipped;
+      // Вне боковой панели сегменты тоже умеют сжиматься: при большом
+      // системном шрифте подписи не помещались в строку, и переключатель
+      // вылезал за край вместо того, чтобы обрезать их многоточием. Flexible,
+      // а не Expanded: пока подписи помещаются, переключатель прежней ширины.
+      return expand ? Expanded(child: tipped) : Flexible(child: tipped);
     }
 
     return Container(

@@ -291,7 +291,9 @@ class _SummaryRow extends StatelessWidget {
             crossAxisCount: columns,
             mainAxisSpacing: AppDimens.space12,
             crossAxisSpacing: AppDimens.space12,
-            mainAxisExtent: 112,
+            // Поправка на системный шрифт: подписи внутри плитки растут
+            // вместе с ним, а высота ячейки задана в точках.
+            mainAxisExtent: 112 * MediaQuery.textScalerOf(context).scale(1),
           ),
           itemCount: tiles.length,
           itemBuilder: (context, i) => AppCard(

@@ -558,12 +558,20 @@ class _TopHeader extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          // Заголовок стоит первым и всегда виден целиком.
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: wide ? context.text.headlineMedium : context.text.titleLarge,
+          // Заголовок стоит первым, но уступает место кнопкам: на телефоне
+          // «Хочу попробовать» вместе с тремя значками и профилем в 400 точек
+          // не помещалось, и шапка показывала полосатую ленту переполнения.
+          // Обрезать заголовок многоточием можно, убрать кнопку — нет.
+          Flexible(
+            fit: wide ? FlexFit.loose : FlexFit.tight,
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: wide
+                  ? context.text.headlineMedium
+                  : context.text.titleLarge,
+            ),
           ),
           // Гарантированный зазор между заголовком и поиском.
           const SizedBox(width: AppDimens.space24),
@@ -608,7 +616,7 @@ class _TopHeader extends ConsumerWidget {
             // На телефоне поле поиска в шапку не помещается, поэтому здесь
             // значок: он переводит в каталог и сразу ставит курсор в поиск.
             // Раньше искать можно было, только догадавшись зайти в каталог.
-            const Spacer(),
+            // Распорка не нужна: свободное место забирает сам заголовок.
             IconActionButton(
               icon: Icons.search_rounded,
               tooltip: l10n.commonSearch,

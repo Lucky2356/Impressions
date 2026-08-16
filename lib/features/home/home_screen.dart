@@ -162,6 +162,7 @@ class _MainColumn extends ConsumerWidget {
                 ? 3
                 : 2;
             return _grid(
+              context,
               [
                 // Правый клик и долгое нажатие открывают то же меню, что и в
                 // каталоге: раньше на этих карточках они не делали ничего.
@@ -199,6 +200,7 @@ class _MainColumn extends ConsumerWidget {
                   : 1;
               final palette = c.profilePalette;
               return _grid(
+                context,
                 [
                   for (var i = 0; i < roots.length && i < cols * 2; i++)
                     _CategoryTile(
@@ -227,14 +229,21 @@ class _MainColumn extends ConsumerWidget {
     );
   }
 
-  Widget _grid(List<Widget> children, int cols, double aspect) {
+  Widget _grid(
+    BuildContext context,
+    List<Widget> children,
+    int cols,
+    double aspect,
+  ) {
     return GridView.count(
       crossAxisCount: cols,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: AppDimens.space16,
       crossAxisSpacing: AppDimens.space16,
-      childAspectRatio: aspect,
+      // Соотношение делится на масштаб шрифта: подписи внутри плиток растут
+      // вместе с ним, а ячейка иначе осталась бы прежней и переполнялась.
+      childAspectRatio: aspect / MediaQuery.textScalerOf(context).scale(1),
       children: children,
     );
   }
@@ -442,7 +451,11 @@ class _PinnedBlock extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: AppDimens.space16,
               crossAxisSpacing: AppDimens.space16,
-              childAspectRatio: cols == 1 ? 4.2 : 2.4,
+              // Соотношение делится на масштаб шрифта — по тому же правилу,
+              // что и в [_grid].
+              childAspectRatio:
+                  (cols == 1 ? 4.2 : 2.4) /
+                  MediaQuery.textScalerOf(context).scale(1),
               children: [
                 for (final category in pinnedCategories)
                   _CategoryTile(

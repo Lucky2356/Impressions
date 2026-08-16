@@ -21,6 +21,26 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // При системном шрифте «Огромный» подпись занимает шесть строк, и вся
+    // композиция перестаёт помещаться в высоту экрана. Тогда пустое состояние
+    // прокручивается; пока помещается — стоит посередине, как и раньше.
+    // Когда высота не ограничена — а так бывает внутри чужого списка — своей
+    // прокрутки заводить нельзя: вложенный вьюпорт без границ падает.
+    return LayoutBuilder(
+      builder: (context, cns) {
+        final content = _content(context);
+        if (!cns.hasBoundedHeight) return content;
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: cns.maxHeight),
+            child: content,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _content(BuildContext context) {
     final c = context.colors;
     return Center(
       child: Padding(
