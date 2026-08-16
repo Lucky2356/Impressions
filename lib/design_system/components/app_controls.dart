@@ -191,6 +191,12 @@ class AppDropdown<T> extends StatelessWidget {
     final c = context.colors;
     final tint = active ? c.accentPrimary : c.textMuted;
 
+    // При большом системном шрифте таблетка, сжатая под содержимое, шире
+    // экрана телефона: «Свежие впечатления» и стрелка не помещаются в строку
+    // ни при каком сжатии. Тогда список занимает строку целиком и обрезает
+    // название многоточием — вместо полосатой ленты переполнения.
+    final stretch = expand || _textScaleOf(context) > 1.3;
+
     final dropdown = DropdownButtonHideUnderline(
       child: DropdownButton<T>(
         value: value,
@@ -211,7 +217,7 @@ class AppDropdown<T> extends StatelessWidget {
         ],
         onChanged: onChanged,
         isDense: true,
-        isExpanded: expand,
+        isExpanded: stretch,
         borderRadius: AppDimens.brMd,
         style: context.text.labelMedium?.copyWith(
           color: c.textPrimary,
@@ -235,7 +241,7 @@ class AppDropdown<T> extends StatelessWidget {
         border: Border.all(color: active ? c.accentPrimary : c.border),
       ),
       child: Row(
-        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
         children: [
           if (icon != null) ...[
             Icon(icon, size: 16, color: tint),
@@ -246,8 +252,12 @@ class AppDropdown<T> extends StatelessWidget {
             const SizedBox(width: AppDimens.space8),
           ],
           // В растянутом режиме список забирает остаток строки, стрелка встаёт
-          // у правого края — все фильтры выглядят одинаково.
-          expand ? Expanded(child: dropdown) : dropdown,
+          // у правого края — все фильтры выглядят одинаково. В обычном он
+          // тоже обязан уметь сжиматься: при системном шрифте «Огромный»
+          // таблетка со «Свежие впечатления» шире экрана телефона, и без
+          // Flexible она переполнялась вместо того, чтобы обрезать название
+          // многоточием, как уже умеет selectedItemBuilder.
+          stretch ? Expanded(child: dropdown) : Flexible(child: dropdown),
         ],
       ),
     );

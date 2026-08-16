@@ -129,7 +129,12 @@ class BranchEntriesGrid extends StatelessWidget {
             crossAxisCount: columns,
             mainAxisSpacing: AppDimens.space8,
             crossAxisSpacing: AppDimens.space8,
-            mainAxisExtent: 104,
+            // Высота берётся у самой карточки, а не подбирается здесь: с
+            // 1.17.0 в строке метаданных стоят и отношение, и стадия, и
+            // оценка, подобранных 104 точек им перестало хватать.
+            mainAxisExtent: entryCardCompactHeightFor(
+              MediaQuery.textScalerOf(context).scale(1),
+            ),
           ),
           itemCount: entries.length,
           itemBuilder: (context, i) {

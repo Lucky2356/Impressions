@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/gen/app_localizations.dart';
+import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
@@ -180,6 +181,7 @@ class _RootShelves extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final layout = context.layout;
     final actions = CategoryActions(ref, context);
     final roots = CategoryTree.childrenOf(categories, null);
 
@@ -201,7 +203,23 @@ class _RootShelves extends ConsumerWidget {
           ),
         ],
       ),
-      child: CategoryShelves(categories: roots, allCategories: categories),
+      // Полки своей прокрутки не имеют, а каркас раздела отдаёт ребёнку ровно
+      // высоту экрана: без списка вокруг корневые ветки ниже сгиба были
+      // обрезаны и недоступны.
+      child: ListView(
+        // Разделы живут в KeyedSubtree и при переключении уничтожаются: без
+        // ключа возврат из ветки сбрасывал бы полки в начало.
+        key: const PageStorageKey('categories-root'),
+        padding: EdgeInsets.fromLTRB(
+          layout.gutter,
+          AppDimens.space16,
+          layout.gutter,
+          AppDimens.space40,
+        ),
+        children: [
+          CategoryShelves(categories: roots, allCategories: categories),
+        ],
+      ),
     );
   }
 }

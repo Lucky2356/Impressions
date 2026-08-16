@@ -216,6 +216,20 @@ class EntryCard extends StatelessWidget {
 /// здесь.
 const double entryCardCompactHeight = 136;
 
+/// Сколько в этой высоте занимает текст: путь, название в две строки и строка
+/// метаданных. Миниатюра и отступы от размера шрифта не зависят.
+const double _entryCardCompactTextHeight = 88;
+
+/// Высота компактной карточки с поправкой на системный масштаб шрифта.
+///
+/// По тому же правилу, что и [categoryShelfHeightFor]: высота ячейки задаётся
+/// сеткой в точках, а размер текста — системой, и при «Крупном шрифте»
+/// содержимое переставало помещаться.
+double entryCardCompactHeightFor(double textScale) {
+  final extra = (textScale - 1).clamp(0.0, 2.0);
+  return entryCardCompactHeight + extra * _entryCardCompactTextHeight;
+}
+
 /// Компактная карточка записи (§3.4): строка с миниатюрой слева.
 class EntryCardCompact extends StatelessWidget {
   const EntryCardCompact({super.key, required this.data, this.onTap});

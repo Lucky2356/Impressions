@@ -61,8 +61,14 @@ class CategoryBranchPage extends ConsumerWidget {
     final tone = CategoryPalette.colorOf(category, all, c);
     final crumbs = CategoryTree.breadcrumbOf(all, category);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Шапка внутри прокрутки, а не над ней: прибитая к верху, она в альбомной
+    // ориентации и при крупном системном шрифте съедала почти всю высоту, и
+    // ленте оставалась полоска в пару строк.
+    return ListView(
+      // Разделы живут в KeyedSubtree и при переключении уничтожаются:
+      // без своего ключа страница возвращалась бы в начало.
+      key: PageStorageKey('category-branch-${category.id}'),
+      padding: EdgeInsets.zero,
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(
@@ -97,18 +103,18 @@ class CategoryBranchPage extends ConsumerWidget {
             ],
           ),
         ),
+        // Черта во всю ширину, поэтому отступы по краям несёт не список, а
+        // каждая половина отдельно.
         Divider(height: 1, color: c.border),
-        Expanded(
-          child: ListView(
-            // Разделы живут в KeyedSubtree и при переключении уничтожаются:
-            // без своего ключа страница возвращалась бы в начало.
-            key: PageStorageKey('category-branch-${category.id}'),
-            padding: EdgeInsets.fromLTRB(
-              layout.gutter,
-              AppDimens.space16,
-              layout.gutter,
-              AppDimens.space40,
-            ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            layout.gutter,
+            AppDimens.space16,
+            layout.gutter,
+            AppDimens.space40,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (children.isNotEmpty) ...[
                 SectionHeader(title: l10n.categorySubcategoriesTitle),
@@ -362,12 +368,16 @@ class _Header extends ConsumerWidget {
 /// на своём месте: это содержимое, а не другой способ смотреть на дерево.
 /// Одним виджетом и для подкатегорий на странице ветки, и для корневых полок
 /// на телефоне.
+///
+/// Полки всегда вкладываются в чужую прокрутку и своей не имеют: до 1.18.0
+/// сетка умела прокручиваться сама, но включалось это неиспользованным
+/// параметром, а корневые полки на телефоне попадали в ветку без прокрутки —
+/// и всё ниже сгиба оказывалось недоступным.
 class CategoryShelves extends ConsumerWidget {
   const CategoryShelves({
     super.key,
     required this.categories,
     required this.allCategories,
-    this.padding,
   });
 
   /// Что показывать полками.
@@ -375,8 +385,6 @@ class CategoryShelves extends ConsumerWidget {
 
   /// Всё дерево — из него берутся имена подкатегорий для подписи на карточке.
   final List<CategoryRow> allCategories;
-
-  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -400,11 +408,9 @@ class CategoryShelves extends ConsumerWidget {
       builder: (context, cns) {
         final cols = (cns.maxWidth / 210).floor().clamp(1, 6);
         return GridView.builder(
-          shrinkWrap: padding == null,
-          physics: padding == null
-              ? const NeverScrollableScrollPhysics()
-              : null,
-          padding: padding ?? EdgeInsets.zero,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: cols,
             mainAxisSpacing: AppDimens.space12,
