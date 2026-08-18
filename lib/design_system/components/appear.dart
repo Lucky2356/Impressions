@@ -29,10 +29,10 @@ class Appear extends StatefulWidget {
 }
 
 class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppDimens.durationSlow,
-  );
+  /// Заводится в [initState], а не отложенным полем: при выключенной системной
+  /// анимации `build` до контроллера не доходит, и отложенное поле создавало
+  /// его прямо в `dispose` — то есть искало предка у уже отцепленного виджета.
+  late final AnimationController _controller;
 
   late final Animation<double> _fade = CurvedAnimation(
     parent: _controller,
@@ -46,6 +46,10 @@ class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppDimens.durationSlow,
+    );
     final delay =
         Appear.step *
         (widget.index > Appear.maxStaggered
@@ -65,6 +69,10 @@ class _AppearState extends State<Appear> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Системное «убрать анимацию» — не пожелание, а требование: у кого-то от
+    // движения кружится голова. Показываем сразу готовый вид, а не ускоренный.
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+
     return FadeTransition(
       opacity: _fade,
       child: SlideTransition(

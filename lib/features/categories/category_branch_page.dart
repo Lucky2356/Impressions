@@ -125,7 +125,7 @@ class CategoryBranchPage extends ConsumerWidget {
               SectionHeader(title: l10n.categoryEntriesTitle),
               const SizedBox(height: AppDimens.space12),
               feed.when(
-                loading: () => const SizedBox.shrink(),
+                loading: () => const SkeletonList(),
                 error: (e, _) => ErrorState(error: e),
                 data: (found) {
                   if (found.items.isEmpty) {

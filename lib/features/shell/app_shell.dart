@@ -158,6 +158,12 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// анимировать самому: без этого экран подменялся рывком и было непонятно,
   /// сменился раздел или просто перерисовался.
   Widget _animatedBody(String id) {
+    // При системном «убрать анимацию» раздел меняется мгновенно: смена и так
+    // очевидна по подсвеченному пункту навигации.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return KeyedSubtree(key: ValueKey(id), child: _body(id));
+    }
+
     return AnimatedSwitcher(
       duration: AppDimens.durationMedium,
       switchInCurve: Curves.easeOutCubic,

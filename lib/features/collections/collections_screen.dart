@@ -73,7 +73,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     }
 
     return collections.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const SkeletonGrid(padding: EdgeInsets.all(24)),
       error: (e, _) => ErrorState(error: e),
       data: (list) {
         if (list.isEmpty) {
@@ -276,7 +276,7 @@ class _CollectionDetail extends ConsumerWidget {
         ],
       ),
       child: entries.when(
-        loading: () => const SizedBox.shrink(),
+        loading: () => const SkeletonList(padding: EdgeInsets.all(24)),
         error: (e, _) => ErrorState(error: e),
         data: (list) {
           if (list.isEmpty) {

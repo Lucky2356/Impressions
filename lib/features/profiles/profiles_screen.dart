@@ -48,7 +48,7 @@ class ProfilesScreen extends ConsumerWidget {
     final counts = ref.watch(entryCountsByProfileProvider).value ?? const {};
 
     return profiles.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const SkeletonList(padding: EdgeInsets.all(24)),
       error: (e, _) => ErrorState(error: e),
       data: (list) => ScreenScaffold(
         header: ScreenHeader(

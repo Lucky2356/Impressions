@@ -113,7 +113,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
         Divider(height: 1, color: c.divider),
         Expanded(
           child: categories.when(
-            loading: () => const SizedBox.shrink(),
+            loading: () => const SkeletonList(count: 5),
             error: (e, _) => ErrorState(error: e),
             data: (list) {
               final byId = {for (final cat in list) cat.id: cat};

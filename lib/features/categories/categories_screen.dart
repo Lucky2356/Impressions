@@ -112,7 +112,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final selectedId = ref.watch(selectedCategoryProvider);
 
     return categories.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const SkeletonGrid(padding: EdgeInsets.all(24)),
       error: (e, _) => ErrorState(error: e),
       data: (list) {
         final actions = CategoryActions(ref, context);

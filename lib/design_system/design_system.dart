@@ -30,6 +30,7 @@ export 'components/relation_chip.dart';
 export 'components/screen_header.dart';
 export 'components/section_header.dart';
 export 'components/settings_group.dart';
+export 'components/skeleton.dart';
 export 'components/sparkline.dart';
 export 'components/status_chip.dart';
 export 'components/text_input_dialog.dart';

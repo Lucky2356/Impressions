@@ -125,7 +125,7 @@ class IncomingScreen extends ConsumerWidget {
     }
 
     return items.when(
-      loading: () => const SizedBox.shrink(),
+      loading: () => const SkeletonList(padding: EdgeInsets.all(24)),
       error: (e, _) => ErrorState(error: e),
       data: (list) {
         if (list.isEmpty) {

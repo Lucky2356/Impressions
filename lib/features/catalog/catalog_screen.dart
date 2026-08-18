@@ -145,7 +145,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ),
       ),
       child: results.when(
-        loading: () => const SizedBox.shrink(),
+        // Заглушка повторяет выбранный вид: иначе при загрузке лента
+        // подменялась бы сеткой и наоборот.
+        loading: () => state.view == CatalogViewMode.grid
+            ? const SkeletonGrid()
+            : const SkeletonList(),
         error: (e, _) => ErrorState(error: e),
         data: (found) {
           final list = found.items;
