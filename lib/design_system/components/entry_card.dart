@@ -22,6 +22,7 @@ class EntryCardData {
     this.statusLabel,
     this.imagePath,
     this.seedColor,
+    this.heroTag,
   });
 
   final String title;
@@ -39,6 +40,9 @@ class EntryCardData {
   final String? statusLabel;
   final String? imagePath;
   final Color? seedColor;
+
+  /// Метка перелёта обложки в карточку записи — см. [CoverImage.heroTag].
+  final String? heroTag;
 
   /// Как карточка называет себя экранному диктору.
   ///
@@ -144,6 +148,7 @@ class EntryCard extends StatelessWidget {
                   imagePath: data.imagePath,
                   seedColor: data.seedColor,
                   borderRadius: AppDimens.brSm,
+                  heroTag: data.heroTag,
                 ),
                 if (data.statusLabel != null)
                   Positioned(
@@ -256,6 +261,7 @@ class EntryCardCompact extends StatelessWidget {
                 title: data.title,
                 imagePath: data.imagePath,
                 seedColor: data.seedColor,
+                heroTag: data.heroTag,
                 aspectRatio: 3 / 4,
                 borderRadius: AppDimens.brSm,
               ),

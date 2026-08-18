@@ -166,8 +166,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: l10n.settingsSearchEmpty,
               message: l10n.settingsSearchEmptyHint,
             ),
-          for (final s in main) ...[
-            _SectionTile(section: s, selected: s.id == selectedId),
+          for (final (i, s) in main.indexed) ...[
+            Appear(
+              index: i,
+              child: _SectionTile(section: s, selected: s.id == selectedId),
+            ),
             const SizedBox(height: AppDimens.space8),
           ],
           // При поиске черта «Дополнительно» только мешает: разделов на
@@ -177,8 +180,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const _AdvancedHeader(),
             const SizedBox(height: AppDimens.space16),
           ],
-          for (final s in advanced) ...[
-            _SectionTile(section: s, selected: s.id == selectedId),
+          for (final (i, s) in advanced.indexed) ...[
+            Appear(
+              // Продолжаем очередь основных разделов, а не начинаем заново:
+              // иначе после черты список появлялся бы вторым заходом.
+              index: main.length + i,
+              child: _SectionTile(section: s, selected: s.id == selectedId),
+            ),
             const SizedBox(height: AppDimens.space8),
           ],
           const SizedBox(height: AppDimens.space16),

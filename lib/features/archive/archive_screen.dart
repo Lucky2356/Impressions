@@ -282,7 +282,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
           AppDimens.space40,
         ),
         itemCount: rows.length,
-        itemBuilder: (context, i) => rows[i](context),
+        itemBuilder: (context, i) => Appear(index: i, child: rows[i](context)),
       ),
     );
   }

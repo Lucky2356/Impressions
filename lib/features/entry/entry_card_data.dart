@@ -11,7 +11,11 @@ import '../../design_system/design_system.dart';
 /// Перевод был написан трижды — в каталоге, в ветке категорий и в подборке, —
 /// и уже начал расходиться: в подборке карточки теряли отношение, потому что
 /// в третьей копии эту строку забыли.
-EntryCardData entryCardData(BuildContext context, EntryView entry) {
+EntryCardData entryCardData(
+  BuildContext context,
+  EntryView entry, {
+  bool hero = false,
+}) {
   return EntryCardData(
     title: entry.title,
     subtitle: entry.subtitle,
@@ -21,8 +25,18 @@ EntryCardData entryCardData(BuildContext context, EntryView entry) {
     statusLabel: entryStatusText(context, entry),
     imagePath: entry.coverPath,
     seedColor: context.colors.profileColorFor(entry.objectId),
+    // Метку просит сам экран: она обязана быть единственной, а на главной
+    // одна и та же запись встречается в двух блоках сразу.
+    heroTag: hero ? entryHeroTag(entry.entryId) : null,
   );
 }
+
+/// Метка перелёта обложки для записи.
+///
+/// В одном месте, потому что её задают на карточке в списке, а принимают в
+/// карточке записи — разойдись они, перелёта просто не будет, и понять почему
+/// будет неоткуда.
+String entryHeroTag(String entryId) => 'entry-cover-$entryId';
 
 /// Стадия записи вместе с прогрессом одной строкой: «Читаю · 3 страница из 320».
 ///

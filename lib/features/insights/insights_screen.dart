@@ -296,28 +296,31 @@ class _SummaryRow extends StatelessWidget {
             mainAxisExtent: 112 * MediaQuery.textScalerOf(context).scale(1),
           ),
           itemCount: tiles.length,
-          itemBuilder: (context, i) => AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  tiles[i].value,
-                  maxLines: 1,
-                  style: context.text.displayMedium?.copyWith(
-                    color: tiles[i].color,
+          itemBuilder: (context, i) => Appear(
+            index: i,
+            child: AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    tiles[i].value,
+                    maxLines: 1,
+                    style: context.text.displayMedium?.copyWith(
+                      color: tiles[i].color,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppDimens.space4),
-                Text(
-                  tiles[i].label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.bodySmall?.copyWith(
-                    color: c.textSecondary,
+                  const SizedBox(height: AppDimens.space4),
+                  Text(
+                    tiles[i].label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.text.bodySmall?.copyWith(
+                      color: c.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

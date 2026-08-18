@@ -143,7 +143,7 @@ class BranchEntriesGrid extends StatelessWidget {
               context,
               entry: e,
               child: EntryCardCompact(
-                data: entryCardData(context, e),
+                data: entryCardData(context, e, hero: true),
                 onTap: () => EntryDetailSheet.show(context, e.entryId),
               ),
             );

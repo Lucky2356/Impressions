@@ -292,7 +292,7 @@ class _Results extends ConsumerWidget {
               selectionActive: selectionActive,
               order: order,
               builder: (onTap) => EntryCardCompact(
-                data: entryCardData(context, entries[i]),
+                data: entryCardData(context, entries[i], hero: true),
                 onTap: onTap,
               ),
             ),
@@ -340,7 +340,7 @@ class _Results extends ConsumerWidget {
                 order: order,
                 builder: (onTap) => EntryCard(
                   dense: dense,
-                  data: entryCardData(context, entries[i]),
+                  data: entryCardData(context, entries[i], hero: true),
                   onTap: onTap,
                 ),
               ),

@@ -76,7 +76,10 @@ class WishlistScreen extends ConsumerWidget {
         ),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-        itemBuilder: (context, i) => WishlistTile(entry: items[i]),
+        itemBuilder: (context, i) => Appear(
+          index: i,
+          child: WishlistTile(entry: items[i]),
+        ),
       ),
     );
   }

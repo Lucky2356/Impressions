@@ -73,10 +73,13 @@ class ProfilesScreen extends ConsumerWidget {
           separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space12),
           itemBuilder: (context, i) {
             final p = list[i];
-            return _ProfileTile(
-              profile: p,
-              isActive: active?.id == p.id,
-              entryCount: counts[p.id] ?? 0,
+            return Appear(
+              index: i,
+              child: _ProfileTile(
+                profile: p,
+                isActive: active?.id == p.id,
+                entryCount: counts[p.id] ?? 0,
+              ),
             );
           },
         ),

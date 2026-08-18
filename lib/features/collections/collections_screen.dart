@@ -125,18 +125,21 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                   final color = view.collection.color == null
                       ? c.profileColorFor(view.collection.id)
                       : Color(view.collection.color!);
-                  return CollectionCard(
-                    title: view.collection.name,
-                    tagLabel: l10n.collectionEntriesCount(view.entryCount),
-                    tagColor: color,
-                    // Живая подборка помечена значком: список, который
-                    // меняется сам, должен об этом говорить.
-                    tagIcon: view.isSmart
-                        ? Icons.auto_awesome_rounded
-                        : Icons.collections_bookmark_rounded,
-                    progress: view.entryCount == 0 ? 0 : 1,
-                    progressLabel: view.collection.description ?? '',
-                    onTap: () => setState(() => _openId = view.collection.id),
+                  return Appear(
+                    index: i,
+                    child: CollectionCard(
+                      title: view.collection.name,
+                      tagLabel: l10n.collectionEntriesCount(view.entryCount),
+                      tagColor: color,
+                      // Живая подборка помечена значком: список, который
+                      // меняется сам, должен об этом говорить.
+                      tagIcon: view.isSmart
+                          ? Icons.auto_awesome_rounded
+                          : Icons.collections_bookmark_rounded,
+                      progress: view.entryCount == 0 ? 0 : 1,
+                      progressLabel: view.collection.description ?? '',
+                      onTap: () => setState(() => _openId = view.collection.id),
+                    ),
                   );
                 },
               );
@@ -322,7 +325,7 @@ class _CollectionDetail extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppDimens.space8),
                   child: EntryCardCompact(
-                    data: entryCardData(context, e),
+                    data: entryCardData(context, e, hero: true),
                     onTap: () => EntryDetailSheet.show(context, e.entryId),
                   ),
                 );
@@ -369,7 +372,7 @@ class _CollectionDetail extends ConsumerWidget {
                     ),
                     Expanded(
                       child: EntryCardCompact(
-                        data: entryCardData(context, e),
+                        data: entryCardData(context, e, hero: true),
                         onTap: () => EntryDetailSheet.show(context, e.entryId),
                       ),
                     ),

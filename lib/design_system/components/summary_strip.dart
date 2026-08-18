@@ -101,8 +101,8 @@ class _Tile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  item.value,
+                _AnimatedValue(
+                  value: item.value,
                   style: context.text.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -122,6 +122,32 @@ class _Tile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Число, которое доезжает до нового значения, а не подменяется.
+///
+/// Показывает, что счётчик изменился: после добавления записи «7» само собой
+/// становится «8», и это единственное место, где движение что-то сообщает, а
+/// не украшает. Всё, что числом не является, показывается как есть.
+class _AnimatedValue extends StatelessWidget {
+  const _AnimatedValue({required this.value, this.style});
+
+  final String value;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = int.tryParse(value);
+    if (target == null || MediaQuery.disableAnimationsOf(context)) {
+      return Text(value, style: style);
+    }
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: target.toDouble(), end: target.toDouble()),
+      duration: AppDimens.durationMedium,
+      curve: AppDimens.curveStandard,
+      builder: (context, v, _) => Text('${v.round()}', style: style),
     );
   }
 }

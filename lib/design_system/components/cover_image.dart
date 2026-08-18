@@ -16,6 +16,7 @@ class CoverImage extends StatelessWidget {
     this.aspectRatio = 3 / 4,
     this.seedColor,
     this.borderRadius = AppDimens.brMd,
+    this.heroTag,
   });
 
   final String title;
@@ -24,8 +25,27 @@ class CoverImage extends StatelessWidget {
   final Color? seedColor;
   final BorderRadius borderRadius;
 
+  /// Метка перелёта в карточку записи. `null` — обложка стоит на месте.
+  ///
+  /// Метка обязана быть единственной на экране, иначе кадр падает. Поэтому её
+  /// задают только там, где запись заведомо встречается один раз: в каталоге,
+  /// в ветке, в составе подборки, в «Хочу попробовать». На главной одна и та
+  /// же запись попадает и в «Продолжить начатое», и в «Недавнее» — там метки
+  /// нет.
+  final String? heroTag;
+
   @override
   Widget build(BuildContext context) {
+    final tag = heroTag;
+    // Перелёт при выключенной системной анимации только мешает: там переход
+    // и так мгновенный, а Hero оставил бы кадр с летящей картинкой.
+    if (tag == null || MediaQuery.disableAnimationsOf(context)) {
+      return _content(context);
+    }
+    return Hero(tag: tag, child: _content(context));
+  }
+
+  Widget _content(BuildContext context) {
     final path = imagePath;
     return ClipRRect(
       borderRadius: borderRadius,
