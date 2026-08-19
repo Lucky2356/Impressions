@@ -503,6 +503,54 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryImpressionDateClear => 'Убрать дату';
 
   @override
+  String get visitsTitle => 'Ещё раз';
+
+  @override
+  String get visitsHint =>
+      'Сходили сюда снова или пересмотрели? Добавьте — прежняя оценка останется в истории.';
+
+  @override
+  String get visitAdd => 'Был ещё раз';
+
+  @override
+  String get visitDate => 'Когда это было';
+
+  @override
+  String get visitNote => 'Что изменилось';
+
+  @override
+  String get visitRemove => 'Убрать этот раз';
+
+  @override
+  String get visitRemoveMessage => 'Запись вернётся к предыдущему впечатлению.';
+
+  @override
+  String visitCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count раз',
+      many: '$count раз',
+      few: '$count раза',
+      one: '$count раз',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearReturned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Вернулись к $count впечатлениям',
+      many: 'Вернулись к $count впечатлениям',
+      few: 'Вернулись к $count впечатлениям',
+      one: 'Вернулись к $count впечатлению',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get entryArchive => 'Архивировать запись';
 
   @override

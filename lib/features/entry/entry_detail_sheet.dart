@@ -21,6 +21,7 @@ import '../quick_add/category_picker.dart';
 import '../search/recent_store.dart';
 import 'entry_object_dialogs.dart';
 import 'entry_photos.dart';
+import 'entry_visits.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
 import 'status_field.dart';
@@ -490,6 +491,16 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                     onChanged: isOwn ? (v) => _setPrivacy(d.entry.id, v) : null,
                   ),
 
+                  const SizedBox(height: AppDimens.space16),
+                  Divider(color: c.divider),
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Повторные впечатления (§10): «был ещё раз».
+                  EntryVisitsBlock(
+                    entryId: d.entry.id,
+                    visits: d.visits,
+                    canEdit: isOwn,
+                  ),
                   const SizedBox(height: AppDimens.space16),
                   Divider(color: c.divider),
                   const SizedBox(height: AppDimens.space16),

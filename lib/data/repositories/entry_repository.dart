@@ -1391,6 +1391,13 @@ class EntryRepository {
     List<EntryStatus> statusesOf(ObjectTypeRow type) =>
         statusesByType[type.id] ??= EntryStatus.decode(type.statusesJson);
 
+    // Повторы — одним запросом на весь список: спрашивать про каждую карточку
+    // отдельно значит шестьдесят запросов на страницу каталога. Единица тут
+    // обычное дело, поэтому в карте лежит только то, что больше.
+    final visits = await visitCounts([
+      for (final r in rows) r.readTable(db.profileEntries).id,
+    ]);
+
     return [
       for (final r in rows)
         () {
@@ -1420,6 +1427,7 @@ class EntryRepository {
             impressionDate: entry.impressionDate,
             createdAt: entry.createdAt,
             coverPath: covers[entry.id],
+            visitCount: visits[entry.id] ?? 1,
           );
         }(),
     ];

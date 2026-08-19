@@ -18,6 +18,7 @@ class EntryDetail {
     required this.categoryPath,
     required this.extraCategories,
     required this.history,
+    required this.visits,
     this.recommendedBy,
   });
 
@@ -40,6 +41,12 @@ class EntryDetail {
   final List<CategoryRow> extraCategories;
 
   final List<ProfileEntryRevisionRow> history;
+
+  /// Повторные впечатления (§10), свежие сверху.
+  ///
+  /// «Понравилось тогда» и «понравилось сейчас» — разные сведения, и до схемы
+  /// 8 второе затирало первое.
+  final List<EntryVisitRow> visits;
 
   /// Имя того, кто посоветовал эту запись; null — завели сами.
   ///
@@ -109,6 +116,7 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
     categoryPath: path,
     extraCategories: extras,
     history: history,
+    visits: await ref.watch(entryRepositoryProvider).visitsOf(entryId),
     recommendedBy: recommender?.firstName,
   );
 });

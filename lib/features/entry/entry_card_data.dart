@@ -28,6 +28,7 @@ EntryCardData entryCardData(
     // Метку просит сам экран: она обязана быть единственной, а на главной
     // одна и та же запись встречается в двух блоках сразу.
     heroTag: hero ? entryHeroTag(entry.entryId) : null,
+    visitCount: entry.visitCount,
   );
 }
 

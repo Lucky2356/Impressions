@@ -23,6 +23,7 @@ class EntryCardData {
     this.imagePath,
     this.seedColor,
     this.heroTag,
+    this.visitCount = 1,
   });
 
   final String title;
@@ -44,6 +45,10 @@ class EntryCardData {
   /// Метка перелёта обложки в карточку записи — см. [CoverImage.heroTag].
   final String? heroTag;
 
+  /// Сколько раз к записи возвращались (§10). Единицу не показываем: «был один
+  /// раз» — это про все записи сразу, и пометка сообщала бы ноль сведений.
+  final int visitCount;
+
   /// Как карточка называет себя экранному диктору.
   ///
   /// Одной фразой вместо россыпи отдельных строк: название, где лежит,
@@ -57,6 +62,7 @@ class EntryCardData {
       if (relation != null) relation!.label(l10n),
       if (rating != null) l10n.entryRatingOf(rating!.toStringAsFixed(1)),
       ?statusLabel,
+      if (visitCount > 1) l10n.visitCount(visitCount),
     ];
     return parts.join(', ');
   }
@@ -162,6 +168,12 @@ class EntryCard extends StatelessWidget {
                         compact: true,
                       ),
                     ),
+                  ),
+                if (data.visitCount > 1)
+                  Positioned(
+                    right: AppDimens.space4,
+                    bottom: AppDimens.space4,
+                    child: _VisitBadge(count: data.visitCount),
                   ),
               ],
             ),
@@ -300,10 +312,50 @@ class EntryCardCompact extends StatelessWidget {
                         StatusChip(label: data.statusLabel!, compact: true),
                       if (data.rating != null)
                         RatingView(value: data.rating, compact: true),
+                      if (data.visitCount > 1)
+                        _VisitBadge(count: data.visitCount),
                     ],
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// «×3» — сколько раз к записи возвращались (§10).
+///
+/// Значком со стрелкой, а не словом: в строку метаданных рядом с отношением и
+/// оценкой слово не помещается, а вопрос, на который отвечает пометка, —
+/// «сюда ходили не один раз?».
+class _VisitBadge extends StatelessWidget {
+  const _VisitBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Tooltip(
+      message: AppLocalizations.of(context).visitCount(count),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: c.surfaceMuted,
+          borderRadius: AppDimens.brPill,
+          border: Border.all(color: c.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.replay_rounded, size: 12, color: c.textMuted),
+            const SizedBox(width: 3),
+            Text(
+              '$count',
+              style: context.text.labelSmall?.copyWith(color: c.textSecondary),
             ),
           ],
         ),

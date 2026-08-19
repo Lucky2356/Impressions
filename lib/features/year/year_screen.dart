@@ -221,6 +221,13 @@ class _TotalCard extends StatelessWidget {
               icon: Icons.account_tree_rounded,
               label: l10n.yearNewCategories(review.newCategories),
             ),
+          // К чему возвращались не в первый раз: у личного архива это самая
+          // говорящая строка — что понравилось настолько, что вы пришли снова.
+          if (review.returned > 0)
+            _Line(
+              icon: Icons.replay_rounded,
+              label: l10n.yearReturned(review.returned),
+            ),
         ],
       ),
     );

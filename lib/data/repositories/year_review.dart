@@ -24,6 +24,7 @@ class YearReview {
     required this.byRelation,
     required this.newCategories,
     required this.finished,
+    required this.returned,
   });
 
   static const empty = YearReview(
@@ -39,6 +40,7 @@ class YearReview {
     byRelation: {},
     newCategories: 0,
     finished: 0,
+    returned: 0,
   );
 
   final int year;
@@ -68,6 +70,12 @@ class YearReview {
 
   /// Сколько начатого довели до конца — записи на завершающей стадии.
   final int finished;
+
+  /// К скольким записям в этом году возвращались не в первый раз (§10).
+  ///
+  /// Считается по повторам, а не по записям: «сходили в это кафе четвёртый
+  /// раз» — про год, а не про то, когда кафе завели.
+  final int returned;
 
   bool get isEmpty => total == 0;
 }
@@ -133,6 +141,7 @@ extension YearReviewStats on EntryRepository {
     final busiestMonth = await _busiestMonth(inYear, total);
     final topCategory = await _topCategory(profileId, inYear);
     final newCategories = await _newCategories(profileId, from, to);
+    final returned = await _returned(profileId, from, to);
 
     // Записи для карточек: лучшее, первое и последнее. Идентификаторы берём
     // отдельными запросами, а карточки собираем одним — иначе на три вопроса
@@ -168,6 +177,7 @@ extension YearReviewStats on EntryRepository {
       byRelation: byRelation,
       newCategories: newCategories,
       finished: finished,
+      returned: returned,
     );
   }
 
@@ -184,6 +194,32 @@ extension YearReviewStats on EntryRepository {
               ..limit(limit))
             .get();
     return [for (final row in rows) row.id];
+  }
+
+  /// К скольким записям в этом году возвращались не в первый раз.
+  ///
+  /// Считаем записи, а не сами повторы: «возвращались к семи местам» понятнее,
+  /// чем «было двадцать повторов». Первый раз не в счёт — иначе сюда попало бы
+  /// всё, что человек когда-либо заводил.
+  Future<int> _returned(String profileId, DateTime from, DateTime to) async {
+    final rows = await db
+        .customSelect(
+          'SELECT COUNT(*) AS c FROM ('
+          '  SELECT v.entry_id FROM entry_visits v'
+          '  JOIN profile_entries e ON e.id = v.entry_id'
+          '  WHERE e.profile_id = ?1 AND e.archived_at IS NULL'
+          '    AND v.occurred_at >= ?2 AND v.occurred_at < ?3'
+          '  GROUP BY v.entry_id HAVING COUNT(*) > 1'
+          ')',
+          variables: [
+            Variable<String>(profileId),
+            Variable<DateTime>(from),
+            Variable<DateTime>(to),
+          ],
+          readsFrom: {db.entryVisits, db.profileEntries},
+        )
+        .getSingle();
+    return rows.read<int>('c');
   }
 
   Future<({DateTime month, int count})?> _busiestMonth(

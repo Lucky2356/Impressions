@@ -19,6 +19,7 @@ class EntryView {
     this.progressCurrent,
     this.progressTotal,
     this.progressUnit,
+    this.visitCount = 1,
     this.impressionDate,
     this.createdAt,
     this.coverPath,
@@ -58,6 +59,10 @@ class EntryView {
 
   /// В чём тип считает прогресс: серия, страница, час. null — считать нечего.
   final String? progressUnit;
+
+  /// Сколько раз к записи возвращались (§10). Единица — обычный случай, её на
+  /// карточке не показывают.
+  final int visitCount;
 
   /// Когда впечатление случилось, а не когда запись завели.
   final DateTime? impressionDate;

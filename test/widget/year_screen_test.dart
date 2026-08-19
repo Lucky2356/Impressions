@@ -76,6 +76,7 @@ void main() {
     byRelation: const {'love': 10},
     newCategories: 3,
     finished: 18,
+    returned: 4,
   );
 
   Future<void> pump(

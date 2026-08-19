@@ -908,6 +908,60 @@ abstract class AppLocalizations {
   /// **'Убрать дату'**
   String get entryImpressionDateClear;
 
+  /// No description provided for @visitsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё раз'**
+  String get visitsTitle;
+
+  /// No description provided for @visitsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сходили сюда снова или пересмотрели? Добавьте — прежняя оценка останется в истории.'**
+  String get visitsHint;
+
+  /// No description provided for @visitAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Был ещё раз'**
+  String get visitAdd;
+
+  /// No description provided for @visitDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда это было'**
+  String get visitDate;
+
+  /// No description provided for @visitNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что изменилось'**
+  String get visitNote;
+
+  /// No description provided for @visitRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать этот раз'**
+  String get visitRemove;
+
+  /// No description provided for @visitRemoveMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись вернётся к предыдущему впечатлению.'**
+  String get visitRemoveMessage;
+
+  /// No description provided for @visitCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} раз} few{{count} раза} many{{count} раз} other{{count} раз}}'**
+  String visitCount(int count);
+
+  /// No description provided for @yearReturned.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Вернулись к {count} впечатлению} few{Вернулись к {count} впечатлениям} many{Вернулись к {count} впечатлениям} other{Вернулись к {count} впечатлениям}}'**
+  String yearReturned(int count);
+
   /// No description provided for @entryArchive.
   ///
   /// In ru, this message translates to:

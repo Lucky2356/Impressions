@@ -487,6 +487,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryImpressionDateClear => 'Clear the date';
 
   @override
+  String get visitsTitle => 'Again';
+
+  @override
+  String get visitsHint =>
+      'Been here again, or rewatched it? Add it — the previous rating stays in the history.';
+
+  @override
+  String get visitAdd => 'I went again';
+
+  @override
+  String get visitDate => 'When it was';
+
+  @override
+  String get visitNote => 'What changed';
+
+  @override
+  String get visitRemove => 'Remove this time';
+
+  @override
+  String get visitRemoveMessage =>
+      'The entry goes back to the previous impression.';
+
+  @override
+  String visitCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '$count time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearReturned(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Came back to $count impressions',
+      one: 'Came back to $count impression',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get entryArchive => 'Archive entry';
 
   @override
