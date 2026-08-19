@@ -1080,6 +1080,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoIsCover => 'Entry cover';
 
   @override
+  String get photoCaption => 'Photo caption';
+
+  @override
+  String get photoCaptionHint => 'Where it was taken and what is going on';
+
+  @override
+  String get photoCaptionEmpty => 'No caption';
+
+  @override
+  String get photoReorderHint => 'Drag a photo to change the order';
+
+  @override
   String get photoDropHint => 'Drop images here';
 
   @override

@@ -39,6 +39,7 @@ class TextInputDialog extends StatefulWidget {
     String? initial,
     String? confirmLabel,
     List<String> suggestions = const [],
+    bool allowEmpty = false,
   }) async {
     final result = await showDialog<String>(
       context: context,
@@ -52,6 +53,10 @@ class TextInputDialog extends StatefulWidget {
       ),
     );
     final trimmed = result?.trim();
+    // Обычно пустой ввод — это отказ: безымянная категория никому не нужна.
+    // Но подпись к снимку стирают именно пустой строкой, и без [allowEmpty]
+    // «убрать подпись» было бы нечем выразить.
+    if (allowEmpty) return trimmed;
     return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
   }
 

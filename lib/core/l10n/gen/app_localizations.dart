@@ -1892,6 +1892,30 @@ abstract class AppLocalizations {
   /// **'Обложка записи'**
   String get photoIsCover;
 
+  /// No description provided for @photoCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подпись к фотографии'**
+  String get photoCaption;
+
+  /// No description provided for @photoCaptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где это снято и что здесь происходит'**
+  String get photoCaptionHint;
+
+  /// No description provided for @photoCaptionEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без подписи'**
+  String get photoCaptionEmpty;
+
+  /// No description provided for @photoReorderHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Потяните снимок, чтобы поменять порядок'**
+  String get photoReorderHint;
+
   /// No description provided for @photoDropHint.
   ///
   /// In ru, this message translates to:

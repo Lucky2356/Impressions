@@ -114,7 +114,11 @@ class ExportResult {
 
 /// Сборка подписанного контейнера профиля `*.impressions` (§19).
 class ExportService {
-  ExportService(this.db) : _keys = KeyService(db), _images = ImageService(db);
+  /// [mediaDirectory] — каталог снимков; задаётся только в тестах, чтобы они
+  /// не писали в папку приложения.
+  ExportService(this.db, {Directory? mediaDirectory})
+    : _keys = KeyService(db),
+      _images = ImageService(db, mediaDirectory: mediaDirectory);
 
   final AppDatabase db;
   final KeyService _keys;
@@ -144,6 +148,7 @@ class ExportService {
     files['objects.jsonl'] = _jsonl(data.objectsJson);
     files['entries.jsonl'] = _jsonl(data.entriesJson);
     files['revisions.jsonl'] = _jsonl(data.revisionsJson);
+    files['photos.jsonl'] = _jsonl(data.photosJson);
 
     for (final att in data.attachments) {
       final path = await _images.absolutePath(att.storagePath);
@@ -420,6 +425,7 @@ class ExportService {
 
     // Вложения (§25: приватность «без фотографий»).
     var attachments = <AttachmentRow>[];
+    var attachmentLinks = <RevisionAttachmentRow>[];
     if (options.includePhotos) {
       final revisionIds = entryRevisions
           .where((r) {
@@ -432,6 +438,7 @@ class ExportService {
         final attLinks = await (db.select(
           db.revisionAttachments,
         )..where((ra) => ra.revisionId.isIn(revisionIds))).get();
+        attachmentLinks = attLinks;
         final attIds = attLinks.map((l) => l.attachmentId).toSet();
         if (attIds.isNotEmpty) {
           attachments = await (db.select(
@@ -443,6 +450,7 @@ class ExportService {
 
     // Обложки веток — по хешу файла и только из того, что реально уехало.
     final shaById = {for (final a in attachments) a.id: a.sha256};
+    final captionById = {for (final a in attachments) a.id: a.caption};
     final coverShaByCategory = <String, String>{
       for (final c in categories) c.id: ?shaById[c.coverAttachmentId],
     };
@@ -587,6 +595,22 @@ class ExportService {
           },
       ],
       attachments: attachments,
+      // Связи «снимок принадлежит этой версии записи» ездят по хешу файла, а
+      // не по идентификатору: на той стороне тот же файл мог уже быть, и
+      // идентификатор у него свой. По той же причине так сделаны обложки
+      // веток. До 1.19.0 связей в пакете не было вовсе — файлы приезжали, а
+      // записи оставались без фотографий.
+      photosJson: [
+        for (final l in attachmentLinks)
+          if (shaById[l.attachmentId] case final sha?)
+            {
+              'revisionId': l.revisionId,
+              'sha256': sha,
+              'sortOrder': l.sortOrder,
+              'isPrimary': l.isPrimary,
+              'caption': captionById[l.attachmentId],
+            },
+      ],
       summary: ExportSummary(
         profileName: profile.firstName,
         entries: entries.length,
@@ -616,6 +640,7 @@ class _ExportData {
     required this.entriesJson,
     required this.revisionsJson,
     required this.attachments,
+    required this.photosJson,
     required this.summary,
   });
 
@@ -626,6 +651,9 @@ class _ExportData {
   final List<Map<String, Object?>> entriesJson;
   final List<Map<String, Object?>> revisionsJson;
   final List<AttachmentRow> attachments;
+
+  /// Связи снимков с версиями записей — см. комментарий у сборки.
+  final List<Map<String, Object?>> photosJson;
   final ExportSummary summary;
 }
 

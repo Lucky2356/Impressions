@@ -385,6 +385,44 @@ class ImageService {
     });
   }
 
+  /// Переставляет снимки в заданном порядке (§16).
+  ///
+  /// Порядок задаётся целиком списком, а не сдвигом по одному: перетаскивание
+  /// сообщает готовую раскладку, и пересчитывать её по шагам значит завести
+  /// второе описание того же.
+  Future<void> reorderAttachments({
+    required String revisionId,
+    required List<String> orderedAttachmentIds,
+  }) async {
+    await db.batch((b) {
+      for (var i = 0; i < orderedAttachmentIds.length; i++) {
+        b.update(
+          db.revisionAttachments,
+          RevisionAttachmentsCompanion(sortOrder: Value(i)),
+          where: (ra) =>
+              ra.revisionId.equals(revisionId) &
+              ra.attachmentId.equals(orderedAttachmentIds[i]),
+        );
+      }
+    });
+  }
+
+  /// Подпись к снимку (§16). Пустая строка стирает подпись.
+  ///
+  /// Подпись у самого вложения, а не у связи: один и тот же файл, попавший в
+  /// две записи, подписан одинаково — это свойство снимка, а не места, где он
+  /// лежит.
+  Future<void> setCaption(String attachmentId, String? caption) async {
+    final text = caption?.trim();
+    await (db.update(
+      db.attachments,
+    )..where((a) => a.id.equals(attachmentId))).write(
+      AttachmentsCompanion(
+        caption: Value(text == null || text.isEmpty ? null : text),
+      ),
+    );
+  }
+
   /// Какое вложение сейчас обложка.
   Future<String?> primaryAttachmentId(String revisionId) async {
     final row =

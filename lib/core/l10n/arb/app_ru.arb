@@ -343,6 +343,10 @@
   "purgeCategoryHasChildren": "Сначала разберитесь с подкатегориями: удалять ветку целиком нельзя.",
   "photoMakeCover": "Сделать обложкой",
   "photoIsCover": "Обложка записи",
+  "photoCaption": "Подпись к фотографии",
+  "photoCaptionHint": "Где это снято и что здесь происходит",
+  "photoCaptionEmpty": "Без подписи",
+  "photoReorderHint": "Потяните снимок, чтобы поменять порядок",
   "photoDropHint": "Перетащите изображения сюда",
 
   "profilesTitle": "Профили",

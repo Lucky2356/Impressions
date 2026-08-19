@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -14,6 +13,8 @@ import '../../design_system/design_system.dart';
 import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
 import 'entry_card_data.dart';
+import 'entry_photo_thumb.dart';
+import 'entry_photo_viewer.dart';
 import 'photo_source.dart';
 
 /// Фотографии записи (§16): добавление с камеры/галереи на Android, выбором
@@ -219,24 +220,45 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
         else
           SizedBox(
             height: 108,
-            child: ListView.separated(
+            // Порядок задаёт человек: до 1.19.0 он был порядком добавления, и
+            // поменять его было нечем. Перетаскивание, а не «влево-вправо» по
+            // шагу: разложить пять снимков шагами — двадцать нажатий.
+            child: ReorderableListView.builder(
               scrollDirection: Axis.horizontal,
+              buildDefaultDragHandles: false,
               itemCount: _photos.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: AppDimens.space8),
+              // onReorderItem уже учитывает сдвиг из-за изъятого элемента —
+              // так же, как порядок записей в подборке.
+              onReorderItem: _reorder,
               itemBuilder: (context, i) {
                 final row = _photos[i];
                 final path = _paths[row.id];
-                return _PhotoThumb(
-                  path: path,
-                  isCover: row.id == _primaryId,
-                  onRemove: () => _remove(row),
-                  onOpen: () => _openFullscreen(i),
-                  onMakeCover: row.id == _primaryId
-                      ? null
-                      : () => _makeCover(row),
+                return Padding(
+                  key: ValueKey(row.id),
+                  padding: const EdgeInsets.only(right: AppDimens.space8),
+                  child: ReorderableDelayedDragStartListener(
+                    index: i,
+                    child: PhotoThumb(
+                      path: path,
+                      caption: row.caption,
+                      isCover: row.id == _primaryId,
+                      onRemove: () => _remove(row),
+                      onOpen: () => _openFullscreen(i),
+                      onMakeCover: row.id == _primaryId
+                          ? null
+                          : () => _makeCover(row),
+                    ),
+                  ),
                 );
               },
+            ),
+          ),
+        if (_photos.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: AppDimens.space4),
+            child: Text(
+              l10n.photoReorderHint,
+              style: context.text.labelSmall?.copyWith(color: c.textMuted),
             ),
           ),
       ],
@@ -259,173 +281,48 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
   }
 
   Future<void> _openFullscreen(int index) async {
-    final fullPaths = <String>[];
+    final photos = <ViewerPhoto>[];
     for (final row in _photos) {
-      fullPaths.add(await _service.absolutePath(row.storagePath));
+      photos.add((
+        id: row.id,
+        path: await _service.absolutePath(row.storagePath),
+        caption: row.caption,
+      ));
     }
     if (!mounted) return;
     await showDialog(
       context: context,
-      builder: (_) => _FullscreenGallery(paths: fullPaths, initial: index),
+      builder: (_) =>
+          PhotoViewer(photos: photos, initial: index, onCaption: _setCaption),
     );
-  }
-}
-
-class _PhotoThumb extends StatelessWidget {
-  const _PhotoThumb({
-    required this.path,
-    required this.isCover,
-    required this.onRemove,
-    required this.onOpen,
-    required this.onMakeCover,
-  });
-
-  final String? path;
-
-  /// Этот снимок показывается в каталоге и на главной.
-  final bool isCover;
-
-  final VoidCallback onRemove;
-  final VoidCallback onOpen;
-
-  /// null — снимок уже обложка, назначать нечего.
-  final VoidCallback? onMakeCover;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final l10n = AppLocalizations.of(context);
-    return Stack(
-      children: [
-        InkWell(
-          onTap: onOpen,
-          borderRadius: AppDimens.brMd,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: AppDimens.brMd,
-              border: isCover
-                  ? Border.all(color: c.accentPrimary, width: 2)
-                  : null,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: 108,
-              height: 108,
-              // Ровная плитка лежит фоном: спрашивать диск о каждом снимке на
-              // каждую перерисовку карточки записи незачем.
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(color: c.surfaceMuted),
-                  if (path != null)
-                    Image.file(
-                      File(path!),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // Обложка видна в списках, поэтому выбирать её должен человек, а не
-        // порядок добавления снимков.
-        Positioned(
-          bottom: 2,
-          left: 2,
-          child: Tooltip(
-            message: isCover ? l10n.photoIsCover : l10n.photoMakeCover,
-            child: Material(
-              color: c.surface.withValues(alpha: 0.85),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onMakeCover,
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    isCover ? Icons.star_rounded : Icons.star_outline_rounded,
-                    size: 14,
-                    color: isCover ? c.accentPrimary : c.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 2,
-          right: 2,
-          child: Tooltip(
-            message: l10n.photoRemove,
-            child: Material(
-              color: c.surface.withValues(alpha: 0.85),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onRemove,
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.close_rounded,
-                    size: 14,
-                    color: c.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FullscreenGallery extends StatefulWidget {
-  const _FullscreenGallery({required this.paths, required this.initial});
-
-  final List<String> paths;
-  final int initial;
-
-  @override
-  State<_FullscreenGallery> createState() => _FullscreenGalleryState();
-}
-
-class _FullscreenGalleryState extends State<_FullscreenGallery> {
-  late final PageController _controller = PageController(
-    initialPage: widget.initial,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    // Подпись могли поменять — перечитываем, иначе следующий просмотр покажет
+    // прежнюю.
+    await _load();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Dialog.fullscreen(
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _controller,
-            itemCount: widget.paths.length,
-            itemBuilder: (context, i) => InteractiveViewer(
-              child: Center(child: Image.file(File(widget.paths[i]))),
-            ),
-          ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: IconButton(
-              tooltip: l10n.commonClose,
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close_rounded),
-            ),
-          ),
-        ],
-      ),
+  Future<void> _setCaption(String attachmentId, String caption) async {
+    await _service.setCaption(attachmentId, caption);
+  }
+
+  /// Новый порядок снимков после перетаскивания.
+  ///
+  /// Список считается здесь целиком и уходит в базу одним куском: сдвиг «на
+  /// одну позицию» пришлось бы описывать дважды — здесь и там.
+  Future<void> _reorder(int oldIndex, int newIndex) async {
+    final revisionId = widget.revisionId;
+    if (revisionId == null) return;
+
+    final next = [..._photos];
+    next.insert(newIndex, next.removeAt(oldIndex));
+    setState(() => _photos = next);
+
+    await _service.reorderAttachments(
+      revisionId: revisionId,
+      orderedAttachmentIds: [for (final row in next) row.id],
     );
+    // Обложка выбирается по пометке, а при её отсутствии — по порядку: список
+    // мог поменяться и в каталоге.
+    ref.read(dataRefreshProvider.notifier).bump();
+    await _load();
   }
 }

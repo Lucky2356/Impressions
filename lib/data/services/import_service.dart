@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:convert';
 import 'dart:isolate';
 
@@ -186,7 +187,10 @@ class ImportResult {
 /// файлов → manifest и версия формата → контрольные суммы → подпись → лимиты →
 /// полный разбор → предпросмотр → (по подтверждению) транзакционное применение.
 class ImportService {
-  ImportService(this.db) : _images = ImageService(db);
+  /// [mediaDirectory] — каталог снимков; задаётся только в тестах, чтобы они
+  /// не писали в папку приложения.
+  ImportService(this.db, {Directory? mediaDirectory})
+    : _images = ImageService(db, mediaDirectory: mediaDirectory);
 
   final AppDatabase db;
   final ImageService _images;
@@ -200,6 +204,7 @@ class ImportService {
     'objects.jsonl',
     'entries.jsonl',
     'revisions.jsonl',
+    'photos.jsonl',
     'checksums.json',
     'signature.json',
   };
@@ -313,6 +318,9 @@ class ImportService {
       objects: _decodeJsonl(files['objects.jsonl']),
       entries: _decodeJsonl(files['entries.jsonl']),
       revisions: _decodeJsonl(files['revisions.jsonl']),
+      // Пакет от 1.18.0 и старше этого файла не знает — и это не ошибка:
+      // фотографии тогда приезжали без связи с записями.
+      photos: _decodeJsonl(files['photos.jsonl']),
       attachments: {
         for (final entry in files.entries)
           if (entry.key.startsWith(attachmentsPrefix)) entry.key: entry.value,
@@ -572,16 +580,25 @@ class ImportService {
     // Вложения записываем до транзакции: файлы дедуплицируются по SHA-256,
     // а связи создаются уже внутри транзакции.
     final attachmentIdBySha = <String, String>{};
-    final results = await _images.addAllFromBytes(
-      preview.payload.attachments.values.toList(),
-    );
-    for (final result in results) {
-      switch (result) {
+    final files = preview.payload.attachments.entries.toList();
+    final results = await _images.addAllFromBytes([
+      for (final f in files) f.value,
+    ]);
+    for (var i = 0; i < results.length; i++) {
+      // Хеш на этой стороне считается заново — и совпадает не всегда:
+      // обработка перекодирует снимок, и байты выходят другие. Поэтому имя
+      // файла в пакете (`attachments/<хеш>.jpg`) — тоже ключ: по нему на
+      // связи и обложки ссылается сам пакет. Без этого фотография приезжала
+      // файлом, но своей записи не находила.
+      final declared = _shaFromFileName(files[i].key);
+      switch (results[i]) {
         case ImageAdded(attachment: final a):
           attachmentIdBySha[a.sha256] = a.id;
+          if (declared != null) attachmentIdBySha[declared] = a.id;
           newImages++;
         case ImageDuplicate(attachment: final a):
           attachmentIdBySha[a.sha256] = a.id;
+          if (declared != null) attachmentIdBySha[declared] = a.id;
         case ImageRejected():
           // Некорректное вложение пропускаем, остальной импорт продолжается.
           break;
@@ -596,6 +613,7 @@ class ImportService {
       await _applyCategories(preview, attachmentIdBySha);
       await _applyEntries(preview);
       await _applyRevisions(preview, attachmentIdBySha);
+      await _applyPhotoLinks(preview, attachmentIdBySha);
 
       await db
           .into(db.importBatches)
@@ -829,6 +847,54 @@ class ImportService {
     }
   }
 
+  /// Хеш, которым пакет назвал файл снимка: `attachments/<хеш>.jpg`.
+  static String? _shaFromFileName(String name) {
+    if (!name.startsWith(attachmentsPrefix)) return null;
+    final base = name.substring(attachmentsPrefix.length);
+    final dot = base.lastIndexOf('.');
+    final sha = dot == -1 ? base : base.substring(0, dot);
+    return sha.isEmpty ? null : sha;
+  }
+
+  /// Возвращает снимки их записям (§16).
+  ///
+  /// Файлы приезжают отдельно и складываются по хешу, поэтому здесь остаётся
+  /// восстановить связь и порядок. Ссылку на снимок, которого в пакете нет,
+  /// пропускаем молча: выгрузка одной ветки или приватность «без фотографий»
+  /// — обычное дело, и валить из-за них весь импорт незачем.
+  Future<void> _applyPhotoLinks(
+    ImportPreview preview,
+    Map<String, String> attachmentIdBySha,
+  ) async {
+    for (final link in preview.payload.photos) {
+      final revisionId = link['revisionId'] as String?;
+      final sha = link['sha256'] as String?;
+      if (revisionId == null || sha == null) continue;
+      final attachmentId = attachmentIdBySha[sha];
+      if (attachmentId == null) continue;
+
+      await db
+          .into(db.revisionAttachments)
+          .insertOnConflictUpdate(
+            RevisionAttachmentsCompanion.insert(
+              id: Ids.newId(),
+              entityKind: 'entry',
+              revisionId: revisionId,
+              attachmentId: attachmentId,
+              sortOrder: Value(link['sortOrder'] as int? ?? 0),
+              isPrimary: Value(link['isPrimary'] as bool? ?? false),
+            ),
+          );
+
+      // Подпись — свойство самого снимка, и на чужой стороне её могло не быть.
+      if (link['caption'] case final String caption when caption.isNotEmpty) {
+        await (db.update(db.attachments)
+              ..where((a) => a.id.equals(attachmentId)))
+            .write(AttachmentsCompanion(caption: Value(caption)));
+      }
+    }
+  }
+
   Future<void> _applyRevisions(
     ImportPreview preview,
     Map<String, String> attachmentIdBySha,
@@ -924,6 +990,7 @@ class ImportPayload {
     required this.entries,
     required this.revisions,
     required this.attachments,
+    this.photos = const [],
   });
 
   final Map<String, Object?> profile;
@@ -932,6 +999,10 @@ class ImportPayload {
   final List<Map<String, Object?>> entries;
   final List<Map<String, Object?>> revisions;
   final Map<String, Uint8List> attachments;
+
+  /// Связи снимков с версиями записей. Пусто у пакетов до 1.19.0 — там
+  /// фотографии приезжали файлами, но ничьими.
+  final List<Map<String, Object?>> photos;
 }
 
 class _Diff {

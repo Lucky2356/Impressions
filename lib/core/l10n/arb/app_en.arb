@@ -332,6 +332,10 @@
   "purgeCategoryHasChildren": "Deal with the subcategories first: a whole branch cannot be deleted at once.",
   "photoMakeCover": "Make it the cover",
   "photoIsCover": "Entry cover",
+  "photoCaption": "Photo caption",
+  "photoCaptionHint": "Where it was taken and what is going on",
+  "photoCaptionEmpty": "No caption",
+  "photoReorderHint": "Drag a photo to change the order",
   "photoDropHint": "Drop images here",
 
   "profilesTitle": "Profiles",

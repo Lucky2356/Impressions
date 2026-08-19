@@ -1106,6 +1106,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoIsCover => 'Обложка записи';
 
   @override
+  String get photoCaption => 'Подпись к фотографии';
+
+  @override
+  String get photoCaptionHint => 'Где это снято и что здесь происходит';
+
+  @override
+  String get photoCaptionEmpty => 'Без подписи';
+
+  @override
+  String get photoReorderHint => 'Потяните снимок, чтобы поменять порядок';
+
+  @override
   String get photoDropHint => 'Перетащите изображения сюда';
 
   @override
