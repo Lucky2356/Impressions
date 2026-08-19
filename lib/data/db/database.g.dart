@@ -9400,6 +9400,421 @@ class EntryTagsCompanion extends UpdateCompanion<EntryTagRow> {
   }
 }
 
+class $EntryVisitsTable extends EntryVisits
+    with TableInfo<$EntryVisitsTable, EntryVisitRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EntryVisitsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES profile_entries (id) ON DELETE RESTRICT',
+    ),
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
+  @override
+  late final GeneratedColumn<double> rating = GeneratedColumn<double>(
+    'rating',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entryId,
+    occurredAt,
+    rating,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'entry_visits';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EntryVisitRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('rating')) {
+      context.handle(
+        _ratingMeta,
+        rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EntryVisitRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EntryVisitRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+      rating: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}rating'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EntryVisitsTable createAlias(String alias) {
+    return $EntryVisitsTable(attachedDatabase, alias);
+  }
+}
+
+class EntryVisitRow extends DataClass implements Insertable<EntryVisitRow> {
+  final String id;
+  final String entryId;
+
+  /// Когда это было. Обязательна: посещение без даты не встроить в историю.
+  final DateTime occurredAt;
+
+  /// Оценка именно этого раза; может отсутствовать.
+  final double? rating;
+  final String? note;
+  final DateTime createdAt;
+  const EntryVisitRow({
+    required this.id,
+    required this.entryId,
+    required this.occurredAt,
+    this.rating,
+    this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entry_id'] = Variable<String>(entryId);
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    if (!nullToAbsent || rating != null) {
+      map['rating'] = Variable<double>(rating);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EntryVisitsCompanion toCompanion(bool nullToAbsent) {
+    return EntryVisitsCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      occurredAt: Value(occurredAt),
+      rating: rating == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rating),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory EntryVisitRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EntryVisitRow(
+      id: serializer.fromJson<String>(json['id']),
+      entryId: serializer.fromJson<String>(json['entryId']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+      rating: serializer.fromJson<double?>(json['rating']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entryId': serializer.toJson<String>(entryId),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+      'rating': serializer.toJson<double?>(rating),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  EntryVisitRow copyWith({
+    String? id,
+    String? entryId,
+    DateTime? occurredAt,
+    Value<double?> rating = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+  }) => EntryVisitRow(
+    id: id ?? this.id,
+    entryId: entryId ?? this.entryId,
+    occurredAt: occurredAt ?? this.occurredAt,
+    rating: rating.present ? rating.value : this.rating,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  EntryVisitRow copyWithCompanion(EntryVisitsCompanion data) {
+    return EntryVisitRow(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      rating: data.rating.present ? data.rating.value : this.rating,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntryVisitRow(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('rating: $rating, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, entryId, occurredAt, rating, note, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EntryVisitRow &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.occurredAt == this.occurredAt &&
+          other.rating == this.rating &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class EntryVisitsCompanion extends UpdateCompanion<EntryVisitRow> {
+  final Value<String> id;
+  final Value<String> entryId;
+  final Value<DateTime> occurredAt;
+  final Value<double?> rating;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const EntryVisitsCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EntryVisitsCompanion.insert({
+    required String id,
+    required String entryId,
+    required DateTime occurredAt,
+    this.rating = const Value.absent(),
+    this.note = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       entryId = Value(entryId),
+       occurredAt = Value(occurredAt),
+       createdAt = Value(createdAt);
+  static Insertable<EntryVisitRow> custom({
+    Expression<String>? id,
+    Expression<String>? entryId,
+    Expression<DateTime>? occurredAt,
+    Expression<double>? rating,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (rating != null) 'rating': rating,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EntryVisitsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? entryId,
+    Value<DateTime>? occurredAt,
+    Value<double?>? rating,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return EntryVisitsCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      occurredAt: occurredAt ?? this.occurredAt,
+      rating: rating ?? this.rating,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    if (rating.present) {
+      map['rating'] = Variable<double>(rating.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntryVisitsCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('rating: $rating, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CollectionsTable extends Collections
     with TableInfo<$CollectionsTable, CollectionRow> {
   @override
@@ -13434,6 +13849,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $EntryTagsTable entryTags = $EntryTagsTable(this);
+  late final $EntryVisitsTable entryVisits = $EntryVisitsTable(this);
   late final $CollectionsTable collections = $CollectionsTable(this);
   late final $CollectionEntriesTable collectionEntries =
       $CollectionEntriesTable(this);
@@ -13466,6 +13882,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     profileEntryRevisions,
     entryCategories,
     entryTags,
+    entryVisits,
     collections,
     collectionEntries,
     attachments,
@@ -19554,6 +19971,24 @@ final class $$ProfileEntriesTableReferences
     );
   }
 
+  static MultiTypedResultKey<$EntryVisitsTable, List<EntryVisitRow>>
+  _entryVisitsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.entryVisits,
+    aliasName: 'profile_entries__id__entry_visits__entry_id',
+  );
+
+  $$EntryVisitsTableProcessedTableManager get entryVisitsRefs {
+    final manager = $$EntryVisitsTableTableManager(
+      $_db,
+      $_db.entryVisits,
+    ).filter((f) => f.entryId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_entryVisitsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$CollectionEntriesTable, List<CollectionEntryRow>>
   _collectionEntriesRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
@@ -19788,6 +20223,31 @@ class $$ProfileEntriesTableFilterComposer
           }) => $$EntryTagsTableFilterComposer(
             $db: $db,
             $table: $db.entryTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> entryVisitsRefs(
+    Expression<bool> Function($$EntryVisitsTableFilterComposer f) f,
+  ) {
+    final $$EntryVisitsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.entryVisits,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntryVisitsTableFilterComposer(
+            $db: $db,
+            $table: $db.entryVisits,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20176,6 +20636,31 @@ class $$ProfileEntriesTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> entryVisitsRefs<T extends Object>(
+    Expression<T> Function($$EntryVisitsTableAnnotationComposer a) f,
+  ) {
+    final $$EntryVisitsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.entryVisits,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntryVisitsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entryVisits,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> collectionEntriesRefs<T extends Object>(
     Expression<T> Function($$CollectionEntriesTableAnnotationComposer a) f,
   ) {
@@ -20222,6 +20707,7 @@ class $$ProfileEntriesTableTableManager
             bool profileEntryRevisionsRefs,
             bool entryCategoriesRefs,
             bool entryTagsRefs,
+            bool entryVisitsRefs,
             bool collectionEntriesRefs,
           })
         > {
@@ -20345,6 +20831,7 @@ class $$ProfileEntriesTableTableManager
                 profileEntryRevisionsRefs = false,
                 entryCategoriesRefs = false,
                 entryTagsRefs = false,
+                entryVisitsRefs = false,
                 collectionEntriesRefs = false,
               }) {
                 return PrefetchHooks(
@@ -20353,6 +20840,7 @@ class $$ProfileEntriesTableTableManager
                     if (profileEntryRevisionsRefs) db.profileEntryRevisions,
                     if (entryCategoriesRefs) db.entryCategories,
                     if (entryTagsRefs) db.entryTags,
+                    if (entryVisitsRefs) db.entryVisits,
                     if (collectionEntriesRefs) db.collectionEntries,
                   ],
                   addJoins:
@@ -20469,6 +20957,27 @@ class $$ProfileEntriesTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (entryVisitsRefs)
+                        await $_getPrefetchedData<
+                          ProfileEntryRow,
+                          $ProfileEntriesTable,
+                          EntryVisitRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProfileEntriesTableReferences
+                              ._entryVisitsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProfileEntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).entryVisitsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (collectionEntriesRefs)
                         await $_getPrefetchedData<
                           ProfileEntryRow,
@@ -20516,6 +21025,7 @@ typedef $$ProfileEntriesTableProcessedTableManager =
         bool profileEntryRevisionsRefs,
         bool entryCategoriesRefs,
         bool entryTagsRefs,
+        bool entryVisitsRefs,
         bool collectionEntriesRefs,
       })
     >;
@@ -21710,6 +22220,345 @@ typedef $$EntryTagsTableProcessedTableManager =
       (EntryTagRow, $$EntryTagsTableReferences),
       EntryTagRow,
       PrefetchHooks Function({bool entryId, bool tagId})
+    >;
+typedef $$EntryVisitsTableCreateCompanionBuilder =
+    EntryVisitsCompanion Function({
+      required String id,
+      required String entryId,
+      required DateTime occurredAt,
+      Value<double?> rating,
+      Value<String?> note,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$EntryVisitsTableUpdateCompanionBuilder =
+    EntryVisitsCompanion Function({
+      Value<String> id,
+      Value<String> entryId,
+      Value<DateTime> occurredAt,
+      Value<double?> rating,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+final class $$EntryVisitsTableReferences
+    extends BaseReferences<_$AppDatabase, $EntryVisitsTable, EntryVisitRow> {
+  $$EntryVisitsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ProfileEntriesTable _entryIdTable(_$AppDatabase db) => db
+      .profileEntries
+      .createAlias('entry_visits__entry_id__profile_entries__id');
+
+  $$ProfileEntriesTableProcessedTableManager get entryId {
+    final $_column = $_itemColumn<String>('entry_id')!;
+
+    final manager = $$ProfileEntriesTableTableManager(
+      $_db,
+      $_db.profileEntries,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$EntryVisitsTableFilterComposer
+    extends Composer<_$AppDatabase, $EntryVisitsTable> {
+  $$EntryVisitsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProfileEntriesTableFilterComposer get entryId {
+    final $$ProfileEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.profileEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfileEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.profileEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EntryVisitsTableOrderingComposer
+    extends Composer<_$AppDatabase, $EntryVisitsTable> {
+  $$EntryVisitsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get rating => $composableBuilder(
+    column: $table.rating,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProfileEntriesTableOrderingComposer get entryId {
+    final $$ProfileEntriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.profileEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfileEntriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.profileEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EntryVisitsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EntryVisitsTable> {
+  $$EntryVisitsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get rating =>
+      $composableBuilder(column: $table.rating, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ProfileEntriesTableAnnotationComposer get entryId {
+    final $$ProfileEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.profileEntries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProfileEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.profileEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$EntryVisitsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EntryVisitsTable,
+          EntryVisitRow,
+          $$EntryVisitsTableFilterComposer,
+          $$EntryVisitsTableOrderingComposer,
+          $$EntryVisitsTableAnnotationComposer,
+          $$EntryVisitsTableCreateCompanionBuilder,
+          $$EntryVisitsTableUpdateCompanionBuilder,
+          (EntryVisitRow, $$EntryVisitsTableReferences),
+          EntryVisitRow,
+          PrefetchHooks Function({bool entryId})
+        > {
+  $$EntryVisitsTableTableManager(_$AppDatabase db, $EntryVisitsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EntryVisitsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EntryVisitsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EntryVisitsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> entryId = const Value.absent(),
+                Value<DateTime> occurredAt = const Value.absent(),
+                Value<double?> rating = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EntryVisitsCompanion(
+                id: id,
+                entryId: entryId,
+                occurredAt: occurredAt,
+                rating: rating,
+                note: note,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String entryId,
+                required DateTime occurredAt,
+                Value<double?> rating = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => EntryVisitsCompanion.insert(
+                id: id,
+                entryId: entryId,
+                occurredAt: occurredAt,
+                rating: rating,
+                note: note,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$EntryVisitsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({entryId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (entryId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.entryId,
+                                referencedTable: $$EntryVisitsTableReferences
+                                    ._entryIdTable(db),
+                                referencedColumn: $$EntryVisitsTableReferences
+                                    ._entryIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$EntryVisitsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EntryVisitsTable,
+      EntryVisitRow,
+      $$EntryVisitsTableFilterComposer,
+      $$EntryVisitsTableOrderingComposer,
+      $$EntryVisitsTableAnnotationComposer,
+      $$EntryVisitsTableCreateCompanionBuilder,
+      $$EntryVisitsTableUpdateCompanionBuilder,
+      (EntryVisitRow, $$EntryVisitsTableReferences),
+      EntryVisitRow,
+      PrefetchHooks Function({bool entryId})
     >;
 typedef $$CollectionsTableCreateCompanionBuilder =
     CollectionsCompanion Function({
@@ -24504,6 +25353,8 @@ class $AppDatabaseManager {
       $$EntryCategoriesTableTableManager(_db, _db.entryCategories);
   $$EntryTagsTableTableManager get entryTags =>
       $$EntryTagsTableTableManager(_db, _db.entryTags);
+  $$EntryVisitsTableTableManager get entryVisits =>
+      $$EntryVisitsTableTableManager(_db, _db.entryVisits);
   $$CollectionsTableTableManager get collections =>
       $$CollectionsTableTableManager(_db, _db.collections);
   $$CollectionEntriesTableTableManager get collectionEntries =>

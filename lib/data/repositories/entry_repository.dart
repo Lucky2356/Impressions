@@ -332,6 +332,103 @@ class EntryRepository {
     await revisions.commitEntries(entryIds);
   }
 
+  /// История повторов записи, свежие сверху.
+  Future<List<EntryVisitRow>> visitsOf(String entryId) {
+    return (db.select(db.entryVisits)
+          ..where((v) => v.entryId.equals(entryId))
+          ..orderBy([
+            (v) =>
+                OrderingTerm(expression: v.occurredAt, mode: OrderingMode.desc),
+          ]))
+        .get();
+  }
+
+  /// Сколько раз к записи возвращались — для пометки на карточке.
+  ///
+  /// Одним запросом на весь список: спрашивать про каждую карточку отдельно
+  /// значит шестьдесят запросов на страницу каталога.
+  Future<Map<String, int>> visitCounts(Iterable<String> entryIds) async {
+    final ids = entryIds.toSet();
+    if (ids.isEmpty) return const {};
+    final count = db.entryVisits.id.count();
+    final rows =
+        await (db.selectOnly(db.entryVisits)
+              ..addColumns([db.entryVisits.entryId, count])
+              ..where(db.entryVisits.entryId.isIn(ids.toList()))
+              ..groupBy([db.entryVisits.entryId]))
+            .get();
+    final byEntry = <String, int>{};
+    for (final row in rows) {
+      final id = row.read(db.entryVisits.entryId);
+      if (id != null) byEntry[id] = row.read(count) ?? 0;
+    }
+    return byEntry;
+  }
+
+  /// Добавляет ещё один раз и подтягивает за ним саму запись.
+  ///
+  /// Запись хранит последнее: её оценка и дата впечатления становятся такими
+  /// же, как у самого свежего посещения. Иначе каталог показывал бы оценку
+  /// первого раза, а карточка — второго, и это выглядело бы сбоем.
+  Future<EntryVisitRow> addVisit({
+    required String entryId,
+    required DateTime occurredAt,
+    double? rating,
+    String? note,
+  }) async {
+    final row = EntryVisitRow(
+      id: Ids.newId(),
+      entryId: entryId,
+      occurredAt: occurredAt,
+      rating: rating,
+      note: note,
+      createdAt: DateTime.now(),
+    );
+    await db.into(db.entryVisits).insert(row);
+    await _syncEntryWithLatestVisit(entryId);
+    return row;
+  }
+
+  /// Убирает один раз из истории и возвращает запись к предыдущему.
+  Future<void> removeVisit(String visitId) async {
+    final visit = await (db.select(
+      db.entryVisits,
+    )..where((v) => v.id.equals(visitId))).getSingleOrNull();
+    if (visit == null) return;
+    await (db.delete(db.entryVisits)..where((v) => v.id.equals(visitId))).go();
+    await _syncEntryWithLatestVisit(visit.entryId);
+  }
+
+  /// Приводит запись к самому свежему посещению.
+  ///
+  /// Когда посещений не осталось, оценку и дату не трогаем: они были у записи
+  /// и до того, как повторы появились, и стирать их из-за удаления повтора —
+  /// потеря того, чего человек не отменял.
+  Future<void> _syncEntryWithLatestVisit(String entryId) async {
+    final latest =
+        await (db.select(db.entryVisits)
+              ..where((v) => v.entryId.equals(entryId))
+              ..orderBy([
+                (v) => OrderingTerm(
+                  expression: v.occurredAt,
+                  mode: OrderingMode.desc,
+                ),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    if (latest == null) return;
+
+    await (db.update(
+      db.profileEntries,
+    )..where((e) => e.id.equals(entryId))).write(
+      ProfileEntriesCompanion(
+        rating: Value(latest.rating),
+        impressionDate: Value(latest.occurredAt),
+      ),
+    );
+    await revisions.commitEntries([entryId]);
+  }
+
   /// Маркер «поле не передано» — позволяет отличить null от отсутствия.
   static const Object _unset = Object();
 

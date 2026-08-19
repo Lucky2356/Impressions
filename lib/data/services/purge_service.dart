@@ -113,6 +113,9 @@ class PurgeService {
       await (db.delete(db.entryTags)..where((t) => t.entryId.isIn(ids))).go();
       await _purgeTagsIfUnused(tagIds);
 
+      // История повторов уходит вместе с записью: ссылка на неё стоит с
+      // `restrict`, и без этого запись просто не удалилась бы.
+      await (db.delete(db.entryVisits)..where((v) => v.entryId.isIn(ids))).go();
       await (db.delete(
         db.entryCategories,
       )..where((ec) => ec.entryId.isIn(ids))).go();

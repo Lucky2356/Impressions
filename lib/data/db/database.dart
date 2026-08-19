@@ -35,6 +35,7 @@ part 'database.g.dart';
     ProfileEntryRevisions,
     EntryCategories,
     EntryTags,
+    EntryVisits,
     Collections,
     CollectionEntries,
     Attachments,
@@ -53,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -121,6 +122,13 @@ class AppDatabase extends _$AppDatabase {
         await seedBuiltInStatuses();
         await migrateWantToTryToStatus();
       }
+      // 8: повторные впечатления. Каждой записи, у которой уже было что
+      // сказать о времени или об оценке, заводится первое посещение — иначе
+      // история начиналась бы со второго раза, а первый выглядел бы забытым.
+      if (from < 8) {
+        await m.createTable(entryVisits);
+        await seedFirstVisits();
+      }
       await _createIndexes();
     },
     beforeOpen: (details) async {
@@ -167,6 +175,8 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_revision_attachments_attachment ON revision_attachments (attachment_id)',
       'CREATE INDEX IF NOT EXISTS idx_collection_entries_entry ON collection_entries (entry_id)',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_entry_primary_category ON entry_categories (entry_id) WHERE is_primary = 1',
+      // История посещений спрашивается всегда по одной записи.
+      'CREATE INDEX IF NOT EXISTS idx_visits_entry ON entry_visits (entry_id)',
     ];
     for (final s in stmts) {
       await customStatement(s);
@@ -242,6 +252,26 @@ class AppDatabase extends _$AppDatabase {
       updates: {profileEntries},
     );
     return moved + renamed;
+  }
+
+  /// Заводит первое посещение записям, у которых есть дата или оценка.
+  ///
+  /// Одним оператором, без чтения в память: на профиле в тысячи записей проход
+  /// по одной был бы тысячей запросов. Записи без даты и без оценки
+  /// пропускаются — заводить посещение «неизвестно когда и без мнения» значит
+  /// придумывать за человека.
+  ///
+  /// Возвращает, сколько посещений завёл.
+  Future<int> seedFirstVisits() async {
+    return customUpdate(
+      'INSERT INTO entry_visits (id, entry_id, occurred_at, rating, note, '
+      'created_at) '
+      'SELECT lower(hex(randomblob(16))), id, '
+      'COALESCE(impression_date, created_at), rating, NULL, created_at '
+      'FROM profile_entries '
+      'WHERE impression_date IS NOT NULL OR rating IS NOT NULL',
+      updates: {entryVisits},
+    );
   }
 
   /// Полнотекстовый поиск заметок записей (FTS5) + триггеры синхронизации.

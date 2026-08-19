@@ -149,6 +149,7 @@ class ExportService {
     files['entries.jsonl'] = _jsonl(data.entriesJson);
     files['revisions.jsonl'] = _jsonl(data.revisionsJson);
     files['photos.jsonl'] = _jsonl(data.photosJson);
+    files['visits.jsonl'] = _jsonl(data.visitsJson);
 
     for (final att in data.attachments) {
       final path = await _images.absolutePath(att.storagePath);
@@ -448,6 +449,13 @@ class ExportService {
       }
     }
 
+    // Повторные впечатления — только у записей, попавших в выгрузку.
+    final visits = entryIds.isEmpty
+        ? <EntryVisitRow>[]
+        : await (db.select(
+            db.entryVisits,
+          )..where((v) => v.entryId.isIn(entryIds.toList()))).get();
+
     // Обложки веток — по хешу файла и только из того, что реально уехало.
     final shaById = {for (final a in attachments) a.id: a.sha256};
     final captionById = {for (final a in attachments) a.id: a.caption};
@@ -611,6 +619,17 @@ class ExportService {
               'caption': captionById[l.attachmentId],
             },
       ],
+      visitsJson: [
+        for (final v in visits)
+          {
+            'id': v.id,
+            'entryId': v.entryId,
+            'occurredAt': v.occurredAt.toUtc().toIso8601String(),
+            'rating': v.rating,
+            'note': v.note,
+            'createdAt': v.createdAt.toUtc().toIso8601String(),
+          },
+      ],
       summary: ExportSummary(
         profileName: profile.firstName,
         entries: entries.length,
@@ -641,6 +660,7 @@ class _ExportData {
     required this.revisionsJson,
     required this.attachments,
     required this.photosJson,
+    required this.visitsJson,
     required this.summary,
   });
 
@@ -654,6 +674,9 @@ class _ExportData {
 
   /// Связи снимков с версиями записей — см. комментарий у сборки.
   final List<Map<String, Object?>> photosJson;
+
+  /// Повторные впечатления записей (§10).
+  final List<Map<String, Object?>> visitsJson;
   final ExportSummary summary;
 }
 

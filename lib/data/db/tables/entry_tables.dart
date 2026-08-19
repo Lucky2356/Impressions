@@ -73,6 +73,36 @@ class ProfileEntryRevisions extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Отдельный раз, когда впечатление повторили (§10).
+///
+/// У записи одна оценка и одна дата: сходили в то же кафе второй раз — и
+/// первый приходилось затирать. Между тем «понравилось тогда» и «понравилось
+/// сейчас» — разные сведения, и вся ценность личного архива как раз в том,
+/// чтобы видеть, как мнение менялось.
+///
+/// Запись при этом продолжает хранить последнее: её `rating` и
+/// `impression_date` обновляются вместе с новым посещением. Так каталог,
+/// фильтры, статистика, итоги года и обмен файлами продолжают работать без
+/// единой правки — считать оценку из посещений на каждый запрос значило бы
+/// переписать всю выборку записей ради того же числа.
+@DataClassName('EntryVisitRow')
+class EntryVisits extends Table {
+  TextColumn get id => text()();
+  TextColumn get entryId =>
+      text().references(ProfileEntries, #id, onDelete: KeyAction.restrict)();
+
+  /// Когда это было. Обязательна: посещение без даты не встроить в историю.
+  DateTimeColumn get occurredAt => dateTime()();
+
+  /// Оценка именно этого раза; может отсутствовать.
+  RealColumn get rating => real().nullable()();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Связь запись↔категория (§7.2): одна основная + дополнительные.
 @DataClassName('EntryCategoryRow')
 class EntryCategories extends Table {

@@ -205,6 +205,7 @@ class ImportService {
     'entries.jsonl',
     'revisions.jsonl',
     'photos.jsonl',
+    'visits.jsonl',
     'checksums.json',
     'signature.json',
   };
@@ -321,6 +322,7 @@ class ImportService {
       // Пакет от 1.18.0 и старше этого файла не знает — и это не ошибка:
       // фотографии тогда приезжали без связи с записями.
       photos: _decodeJsonl(files['photos.jsonl']),
+      visits: _decodeJsonl(files['visits.jsonl']),
       attachments: {
         for (final entry in files.entries)
           if (entry.key.startsWith(attachmentsPrefix)) entry.key: entry.value,
@@ -614,6 +616,7 @@ class ImportService {
       await _applyEntries(preview);
       await _applyRevisions(preview, attachmentIdBySha);
       await _applyPhotoLinks(preview, attachmentIdBySha);
+      await _applyVisits(preview);
 
       await db
           .into(db.importBatches)
@@ -847,6 +850,33 @@ class ImportService {
     }
   }
 
+  /// Переносит повторные впечатления (§10).
+  ///
+  /// Оценку и дату самой записи здесь не трогаем: они уже приехали в пакете
+  /// своим полем, и пересчитывать их из посещений значило бы решать за
+  /// отправителя.
+  Future<void> _applyVisits(ImportPreview preview) async {
+    for (final v in preview.payload.visits) {
+      final id = v['id'] as String?;
+      final entryId = v['entryId'] as String?;
+      final occurredAt = _parseDate(v['occurredAt']);
+      if (id == null || entryId == null || occurredAt == null) continue;
+
+      await db
+          .into(db.entryVisits)
+          .insertOnConflictUpdate(
+            EntryVisitsCompanion.insert(
+              id: id,
+              entryId: entryId,
+              occurredAt: occurredAt,
+              rating: Value((v['rating'] as num?)?.toDouble()),
+              note: Value(v['note'] as String?),
+              createdAt: _parseDate(v['createdAt']) ?? occurredAt,
+            ),
+          );
+    }
+  }
+
   /// Хеш, которым пакет назвал файл снимка: `attachments/<хеш>.jpg`.
   static String? _shaFromFileName(String name) {
     if (!name.startsWith(attachmentsPrefix)) return null;
@@ -991,6 +1021,7 @@ class ImportPayload {
     required this.revisions,
     required this.attachments,
     this.photos = const [],
+    this.visits = const [],
   });
 
   final Map<String, Object?> profile;
@@ -1003,6 +1034,9 @@ class ImportPayload {
   /// Связи снимков с версиями записей. Пусто у пакетов до 1.19.0 — там
   /// фотографии приезжали файлами, но ничьими.
   final List<Map<String, Object?>> photos;
+
+  /// Повторные впечатления. Пусто у пакетов до 1.19.0.
+  final List<Map<String, Object?>> visits;
 }
 
 class _Diff {

@@ -101,4 +101,46 @@ void main() {
       reason: 'подпись — свойство снимка и едет вместе с ним',
     );
   });
+
+  test('повторные впечатления доезжают вместе с записью', () async {
+    final db = openTestDb();
+    addTearDown(db.close);
+    final entries = EntryRepository(db, mediaDirectory: sourceMedia);
+
+    final me = await ProfileRepository(db).createOwnProfile(firstName: 'Я');
+    final type = await entries.createObjectType(me.id, 'Места');
+    final object = await entries.createObject(typeId: type.id, title: 'Кафе');
+    final entry = await entries.createEntry(
+      profileId: me.id,
+      objectId: object.id,
+      rating: 6,
+      impressionDate: DateTime(2026, 1, 10),
+    );
+    await entries.addVisit(
+      entryId: entry.id,
+      occurredAt: DateTime(2026, 6, 1),
+      rating: 9,
+      note: 'Стало заметно лучше',
+    );
+
+    final exported = await ExportService(
+      db,
+      mediaDirectory: sourceMedia,
+    ).export(me.id, const ExportOptions());
+
+    final target = openTestDb();
+    addTearDown(target.close);
+    final importer = ImportService(target, mediaDirectory: targetMedia);
+    await importer.apply(
+      await importer.inspect(Uint8List.fromList(exported.bytes)),
+    );
+
+    final theirEntries = EntryRepository(target, mediaDirectory: targetMedia);
+    final theirRow = (await target.select(target.profileEntries).get()).single;
+    final visits = await theirEntries.visitsOf(theirRow.id);
+
+    expect(visits.length, 1);
+    expect(visits.single.rating, 9);
+    expect(visits.single.note, 'Стало заметно лучше');
+  });
 }
