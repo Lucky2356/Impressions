@@ -866,6 +866,30 @@ abstract class AppLocalizations {
   /// **'Год'**
   String get entryYearLabel;
 
+  /// No description provided for @objectAltTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оригинальное название'**
+  String get objectAltTitle;
+
+  /// No description provided for @objectAltTitleHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как это называется на языке оригинала'**
+  String get objectAltTitleHint;
+
+  /// No description provided for @objectSummary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кратко'**
+  String get objectSummary;
+
+  /// No description provided for @objectSummaryHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Одна строка о том, что это такое'**
+  String get objectSummaryHint;
+
   /// No description provided for @entryImpressionDate.
   ///
   /// In ru, this message translates to:

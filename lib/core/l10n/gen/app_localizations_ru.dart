@@ -482,6 +482,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryYearLabel => 'Год';
 
   @override
+  String get objectAltTitle => 'Оригинальное название';
+
+  @override
+  String get objectAltTitleHint => 'Как это называется на языке оригинала';
+
+  @override
+  String get objectSummary => 'Кратко';
+
+  @override
+  String get objectSummaryHint => 'Одна строка о том, что это такое';
+
+  @override
   String get entryImpressionDate => 'Дата впечатления';
 
   @override

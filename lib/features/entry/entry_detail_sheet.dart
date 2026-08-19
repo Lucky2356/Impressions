@@ -262,6 +262,19 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       ],
                     ],
                   ),
+                  // Оригинальное название под основным: «Twin Peaks» под
+                  // «Твин Пикс». Отдельной строкой, а не в общем перечне с
+                  // типом и годом, — это второе имя того же, а не ещё одно
+                  // свойство.
+                  if (d.object.altTitle case final alt?) ...[
+                    const SizedBox(height: AppDimens.space2),
+                    Text(
+                      alt,
+                      style: context.text.titleMedium?.copyWith(
+                        color: c.textSecondary,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppDimens.space4),
                   Text(
                     [
@@ -273,6 +286,13 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                       color: c.textSecondary,
                     ),
                   ),
+                  // Краткое описание объекта. В списках оно давно
+                  // подставлялось подзаголовком, а в самой карточке его видно
+                  // не было.
+                  if (d.object.summary case final summary?) ...[
+                    const SizedBox(height: AppDimens.space8),
+                    Text(summary, style: context.text.bodyMedium),
+                  ],
                   // Откуда запись взялась. Приложение помечало перенесённые
                   // записи с самого начала и нигде этого не показывало.
                   if (d.recommendedBy != null) ...[
@@ -661,6 +681,8 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         .updateObject(
           d.object.id,
           title: result.title,
+          altTitle: result.altTitle,
+          summary: result.summary,
           creator: result.creator,
           year: result.year,
         );

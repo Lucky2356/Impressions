@@ -466,6 +466,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryYearLabel => 'Year';
 
   @override
+  String get objectAltTitle => 'Original title';
+
+  @override
+  String get objectAltTitleHint => 'How it is called in the original language';
+
+  @override
+  String get objectSummary => 'In short';
+
+  @override
+  String get objectSummaryHint => 'One line about what this is';
+
+  @override
   String get entryImpressionDate => 'Impression date';
 
   @override

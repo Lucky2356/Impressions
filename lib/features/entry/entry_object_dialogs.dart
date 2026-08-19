@@ -6,7 +6,13 @@ import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 
 /// Результат правки описания объекта.
-typedef ObjectEdit = ({String title, String? creator, int? year});
+typedef ObjectEdit = ({
+  String title,
+  String? altTitle,
+  String? summary,
+  String? creator,
+  int? year,
+});
 
 /// Диалог правки названия, бренда и года объекта.
 /// Выбор объекта, с которым сводить.
@@ -97,12 +103,20 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
   late final _year = TextEditingController(
     text: widget.object.year?.toString() ?? '',
   );
+  late final _altTitle = TextEditingController(
+    text: widget.object.altTitle ?? '',
+  );
+  late final _summary = TextEditingController(
+    text: widget.object.summary ?? '',
+  );
 
   @override
   void dispose() {
     _title.dispose();
     _creator.dispose();
     _year.dispose();
+    _altTitle.dispose();
+    _summary.dispose();
     super.dispose();
   }
 
@@ -129,6 +143,18 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
               decoration: InputDecoration(labelText: l10n.quickAddNameLabel),
             ),
             const SizedBox(height: AppDimens.space16),
+            const SizedBox(height: AppDimens.space16),
+            // Оригинальное название хранилось в базе с самого начала и нигде
+            // не показывалось: «Твин Пикс» и «Twin Peaks» — один и тот же
+            // сериал, и искать его хочется обоими написаниями.
+            TextField(
+              controller: _altTitle,
+              decoration: InputDecoration(
+                labelText: l10n.objectAltTitle,
+                hintText: l10n.objectAltTitleHint,
+              ),
+            ),
+            const SizedBox(height: AppDimens.space16),
             TextField(
               controller: _creator,
               decoration: InputDecoration(labelText: l10n.entryCreatorLabel),
@@ -138,6 +164,18 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
               controller: _year,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(labelText: l10n.entryYearLabel),
+            ),
+            const SizedBox(height: AppDimens.space16),
+            // Краткое описание уже подставлялось подзаголовком в списках,
+            // когда у объекта нет бренда, — а ввести его было негде.
+            TextField(
+              controller: _summary,
+              maxLines: 3,
+              minLines: 1,
+              decoration: InputDecoration(
+                labelText: l10n.objectSummary,
+                hintText: l10n.objectSummaryHint,
+              ),
             ),
           ],
         ),
@@ -151,10 +189,18 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
           onPressed: () {
             final title = _title.text.trim();
             if (title.isEmpty) return;
-            final creator = _creator.text.trim();
+            // Пустое поле — это «стереть», а не «оставить как было»: форма
+            // показывает всё сразу, и очистить её человек может нарочно.
+            String? orNull(String value) {
+              final text = value.trim();
+              return text.isEmpty ? null : text;
+            }
+
             Navigator.of(context).pop((
               title: title,
-              creator: creator.isEmpty ? null : creator,
+              altTitle: orNull(_altTitle.text),
+              summary: orNull(_summary.text),
+              creator: orNull(_creator.text),
               year: int.tryParse(_year.text.trim()),
             ));
           },

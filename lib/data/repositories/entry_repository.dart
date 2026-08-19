@@ -107,27 +107,38 @@ class EntryRepository {
   }
 
   /// Обновляет объект и фиксирует новую версию (§18).
+  /// Правит описание объекта. Не переданное поле остаётся прежним, `null`
+  /// стирает его — как в [updateEntry], по тому же маркеру [_unset].
+  ///
+  /// До 1.19.0 `null` значил «не трогать», и убрать однажды введённые бренд,
+  /// год или оригинальное название было нечем.
   Future<void> updateObject(
     String objectId, {
     String? title,
-    String? altTitle,
-    String? summary,
-    String? creator,
-    int? year,
+    Object? altTitle = _unset,
+    Object? summary = _unset,
+    Object? creator = _unset,
+    Object? year = _unset,
   }) async {
+    Value<T?> val<T>(Object? v) =>
+        identical(v, _unset) ? const Value.absent() : Value(v as T?);
+
+    final alt = val<String>(altTitle);
     await (db.update(db.objects)..where((o) => o.id.equals(objectId))).write(
       ObjectsCompanion(
         title: title == null ? const Value.absent() : Value(title),
         normalizedTitle: title == null
             ? const Value.absent()
             : Value(Normalize.name(title)),
-        altTitle: altTitle == null ? const Value.absent() : Value(altTitle),
-        normalizedAltTitle: altTitle == null
-            ? const Value.absent()
-            : Value(Normalize.name(altTitle)),
-        summary: summary == null ? const Value.absent() : Value(summary),
-        creator: creator == null ? const Value.absent() : Value(creator),
-        year: year == null ? const Value.absent() : Value(year),
+        altTitle: alt,
+        // Нормализованное написание идёт следом за самим названием: разойдись
+        // они, поиск находил бы объект по стёртому названию.
+        normalizedAltTitle: alt.present
+            ? Value(alt.value == null ? null : Normalize.name(alt.value!))
+            : const Value.absent(),
+        summary: val<String>(summary),
+        creator: val<String>(creator),
+        year: val<int>(year),
       ),
     );
     await revisions.commitObject(objectId);
