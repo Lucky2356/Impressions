@@ -60,8 +60,12 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<void> pumpShell(WidgetTester tester, double textScale) async {
-    tester.view.physicalSize = const Size(400, 860);
+  Future<void> pumpShell(
+    WidgetTester tester,
+    double textScale, {
+    Size size = const Size(400, 860),
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -115,6 +119,22 @@ void main() {
         scrollable,
         isNotEmpty,
         reason: 'раздел «$section» ничем не прокручивается',
+      );
+    }
+  });
+
+  testWidgets('разделы не переполняются на широком экране', (tester) async {
+    // Раскладка Windows — другая ветка кода: боковая панель, две колонки в
+    // категориях и настройках. Проверяли её только глазами.
+    await pumpShell(tester, 1.0, size: const Size(1400, 900));
+
+    for (final section in NavIds.all) {
+      container.read(navProvider.notifier).go(section);
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'раздел «$section» на широком экране',
       );
     }
   });

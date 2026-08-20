@@ -139,8 +139,10 @@ void main() {
     final theirRow = (await target.select(target.profileEntries).get()).single;
     final visits = await theirEntries.visitsOf(theirRow.id);
 
-    expect(visits.length, 1);
-    expect(visits.single.rating, 9);
-    expect(visits.single.note, 'Стало заметно лучше');
+    // Два: сам повтор и исходное впечатление записи, которое завёл первый
+    // добавленный повтор.
+    expect(visits.length, 2);
+    expect(visits.first.rating, 9);
+    expect(visits.first.note, 'Стало заметно лучше');
   });
 }

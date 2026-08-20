@@ -48,6 +48,44 @@ void main() {
     expect(row.impressionDate, DateTime(2026, 6, 1));
   });
 
+  test('первый раз попадает в историю сам', () async {
+    // У записей, заведённых до обновления, первое посещение создаёт разовый
+    // проход схемы 8. У новых его не было бы вовсе, и добавление второго раза
+    // выглядело бы так, будто первого не случилось.
+    await entries.addVisit(
+      entryId: entryId,
+      occurredAt: DateTime(2026, 6, 1),
+      rating: 9,
+    );
+
+    final visits = await entries.visitsOf(entryId);
+    expect(visits.length, 2);
+    expect(visits.last.rating, 6, reason: 'первым стоит исходное впечатление');
+    expect(visits.last.occurredAt, DateTime(2026, 1, 10));
+  });
+
+  test('запись без даты и без оценки лишнего повтора не заводит', () async {
+    final type = (await entries.objectTypes(
+      (await db.select(db.profiles).get()).single.id,
+    )).first;
+    final object = await entries.createObject(
+      typeId: type.id,
+      title: 'Ничего не сказано',
+    );
+    final bare = await entries.createEntry(
+      profileId: (await db.select(db.profiles).get()).single.id,
+      objectId: object.id,
+    );
+
+    await entries.addVisit(entryId: bare.id, occurredAt: DateTime(2026, 6, 1));
+
+    expect(
+      (await entries.visitsOf(bare.id)).length,
+      1,
+      reason: 'придумывать первое впечатление за человека нечего',
+    );
+  });
+
   test('история идёт от свежего к старому', () async {
     await entries.addVisit(
       entryId: entryId,
@@ -60,8 +98,10 @@ void main() {
       rating: 5,
     );
 
+    // Третьим снизу стоит исходное впечатление записи: его заводит сам
+    // первый добавленный повтор.
     final visits = await entries.visitsOf(entryId);
-    expect(visits.map((v) => v.rating).toList(), [5, 7]);
+    expect(visits.map((v) => v.rating).toList(), [5, 7, 6]);
   });
 
   test('запись позади самого свежего посещения не отстаёт', () async {
@@ -109,7 +149,8 @@ void main() {
     await entries.addVisit(entryId: entryId, occurredAt: DateTime(2026, 3, 1));
     await entries.addVisit(entryId: entryId, occurredAt: DateTime(2026, 4, 1));
 
-    expect(await entries.visitCounts([entryId]), {entryId: 2});
+    // Два добавленных повтора плюс исходное впечатление записи.
+    expect(await entries.visitCounts([entryId]), {entryId: 3});
     expect(await entries.visitCounts(const []), isEmpty);
   });
 }

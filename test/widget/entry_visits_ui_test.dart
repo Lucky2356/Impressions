@@ -99,8 +99,9 @@ void main() {
     await entries.addVisit(entryId: entryId, occurredAt: DateTime(2026, 3, 1));
     await entries.addVisit(entryId: entryId, occurredAt: DateTime(2026, 4, 1));
 
+    // Три: два добавленных повтора и исходное впечатление записи.
     final view = (await entries.entryViews(me.id)).single;
-    expect(view.visitCount, 2);
+    expect(view.visitCount, 3);
 
     await tester.pumpWidget(
       app(
@@ -114,7 +115,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('2'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
     expect(find.byIcon(Icons.replay_rounded), findsOneWidget);
   });
 }

@@ -376,6 +376,8 @@ class EntryRepository {
     double? rating,
     String? note,
   }) async {
+    await _materializeFirstVisit(entryId);
+
     final row = EntryVisitRow(
       id: Ids.newId(),
       entryId: entryId,
@@ -387,6 +389,43 @@ class EntryRepository {
     await db.into(db.entryVisits).insert(row);
     await _syncEntryWithLatestVisit(entryId);
     return row;
+  }
+
+  /// Заводит записи её собственный первый раз, если истории ещё нет.
+  ///
+  /// Тем же правилом, что и разовый проход схемы 8: у записи с датой или
+  /// оценкой первое впечатление уже состоялось, и оно часть истории. Иначе
+  /// добавление второго раза выглядело бы так, будто первого не было — у
+  /// записей, заведённых до обновления, он есть, а у новых пропадал бы.
+  ///
+  /// Лениво, а не при создании записи: строка на каждую заведённую запись
+  /// нужна только тем, к кому и правда вернулись.
+  Future<void> _materializeFirstVisit(String entryId) async {
+    final existing =
+        await (db.select(db.entryVisits)
+              ..where((v) => v.entryId.equals(entryId))
+              ..limit(1))
+            .getSingleOrNull();
+    if (existing != null) return;
+
+    final entry = await (db.select(
+      db.profileEntries,
+    )..where((e) => e.id.equals(entryId))).getSingleOrNull();
+    if (entry == null) return;
+    if (entry.impressionDate == null && entry.rating == null) return;
+
+    await db
+        .into(db.entryVisits)
+        .insert(
+          EntryVisitRow(
+            id: Ids.newId(),
+            entryId: entryId,
+            occurredAt: entry.impressionDate ?? entry.createdAt,
+            rating: entry.rating,
+            note: null,
+            createdAt: entry.createdAt,
+          ),
+        );
   }
 
   /// Убирает один раз из истории и возвращает запись к предыдущему.
