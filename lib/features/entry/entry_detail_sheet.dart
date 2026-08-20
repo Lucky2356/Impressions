@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/utils/dates.dart';
-import '../../core/domain/entry_status.dart';
-import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
@@ -20,11 +18,13 @@ import '../collections/collection_picker.dart';
 import '../quick_add/category_picker.dart';
 import '../search/recent_store.dart';
 import 'entry_object_dialogs.dart';
+import 'entry_disclosure.dart';
+import 'entry_hero.dart';
+import 'entry_opinion.dart';
 import 'entry_photos.dart';
 import 'entry_visits.dart';
 import 'entry_providers.dart';
 import 'entry_tags.dart';
-import 'status_field.dart';
 
 /// Карточка записи: путь категорий, отношение, оценка, заметка, история версий
 /// с восстановлением (§18) и архивирование (§24).
@@ -48,28 +48,11 @@ class EntryDetailSheet extends ConsumerStatefulWidget {
 }
 
 class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
-  final _note = TextEditingController();
-  final _noteFocus = FocusNode();
-  bool _noteInitialised = false;
-  bool _showHistory = false;
-
-  /// Прогресс: сколько пройдено и сколько всего.
+  /// Ключ карточки впечатления: через него закрытие дописывает набранное.
   ///
-  /// Записывается не на каждую цифру, а когда курсор ушёл из полей: иначе
-  /// «12» из «120» успело бы стать отдельной версией записи (§18), и история
-  /// заросла бы промежуточными числами.
-  final _progressCurrent = TextEditingController();
-  final _progressTotal = TextEditingController();
-  final _progressFocus = FocusNode();
-  bool _progressInitialised = false;
-  String _savedProgress = '';
-
-  /// Текст заметки, который уже лежит в базе.
-  ///
-  /// Заметка сохранялась только по кнопке: закрыли карточку крестиком, свайпом
-  /// вниз или нажатием мимо — набранное пропадало молча. Отношение, оценка и
-  /// дата рядом сохраняются сразу, поэтому и ожидание было такое же.
-  String _savedNote = '';
+  /// Поля ввода живут в ней самой — иначе половина этого файла была бы про
+  /// сохранение заметки и прогресса.
+  final _opinionKey = GlobalKey<EntryOpinionCardState>();
 
   @override
   void initState() {
@@ -79,22 +62,6 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
       (_) =>
           ref.read(recentStoreProvider.notifier).rememberEntry(widget.entryId),
     );
-    _noteFocus.addListener(() {
-      if (!_noteFocus.hasFocus) _saveNoteIfChanged();
-    });
-    _progressFocus.addListener(() {
-      if (!_progressFocus.hasFocus) _saveProgressIfChanged();
-    });
-  }
-
-  @override
-  void dispose() {
-    _noteFocus.dispose();
-    _note.dispose();
-    _progressFocus.dispose();
-    _progressCurrent.dispose();
-    _progressTotal.dispose();
-    super.dispose();
   }
 
   void _bump() => ref.read(dataRefreshProvider.notifier).bump();
@@ -110,10 +77,10 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     // заметку надёжнее всего здесь, а не в каждом обработчике.
     return PopScope(
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          _saveNoteIfChanged();
-          _saveProgressIfChanged();
-        }
+        // Карточку закрывают четырьмя способами: крестиком, нажатием мимо,
+        // свайпом вниз и кнопкой «Назад». Все четыре снимают маршрут, поэтому
+        // дописывать набранное надёжнее всего здесь.
+        if (didPop) _opinionKey.currentState?.saveIfChanged();
       },
       child: _content(context, l10n, c, detail),
     );
@@ -132,19 +99,6 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         if (d == null) {
           return Center(child: Text(l10n.commonNothingFound));
         }
-        if (!_noteInitialised) {
-          _note.text = d.entry.detailedNote ?? '';
-          _savedNote = _note.text;
-          _noteInitialised = true;
-        }
-        if (!_progressInitialised) {
-          _progressCurrent.text = d.entry.progressCurrent?.toString() ?? '';
-          _progressTotal.text = d.entry.progressTotal?.toString() ?? '';
-          _savedProgress = _progressKey();
-          _progressInitialised = true;
-        }
-        final statuses = EntryStatus.decode(d.type.statusesJson);
-        final relation = Relation.byName(d.entry.relation);
         final revisionDate = localeDate(context, 'd MMMM y, HH:mm');
         // Чужую запись нельзя редактировать: мнение принадлежит её автору (§6.2).
         // Вместо редактирования предлагается добавить её себе (§12).
@@ -154,11 +108,13 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Шапка
+            // Шапка: только выход и меню действий. Раньше здесь стояло слово
+            // «Запись» и три значка, а название самой записи лежало ниже — и
+            // первым, что читал глаз, была служебная подпись.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppDimens.space20,
-                AppDimens.space16,
+                AppDimens.space8,
                 AppDimens.space8,
                 AppDimens.space8,
               ),
@@ -167,21 +123,12 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                   Expanded(
                     child: Text(
                       l10n.entryDetailTitle,
-                      style: context.text.headlineSmall,
+                      style: context.text.labelSmall?.copyWith(
+                        color: c.textMuted,
+                      ),
                     ),
                   ),
-                  if (isOwn) ...[
-                    IconButton(
-                      tooltip: l10n.collectionAddTo,
-                      onPressed: () => _addToCollection(d.entry.id),
-                      icon: const Icon(Icons.playlist_add_rounded),
-                    ),
-                    IconButton(
-                      tooltip: l10n.entryArchive,
-                      onPressed: () => _archive(d.entry.id),
-                      icon: const Icon(Icons.archive_outlined),
-                    ),
-                  ],
+                  if (isOwn) _menu(l10n, c, d),
                   IconButton(
                     tooltip: l10n.commonClose,
                     onPressed: () => Navigator.of(context).pop(),
@@ -190,149 +137,25 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                 ],
               ),
             ),
-            Divider(height: 1, color: c.border),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.all(AppDimens.space20),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.space20,
+                  0,
+                  AppDimens.space20,
+                  AppDimens.space32,
+                ),
                 children: [
-                  // Хлебные крошки: Продукты / Колбасы / Папа может (§7.6).
-                  // Нажатие меняет категорию: раньше переложить запись можно
-                  // было только правой кнопкой в каталоге, о чём догадаться
-                  // неоткуда.
-                  InkWell(
-                    onTap: isOwn ? () => _pickCategory(d.entry.id) : null,
-                    borderRadius: AppDimens.brSm,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Breadcrumbs(
-                            crumbs: [
-                              for (final name in d.categoryPath) Crumb(name),
-                              if (d.categoryPath.isEmpty)
-                                Crumb(l10n.quickAddNoCategory),
-                              Crumb(d.object.title),
-                            ],
-                          ),
-                        ),
-                        if (isOwn)
-                          Icon(
-                            Icons.drive_file_move_outline,
-                            size: 16,
-                            color: c.textMuted,
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (isOwn || d.extraCategories.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppDimens.space8),
-                      child: _ExtraCategories(
-                        categories: d.extraCategories,
-                        onAdd: isOwn ? () => _addCategory(d.entry.id) : null,
-                        onRemove: isOwn
-                            ? (id) => _removeCategory(d.entry.id, id)
-                            : null,
-                      ),
-                    ),
-                  const SizedBox(height: AppDimens.space12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          d.object.title,
-                          style: context.text.displayMedium,
-                        ),
-                      ),
-                      // Правка описания самого объекта: название, бренд, год.
-                      // Раньше их нельзя было изменить вовсе — даже опечатку.
-                      if (isOwn) ...[
-                        AppIconButton(
-                          icon: Icons.edit_rounded,
-                          tooltip: l10n.entryEditObject,
-                          onPressed: () => _editObject(d),
-                        ),
-                        // Свести два одинаковых объекта можно было только
-                        // заведя всё заново: диалог похожих работает лишь в
-                        // момент создания записи.
-                        AppIconButton(
-                          icon: Icons.merge_rounded,
-                          tooltip: l10n.entryMerge,
-                          onPressed: () => _mergeObject(d),
-                        ),
-                      ],
-                    ],
-                  ),
-                  // Оригинальное название под основным: «Twin Peaks» под
-                  // «Твин Пикс». Отдельной строкой, а не в общем перечне с
-                  // типом и годом, — это второе имя того же, а не ещё одно
-                  // свойство.
-                  if (d.object.altTitle case final alt?) ...[
-                    const SizedBox(height: AppDimens.space2),
-                    Text(
-                      alt,
-                      style: context.text.titleMedium?.copyWith(
-                        color: c.textSecondary,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppDimens.space4),
-                  Text(
-                    [
-                      d.typeName,
-                      if (d.object.creator != null) d.object.creator!,
-                      if (d.object.year != null) '${d.object.year}',
-                    ].join(' · '),
-                    style: context.text.bodyMedium?.copyWith(
-                      color: c.textSecondary,
-                    ),
-                  ),
-                  // Краткое описание объекта. В списках оно давно
-                  // подставлялось подзаголовком, а в самой карточке его видно
-                  // не было.
-                  if (d.object.summary case final summary?) ...[
-                    const SizedBox(height: AppDimens.space8),
-                    Text(summary, style: context.text.bodyMedium),
-                  ],
-                  // Откуда запись взялась. Приложение помечало перенесённые
-                  // записи с самого начала и нигде этого не показывало.
-                  if (d.recommendedBy != null) ...[
-                    const SizedBox(height: AppDimens.space8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline_rounded,
-                          size: 16,
-                          color: c.accentPrimary,
-                        ),
-                        const SizedBox(width: AppDimens.space8),
-                        Flexible(
-                          child: Text(
-                            l10n.entryRecommendedBy(d.recommendedBy!),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: context.text.bodySmall?.copyWith(
-                              color: c.accentPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: AppDimens.space16),
-
-                  // Дата впечатления (§10): по ней можно сортировать каталог,
-                  // но задать её раньше было негде.
-                  _ImpressionDateRow(
-                    value: d.entry.impressionDate,
+                  EntryHero(
+                    detail: d,
+                    coverPath: d.coverPath,
                     editable: isOwn,
-                    onPick: () => _pickImpressionDate(d),
-                    onClear: () => _setImpressionDate(d.entry.id, null),
+                    onPickCategory: () => _pickCategory(d.entry.id),
                   ),
-                  const SizedBox(height: AppDimens.space24),
 
                   // Чужая запись: мнение источника только для чтения (§12).
                   if (!isOwn) ...[
+                    const SizedBox(height: AppDimens.space16),
                     Container(
                       padding: const EdgeInsets.all(AppDimens.space16),
                       decoration: BoxDecoration(
@@ -360,206 +183,88 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimens.space20),
-                  ],
-
-                  // Стадия и прогресс идут перед отношением: сначала «дошли ли
-                  // вы до этого», потом «понравилось ли». Раньше первый вопрос
-                  // задавался вторым — отношением «Хочу попробовать», — и
-                  // сказать «уже смотрю, но пока без мнения» было нечем.
-                  StatusField(
-                    statuses: statuses,
-                    value: d.entry.status,
-                    onChanged: isOwn
-                        ? (key) => _setStatus(d.entry.id, key)
-                        : null,
-                    showEmptyHint: isOwn,
-                  ),
-                  if (statuses.isNotEmpty)
-                    const SizedBox(height: AppDimens.space20),
-                  if (d.type.progressUnit != null) ...[
-                    Focus(
-                      focusNode: _progressFocus,
-                      child: ProgressField(
-                        unit: d.type.progressUnit!,
-                        current: _progressCurrent,
-                        total: _progressTotal,
-                        enabled: isOwn,
-                        onEditingComplete: () => _saveProgressIfChanged(),
-                      ),
-                    ),
-                    const SizedBox(height: AppDimens.space20),
-                  ],
-
-                  // Отношение
-                  Text(
-                    l10n.quickAddRelationLabel,
-                    style: context.text.labelSmall?.copyWith(
-                      color: c.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.space8),
-                  Wrap(
-                    spacing: AppDimens.space8,
-                    runSpacing: AppDimens.space8,
-                    children: [
-                      for (final r in Relation.values)
-                        ChoiceChip(
-                          selected: relation == r,
-                          onSelected: isOwn
-                              ? (s) => _setRelation(d.entry.id, s ? r : null)
-                              : null,
-                          avatar: Icon(
-                            r.icon,
-                            size: 16,
-                            color: relation == r
-                                ? r.accent(c)
-                                : c.textSecondary,
-                          ),
-                          label: Text(r.label(l10n)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimens.space20),
-
-                  // Оценка
-                  Row(
-                    children: [
-                      Text(
-                        l10n.quickAddRatingLabel,
-                        style: context.text.labelSmall?.copyWith(
-                          color: c.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      RatingView(value: d.entry.rating, compact: true),
-                    ],
-                  ),
-                  Slider(
-                    value: d.entry.rating ?? 0,
-                    min: 0,
-                    max: 10,
-                    divisions: 20,
-                    label: (d.entry.rating ?? 0).toStringAsFixed(1),
-                    onChanged: isOwn ? (v) => _setRating(d.entry.id, v) : null,
-                  ),
-                  if (d.entry.rating != null && isOwn)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () => _setRating(d.entry.id, null),
-                        child: Text(l10n.quickAddRatingNone),
-                      ),
-                    ),
-                  const SizedBox(height: AppDimens.space12),
-
-                  // Заметка
-                  TextField(
-                    controller: _note,
-                    focusNode: _noteFocus,
-                    minLines: 3,
-                    maxLines: 8,
-                    readOnly: !isOwn,
-                    decoration: InputDecoration(labelText: l10n.entryNoteLabel),
-                    onEditingComplete: () => _saveNote(d.entry.id),
-                  ),
-                  if (isOwn) ...[
-                    const SizedBox(height: AppDimens.space8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton(
-                        onPressed: () => _saveNote(d.entry.id),
-                        child: Text(l10n.commonSave),
-                      ),
-                    ),
                   ],
 
                   const SizedBox(height: AppDimens.space20),
-                  Divider(color: c.divider),
-                  const SizedBox(height: AppDimens.space16),
 
-                  // Теги (§7.2)
-                  EntryTags(entryId: d.entry.id, editable: isOwn),
-
-                  const SizedBox(height: AppDimens.space16),
-                  Divider(color: c.divider),
-                  const SizedBox(height: AppDimens.space16),
-
-                  // Доступность записи при передаче (§25)
-                  PrivacySelector(
-                    value: d.entry.privacy,
-                    onChanged: isOwn ? (v) => _setPrivacy(d.entry.id, v) : null,
+                  // То, ради чего карточку открывают, — одной карточкой.
+                  EntryOpinionCard(
+                    key: _opinionKey,
+                    detail: d,
+                    editable: isOwn,
                   ),
 
-                  const SizedBox(height: AppDimens.space16),
-                  Divider(color: c.divider),
-                  const SizedBox(height: AppDimens.space16),
+                  const SizedBox(height: AppDimens.space20),
 
-                  // Повторные впечатления (§10): «был ещё раз».
+                  // Повторные впечатления (§10) и фотографии (§16) — это
+                  // содержимое записи, поэтому они открыты, а не свёрнуты.
                   EntryVisitsBlock(
                     entryId: d.entry.id,
                     visits: d.visits,
                     canEdit: isOwn,
                   ),
-                  const SizedBox(height: AppDimens.space16),
-                  Divider(color: c.divider),
-                  const SizedBox(height: AppDimens.space16),
-
-                  // Фотографии (§16)
+                  const SizedBox(height: AppDimens.space20),
                   EntryPhotos(
                     entryId: d.entry.id,
                     revisionId: d.entry.currentRevisionId,
                   ),
+                  const SizedBox(height: AppDimens.space24),
 
-                  const SizedBox(height: AppDimens.space16),
-                  Divider(color: c.divider),
-                  const SizedBox(height: AppDimens.space8),
-
-                  // Похожее рядом: тот же тип, близкая оценка или общий тег.
-                  _SimilarEntries(entryId: d.entry.id),
-
-                  // История версий
-                  InkWell(
-                    onTap: () => setState(() => _showHistory = !_showHistory),
-                    borderRadius: AppDimens.brSm,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppDimens.space8,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            l10n.entryHistory,
-                            style: context.text.titleMedium,
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${d.history.length}',
-                            style: context.text.labelSmall?.copyWith(
-                              color: c.textMuted,
-                            ),
-                          ),
-                          Icon(
-                            _showHistory
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.keyboard_arrow_down_rounded,
-                            color: c.textSecondary,
-                          ),
-                        ],
-                      ),
+                  // Дальше — то, что спрашивают редко. Раскрытым это занимало
+                  // больше половины карточки.
+                  EntryDisclosure(
+                    title: l10n.tagsTitle,
+                    child: EntryTags(entryId: d.entry.id, editable: isOwn),
+                  ),
+                  EntryDisclosure(
+                    title: l10n.categoryExtra,
+                    badge: d.extraCategories.isEmpty
+                        ? null
+                        : '${d.extraCategories.length}',
+                    // Если запись и правда лежит на двух полках, это про то,
+                    // где она находится, а не про редкую настройку: прятать
+                    // такое нельзя. Пустой раздел остаётся свёрнутым.
+                    initiallyOpen: d.extraCategories.isNotEmpty,
+                    child: _ExtraCategories(
+                      categories: d.extraCategories,
+                      onAdd: isOwn ? () => _addCategory(d.entry.id) : null,
+                      onRemove: isOwn
+                          ? (id) => _removeCategory(d.entry.id, id)
+                          : null,
                     ),
                   ),
-                  // Форматтер один на всю историю: у записи, правленной двести
-                  // раз, здесь заводилось двести штук за кадр.
-                  if (_showHistory)
-                    for (final rev in d.history)
-                      _RevisionRow(
-                        dateLabel: revisionDate.format(rev.createdAt),
-                        isCurrent: rev.id == d.entry.currentRevisionId,
-                        onRestore: rev.id == d.entry.currentRevisionId
-                            ? null
-                            : () => _restore(d.entry.id, rev.id),
-                      ),
+                  EntryDisclosure(
+                    title: l10n.privacyLabel,
+                    child: PrivacySelector(
+                      value: d.entry.privacy,
+                      onChanged: isOwn
+                          ? (v) => _setPrivacy(d.entry.id, v)
+                          : null,
+                    ),
+                  ),
+                  EntryDisclosure(
+                    title: l10n.entrySimilar,
+                    child: _SimilarEntries(entryId: d.entry.id),
+                  ),
+                  EntryDisclosure(
+                    title: l10n.entryHistory,
+                    badge: '${d.history.length}',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Форматтер один на всю историю: у записи, правленной
+                        // двести раз, здесь заводилось двести штук за кадр.
+                        for (final rev in d.history)
+                          _RevisionRow(
+                            dateLabel: revisionDate.format(rev.createdAt),
+                            isCurrent: rev.id == d.entry.currentRevisionId,
+                            onRestore: rev.id == d.entry.currentRevisionId
+                                ? null
+                                : () => _restore(d.entry.id, rev.id),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -569,59 +274,53 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     );
   }
 
-  // ---- Вспомогательные виджеты вынесены ниже по файлу ----
-
-  Future<void> _setRelation(String entryId, Relation? r) async {
-    await ref
-        .read(entryRepositoryProvider)
-        .updateEntry(entryId, relation: r?.name);
-    _bump();
-  }
-
-  Future<void> _setStatus(String entryId, String? key) async {
-    await ref.read(entryRepositoryProvider).updateEntry(entryId, status: key);
-    _bump();
-  }
-
-  /// Что сейчас набрано в полях прогресса — одной строкой для сравнения.
-  String _progressKey() => '${_progressCurrent.text}/${_progressTotal.text}';
-
-  /// Дописывает прогресс, если его меняли.
+  /// Действия над записью — в одном меню.
   ///
-  /// Без сравнения с сохранённым каждое закрытие карточки заводило бы новую
-  /// версию записи (§18) — ровно та же ловушка, что и с заметкой.
-  void _saveProgressIfChanged() {
-    if (!_progressInitialised) return;
-    if (_progressKey() == _savedProgress) return;
-    _savedProgress = _progressKey();
-
-    final repo = ref.read(entryRepositoryProvider);
-    repo
-        .updateEntry(
-          widget.entryId,
-          progressCurrent: progressValueOf(_progressCurrent),
-          progressTotal: progressValueOf(_progressTotal),
-        )
-        .then((_) {
-          if (mounted) _bump();
-        });
+  /// Их пять, и раньше три висели значками в шапке, а два — рядом с названием
+  /// объекта, хотя относятся к объекту, а не к тому, что вы о нём думаете.
+  Widget _menu(AppLocalizations l10n, AppColors c, EntryDetail d) {
+    return PopupMenuButton<String>(
+      tooltip: '',
+      icon: Icon(Icons.more_horiz_rounded, color: c.textSecondary),
+      onSelected: (value) {
+        switch (value) {
+          case 'collection':
+            _addToCollection(d.entry.id);
+          case 'object':
+            _editObject(d);
+          case 'merge':
+            _mergeObject(d);
+          case 'archive':
+            _archive(d.entry.id);
+        }
+      },
+      itemBuilder: (_) => [
+        _item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
+        _item('object', Icons.edit_rounded, l10n.entryEditObject),
+        _item('merge', Icons.merge_rounded, l10n.entryMerge),
+        const PopupMenuDivider(),
+        _item('archive', Icons.archive_outlined, l10n.entryArchive),
+      ],
+    );
   }
 
-  Future<void> _setRating(String entryId, double? value) async {
-    await ref.read(entryRepositoryProvider).updateEntry(entryId, rating: value);
-    _bump();
+  PopupMenuItem<String> _item(String value, IconData icon, String label) {
+    return PopupMenuItem(
+      value: value,
+      height: 40,
+      child: Row(
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: AppDimens.space12),
+          Flexible(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// Переложить запись в другую категорию прямо из карточки.
-  Future<void> _pickCategory(String entryId) async {
-    final picked = await CategoryPicker.show(context);
-    final category = picked?.category;
-    if (picked == null || picked.cleared || category == null) return;
-    await ref
-        .read(entryRepositoryProvider)
-        .setPrimaryCategory(entryId, category.id);
-    _bump();
-  }
+  // ---- Вспомогательные виджеты вынесены ниже по файлу ----
 
   /// Кладёт запись ещё на одну полку (§7.2).
   ///
@@ -657,26 +356,6 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         .read(entryRepositoryProvider)
         .updateEntry(entryId, privacy: privacy);
     _bump();
-  }
-
-  Future<void> _saveNote(String entryId) async {
-    final text = _note.text.trim();
-    _savedNote = text;
-    // Репозиторий берём до `await`: карточку могли уже закрыть, и после
-    // ожидания `ref` обращаться некуда.
-    final repo = ref.read(entryRepositoryProvider);
-    await repo.updateEntry(entryId, detailedNote: text.isEmpty ? null : text);
-    if (mounted) _bump();
-  }
-
-  /// Дописывает заметку, если её меняли.
-  ///
-  /// Без сравнения с сохранённым каждое закрытие карточки заводило бы новую
-  /// версию записи (§18) — история заросла бы пустыми правками.
-  void _saveNoteIfChanged() {
-    if (!_noteInitialised) return;
-    if (_note.text.trim() == _savedNote.trim()) return;
-    _saveNote(widget.entryId);
   }
 
   /// Правка описания объекта. Фиксируется новой версией (§18), поэтому
@@ -733,27 +412,14 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     showMessage(context, l10n.entryMergeDone);
   }
 
-  Future<void> _pickImpressionDate(EntryDetail d) async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: d.entry.impressionDate ?? now,
-      firstDate: DateTime(now.year - 50),
-      lastDate: now,
-      locale: const Locale('ru'),
-    );
-    if (picked == null) return;
-    await _setImpressionDate(d.entry.id, picked);
-  }
-
-  Future<void> _setImpressionDate(String entryId, DateTime? date) async {
+  /// Переложить запись в другую категорию прямо из карточки.
+  Future<void> _pickCategory(String entryId) async {
+    final picked = await CategoryPicker.show(context);
+    final category = picked?.category;
+    if (picked == null || picked.cleared || category == null) return;
     await ref
         .read(entryRepositoryProvider)
-        .updateEntry(
-          entryId,
-          impressionDate: date,
-          clearImpressionDate: date == null,
-        );
+        .setPrimaryCategory(entryId, category.id);
     _bump();
   }
 
@@ -761,7 +427,6 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     final l10n = AppLocalizations.of(context);
     final db = ref.read(appDatabaseProvider);
     await RevisionService(db).restoreEntryRevision(entryId, revisionId);
-    _noteInitialised = false;
     _bump();
     if (!mounted) return;
     showMessage(context, l10n.entryRestored);
@@ -890,67 +555,6 @@ class _RevisionRow extends StatelessWidget {
 }
 
 /// Строка с датой впечатления: когда это было на самом деле, а не когда
-/// запись завели.
-class _ImpressionDateRow extends StatelessWidget {
-  const _ImpressionDateRow({
-    required this.value,
-    required this.editable,
-    required this.onPick,
-    required this.onClear,
-  });
-
-  final DateTime? value;
-  final bool editable;
-  final VoidCallback onPick;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final c = context.colors;
-    if (value == null && !editable) return const SizedBox.shrink();
-
-    return Row(
-      children: [
-        Icon(Icons.event_rounded, size: 18, color: c.textSecondary),
-        const SizedBox(width: AppDimens.space8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.entryImpressionDate,
-                style: context.text.labelSmall?.copyWith(
-                  color: c.textSecondary,
-                ),
-              ),
-              Text(
-                value == null
-                    ? l10n.entryImpressionDateNone
-                    : localeDate(context, 'd MMMM y').format(value!),
-                style: context.text.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-        if (editable) ...[
-          if (value != null)
-            AppIconButton(
-              icon: Icons.close_rounded,
-              tooltip: l10n.entryImpressionDateClear,
-              onPressed: onClear,
-            ),
-          AppIconButton(
-            icon: Icons.edit_calendar_rounded,
-            tooltip: l10n.entryImpressionDate,
-            onPressed: onPick,
-          ),
-        ],
-      ],
-    );
-  }
-}
 
 /// Похожие записи под карточкой.
 ///
@@ -1023,18 +627,14 @@ class _ExtraCategories extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final c = context.colors;
 
     return Wrap(
       spacing: AppDimens.space8,
       runSpacing: AppDimens.space8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (categories.isNotEmpty)
-          Text(
-            l10n.categoryExtra,
-            style: context.text.labelSmall?.copyWith(color: c.textMuted),
-          ),
+        // Подписи «Ещё категории» здесь больше нет: так называется сам раздел,
+        // внутри которого лежат эти чипы, и повторять название дважды незачем.
         for (final category in categories)
           Chip(
             label: Text(category.name),
@@ -1045,7 +645,7 @@ class _ExtraCategories extends StatelessWidget {
         if (onAdd != null)
           ActionChip(
             avatar: const Icon(Icons.add_rounded, size: 16),
-            label: Text(categories.isEmpty ? l10n.categoryExtra : ''),
+            label: Text(categories.isEmpty ? l10n.commonAdd : ''),
             visualDensity: VisualDensity.compact,
             tooltip: l10n.categoryExtraAdd,
             onPressed: onAdd,

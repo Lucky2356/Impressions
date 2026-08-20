@@ -12,7 +12,6 @@ import '../../data/db/database.dart';
 import '../../design_system/design_system.dart';
 import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
-import 'entry_card_data.dart';
 import 'entry_photo_thumb.dart';
 import 'entry_photo_viewer.dart';
 import 'photo_section_header.dart';
@@ -40,9 +39,6 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
 
   /// Какой снимок сейчас обложка записи.
   String? _primaryId;
-
-  /// Полный путь обложки — для крупной полосы над миниатюрами.
-  String? _coverPath;
   bool _dragging = false;
   bool _busy = false;
 
@@ -65,10 +61,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
   Future<void> _load() async {
     final revisionId = widget.revisionId;
     if (revisionId == null) {
-      setState(() {
-        _photos = const [];
-        _coverPath = null;
-      });
+      setState(() => _photos = const []);
       return;
     }
     final rows = await _service.attachmentsOfRevision(revisionId);
@@ -79,15 +72,10 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
       );
     }
     final primary = await _service.primaryAttachmentId(revisionId);
-    final primaryRow = rows.where((r) => r.id == primary).firstOrNull;
-    final cover = primaryRow == null
-        ? null
-        : await _service.absolutePath(primaryRow.storagePath);
     if (!mounted) return;
     setState(() {
       _photos = rows;
       _primaryId = primary;
-      _coverPath = cover;
       _paths
         ..clear()
         ..addAll(paths);
@@ -173,19 +161,6 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Обложка крупно — и потому, что §3 просит выразительных фотографий, и
-        // потому, что перелёту из списка нужно куда прилетать. Без снимка
-        // полосы нет: типографическая заглушка во всю ширину — это много
-        // пустоты, а перелетать было бы нечему.
-        if (_coverPath case final path?) ...[
-          CoverImage(
-            title: '',
-            imagePath: path,
-            aspectRatio: 16 / 9,
-            heroTag: entryHeroTag(widget.entryId),
-          ),
-          const SizedBox(height: AppDimens.space16),
-        ],
         PhotoSectionHeader(
           onPick: _busy ? null : _pick,
           onCapture: _busy ? null : _capture,

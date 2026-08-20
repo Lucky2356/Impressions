@@ -19,6 +19,7 @@ class EntryDetail {
     required this.extraCategories,
     required this.history,
     required this.visits,
+    this.coverPath,
     this.recommendedBy,
   });
 
@@ -41,6 +42,10 @@ class EntryDetail {
   final List<CategoryRow> extraCategories;
 
   final List<ProfileEntryRevisionRow> history;
+
+  /// Главная фотография записи — та же, что видна в каталоге. Тем же
+  /// правилом: пометка обложки, а при её отсутствии — порядок снимков.
+  final String? coverPath;
 
   /// Повторные впечатления (§10), свежие сверху.
   ///
@@ -117,6 +122,9 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
     extraCategories: extras,
     history: history,
     visits: await ref.watch(entryRepositoryProvider).visitsOf(entryId),
+    coverPath: (await ref.watch(entryRepositoryProvider).photosOfEntries([
+      entryId,
+    ], limit: 1)).firstOrNull?.path,
     recommendedBy: recommender?.firstName,
   );
 });

@@ -77,6 +77,10 @@ void main() {
     testWidgets('архивирование идёт сразу, без вопроса', (tester) async {
       await openCard(tester);
 
+      // Действия над записью с 1.20.0 живут в одном меню: значков в шапке
+      // было три, а название самой записи при этом лежало ниже.
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.archive_outlined));
       await tester.pumpAndSettle();
 
@@ -89,6 +93,10 @@ void main() {
 
     testWidgets('«Вернуть» возвращает запись', (tester) async {
       await openCard(tester);
+      // Действия над записью с 1.20.0 живут в одном меню: значков в шапке
+      // было три, а название самой записи при этом лежало ниже.
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.archive_outlined));
       await tester.pumpAndSettle();
 

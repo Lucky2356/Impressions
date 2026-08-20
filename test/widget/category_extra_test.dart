@@ -79,7 +79,10 @@ void main() {
     final entry = await makeEntry(primary.id);
 
     await openEntry(tester, entry);
-    await tester.tap(find.widgetWithText(ActionChip, 'Ещё категории'));
+    // Вторая полка — редкий случай, поэтому раздел свёрнут, пока её нет.
+    await tester.tap(find.text('Ещё категории'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ActionChip, 'Добавить'));
     await tester.pumpAndSettle();
 
     // Основную полку целью не предлагают: запись и так на ней лежит.
