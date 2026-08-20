@@ -506,10 +506,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get visitsTitle => 'Ещё раз';
 
   @override
-  String get visitsHint =>
-      'Сходили сюда снова или пересмотрели? Добавьте — прежняя оценка останется в истории.';
-
-  @override
   String get visitAdd => 'Был ещё раз';
 
   @override

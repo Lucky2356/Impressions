@@ -914,12 +914,6 @@ abstract class AppLocalizations {
   /// **'Ещё раз'**
   String get visitsTitle;
 
-  /// No description provided for @visitsHint.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сходили сюда снова или пересмотрели? Добавьте — прежняя оценка останется в истории.'**
-  String get visitsHint;
-
   /// No description provided for @visitAdd.
   ///
   /// In ru, this message translates to:

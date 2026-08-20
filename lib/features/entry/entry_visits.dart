@@ -33,7 +33,6 @@ class EntryVisitsBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final c = context.colors;
 
     // У чужой записи с единственным посещением показывать нечего: эта дата уже
     // стоит выше. Правило «пустые блоки не показываются» действует и здесь.
@@ -55,12 +54,9 @@ class EntryVisitsBlock extends ConsumerWidget {
               ),
           ],
         ),
-        if (visits.length < 2)
-          Text(
-            l10n.visitsHint,
-            style: context.text.labelSmall?.copyWith(color: c.textMuted),
-          )
-        else
+        // Пока повтор один, списка нет: эта дата уже стоит выше, а объяснять
+        // кнопку отдельной фразой на каждой записи — лишний шум.
+        if (visits.length >= 2)
           for (final visit in visits)
             _VisitRow(
               visit: visit,

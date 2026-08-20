@@ -27,9 +27,19 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recent =
-        ref.watch(recentEntriesProvider).value ?? const <EntryView>[];
+    final recentAsync = ref.watch(recentEntriesProvider);
+    final recent = recentAsync.value ?? const <EntryView>[];
     final l10n = AppLocalizations.of(context);
+
+    // Пока запрос идёт, «записей пока нет» — неправда: на большом профиле
+    // главная успевала предложить завести первую запись человеку, у которого
+    // их тысяча. Пустое состояние показываем, только когда ответ получен.
+    if (recentAsync.isLoading && recent.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(AppDimens.space24),
+        child: SkeletonList(),
+      );
+    }
 
     if (recent.isEmpty) {
       return EmptyState(

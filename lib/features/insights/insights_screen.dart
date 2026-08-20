@@ -102,7 +102,17 @@ class InsightsScreen extends ConsumerWidget {
     final data = ref.watch(profileInsightsProvider).value;
     final scope = ref.watch(insightsScopeProvider);
 
-    if (data == null) return const SizedBox.shrink();
+    // Пока считается, экран показывал пустоту — на профиле в тысячи записей
+    // это несколько секунд белого поля.
+    if (data == null) {
+      return ScreenScaffold(
+        header: ScreenHeader(title: l10n.insightsTitle),
+        child: const Padding(
+          padding: EdgeInsets.all(AppDimens.space24),
+          child: SkeletonGrid(count: 4, aspectRatio: 1.8, minTileWidth: 220),
+        ),
+      );
+    }
     // Пустой профиль и пустой срез — разные вещи: в первом случае заводить
     // нечего, во втором стоит поменять период или ветку.
     if (data.isEmpty) {

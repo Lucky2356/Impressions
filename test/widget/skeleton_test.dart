@@ -10,7 +10,9 @@ import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/design_system/design_system.dart';
 import 'package:impressions/features/catalog/catalog_providers.dart';
 import 'package:impressions/features/catalog/catalog_screen.dart';
+import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/features/categories/category_providers.dart';
+import 'package:impressions/features/home/home_screen.dart';
 import 'package:impressions/features/home/home_providers.dart';
 
 import '../db/test_db.dart';
@@ -66,6 +68,34 @@ void main() {
   testWidgets('пока каталог грузится, на экране заглушки', (tester) async {
     await pumpCatalog(tester, loading: true);
 
+    expect(find.byType(SkeletonBox), findsWidgets);
+  });
+
+  testWidgets('главная не утверждает, что записей нет, пока их считает', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          activeProfileProvider.overrideWithValue(me),
+          recentEntriesProvider.overrideWith(
+            (ref) => Completer<List<EntryView>>().future,
+          ),
+        ],
+        child: app(const HomeScreen()),
+      ),
+    );
+    await tester.pump();
+
+    // «Записей пока нет» — неправда, пока ответа ещё нет: на большом профиле
+    // главная успевала предложить завести первую запись тому, у кого их тысяча.
+    expect(find.text('Записей пока нет'), findsNothing);
     expect(find.byType(SkeletonBox), findsWidgets);
   });
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -204,6 +206,8 @@ class _Header extends ConsumerWidget {
     // список, а не на его хранителя.
     final pinned = (ref.watch(pinnedCategoryIdsProvider).value ?? const [])
         .contains(category.id);
+    final cover =
+        (ref.watch(categoryCoverPathsProvider).value ?? const {})[category.id];
 
     return LayoutBuilder(
       builder: (context, cns) {
@@ -216,15 +220,27 @@ class _Header extends ConsumerWidget {
             ),
             const SizedBox(width: AppDimens.space8),
           ],
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: tone.withValues(alpha: 0.14),
+          // Выбранная обложка ветки показывается на её же странице. До сих
+          // пор её было видно только на полке в списке — то есть везде, кроме
+          // того места, к которому она относится.
+          if (cover != null)
+            ClipRRect(
               borderRadius: AppDimens.brMd,
-            ),
-            child: Icon(AppIcons.byKey(category.icon), size: 26, color: tone),
-          ),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: Image.file(
+                  File(cover),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _IconTile(
+                    icon: AppIcons.byKey(category.icon),
+                    tone: tone,
+                  ),
+                ),
+              ),
+            )
+          else
+            _IconTile(icon: AppIcons.byKey(category.icon), tone: tone),
           const SizedBox(width: AppDimens.space16),
           Expanded(
             child: Column(
@@ -458,6 +474,27 @@ class CategoryShelves extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Значок ветки на цветной плитке — когда своей обложки у неё нет.
+class _IconTile extends StatelessWidget {
+  const _IconTile({required this.icon, required this.tone});
+
+  final IconData icon;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.14),
+        borderRadius: AppDimens.brMd,
+      ),
+      child: Icon(icon, size: 26, color: tone),
     );
   }
 }

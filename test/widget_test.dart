@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:impressions/app/app.dart';
 import 'package:impressions/app/app_state.dart';
 import 'package:impressions/data/db/database.dart';
+import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/design_system/design_system.dart';
+import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/onboarding/onboarding_screen.dart';
 
 /// Тестовый профиль без обращения к базе.
@@ -22,7 +24,14 @@ ProfileRow _profile(String id, String name) => ProfileRow(
 /// UI-тесты используют подменённый список профилей: drift-стримы в widget-тестах
 /// оставляют висящие таймеры, а поведение БД покрыто отдельными db-тестами.
 ProviderScope _app(List<ProfileRow> profiles) => ProviderScope(
-  overrides: [profilesProvider.overrideWith((ref) => Stream.value(profiles))],
+  overrides: [
+    profilesProvider.overrideWith((ref) => Stream.value(profiles)),
+    // Настоящей базы у этих проверок нет, и без подмены запрос недавних
+    // записей не завершается никогда. Раньше это сходило за «записей нет»:
+    // главная показывала пустое состояние, не дождавшись ответа. Теперь она
+    // так не делает, и «пусто» приходится сказать явно.
+    recentEntriesProvider.overrideWith((ref) async => const <EntryView>[]),
+  ],
   child: const ImpressionsApp(),
 );
 
@@ -130,6 +139,8 @@ void main() {
     expect(find.byType(NavSidebar), findsOneWidget);
     expect(find.byType(OnboardingScreen), findsNothing);
     expect(find.text('Главная'), findsWidgets);
+
+    await tester.pump();
     // Записей нет — главная показывает пустое состояние, а не пустые блоки (§14).
     expect(find.byType(EmptyState), findsOneWidget);
     expect(find.byType(SummaryStrip), findsNothing);

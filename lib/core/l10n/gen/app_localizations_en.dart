@@ -490,10 +490,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitsTitle => 'Again';
 
   @override
-  String get visitsHint =>
-      'Been here again, or rewatched it? Add it — the previous rating stays in the history.';
-
-  @override
   String get visitAdd => 'I went again';
 
   @override
