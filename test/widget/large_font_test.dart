@@ -64,6 +64,7 @@ void main() {
     WidgetTester tester,
     double textScale, {
     Size size = const Size(400, 860),
+    Brightness brightness = Brightness.light,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -86,7 +87,9 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('ru'),
-          theme: AppTheme.light(),
+          theme: brightness == Brightness.light
+              ? AppTheme.light()
+              : AppTheme.dark(),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(
               context,
@@ -135,6 +138,22 @@ void main() {
         tester.takeException(),
         isNull,
         reason: 'раздел «$section» на широком экране',
+      );
+    }
+  });
+
+  testWidgets('разделы не переполняются в тёмной теме', (tester) async {
+    // Тёмная тема — свои цвета и своя высота у части поверхностей; проверяли
+    // её только четырьмя golden-эталонами.
+    await pumpShell(tester, 1.0, brightness: Brightness.dark);
+
+    for (final section in NavIds.all) {
+      container.read(navProvider.notifier).go(section);
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'раздел «$section» в тёмной теме',
       );
     }
   });
