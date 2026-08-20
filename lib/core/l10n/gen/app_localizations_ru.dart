@@ -790,6 +790,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoAdd => 'Добавить фото';
 
   @override
+  String get photoCapture => 'Снять камерой';
+
+  @override
   String get photoSectionTitle => 'Фотографии';
 
   @override

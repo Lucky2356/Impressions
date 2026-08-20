@@ -232,6 +232,7 @@
   "@collectionFromFilterSaved": { "placeholders": { "name": { "type": "String" } } },
 
   "photoAdd": "Add photo",
+  "photoCapture": "Take a photo",
   "photoSectionTitle": "Photos",
   "photoRejected": "File rejected: unsupported or damaged format",
   "photoDuplicate": "This image has already been added",

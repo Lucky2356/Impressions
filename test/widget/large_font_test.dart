@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,8 @@ import 'package:impressions/data/repositories/category_repository.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/data/services/seed_service.dart';
+import 'package:impressions/features/entry/entry_detail_sheet.dart';
+import 'package:impressions/features/quick_add/quick_add_sheet.dart';
 import 'package:impressions/features/shell/app_shell.dart';
 
 import '../db/test_db.dart';
@@ -116,6 +120,43 @@ void main() {
   });
 
   for (final scale in [1.0, 1.6]) {
+    testWidgets('листы не переполняются при масштабе шрифта $scale', (
+      tester,
+    ) async {
+      // Проверка разделов до листов не доходит: они живут своими маршрутами,
+      // а именно в них самая свежая вёрстка — карточка записи, форма
+      // добавления, повторные впечатления.
+      await pumpShell(tester, scale);
+
+      final entryId = (await db.select(db.profileEntries).get()).first.id;
+      await EntryRepository(db).addVisit(
+        entryId: entryId,
+        occurredAt: DateTime(2026, 3, 1),
+        rating: 7,
+        note: 'Во второй раз показалось лучше',
+      );
+
+      final context = tester.element(find.byType(AppShell));
+      unawaited(EntryDetailSheet.show(context, entryId));
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'карточка записи при масштабе шрифта $scale',
+      );
+
+      await tester.tap(find.byIcon(Icons.close_rounded).first);
+      await tester.pumpAndSettle();
+
+      unawaited(QuickAddSheet.show(context));
+      await tester.pumpAndSettle();
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'форма добавления при масштабе шрифта $scale',
+      );
+    });
+
     testWidgets('разделы не переполняются при масштабе шрифта $scale', (
       tester,
     ) async {

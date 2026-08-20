@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
+import 'photo_section_header.dart';
 import 'photo_source.dart';
 
 /// Фотографии, выбранные до сохранения записи.
@@ -65,22 +66,9 @@ class _PendingPhotosFieldState extends State<PendingPhotosField> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(l10n.photoSectionTitle, style: context.text.titleMedium),
-            const Spacer(),
-            if (!PhotoSource.isDesktop)
-              IconButton(
-                tooltip: l10n.photoAdd,
-                onPressed: enabled ? _capture : null,
-                icon: const Icon(Icons.photo_camera_outlined),
-              ),
-            TextButton.icon(
-              onPressed: enabled ? _pick : null,
-              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-              label: Text(l10n.photoAdd),
-            ),
-          ],
+        PhotoSectionHeader(
+          onPick: enabled ? _pick : null,
+          onCapture: enabled ? _capture : null,
         ),
         const SizedBox(height: AppDimens.space8),
         if (widget.photos.isEmpty)

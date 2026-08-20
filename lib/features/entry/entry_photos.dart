@@ -15,6 +15,7 @@ import '../../data/services/image_service.dart';
 import 'entry_card_data.dart';
 import 'entry_photo_thumb.dart';
 import 'entry_photo_viewer.dart';
+import 'photo_section_header.dart';
 import 'photo_source.dart';
 
 /// Фотографии записи (§16): добавление с камеры/галереи на Android, выбором
@@ -185,22 +186,9 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
           ),
           const SizedBox(height: AppDimens.space16),
         ],
-        Row(
-          children: [
-            Text(l10n.photoSectionTitle, style: context.text.titleMedium),
-            const Spacer(),
-            if (!_isDesktop)
-              IconButton(
-                tooltip: l10n.photoAdd,
-                onPressed: _busy ? null : _capture,
-                icon: const Icon(Icons.photo_camera_outlined),
-              ),
-            TextButton.icon(
-              onPressed: _busy ? null : _pick,
-              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-              label: Text(l10n.photoAdd),
-            ),
-          ],
+        PhotoSectionHeader(
+          onPick: _busy ? null : _pick,
+          onCapture: _busy ? null : _capture,
         ),
         const SizedBox(height: AppDimens.space8),
         if (_photos.isEmpty)

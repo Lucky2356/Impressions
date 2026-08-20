@@ -1334,6 +1334,12 @@ abstract class AppLocalizations {
   /// **'Добавить фото'**
   String get photoAdd;
 
+  /// No description provided for @photoCapture.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снять камерой'**
+  String get photoCapture;
+
   /// No description provided for @photoSectionTitle.
   ///
   /// In ru, this message translates to:

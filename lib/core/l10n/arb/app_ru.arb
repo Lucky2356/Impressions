@@ -241,6 +241,7 @@
   "@collectionFromFilterSaved": { "placeholders": { "name": { "type": "String" } } },
 
   "photoAdd": "Добавить фото",
+  "photoCapture": "Снять камерой",
   "photoSectionTitle": "Фотографии",
   "photoRejected": "Файл отклонён: неподдерживаемый или повреждённый формат",
   "photoDuplicate": "Такое изображение уже добавлено",
