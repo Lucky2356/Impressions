@@ -4,6 +4,7 @@
 #include <flutter_windows.h>
 
 #include "resource.h"
+#include "window_state.h"
 
 namespace {
 
@@ -28,6 +29,7 @@ constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme"
 
 // The number of Win32Window objects that currently exist.
 static int g_active_window_count = 0;
+
 
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
@@ -197,6 +199,19 @@ Win32Window::MessageHandler(HWND hwnd,
 
       return 0;
     }
+    // Без этого окно сужалось до ширины заголовка: содержимое переставало
+    // помещаться, а вернуть окно к рабочему размеру можно было только мышью.
+    case WM_GETMINMAXINFO: {
+      UINT dpi = FlutterDesktopGetDpiForHWND(hwnd);
+      double scale_factor = dpi / 96.0;
+      auto info = reinterpret_cast<MINMAXINFO*>(lparam);
+      info->ptMinTrackSize.x =
+          Scale(window_state::kMinWindowWidth, scale_factor);
+      info->ptMinTrackSize.y =
+          Scale(window_state::kMinWindowHeight, scale_factor);
+      return 0;
+    }
+
     case WM_SIZE: {
       RECT rect = GetClientArea();
       if (child_content_ != nullptr) {

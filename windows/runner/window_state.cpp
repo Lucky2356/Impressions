@@ -1,5 +1,7 @@
 #include "window_state.h"
 
+#include <algorithm>
+
 namespace {
 
 constexpr wchar_t kKey[] = L"Software\\Impressions";
@@ -44,16 +46,23 @@ void Restore(HWND window) {
       !ReadValue(kWidth, &width) || !ReadValue(kHeight, &height)) {
     return;
   }
-  // Слишком маленькое окно означало бы испорченную запись, а не намерение.
-  if (width < 640 || height < 480) {
+  // Нулевой размер означал бы испорченную запись, а не намерение.
+  if (width == 0 || height == 0) {
     return;
   }
+
+  // Минимум применяется и здесь: SetWindowPlacement проходит мимо
+  // WM_GETMINMAXINFO, и окно, сохранённое версией без минимума, открылось бы
+  // прежним же — слишком узким, чтобы им пользоваться.
+  const double scale = ::GetDpiForWindow(window) / 96.0;
+  const LONG min_width = static_cast<LONG>(kMinWindowWidth * scale);
+  const LONG min_height = static_cast<LONG>(kMinWindowHeight * scale);
 
   RECT rect;
   rect.left = static_cast<LONG>(static_cast<INT32>(left));
   rect.top = static_cast<LONG>(static_cast<INT32>(top));
-  rect.right = rect.left + static_cast<LONG>(width);
-  rect.bottom = rect.top + static_cast<LONG>(height);
+  rect.right = rect.left + (std::max)(static_cast<LONG>(width), min_width);
+  rect.bottom = rect.top + (std::max)(static_cast<LONG>(height), min_height);
   if (!IsVisibleOnSomeMonitor(rect)) {
     return;
   }
