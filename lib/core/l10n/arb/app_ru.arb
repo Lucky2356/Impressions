@@ -348,6 +348,8 @@
   "errorStateTitle": "Не удалось показать этот раздел",
   "errorStateMessage": "Данные на месте — сбой произошёл при их чтении. Попробуйте перейти в раздел заново или перезапустить приложение.",
   "errorStateDetails": "Подробности",
+  "errorRetry": "Повторить",
+  "imageMissing": "Файл не найден",
   "catalogSearchChip": "Поиск: {query}",
   "@catalogSearchChip": { "placeholders": { "query": { "type": "String" } } },
   "purgeAction": "Удалить навсегда",
@@ -463,6 +465,7 @@
   "importBackupCreated": "Создана резервная копия перед импортом",
   "importPasswordNeeded": "Пакет защищён паролем",
   "importErrorTitle": "Импорт не выполнен",
+  "importErrorUnexpected": "Не удалось разобрать пакет. Возможно, файл повреждён или собран другой версией приложения.",
 
   "backupsTitle": "Резервные копии",
   "backupCreate": "Создать копию",

@@ -47,6 +47,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   ImportPreview? _preview;
   ImportResult? _result;
   String? _error;
+
+  /// Текст исключения: нужен, только если об ошибке сообщают.
+  String? _errorDetails;
   bool _busy = false;
   bool _dragging = false;
   bool _needPassword = false;
@@ -91,6 +94,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     setState(() {
       _busy = true;
       _error = null;
+      _errorDetails = null;
       _result = null;
       _pendingBytes = bytes;
     });
@@ -137,7 +141,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       showMessage(context, l10n.importBackupCreated);
     } on Object catch (e) {
       if (!mounted) return;
-      setState(() => _error = '$e');
+      // Раньше сюда печатался toString() исключения — ровно то, от чего
+      // уходил ErrorState. Понятная фраза наверху, подробности под ней.
+      setState(() {
+        _error = l10n.importErrorUnexpected;
+        _errorDetails = '$e';
+      });
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -239,6 +248,15 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 ),
                 const SizedBox(height: AppDimens.space4),
                 Text(_error!, style: context.text.bodySmall),
+                if (_errorDetails case final details?) ...[
+                  const SizedBox(height: AppDimens.space8),
+                  SelectableText(
+                    details,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

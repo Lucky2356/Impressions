@@ -1922,6 +1922,18 @@ abstract class AppLocalizations {
   /// **'Подробности'**
   String get errorStateDetails;
 
+  /// No description provided for @errorRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get errorRetry;
+
+  /// No description provided for @imageMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл не найден'**
+  String get imageMissing;
+
   /// No description provided for @catalogSearchChip.
   ///
   /// In ru, this message translates to:
@@ -2521,6 +2533,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Импорт не выполнен'**
   String get importErrorTitle;
+
+  /// No description provided for @importErrorUnexpected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось разобрать пакет. Возможно, файл повреждён или собран другой версией приложения.'**
+  String get importErrorUnexpected;
 
   /// No description provided for @backupsTitle.
   ///

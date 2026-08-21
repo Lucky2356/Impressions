@@ -475,7 +475,8 @@ class _BranchPhotoPicker extends StatelessWidget {
                       child: Image.file(
                         File(photo.path),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        errorBuilder: (_, _, _) =>
+                            const MissingImage(withLabel: false),
                       ),
                     ),
                   );

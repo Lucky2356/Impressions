@@ -40,7 +40,15 @@ class WishlistScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final layout = context.layout;
-    final items = ref.watch(wishlistProvider).value ?? const <EntryView>[];
+    final async = ref.watch(wishlistProvider);
+    final items = async.value ?? const <EntryView>[];
+
+    if (async.hasError && items.isEmpty) {
+      return ErrorState(
+        error: async.error!,
+        onRetry: () => ref.invalidate(wishlistProvider),
+      );
+    }
 
     if (items.isEmpty) {
       return EmptyState(

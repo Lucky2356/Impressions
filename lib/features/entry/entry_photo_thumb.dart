@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
+import '../../design_system/design_system.dart';
 
 /// Миниатюра снимка в полосе фотографий записи.
 ///
@@ -65,7 +66,10 @@ class PhotoThumb extends StatelessWidget {
                     Image.file(
                       File(path!),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      // Пропавший файл нельзя оставлять ровной серой плиткой:
+                      // от пустого снимка она не отличается, и пропажу видно
+                      // только проверке целостности.
+                      errorBuilder: (_, _, _) => const MissingImage(),
                     ),
                 ],
               ),

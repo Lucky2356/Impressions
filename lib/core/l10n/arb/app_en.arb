@@ -339,6 +339,8 @@
   "errorStateTitle": "This section could not be shown",
   "errorStateMessage": "Your data is intact — the failure happened while reading it. Try opening the section again or restarting the app.",
   "errorStateDetails": "Details",
+  "errorRetry": "Try again",
+  "imageMissing": "File not found",
   "catalogSearchChip": "Search: {query}",
   "purgeAction": "Delete forever",
   "purgeConfirmTitle": "Delete “{title}” forever?",
@@ -445,6 +447,7 @@
   "importBackupCreated": "A backup was created before the import",
   "importPasswordNeeded": "The package is password-protected",
   "importErrorTitle": "The import did not go through",
+  "importErrorUnexpected": "The package could not be read. The file may be damaged or built by a different version of the app.",
 
   "backupsTitle": "Backups",
   "backupCreate": "Create a backup",

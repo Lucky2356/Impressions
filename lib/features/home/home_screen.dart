@@ -41,6 +41,16 @@ class HomeScreen extends ConsumerWidget {
     final recent = recentAsync.value ?? const <EntryView>[];
     final l10n = AppLocalizations.of(context);
 
+    // Отказ базы — тоже не «записей пока нет»: до 1.21.0 главная на нём
+    // предлагала завести первую запись человеку, у которого их тысяча, и о
+    // самом сбое не сообщала ничего.
+    if (recentAsync.hasError && recent.isEmpty) {
+      return ErrorState(
+        error: recentAsync.error!,
+        onRetry: () => ref.invalidate(recentEntriesProvider),
+      );
+    }
+
     // Пока запрос идёт, «записей пока нет» — неправда: на большом профиле
     // главная успевала предложить завести первую запись человеку, у которого
     // их тысяча. Пустое состояние показываем, только когда ответ получен.

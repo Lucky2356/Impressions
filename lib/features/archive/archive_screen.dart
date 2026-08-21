@@ -131,12 +131,32 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     final l10n = AppLocalizations.of(context);
     final layout = context.layout;
 
-    final entries = ref.watch(archivedEntriesProvider).value ?? const [];
-    final categories = ref.watch(archivedCategoriesProvider).value ?? const [];
-    final collections =
-        ref.watch(archivedCollectionsProvider).value ?? const [];
+    final entriesAsync = ref.watch(archivedEntriesProvider);
+    final entries = entriesAsync.value ?? const [];
+    final categoriesAsync = ref.watch(archivedCategoriesProvider);
+    final collectionsAsync = ref.watch(archivedCollectionsProvider);
+    final categories = categoriesAsync.value ?? const [];
+    final collections = collectionsAsync.value ?? const [];
 
     final total = entries.length + categories.length + collections.length;
+
+    // «Архив пуст» и «архив не прочитался» выглядели одинаково.
+    final failed = [
+      entriesAsync,
+      categoriesAsync,
+      collectionsAsync,
+    ].where((a) => a.hasError).firstOrNull;
+    if (failed != null && total == 0) {
+      return ErrorState(
+        error: failed.error!,
+        onRetry: () {
+          ref
+            ..invalidate(archivedEntriesProvider)
+            ..invalidate(archivedCategoriesProvider)
+            ..invalidate(archivedCollectionsProvider);
+        },
+      );
+    }
 
     if (total == 0) {
       return EmptyState(

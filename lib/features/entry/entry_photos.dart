@@ -82,16 +82,34 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     });
   }
 
+  /// Сообщает о сбое вместо того, чтобы проглотить его.
+  ///
+  /// Ни один вызов службы изображений не был обёрнут: нехватка места или
+  /// недоступный каталог уходили в пустоту, и снимок просто не появлялся.
+  Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } on Object catch (e) {
+      if (!mounted) return;
+      showMessage(
+        context,
+        '${AppLocalizations.of(context).photoRejected} ($e)',
+      );
+    }
+  }
+
   Future<void> _makeCover(AttachmentRow row) async {
     final revisionId = widget.revisionId;
     if (revisionId == null) return;
-    await _service.setPrimaryAttachment(
-      revisionId: revisionId,
-      attachmentId: row.id,
-    );
-    // Обложка видна в каталоге и на главной — их нужно перерисовать.
-    ref.read(dataRefreshProvider.notifier).bump();
-    await _load();
+    await _guard(() async {
+      await _service.setPrimaryAttachment(
+        revisionId: revisionId,
+        attachmentId: row.id,
+      );
+      // Обложка видна в каталоге и на главной — их нужно перерисовать.
+      ref.read(dataRefreshProvider.notifier).bump();
+      await _load();
+    });
   }
 
   Future<void> _addBytes(Uint8List bytes) async {
@@ -132,17 +150,21 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      for (final bytes in await PhotoSource.pick()) {
-        await _addBytes(bytes);
-      }
+      await _guard(() async {
+        for (final bytes in await PhotoSource.pick()) {
+          await _addBytes(bytes);
+        }
+      });
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _capture() async {
-    final shot = await PhotoSource.capture();
-    if (shot != null) await _addBytes(shot);
+    await _guard(() async {
+      final shot = await PhotoSource.capture();
+      if (shot != null) await _addBytes(shot);
+    });
   }
 
   /// Удаление фотографии — одно нажатие крестика в углу миниатюры, и до

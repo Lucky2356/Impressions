@@ -227,7 +227,8 @@ class BackupsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
-    final backups = ref.watch(backupsProvider).value ?? const <BackupInfo>[];
+    final backupsAsync = ref.watch(backupsProvider);
+    final backups = backupsAsync.value ?? const <BackupInfo>[];
 
     String reasonLabel(String reason) => switch (reason) {
       'auto' => l10n.backupReasonAuto,
@@ -277,7 +278,15 @@ class BackupsSection extends ConsumerWidget {
         const _BackupEncryptionRow(),
         if (backups.isNotEmpty)
           Divider(height: AppDimens.space24, color: c.divider),
-        if (backups.isEmpty)
+        // «Копий нет» и «список копий не прочитался» выглядели одинаково, а
+        // это самая опасная из подмен: человек решит, что копий не существует.
+        if (backupsAsync.hasError)
+          ErrorState(
+            error: backupsAsync.error!,
+            compact: true,
+            onRetry: () => ref.invalidate(backupsProvider),
+          )
+        else if (backups.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: AppDimens.space12),
             child: Text(

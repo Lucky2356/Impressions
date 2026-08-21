@@ -1106,6 +1106,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorStateDetails => 'Details';
 
   @override
+  String get errorRetry => 'Try again';
+
+  @override
+  String get imageMissing => 'File not found';
+
+  @override
   String catalogSearchChip(String query) {
     return 'Search: $query';
   }
@@ -1437,6 +1443,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importErrorTitle => 'The import did not go through';
+
+  @override
+  String get importErrorUnexpected =>
+      'The package could not be read. The file may be damaged or built by a different version of the app.';
 
   @override
   String get backupsTitle => 'Backups';

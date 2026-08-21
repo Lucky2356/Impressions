@@ -1135,6 +1135,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorStateDetails => 'Подробности';
 
   @override
+  String get errorRetry => 'Повторить';
+
+  @override
+  String get imageMissing => 'Файл не найден';
+
+  @override
   String catalogSearchChip(String query) {
     return 'Поиск: $query';
   }
@@ -1466,6 +1472,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importErrorTitle => 'Импорт не выполнен';
+
+  @override
+  String get importErrorUnexpected =>
+      'Не удалось разобрать пакет. Возможно, файл повреждён или собран другой версией приложения.';
 
   @override
   String get backupsTitle => 'Резервные копии';
