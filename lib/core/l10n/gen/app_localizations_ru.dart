@@ -1180,6 +1180,51 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoDropHint => 'Перетащите изображения сюда';
 
   @override
+  String get photoRemoved => 'Фотография удалена';
+
+  @override
+  String get visitRemoved => 'Впечатление убрано';
+
+  @override
+  String get visitAdded => 'Ещё один раз записан';
+
+  @override
+  String get collectionEntryRemoved => 'Запись убрана из подборки';
+
+  @override
+  String get filtersReset => 'Отбор сброшен';
+
+  @override
+  String get savedShort => 'Сохранено';
+
+  @override
+  String get discardChangesTitle => 'Закрыть без сохранения?';
+
+  @override
+  String get discardChangesMessage => 'Внесённые изменения пропадут.';
+
+  @override
+  String get doctorFixConfirmTitle => 'Удалить лишние файлы?';
+
+  @override
+  String get errorLogClearConfirm => 'Очистить журнал ошибок?';
+
+  @override
+  String get errorLogClearMessage => 'Записи журнала пропадут навсегда.';
+
+  @override
+  String get tagRemoved => 'Тег удалён';
+
+  @override
+  String get categoryRemovedFromEntry => 'Категория снята с записи';
+
+  @override
+  String get privacyChanged => 'Доступность изменена';
+
+  @override
+  String get profileSaved => 'Профиль сохранён';
+
+  @override
   String get profilesTitle => 'Профили';
 
   @override

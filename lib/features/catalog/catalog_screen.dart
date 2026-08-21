@@ -31,6 +31,29 @@ final profileTagsProvider = FutureProvider<List<TagRow>>((ref) async {
 
 /// Каталог записей (§15): режимы отображения, фильтры, сортировка, поиск.
 /// Состояние режима и переключателя подкатегорий сохраняется.
+/// Сбрасывает отбор и предлагает вернуть его.
+///
+/// Одна кнопка стирала поиск и весь набор переключателей сразу, а собирать их
+/// заново приходилось руками. Мест, откуда сбрасывают, три — и снимок отбора
+/// должен делаться одинаково во всех.
+void resetCatalogFilters(
+  BuildContext context,
+  WidgetRef ref,
+  TextEditingController search,
+) {
+  final l10n = AppLocalizations.of(context);
+  final previous = ref.read(catalogStateProvider.notifier).reset();
+  search.clear();
+  showUndoSnackBar(
+    context,
+    message: l10n.filtersReset,
+    onUndo: () async {
+      ref.read(catalogStateProvider.notifier).restoreFilters(previous);
+      search.text = previous.search;
+    },
+  );
+}
+
 class CatalogScreen extends ConsumerStatefulWidget {
   const CatalogScreen({super.key});
 
@@ -89,10 +112,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         content: Text(l10n.catalogAddedHiddenByFilters),
         action: SnackBarAction(
           label: l10n.catalogResetFilters,
-          onPressed: () {
-            _searchController.clear();
-            ref.read(catalogStateProvider.notifier).reset();
-          },
+          onPressed: () => resetCatalogFilters(context, ref, _searchController),
         ),
       ),
     );
@@ -168,10 +188,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   : l10n.catalogEmptyMessage,
               action: filtered
                   ? OutlinedButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        ref.read(catalogStateProvider.notifier).reset();
-                      },
+                      onPressed: () =>
+                          resetCatalogFilters(context, ref, _searchController),
                       child: Text(l10n.catalogResetFilters),
                     )
                   : FilledButton.icon(

@@ -61,7 +61,7 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
   late String? _coverId = widget.category.coverAttachmentId;
   late String? _typeId = widget.category.defaultTypeId;
 
-  ImageService get _images => ImageService(ref.read(appDatabaseProvider));
+  ImageService get _images => ref.read(imageServiceProvider);
 
   /// Путь выбранной обложки — только для показа; в базе лежит идентификатор.
   String? _coverPath;

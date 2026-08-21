@@ -6,6 +6,7 @@ import 'repositories/collection_repository.dart';
 import 'repositories/draft_repository.dart';
 import 'repositories/entry_repository.dart';
 import 'repositories/profile_repository.dart';
+import 'services/image_service.dart';
 import 'services/barcode_decoder.dart';
 import 'services/file_delivery_service.dart';
 import 'services/key_service.dart';
@@ -33,6 +34,15 @@ final entryRepositoryProvider = Provider<EntryRepository>((ref) {
 
 final collectionRepositoryProvider = Provider<CollectionRepository>((ref) {
   return CollectionRepository(ref.watch(appDatabaseProvider));
+});
+
+/// Работа с изображениями (§16).
+///
+/// Через провайдер, как и репозитории: пять экранов заводили службу прямо у
+/// себя, и подменить каталог хранения было нечем — а без подмены их нечем и
+/// проверить.
+final imageServiceProvider = Provider<ImageService>((ref) {
+  return ImageService(ref.watch(appDatabaseProvider));
 });
 
 /// Черновики форм (§11).

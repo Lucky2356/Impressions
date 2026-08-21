@@ -56,6 +56,15 @@ class ErrorLogSection extends ConsumerWidget {
 
   Future<void> _clear(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: l10n.errorLogClearConfirm,
+      message: l10n.errorLogClearMessage,
+      confirmLabel: l10n.errorLogClear,
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
     await ErrorLog.clear();
     ref.invalidate(errorLogCountProvider);
     if (!context.mounted) return;

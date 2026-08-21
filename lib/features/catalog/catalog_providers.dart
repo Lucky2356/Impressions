@@ -301,11 +301,23 @@ class CatalogController extends Notifier<CatalogState> {
         .setBool(SettingKeys.catalogIncludeSubcategories, value);
   }
 
-  void reset() {
+  /// Сбрасывает отбор и возвращает прежний — чтобы его можно было вернуть.
+  ///
+  /// Одна кнопка стирала поиск и весь набор переключателей сразу, а собирать
+  /// их заново приходилось руками.
+  CatalogState reset() {
+    final previous = state;
     state = CatalogState(
       view: state.view,
       includeSubcategories: state.includeSubcategories,
     );
+    _persist();
+    return previous;
+  }
+
+  /// Возвращает отбор целиком — например, после сброса.
+  void restoreFilters(CatalogState previous) {
+    state = previous;
     _persist();
   }
 }

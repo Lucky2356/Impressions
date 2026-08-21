@@ -329,10 +329,7 @@ class FilterBar extends ConsumerWidget {
         ),
       if (hasFilters)
         TextButton.icon(
-          onPressed: () {
-            searchController.clear();
-            controller.reset();
-          },
+          onPressed: () => resetCatalogFilters(context, ref, searchController),
           icon: const Icon(Icons.close_rounded, size: 16),
           label: Text(l10n.catalogResetFilters),
         ),

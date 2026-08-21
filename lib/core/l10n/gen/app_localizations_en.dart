@@ -1151,6 +1151,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoDropHint => 'Drop images here';
 
   @override
+  String get photoRemoved => 'Photo deleted';
+
+  @override
+  String get visitRemoved => 'Impression removed';
+
+  @override
+  String get visitAdded => 'One more time recorded';
+
+  @override
+  String get collectionEntryRemoved => 'Entry removed from the collection';
+
+  @override
+  String get filtersReset => 'Filters cleared';
+
+  @override
+  String get savedShort => 'Saved';
+
+  @override
+  String get discardChangesTitle => 'Close without saving?';
+
+  @override
+  String get discardChangesMessage => 'Your changes will be lost.';
+
+  @override
+  String get doctorFixConfirmTitle => 'Delete the stray files?';
+
+  @override
+  String get errorLogClearConfirm => 'Clear the error log?';
+
+  @override
+  String get errorLogClearMessage => 'Log entries will be gone for good.';
+
+  @override
+  String get tagRemoved => 'Tag deleted';
+
+  @override
+  String get categoryRemovedFromEntry => 'Category removed from the entry';
+
+  @override
+  String get privacyChanged => 'Visibility changed';
+
+  @override
+  String get profileSaved => 'Profile saved';
+
+  @override
   String get profilesTitle => 'Profiles';
 
   @override

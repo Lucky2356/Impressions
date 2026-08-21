@@ -63,13 +63,9 @@ Future<void> _confirmPurge(
     await purge();
   } on PurgeException catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(switch (e.reason) {
-          PurgeRefusal.categoryHasChildren => l10n.purgeCategoryHasChildren,
-        }),
-      ),
-    );
+    showMessage(context, switch (e.reason) {
+      PurgeRefusal.categoryHasChildren => l10n.purgeCategoryHasChildren,
+    });
     return;
   }
   ref.read(dataRefreshProvider.notifier).bump();

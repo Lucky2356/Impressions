@@ -40,11 +40,21 @@ class _DoctorSectionState extends ConsumerState<DoctorSection> {
   IntegrityService get _service =>
       IntegrityService(ref.read(appDatabaseProvider));
 
+  /// Починка удаляет осиротевшие файлы насовсем — про такое спрашивают.
   Future<void> _repair() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await ConfirmDialog.show(
+      context,
+      title: l10n.doctorFixConfirmTitle,
+      message: _report?.findings.map((f) => _label(l10n, f)).join('\n'),
+      confirmLabel: l10n.doctorRepair,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
     await _run(_service.repair);
     ref.read(dataRefreshProvider.notifier).bump();
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context);
     showMessage(context, l10n.doctorFixed);
   }
 

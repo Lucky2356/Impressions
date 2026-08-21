@@ -71,6 +71,7 @@ class TagsSection extends ConsumerWidget {
       if (!ok) return;
       await ref.read(entryRepositoryProvider).deleteTag(tag.id);
       ref.read(dataRefreshProvider.notifier).bump();
+      if (context.mounted) showMessage(context, l10n.tagRemoved);
     }
 
     return SettingsGroup(

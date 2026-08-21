@@ -429,12 +429,22 @@ class EntryRepository {
   }
 
   /// Убирает один раз из истории и возвращает запись к предыдущему.
-  Future<void> removeVisit(String visitId) async {
+  /// Возвращает удалённое посещение, чтобы его можно было вернуть на место.
+  Future<EntryVisitRow?> removeVisit(String visitId) async {
     final visit = await (db.select(
       db.entryVisits,
     )..where((v) => v.id.equals(visitId))).getSingleOrNull();
-    if (visit == null) return;
+    if (visit == null) return null;
     await (db.delete(db.entryVisits)..where((v) => v.id.equals(visitId))).go();
+    await _syncEntryWithLatestVisit(visit.entryId);
+    return visit;
+  }
+
+  /// Возвращает посещение обратно — с прежними датой, оценкой и заметкой.
+  Future<void> restoreVisit(EntryVisitRow visit) async {
+    await db
+        .into(db.entryVisits)
+        .insert(visit, mode: InsertMode.insertOrReplace);
     await _syncEntryWithLatestVisit(visit.entryId);
   }
 

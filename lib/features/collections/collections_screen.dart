@@ -390,10 +390,21 @@ class _CollectionDetail extends ConsumerWidget {
                       icon: Icons.playlist_remove_rounded,
                       tooltip: l10n.collectionRemoveFrom,
                       onPressed: () async {
-                        await ref
+                        final link = await ref
                             .read(collectionRepositoryProvider)
                             .removeEntry(collectionId, e.entryId);
                         ref.read(dataRefreshProvider.notifier).bump();
+                        if (!context.mounted || link == null) return;
+                        showUndoSnackBar(
+                          context,
+                          message: l10n.collectionEntryRemoved,
+                          onUndo: () async {
+                            await ref
+                                .read(collectionRepositoryProvider)
+                                .restoreEntry(link);
+                            ref.read(dataRefreshProvider.notifier).bump();
+                          },
+                        );
                       },
                     ),
                   ],

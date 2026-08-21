@@ -2000,6 +2000,96 @@ abstract class AppLocalizations {
   /// **'Перетащите изображения сюда'**
   String get photoDropHint;
 
+  /// No description provided for @photoRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фотография удалена'**
+  String get photoRemoved;
+
+  /// No description provided for @visitRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Впечатление убрано'**
+  String get visitRemoved;
+
+  /// No description provided for @visitAdded.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё один раз записан'**
+  String get visitAdded;
+
+  /// No description provided for @collectionEntryRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись убрана из подборки'**
+  String get collectionEntryRemoved;
+
+  /// No description provided for @filtersReset.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отбор сброшен'**
+  String get filtersReset;
+
+  /// No description provided for @savedShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранено'**
+  String get savedShort;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть без сохранения?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внесённые изменения пропадут.'**
+  String get discardChangesMessage;
+
+  /// No description provided for @doctorFixConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить лишние файлы?'**
+  String get doctorFixConfirmTitle;
+
+  /// No description provided for @errorLogClearConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить журнал ошибок?'**
+  String get errorLogClearConfirm;
+
+  /// No description provided for @errorLogClearMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записи журнала пропадут навсегда.'**
+  String get errorLogClearMessage;
+
+  /// No description provided for @tagRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тег удалён'**
+  String get tagRemoved;
+
+  /// No description provided for @categoryRemovedFromEntry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория снята с записи'**
+  String get categoryRemovedFromEntry;
+
+  /// No description provided for @privacyChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доступность изменена'**
+  String get privacyChanged;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль сохранён'**
+  String get profileSaved;
+
   /// No description provided for @profilesTitle.
   ///
   /// In ru, this message translates to:

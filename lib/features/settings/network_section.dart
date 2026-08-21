@@ -68,12 +68,9 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
           .set('product_auto_update_count', '${report.updated}');
       ref.read(dataRefreshProvider.notifier).bump();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.settingsProductRefreshed(report.checked, report.updated),
-          ),
-        ),
+      showMessage(
+        context,
+        l10n.settingsProductRefreshed(report.checked, report.updated),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -281,14 +278,9 @@ class KeyStorageSection extends ConsumerWidget {
                   ref.read(dataRefreshProvider.notifier).bump();
                   if (!context.mounted) return;
                   // Сообщаем и об отказе: молчащая кнопка выглядит сломанной.
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        moved
-                            ? l10n.keyStorageMoved
-                            : l10n.keyStorageMoveFailed,
-                      ),
-                    ),
+                  showMessage(
+                    context,
+                    moved ? l10n.keyStorageMoved : l10n.keyStorageMoveFailed,
                   );
                 },
                 child: Text(l10n.keyStorageMove),

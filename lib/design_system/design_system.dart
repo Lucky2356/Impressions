@@ -24,6 +24,7 @@ export 'components/summary_strip.dart';
 export 'components/nav_sidebar.dart';
 export 'components/profile_avatar.dart';
 export 'components/rating_dialog.dart';
+export 'components/saved_flash.dart';
 export 'components/rating_picker.dart';
 export 'components/rating_view.dart';
 export 'components/relation_chip.dart';

@@ -84,6 +84,9 @@ class EntryVisitsBlock extends ConsumerWidget {
           note: result.note,
         );
     ref.read(dataRefreshProvider.notifier).bump();
+    if (context.mounted) {
+      showMessage(context, AppLocalizations.of(context).visitAdded);
+    }
   }
 
   Future<void> _remove(
@@ -101,8 +104,22 @@ class EntryVisitsBlock extends ConsumerWidget {
     );
     if (!confirmed) return;
 
-    await ref.read(entryRepositoryProvider).removeVisit(visit.id);
+    final removed = await ref
+        .read(entryRepositoryProvider)
+        .removeVisit(visit.id);
     ref.read(dataRefreshProvider.notifier).bump();
+    if (!context.mounted || removed == null) return;
+
+    // Подтверждение спрашивали, но вернуть было нечем: оценка записи следует
+    // за самым свежим посещением, и удаление меняло её заодно.
+    showUndoSnackBar(
+      context,
+      message: l10n.visitRemoved,
+      onUndo: () async {
+        await ref.read(entryRepositoryProvider).restoreVisit(removed);
+        ref.read(dataRefreshProvider.notifier).bump();
+      },
+    );
   }
 }
 

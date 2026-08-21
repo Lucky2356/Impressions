@@ -593,7 +593,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     final revisionId = entry.currentRevisionId;
     if (_photos.isEmpty || revisionId == null) return;
 
-    final images = ImageService(ref.read(appDatabaseProvider));
+    final images = ref.read(imageServiceProvider);
     var rejected = 0;
     for (final bytes in _photos) {
       final result = await images.addFromBytes(bytes);

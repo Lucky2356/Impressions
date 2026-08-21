@@ -74,16 +74,12 @@ class BackupsSection extends ConsumerWidget {
     }
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(switch (check) {
-          BackupCheck.ok => l10n.backupVerifyOk,
-          BackupCheck.wrongPassword => l10n.backupWrongPassword,
-          BackupCheck.notFound => l10n.backupRestoreNotFound,
-          _ => l10n.backupVerifyFailed,
-        }),
-      ),
-    );
+    showMessage(context, switch (check) {
+      BackupCheck.ok => l10n.backupVerifyOk,
+      BackupCheck.wrongPassword => l10n.backupWrongPassword,
+      BackupCheck.notFound => l10n.backupRestoreNotFound,
+      _ => l10n.backupVerifyFailed,
+    });
   }
 
   /// Копии лежат в приватном каталоге приложения: снесли приложение — копий не
@@ -202,16 +198,12 @@ class BackupsSection extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (!result.isOk) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(switch (result.status) {
-            RestoreStatus.notFound => l10n.backupRestoreNotFound,
-            RestoreStatus.tooNew => l10n.backupRestoreTooNew,
-            RestoreStatus.wrongPassword => l10n.backupWrongPassword,
-            _ => l10n.backupVerifyFailed,
-          }),
-        ),
-      );
+      showMessage(context, switch (result.status) {
+        RestoreStatus.notFound => l10n.backupRestoreNotFound,
+        RestoreStatus.tooNew => l10n.backupRestoreTooNew,
+        RestoreStatus.wrongPassword => l10n.backupWrongPassword,
+        _ => l10n.backupVerifyFailed,
+      });
       return;
     }
 
@@ -378,6 +370,7 @@ class _BackupMirrorRow extends ConsumerWidget {
           .read(settingsRepositoryProvider)
           .set(SettingKeys.backupMirrorDir, path ?? '');
       ref.read(dataRefreshProvider.notifier).bump();
+      if (context.mounted) showMessage(context, l10n.savedShort);
     }
 
     return Column(
@@ -467,12 +460,9 @@ class _BackupEncryptionRow extends ConsumerWidget {
     ref.read(dataRefreshProvider.notifier).bump();
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok ? l10n.backupEncryptionOn : l10n.backupEncryptionUnavailable,
-        ),
-      ),
+    showMessage(
+      context,
+      ok ? l10n.backupEncryptionOn : l10n.backupEncryptionUnavailable,
     );
   }
 

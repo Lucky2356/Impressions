@@ -455,12 +455,34 @@ class ImageService {
 
   /// Отвязывает вложение от версии (файл остаётся — может использоваться
   /// другими записями; физическое удаление не является обычной операцией §24).
-  Future<void> detach(String revisionId, String attachmentId) {
-    return (db.delete(db.revisionAttachments)..where(
+  Future<RevisionAttachmentRow?> detach(
+    String revisionId,
+    String attachmentId,
+  ) async {
+    final link =
+        await (db.select(db.revisionAttachments)..where(
+              (ra) =>
+                  ra.revisionId.equals(revisionId) &
+                  ra.attachmentId.equals(attachmentId),
+            ))
+            .getSingleOrNull();
+    if (link == null) return null;
+    await (db.delete(db.revisionAttachments)..where(
           (ra) =>
               ra.revisionId.equals(revisionId) &
               ra.attachmentId.equals(attachmentId),
         ))
         .go();
+    return link;
   }
+
+  /// Возвращает снимок на прежнее место — с тем же порядком и признаком
+  /// обложки.
+  ///
+  /// Сам файл при отвязывании никуда не девается: осиротевшие файлы убирает
+  /// проверка целостности, и запускает её человек. Между удалением и отменой
+  /// файл на месте.
+  Future<void> restoreLink(RevisionAttachmentRow link) => db
+      .into(db.revisionAttachments)
+      .insert(link, mode: InsertMode.insertOrReplace);
 }

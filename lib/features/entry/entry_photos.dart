@@ -56,7 +56,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     if (oldWidget.revisionId != widget.revisionId) _load();
   }
 
-  ImageService get _service => ImageService(ref.read(appDatabaseProvider));
+  ImageService get _service => ref.read(imageServiceProvider);
 
   Future<void> _load() async {
     final revisionId = widget.revisionId;
@@ -145,12 +145,27 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     if (shot != null) await _addBytes(shot);
   }
 
+  /// Удаление фотографии — одно нажатие крестика в углу миниатюры, и до
+  /// 1.21.0 оно проходило молча и без возврата.
   Future<void> _remove(AttachmentRow row) async {
+    final l10n = AppLocalizations.of(context);
     final revisionId = widget.revisionId;
     if (revisionId == null) return;
-    await _service.detach(revisionId, row.id);
+
+    final link = await _service.detach(revisionId, row.id);
     ref.read(dataRefreshProvider.notifier).bump();
     await _load();
+    if (!mounted || link == null) return;
+
+    showUndoSnackBar(
+      context,
+      message: l10n.photoRemoved,
+      onUndo: () async {
+        await _service.restoreLink(link);
+        ref.read(dataRefreshProvider.notifier).bump();
+        await _load();
+      },
+    );
   }
 
   @override

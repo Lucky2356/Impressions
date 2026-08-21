@@ -66,7 +66,9 @@ class _StatusesEditorState extends ConsumerState<StatusesEditor> {
       ),
     );
     ref.read(dataRefreshProvider.notifier).bump();
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    showMessage(context, AppLocalizations.of(context).savedShort);
   }
 
   /// Ключи общие для всех типов, поэтому их не придумывают, а выбирают из
@@ -148,121 +150,156 @@ class _StatusesEditorState extends ConsumerState<StatusesEditor> {
     _ => l10n.statusStageDone,
   };
 
+  /// Закрытие с несохранёнными правками спрашивает подтверждение.
+  ///
+  /// Правки здесь копятся в памяти и попадают в базу только по «Сохранить»:
+  /// закрытый крестиком лист терял их молча, и удалённый по ошибке статус
+  /// выглядел так же, как удалённый нарочно.
+  Future<bool> _confirmDiscard() async {
+    if (!_dirty) return true;
+    final l10n = AppLocalizations.of(context);
+    return ConfirmDialog.show(
+      context,
+      title: l10n.discardChangesTitle,
+      message: l10n.discardChangesMessage,
+      confirmLabel: l10n.commonClose,
+      destructive: true,
+    );
+  }
+
+  Future<void> _close() async {
+    if (await _confirmDiscard() && mounted) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
 
-    return Padding(
-      padding: const EdgeInsets.all(AppDimens.space20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.statusesEditFor(widget.type.name),
-                  style: context.text.headlineSmall,
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final discard = await _confirmDiscard();
+        if (!discard || !context.mounted) return;
+        Navigator.of(context).pop();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.space20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.statusesEditFor(widget.type.name),
+                    style: context.text.headlineSmall,
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: l10n.commonClose,
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.space4),
-          Text(
-            l10n.statusesHint,
-            style: context.text.bodySmall?.copyWith(color: c.textSecondary),
-          ),
-          const SizedBox(height: AppDimens.space20),
-          if (_statuses.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppDimens.space24),
-              child: Text(
-                l10n.statusesEmpty,
-                textAlign: TextAlign.center,
-                style: context.text.bodyMedium?.copyWith(color: c.textMuted),
-              ),
-            )
-          else
-            for (final status in _statuses)
+                IconButton(
+                  tooltip: l10n.commonClose,
+                  onPressed: _close,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimens.space4),
+            Text(
+              l10n.statusesHint,
+              style: context.text.bodySmall?.copyWith(color: c.textSecondary),
+            ),
+            const SizedBox(height: AppDimens.space20),
+            if (_statuses.isEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.space8),
-                child: AppCard(
-                  elevated: false,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.space12,
-                    vertical: AppDimens.space8,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        status.done
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked_rounded,
-                        size: 18,
-                        color: c.textSecondary,
-                      ),
-                      const SizedBox(width: AppDimens.space12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(status.name, style: context.text.titleMedium),
-                            Text(
-                              _titleFor(l10n, status.key),
-                              style: context.text.labelSmall?.copyWith(
-                                color: c.textMuted,
-                              ),
-                            ),
-                          ],
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimens.space24,
+                ),
+                child: Text(
+                  l10n.statusesEmpty,
+                  textAlign: TextAlign.center,
+                  style: context.text.bodyMedium?.copyWith(color: c.textMuted),
+                ),
+              )
+            else
+              for (final status in _statuses)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppDimens.space8),
+                  child: AppCard(
+                    elevated: false,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.space12,
+                      vertical: AppDimens.space8,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          status.done
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          size: 18,
+                          color: c.textSecondary,
                         ),
-                      ),
-                      AppIconButton(
-                        icon: Icons.edit_rounded,
-                        tooltip: l10n.statusRename,
-                        onPressed: () => _rename(status),
-                      ),
-                      AppIconButton(
-                        icon: Icons.delete_outline_rounded,
-                        tooltip: l10n.statusRemove,
-                        danger: true,
-                        onPressed: () => _remove(status),
-                      ),
-                    ],
+                        const SizedBox(width: AppDimens.space12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                status.name,
+                                style: context.text.titleMedium,
+                              ),
+                              Text(
+                                _titleFor(l10n, status.key),
+                                style: context.text.labelSmall?.copyWith(
+                                  color: c.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        AppIconButton(
+                          icon: Icons.edit_rounded,
+                          tooltip: l10n.statusRename,
+                          onPressed: () => _rename(status),
+                        ),
+                        AppIconButton(
+                          icon: Icons.delete_outline_rounded,
+                          tooltip: l10n.statusRemove,
+                          danger: true,
+                          onPressed: () => _remove(status),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+            const SizedBox(height: AppDimens.space8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _add,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(l10n.statusAdd),
               ),
-          const SizedBox(height: AppDimens.space8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _add,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text(l10n.statusAdd),
             ),
-          ),
-          const SizedBox(height: AppDimens.space16),
-          TextField(
-            controller: _unit,
-            onChanged: (_) => setState(() => _dirty = true),
-            decoration: InputDecoration(
-              labelText: l10n.progressUnitLabel,
-              hintText: l10n.progressUnitHint,
+            const SizedBox(height: AppDimens.space16),
+            TextField(
+              controller: _unit,
+              onChanged: (_) => setState(() => _dirty = true),
+              decoration: InputDecoration(
+                labelText: l10n.progressUnitLabel,
+                hintText: l10n.progressUnitHint,
+              ),
             ),
-          ),
-          const SizedBox(height: AppDimens.space20),
-          FilledButton(
-            onPressed: _dirty ? _save : null,
-            child: Text(l10n.commonSave),
-          ),
-        ],
+            const SizedBox(height: AppDimens.space20),
+            FilledButton(
+              onPressed: _dirty ? _save : null,
+              child: Text(l10n.commonSave),
+            ),
+          ],
+        ),
       ),
     );
   }

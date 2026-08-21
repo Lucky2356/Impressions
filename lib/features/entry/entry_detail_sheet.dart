@@ -349,6 +349,12 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
   Future<void> _removeCategory(String entryId, String categoryId) async {
     await ref.read(entryRepositoryProvider).removeCategory(entryId, categoryId);
     _bump();
+    if (mounted) {
+      showMessage(
+        context,
+        AppLocalizations.of(context).categoryRemovedFromEntry,
+      );
+    }
   }
 
   Future<void> _setPrivacy(String entryId, String privacy) async {
@@ -356,6 +362,9 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
         .read(entryRepositoryProvider)
         .updateEntry(entryId, privacy: privacy);
     _bump();
+    if (mounted) {
+      showMessage(context, AppLocalizations.of(context).privacyChanged);
+    }
   }
 
   /// Правка описания объекта. Фиксируется новой версией (§18), поэтому

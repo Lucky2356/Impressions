@@ -229,13 +229,32 @@ class CollectionRepository {
     }
   }
 
-  Future<void> removeEntry(String collectionId, String entryId) {
-    return (db.delete(db.collectionEntries)..where(
+  /// Возвращает удалённую связь, чтобы запись можно было вернуть в подборку
+  /// на прежнее место.
+  Future<CollectionEntryRow?> removeEntry(
+    String collectionId,
+    String entryId,
+  ) async {
+    final link =
+        await (db.select(db.collectionEntries)..where(
+              (ce) =>
+                  ce.collectionId.equals(collectionId) &
+                  ce.entryId.equals(entryId),
+            ))
+            .getSingleOrNull();
+    if (link == null) return null;
+    await (db.delete(db.collectionEntries)..where(
           (ce) =>
               ce.collectionId.equals(collectionId) & ce.entryId.equals(entryId),
         ))
         .go();
+    return link;
   }
+
+  /// Возвращает запись в подборку — с прежним местом в порядке.
+  Future<void> restoreEntry(CollectionEntryRow link) => db
+      .into(db.collectionEntries)
+      .insert(link, mode: InsertMode.insertOrReplace);
 
   /// Переставляет запись внутри подборки (§27).
   ///

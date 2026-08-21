@@ -108,6 +108,17 @@ class EntryOpinionCardState extends ConsumerState<EntryOpinionCard> {
 
   void _bump() => ref.read(dataRefreshProvider.notifier).bump();
 
+  /// Сколько раз молча сохранилось набранное.
+  ///
+  /// Считаются только заметка и прогресс: нажатие на стадию, отношение или
+  /// оценку видно по самому переключателю, а эти два уходят в базу так, что на
+  /// экране не меняется ничего.
+  int _savedTick = 0;
+
+  void _flashSaved() {
+    if (mounted) setState(() => _savedTick++);
+  }
+
   /// Дописывает набранное, если его меняли.
   ///
   /// Карточку закрывают четырьмя способами, и все они снимают маршрут, поэтому
@@ -131,7 +142,9 @@ class EntryOpinionCardState extends ConsumerState<EntryOpinionCard> {
     // ожидания `ref` обращаться некуда.
     final repo = ref.read(entryRepositoryProvider);
     await repo.updateEntry(_entryId, detailedNote: text.isEmpty ? null : text);
-    if (mounted) _bump();
+    if (!mounted) return;
+    _bump();
+    _flashSaved();
   }
 
   String _progressKey() => '${_progressCurrent.text}/${_progressTotal.text}';
@@ -149,7 +162,9 @@ class EntryOpinionCardState extends ConsumerState<EntryOpinionCard> {
           progressTotal: progressValueOf(_progressTotal),
         )
         .then((_) {
-          if (mounted) _bump();
+          if (!mounted) return;
+          _bump();
+          _flashSaved();
         });
   }
 
@@ -332,6 +347,8 @@ class EntryOpinionCardState extends ConsumerState<EntryOpinionCard> {
             decoration: InputDecoration(labelText: l10n.entryNoteLabel),
             onEditingComplete: _saveNote,
           ),
+          const SizedBox(height: AppDimens.space4),
+          SavedFlash(tick: _savedTick),
         ],
       ),
     );

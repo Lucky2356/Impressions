@@ -64,7 +64,7 @@ class _CollectionEditorSheetState extends ConsumerState<CollectionEditorSheet> {
   bool _coverLoaded = false;
   bool _saving = false;
 
-  ImageService get _images => ImageService(ref.read(appDatabaseProvider));
+  ImageService get _images => ref.read(imageServiceProvider);
 
   @override
   void initState() {
