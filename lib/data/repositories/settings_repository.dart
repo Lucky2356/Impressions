@@ -6,6 +6,9 @@ class SettingKeys {
   static const activeProfileId = 'active_profile_id';
   static const themeMode = 'theme_mode';
 
+  /// Масштаб интерфейса: `auto` или доля в процентах (`s90`…`s125`).
+  static const uiScale = 'ui_scale';
+
   /// Язык интерфейса: `ru`, `en` или пусто — брать язык системы.
   static const language = 'language';
 

@@ -53,7 +53,7 @@ class ScreenHeader extends StatelessWidget {
     // вставали с разным отступом слева.
     final scope = ContentWidthScope.of(context);
     return alignNarrowColumn(
-      layout,
+      context,
       content,
       scope.width,
       scope.narrowWidth,
@@ -158,6 +158,13 @@ class ScreenHeader extends StatelessWidget {
   }
 }
 
+/// Метка колонки для чтения.
+///
+/// По ней видно, ограничена ли ширина раздела: у [ContentWidth.full] такой
+/// коробки нет вовсе. Нужна проверкам раскладки — иначе «занимает всё окно»
+/// приходится подтверждать замером пикселей.
+const contentColumnKey = ValueKey('content-column');
+
 /// Ставит содержимое в общую колонку раздела.
 ///
 /// Разделы с более узкой собственной колонкой (настройки) прижимаются к её
@@ -165,7 +172,7 @@ class ScreenHeader extends StatelessWidget {
 /// в настройки содержимое заметно прыгало вправо: у каждого раздела был свой
 /// отступ слева.
 Widget alignNarrowColumn(
-  AppLayout layout,
+  BuildContext context,
   Widget content,
   ContentWidth width,
   double? narrowWidth,
@@ -181,13 +188,17 @@ Widget alignNarrowColumn(
       ),
     );
   }
-  final outer = layout.maxWidthFor(width);
+  final outer = context.layout.maxWidthFor(
+    width,
+    MediaQuery.textScalerOf(context).scale(1),
+  );
   if (!outer.isFinite) return body;
   return Align(
     alignment: alignment == Alignment.topLeft
         ? Alignment.topCenter
         : Alignment.center,
     child: ConstrainedBox(
+      key: contentColumnKey,
       constraints: BoxConstraints(maxWidth: outer),
       child: body,
     ),
@@ -220,7 +231,6 @@ class ScreenScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final layout = context.layout;
 
     return ContentWidthScope(
       width: width,
@@ -230,12 +240,14 @@ class ScreenScaffold extends StatelessWidget {
           header,
           Divider(height: 1, color: c.border),
           Expanded(
-            child: alignNarrowColumn(
-              layout,
-              child,
-              width,
-              maxWidth,
-              Alignment.topLeft,
+            child: Builder(
+              builder: (context) => alignNarrowColumn(
+                context,
+                child,
+                width,
+                maxWidth,
+                Alignment.topLeft,
+              ),
             ),
           ),
         ],

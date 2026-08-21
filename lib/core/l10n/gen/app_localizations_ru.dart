@@ -2029,6 +2029,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsLanguageEn => 'English';
 
   @override
+  String get settingsUiScale => 'Масштаб интерфейса';
+
+  @override
+  String get settingsUiScaleAuto => 'По размеру окна';
+
+  @override
+  String get settingsUiScaleHint =>
+      'На большом мониторе интерфейс сам становится крупнее. Если система уже увеличивает шрифт, масштаб домножается к ней.';
+
+  @override
   String get tagsTitle => 'Теги';
 
   @override

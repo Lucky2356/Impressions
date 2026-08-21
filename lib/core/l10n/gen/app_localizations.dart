@@ -3332,6 +3332,24 @@ abstract class AppLocalizations {
   /// **'English'**
   String get settingsLanguageEn;
 
+  /// No description provided for @settingsUiScale.
+  ///
+  /// In ru, this message translates to:
+  /// **'Масштаб интерфейса'**
+  String get settingsUiScale;
+
+  /// No description provided for @settingsUiScaleAuto.
+  ///
+  /// In ru, this message translates to:
+  /// **'По размеру окна'**
+  String get settingsUiScaleAuto;
+
+  /// No description provided for @settingsUiScaleHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'На большом мониторе интерфейс сам становится крупнее. Если система уже увеличивает шрифт, масштаб домножается к ней.'**
+  String get settingsUiScaleHint;
+
   /// No description provided for @tagsTitle.
   ///
   /// In ru, this message translates to:

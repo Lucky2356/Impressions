@@ -78,13 +78,17 @@ class AppLayout {
 
   /// Ширина колонки, которую читают строками.
   ///
-  /// Умножается на [scale], а не на ширину окна: колонка должна расти вместе
-  /// с кеглем, иначе крупный шрифт помещает в строку меньше слов, чем мелкий.
-  double get readingWidth => AppDimens.readingWidth * scale;
+  /// Растёт вместе с кеглем, а не с шириной окна: строка длиннее этого
+  /// нечитаема на любой диагонали, зато крупный шрифт при прежней ширине
+  /// помещал бы в строку меньше слов, чем мелкий.
+  ///
+  /// Масштаб интерфейса приходит сюда сам собой — он и есть множитель кегля.
+  double readingWidthFor(double textScale) =>
+      AppDimens.readingWidth * textScale.clamp(1.0, 1.6);
 
   /// Предел ширины для раздела с таким способом занимать окно.
-  double maxWidthFor(ContentWidth width) =>
-      width == ContentWidth.full ? double.infinity : readingWidth;
+  double maxWidthFor(ContentWidth width, double textScale) =>
+      width == ContentWidth.full ? double.infinity : readingWidthFor(textScale);
 
   /// Число колонок сетки под целевую ширину ячейки.
   ///

@@ -5,6 +5,7 @@ import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../app/locale_controller.dart';
 import '../../app/theme_controller.dart';
+import '../../app/ui_scale_controller.dart';
 import '../../core/config/app_config.dart';
 import '../../core/domain/hotkeys.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -360,8 +361,53 @@ class AppearanceSection extends ConsumerWidget {
           minControlWidth: 330,
         ),
         Divider(height: AppDimens.space24, color: c.divider),
+        SettingsRow(
+          label: l10n.settingsUiScale,
+          description: l10n.settingsUiScaleHint,
+          control: _UiScalePicker(),
+        ),
+        Divider(height: AppDimens.space24, color: c.divider),
         SettingsRow(label: l10n.settingsLanguage, control: _LanguagePicker()),
       ],
+    );
+  }
+}
+
+/// Выбор масштаба интерфейса.
+///
+/// Списком, а не сегментами: значений пять, и в строку настроек на телефоне
+/// они не помещаются — так же, как язык.
+class _UiScalePicker extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final value = ref.watch(uiScaleProvider);
+
+    String label(UiScale scale) => scale.factor == null
+        ? l10n.settingsUiScaleAuto
+        : '${(scale.factor! * 100).round()} %';
+
+    return PopupMenuButton<UiScale>(
+      tooltip: '',
+      onSelected: (v) => ref.read(uiScaleProvider.notifier).set(v),
+      itemBuilder: (_) => [
+        for (final scale in UiScale.values)
+          PopupMenuItem(value: scale, child: Text(label(scale))),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label(value),
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: c.textSecondary),
+            ),
+          ),
+          Icon(Icons.arrow_drop_down_rounded, color: c.textSecondary),
+        ],
+      ),
     );
   }
 }

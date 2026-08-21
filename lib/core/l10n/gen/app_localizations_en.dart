@@ -1976,6 +1976,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageEn => 'English';
 
   @override
+  String get settingsUiScale => 'Interface scale';
+
+  @override
+  String get settingsUiScaleAuto => 'Match window size';
+
+  @override
+  String get settingsUiScaleHint =>
+      'On a large monitor the interface grows on its own. If the system already enlarges text, the scale multiplies it.';
+
+  @override
   String get tagsTitle => 'Tags';
 
   @override

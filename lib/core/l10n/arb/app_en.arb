@@ -583,6 +583,9 @@
   "settingsLanguageSystem": "System language",
   "settingsLanguageRu": "Русский",
   "settingsLanguageEn": "English",
+  "settingsUiScale": "Interface scale",
+  "settingsUiScaleAuto": "Match window size",
+  "settingsUiScaleHint": "On a large monitor the interface grows on its own. If the system already enlarges text, the scale multiplies it.",
 
   "tagsTitle": "Tags",
   "tagsHint": "Tags are free-form labels without nesting; they do not replace categories.",

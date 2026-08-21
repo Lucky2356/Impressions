@@ -29,6 +29,7 @@ import 'locale_controller.dart';
 import 'navigation.dart';
 import 'data_refresh.dart';
 import 'theme_controller.dart';
+import 'ui_scale_controller.dart';
 
 /// Корневой виджет приложения.
 class ImpressionsApp extends ConsumerWidget {
@@ -49,11 +50,9 @@ class ImpressionsApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      // Крупный системный шрифт приложение держит: карточки и поля растут
-      // вместе с ним. Но Android разрешает увеличивать текст вдвое, а такой
-      // размер не выдержит ни одна плотная раскладка — выше 1.5 не идём.
-      builder: (context, child) =>
-          MediaQuery.withClampedTextScaling(maxScaleFactor: 1.5, child: child!),
+      // Масштаб интерфейса и общий предел кегля — в одном месте, потому что
+      // важен их порядок.
+      builder: appTextScaleBuilder,
       home: const _SystemBars(child: _RootGate()),
     );
   }

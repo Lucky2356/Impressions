@@ -563,8 +563,13 @@ class _CategoryTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: context.text.titleMedium,
                 ),
+                // В одну строку, как и название. Высота плитки задана сеткой
+                // заранее, а при крупном системном шрифте «12 записей» в
+                // узкой колонке переносилось на три строки и рвало карточку.
                 Text(
                   l10n.categoryEntriesCount(count),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: context.text.labelSmall?.copyWith(color: c.textMuted),
                 ),
               ],
