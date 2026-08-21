@@ -79,6 +79,10 @@ class AppDimens {
   // ---- Ширины панелей на широком экране ----
   static const double navRailWidth = 268;
   static const double navRailWidthUltra = 300;
-  static const double maxContentWidth = 1160;
-  static const double maxContentWidthUltra = 1560;
+
+  /// Ширина колонки, которую читают строками.
+  ///
+  /// Не растёт вместе с монитором: строка длиннее этого нечитаема на любой
+  /// диагонали. Растёт только вместе с кеглем — см. `AppLayout.readingWidth`.
+  static const double readingWidth = 1100;
 }

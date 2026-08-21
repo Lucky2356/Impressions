@@ -143,7 +143,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return ScreenScaffold(
       header: ScreenHeader(
         title: l10n.navSettings,
-        constrain: false,
         bottom: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
           child: AppSearchField(
@@ -153,7 +152,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ),
-      constrain: false,
+      width: ContentWidth.full,
       child: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimens.space24,
@@ -259,7 +258,6 @@ class _SectionPage extends StatelessWidget {
       maxWidth: _settingsMaxWidth,
       header: ScreenHeader(
         title: section.title,
-        maxWidth: _settingsMaxWidth,
         leading: onBack == null
             ? null
             : AppIconButton(

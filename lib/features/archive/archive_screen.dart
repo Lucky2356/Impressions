@@ -270,6 +270,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     }
 
     return ScreenScaffold(
+      width: ContentWidth.full,
       header: ScreenHeader(
         title: l10n.archiveTitle,
         subtitle: l10n.archiveSubtitle(total),

@@ -186,9 +186,8 @@ class _RootShelves extends ConsumerWidget {
     final roots = CategoryTree.childrenOf(categories, null);
 
     return ScreenScaffold(
-      constrain: false,
+      width: ContentWidth.full,
       header: ScreenHeader(
-        constrain: false,
         title: l10n.categoriesTitle,
         actions: [
           AppIconButton(

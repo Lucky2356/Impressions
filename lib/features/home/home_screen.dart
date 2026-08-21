@@ -77,38 +77,33 @@ class HomeScreen extends ConsumerWidget {
             hasWishlist && constraints.maxWidth >= _sideColumnWidth;
         final horizontal = layout.gutter;
 
+        // Главная — это сетки обложек и плиток, а не текст строками: колонки
+        // она не держит и занимает окно целиком, как каталог. Больше монитор —
+        // больше карточек в ряду.
         return SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              // Та же колонка, что и у остальных разделов. Своя, более широкая
-              // мерка делала главную единственным экраном с другим краем: на
-              // 2K содержимое начиналось и заканчивалось не там, где в каталоге.
-              constraints: BoxConstraints(maxWidth: layout.contentMaxWidth),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontal,
-                  AppDimens.space24,
-                  horizontal,
-                  AppDimens.space32,
-                ),
-                child: showSide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Expanded(child: _MainColumn()),
-                          SizedBox(width: AppDimens.space24),
-                          SizedBox(width: 360, child: _SidePanel()),
-                        ],
-                      )
-                    : const Column(
-                        children: [
-                          _MainColumn(),
-                          SizedBox(height: AppDimens.space24),
-                          _SidePanel(),
-                        ],
-                      ),
-              ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontal,
+              AppDimens.space24,
+              horizontal,
+              AppDimens.space32,
             ),
+            child: showSide
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Expanded(child: _MainColumn()),
+                      SizedBox(width: AppDimens.space24),
+                      SizedBox(width: 360, child: _SidePanel()),
+                    ],
+                  )
+                : const Column(
+                    children: [
+                      _MainColumn(),
+                      SizedBox(height: AppDimens.space24),
+                      _SidePanel(),
+                    ],
+                  ),
           ),
         );
       },

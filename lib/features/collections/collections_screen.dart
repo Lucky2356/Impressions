@@ -94,6 +94,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
         }
 
         return ScreenScaffold(
+          width: ContentWidth.full,
           header: ScreenHeader(
             title: l10n.collectionsTitle,
             actions: [
@@ -181,6 +182,7 @@ class _CollectionDetail extends ConsumerWidget {
         .contains(collectionId);
 
     return ScreenScaffold(
+      width: ContentWidth.full,
       header: ScreenHeader(
         title: row?.name ?? l10n.collectionsTitle,
         subtitle: row?.description,

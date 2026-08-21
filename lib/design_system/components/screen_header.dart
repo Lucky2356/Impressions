@@ -16,8 +16,6 @@ class ScreenHeader extends StatelessWidget {
     this.actions = const [],
     this.leading,
     this.bottom,
-    this.constrain = true,
-    this.maxWidth,
   });
 
   final String title;
@@ -27,14 +25,6 @@ class ScreenHeader extends StatelessWidget {
 
   /// Дополнительная строка под заголовком: фильтры, вкладки.
   final Widget? bottom;
-
-  /// Должно совпадать с одноимённым параметром [ScreenScaffold]: если
-  /// содержимое раздела занимает всю ширину, шапка тоже не сужается.
-  final bool constrain;
-
-  /// Своя предельная ширина вместо общей — для разделов вроде настроек,
-  /// где колонка уже. Должна совпадать с [ScreenScaffold.maxWidth].
-  final double? maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +48,17 @@ class ScreenHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: layout.gutter),
       child: _content(context),
     );
-    if (!constrain) return content;
-    return alignNarrowColumn(layout, content, maxWidth, Alignment.centerLeft);
+    // Мерку шапка берёт у своего каркаса, а не из собственного параметра:
+    // раньше их было два одинаковых, и стоило разойтись — заголовок и список
+    // вставали с разным отступом слева.
+    final scope = ContentWidthScope.of(context);
+    return alignNarrowColumn(
+      layout,
+      content,
+      scope.width,
+      scope.narrowWidth,
+      Alignment.centerLeft,
+    );
   }
 
   Widget _content(BuildContext context) {
@@ -168,6 +167,7 @@ class ScreenHeader extends StatelessWidget {
 Widget alignNarrowColumn(
   AppLayout layout,
   Widget content,
+  ContentWidth width,
   double? narrowWidth,
   Alignment alignment,
 ) {
@@ -181,7 +181,7 @@ Widget alignNarrowColumn(
       ),
     );
   }
-  final outer = layout.contentMaxWidth;
+  final outer = layout.maxWidthFor(width);
   if (!outer.isFinite) return body;
   return Align(
     alignment: alignment == Alignment.topLeft
@@ -203,32 +203,71 @@ class ScreenScaffold extends StatelessWidget {
     super.key,
     required this.header,
     required this.child,
-    this.constrain = true,
+    this.width = ContentWidth.reading,
     this.maxWidth,
   });
 
   final Widget header;
   final Widget child;
-  final bool constrain;
 
-  /// Своя предельная ширина вместо общей; должна совпадать с
-  /// [ScreenHeader.maxWidth], иначе шапка и содержимое разъедутся.
+  /// Как раздел занимает окно: колонкой для чтения или всей шириной.
+  final ContentWidth width;
+
+  /// Своя, более узкая колонка вместо общей — для разделов вроде настроек.
+  /// Имеет смысл только вместе с [ContentWidth.reading].
   final double? maxWidth;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final layout = context.layout;
-    final body = constrain
-        ? alignNarrowColumn(layout, child, maxWidth, Alignment.topLeft)
-        : child;
 
-    return Column(
-      children: [
-        header,
-        Divider(height: 1, color: c.border),
-        Expanded(child: body),
-      ],
+    return ContentWidthScope(
+      width: width,
+      narrowWidth: maxWidth,
+      child: Column(
+        children: [
+          header,
+          Divider(height: 1, color: c.border),
+          Expanded(
+            child: alignNarrowColumn(
+              layout,
+              child,
+              width,
+              maxWidth,
+              Alignment.topLeft,
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+/// Мерка ширины, заданная каркасом раздела, — чтобы шапка не повторяла её
+/// вторым параметром.
+class ContentWidthScope extends InheritedWidget {
+  const ContentWidthScope({
+    super.key,
+    required this.width,
+    required this.narrowWidth,
+    required super.child,
+  });
+
+  final ContentWidth width;
+  final double? narrowWidth;
+
+  /// Вне каркаса шапка ведёт себя как колонка для чтения — так же, как
+  /// [ScreenScaffold] по умолчанию.
+  static ContentWidthScope of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ContentWidthScope>() ??
+      const ContentWidthScope(
+        width: ContentWidth.reading,
+        narrowWidth: null,
+        child: SizedBox.shrink(),
+      );
+
+  @override
+  bool updateShouldNotify(ContentWidthScope old) =>
+      old.width != width || old.narrowWidth != narrowWidth;
 }

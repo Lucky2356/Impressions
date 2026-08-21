@@ -129,9 +129,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     final results = ref.watch(compareResultsProvider(params));
 
     return ScreenScaffold(
-      constrain: false,
       header: ScreenHeader(
-        constrain: false,
         title: l10n.compareTitle,
         bottom: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

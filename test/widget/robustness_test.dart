@@ -241,7 +241,6 @@ void main() {
             child: ScreenHeader(
               title: _longTitle,
               subtitle: _longTitle,
-              constrain: false,
               actions: [
                 FilledButton(onPressed: () {}, child: const Text('Добавить')),
               ],

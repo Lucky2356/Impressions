@@ -123,6 +123,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     // растягивался во всю ширину окна, и при переходе с главной содержимое
     // заметно «прыгало» по горизонтали на широком мониторе.
     return ScreenScaffold(
+      width: ContentWidth.full,
       header: ScreenHeader(
         title: l10n.navCatalog,
         subtitle: count == null ? null : l10n.catalogFound(count),

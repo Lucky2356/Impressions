@@ -56,6 +56,7 @@ class WishlistScreen extends ConsumerWidget {
     }
 
     return ScreenScaffold(
+      width: ContentWidth.full,
       header: ScreenHeader(
         title: l10n.wishlistTitle,
         subtitle: l10n.wishlistSubtitle(items.length),

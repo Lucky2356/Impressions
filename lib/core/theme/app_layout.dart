@@ -17,6 +17,17 @@ enum LayoutSize {
   ultra,
 }
 
+/// Как раздел занимает ширину окна.
+enum ContentWidth {
+  /// Читают строками: колонка постоянной ширины по центру. Настройки, карточка
+  /// записи, итоги года, сводка.
+  reading,
+
+  /// Смотрят сетками: раздел занимает всё окно, и на широком экране растёт
+  /// число ячеек, а не их размер. Каталог, категории, подборки, архив.
+  full,
+}
+
 /// Производные величины раскладки, зависящие от разрешения (§3.5).
 ///
 /// Windows масштабирует логические пиксели по DPI, поэтому 4K при 150 %
@@ -29,7 +40,6 @@ class AppLayout {
     required this.size,
     required this.width,
     required this.gutter,
-    required this.contentMaxWidth,
     required this.gridTileWidth,
     required this.sidebarWidth,
     required this.scale,
@@ -40,10 +50,6 @@ class AppLayout {
 
   /// Горизонтальный отступ содержимого экрана.
   final double gutter;
-
-  /// Предельная ширина колонки контента — на 4K текст не растягивается
-  /// на весь экран, а остаётся читаемым.
-  final double contentMaxWidth;
 
   /// Целевая ширина ячейки сетки каталога при крупном режиме.
   final double gridTileWidth;
@@ -63,6 +69,16 @@ class AppLayout {
   };
 
   bool get isWide => size == LayoutSize.expanded || size == LayoutSize.ultra;
+
+  /// Ширина колонки, которую читают строками.
+  ///
+  /// Умножается на [scale], а не на ширину окна: колонка должна расти вместе
+  /// с кеглем, иначе крупный шрифт помещает в строку меньше слов, чем мелкий.
+  double get readingWidth => AppDimens.readingWidth * scale;
+
+  /// Предел ширины для раздела с таким способом занимать окно.
+  double maxWidthFor(ContentWidth width) =>
+      width == ContentWidth.full ? double.infinity : readingWidth;
 
   /// Число колонок сетки под целевую ширину ячейки.
   ///
@@ -94,7 +110,6 @@ class AppLayout {
         size: LayoutSize.compact,
         width: width,
         gutter: AppDimens.space16,
-        contentMaxWidth: double.infinity,
         gridTileWidth: 150,
         sidebarWidth: 0,
         scale: 1,
@@ -105,7 +120,6 @@ class AppLayout {
         size: LayoutSize.medium,
         width: width,
         gutter: AppDimens.space20,
-        contentMaxWidth: double.infinity,
         gridTileWidth: 168,
         sidebarWidth: 0,
         scale: 1,
@@ -116,7 +130,6 @@ class AppLayout {
         size: LayoutSize.expanded,
         width: width,
         gutter: AppDimens.space24,
-        contentMaxWidth: AppDimens.maxContentWidth,
         gridTileWidth: 184,
         sidebarWidth: AppDimens.navRailWidth,
         scale: 1,
@@ -128,7 +141,6 @@ class AppLayout {
       size: LayoutSize.ultra,
       width: width,
       gutter: AppDimens.space32,
-      contentMaxWidth: AppDimens.maxContentWidthUltra,
       gridTileWidth: 216,
       sidebarWidth: AppDimens.navRailWidthUltra,
       scale: 1.15,
