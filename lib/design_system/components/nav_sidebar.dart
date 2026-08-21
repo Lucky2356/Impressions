@@ -38,6 +38,7 @@ class NavSidebar extends StatelessWidget {
     required this.onSelected,
     required this.appTitle,
     this.footer,
+    this.collapsed = false,
   });
 
   final List<NavGroup> groups;
@@ -45,6 +46,13 @@ class NavSidebar extends StatelessWidget {
   final ValueChanged<String> onSelected;
   final String appTitle;
   final Widget? footer;
+
+  /// Только значки: окно шире телефона, но подписям места нет.
+  ///
+  /// Названия разделов при этом никуда не деваются — они приходят подсказкой
+  /// при наведении. Прятать восемь разделов из двенадцати в «Ещё» на таком
+  /// экране незачем: это правило телефона, а не всякого узкого окна.
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
@@ -59,16 +67,26 @@ class NavSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Logo(title: appTitle),
+          _Logo(title: appTitle, collapsed: collapsed),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.space16,
+              padding: EdgeInsets.symmetric(
+                horizontal: collapsed ? AppDimens.space12 : AppDimens.space16,
                 vertical: AppDimens.space8,
               ),
               children: [
-                for (final group in groups) ...[
-                  if (group.title != null)
+                for (final (i, group) in groups.indexed) ...[
+                  // Заголовок группы значками не прочесть, но границу между
+                  // группами видно и без слов.
+                  if (collapsed) ...[
+                    if (i != 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppDimens.space8,
+                        ),
+                        child: Divider(height: 1, color: c.border),
+                      ),
+                  ] else if (group.title != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppDimens.space12,
@@ -89,6 +107,7 @@ class NavSidebar extends StatelessWidget {
                     _NavTile(
                       data: item,
                       active: item.id == activeId,
+                      collapsed: collapsed,
                       onTap: () => onSelected(item.id),
                     ),
                 ],
@@ -97,7 +116,9 @@ class NavSidebar extends StatelessWidget {
           ),
           if (footer != null)
             Padding(
-              padding: const EdgeInsets.all(AppDimens.space16),
+              padding: EdgeInsets.all(
+                collapsed ? AppDimens.space12 : AppDimens.space16,
+              ),
               child: footer,
             ),
         ],
@@ -107,30 +128,44 @@ class NavSidebar extends StatelessWidget {
 }
 
 class _Logo extends StatelessWidget {
-  const _Logo({required this.title});
+  const _Logo({required this.title, required this.collapsed});
   final String title;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+      // Ровно та же высота, что у шапки раздела справа, — иначе разделитель
+      // под логотипом и разделитель под шапкой идут двумя разными линиями.
+      // Со значками панель стоит рядом с компактной шапкой, с подписями — с
+      // полной.
+      height: collapsed
+          ? AppDimens.headerHeightCompact
+          : AppDimens.headerHeight,
+      padding: EdgeInsets.symmetric(
+        horizontal: collapsed ? AppDimens.space12 : AppDimens.space24,
+      ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: c.border)),
       ),
       child: Row(
+        mainAxisAlignment: collapsed
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
         children: [
           const AppLogo(size: 34),
-          const SizedBox(width: AppDimens.space12),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.text.titleLarge,
+          if (!collapsed) ...[
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.titleLarge,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -142,16 +177,19 @@ class _NavTile extends StatelessWidget {
     required this.data,
     required this.active,
     required this.onTap,
+    this.collapsed = false,
   });
 
   final NavItemData data;
   final bool active;
   final VoidCallback onTap;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final fg = active ? c.navActiveFg : c.textSecondary;
+    if (collapsed) return _collapsed(context, fg);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimens.space2),
       child: Material(
@@ -198,6 +236,48 @@ class _NavTile extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Тот же пункт одним значком. Название приходит подсказкой при наведении,
+  /// а счётчик входящих сжимается в точку: цифре в 46 точек места нет.
+  Widget _collapsed(BuildContext context, Color fg) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.space4),
+      child: Tooltip(
+        message: data.label,
+        child: Material(
+          color: active ? c.navActiveBg : Colors.transparent,
+          borderRadius: AppDimens.brMd,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: AppDimens.brMd,
+            child: SizedBox(
+              height: 46,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(data.icon, size: 22, color: fg),
+                  if (data.badge > 0)
+                    Positioned(
+                      right: AppDimens.space12,
+                      top: AppDimens.space8,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: c.accentPrimary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

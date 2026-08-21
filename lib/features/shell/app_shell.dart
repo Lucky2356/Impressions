@@ -400,8 +400,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final layout = AppLayout.resolve(constraints.maxWidth);
-              return layout.isWide
-                  ? _wideLayout(l10n, layout)
+              return layout.hasSidebar
+                  ? _sidebarLayout(l10n, layout)
                   : _compactLayout(l10n);
             },
           ),
@@ -410,11 +410,20 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  // ---- Широкая раскладка (Windows) ----
-  Widget _wideLayout(AppLocalizations l10n, AppLayout layout) {
+  // ---- Раскладка с боковой панелью (Windows, планшет) ----
+  ///
+  /// Панель приходит с 640 точек, но до 1200 — одними значками: половина
+  /// экрана Full HD и ноутбук 1366 при 125 % получали телефонную панель с
+  /// четырьмя разделами из двенадцати, хотя места хватало на все.
+  ///
+  /// Шапка и круглая кнопка добавления при этом остаются телефонными до 1200:
+  /// поле поиска в 380 точек вместе с заголовком и кнопками в такое окно не
+  /// помещается, а панель значков места под «Добавить» не даёт.
+  Widget _sidebarLayout(AppLocalizations l10n, AppLayout layout) {
     final c = context.colors;
     final activeId = ref.watch(navProvider);
     final incoming = ref.watch(incomingCountProvider).value ?? 0;
+    final wide = layout.isWide;
     return Scaffold(
       body: Row(
         children: [
@@ -424,8 +433,9 @@ class _AppShellState extends ConsumerState<AppShell> {
               appTitle: AppConfig.appName,
               groups: _groups(l10n, incoming),
               activeId: activeId,
+              collapsed: layout.navCollapsed,
               onSelected: _go,
-              footer: const _ThemeToggle(),
+              footer: _ThemeToggle(collapsed: layout.navCollapsed),
             ),
           ),
           Expanded(
@@ -433,7 +443,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               children: [
                 _TopHeader(
                   title: _titleFor(activeId, l10n),
-                  wide: true,
+                  wide: wide,
                   searchFocus: _searchFocus,
                   onSearch: _search,
                   onSearchSubmitted: _searchSubmitted,
@@ -447,6 +457,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ],
       ),
+      floatingActionButton: wide
+          ? null
+          : FloatingActionButton(
+              onPressed: () => QuickAddSheet.show(context),
+              child: const Icon(Icons.add_rounded),
+            ),
     );
   }
 
@@ -858,32 +874,50 @@ class _ProfileChip extends ConsumerWidget {
 }
 
 class _ThemeToggle extends ConsumerWidget {
-  const _ThemeToggle();
+  const _ThemeToggle({this.collapsed = false});
+
+  /// Панель со значками: три сегмента в 52 точки не помещаются, поэтому
+  /// остаётся один значок, а нажатие перебирает режимы по кругу.
+  final bool collapsed;
+
+  static const _order = [ThemeMode.light, ThemeMode.dark, ThemeMode.system];
+
+  static IconData _iconOf(ThemeMode mode) => switch (mode) {
+    ThemeMode.light => Icons.light_mode_rounded,
+    ThemeMode.dark => Icons.dark_mode_rounded,
+    ThemeMode.system => Icons.brightness_auto_rounded,
+  };
+
+  static String _labelOf(AppLocalizations l10n, ThemeMode mode) =>
+      switch (mode) {
+        ThemeMode.light => l10n.themeLight,
+        ThemeMode.dark => l10n.themeDark,
+        ThemeMode.system => l10n.themeSystem,
+      };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final mode = ref.watch(themeModeProvider);
+
+    if (collapsed) {
+      final next = _order[(_order.indexOf(mode) + 1) % _order.length];
+      return IconActionButton(
+        icon: _iconOf(mode),
+        // Подсказка называет то, куда нажатие переведёт: значок и так
+        // показывает, где мы сейчас.
+        tooltip: _labelOf(l10n, next),
+        onPressed: () => ref.read(themeModeProvider.notifier).set(next),
+      );
+    }
+
     return SegmentedToggle<ThemeMode>(
       value: mode,
       expand: true,
       onChanged: (m) => ref.read(themeModeProvider.notifier).set(m),
       segments: [
-        SegmentData(
-          value: ThemeMode.light,
-          icon: Icons.light_mode_rounded,
-          tooltip: l10n.themeLight,
-        ),
-        SegmentData(
-          value: ThemeMode.dark,
-          icon: Icons.dark_mode_rounded,
-          tooltip: l10n.themeDark,
-        ),
-        SegmentData(
-          value: ThemeMode.system,
-          icon: Icons.brightness_auto_rounded,
-          tooltip: l10n.themeSystem,
-        ),
+        for (final m in _order)
+          SegmentData(value: m, icon: _iconOf(m), tooltip: _labelOf(l10n, m)),
       ],
     );
   }

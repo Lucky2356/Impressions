@@ -146,10 +146,8 @@ void main() {
     expect(find.byType(SummaryStrip), findsNothing);
   });
 
-  testWidgets('Узкая раскладка: нижняя навигация вместо боковой', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(700, 1200);
+  testWidgets('Телефон: нижняя навигация вместо боковой', (tester) async {
+    tester.view.physicalSize = const Size(400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -160,4 +158,47 @@ void main() {
     expect(find.byType(NavSidebar), findsNothing);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
+
+  // Половина экрана Full HD, ноутбук 1366 при 125 %, планшет: до 1.21.0 такое
+  // окно получало телефонную панель с четырьмя разделами из двенадцати, а
+  // остальные восемь прятались в «Ещё».
+  testWidgets('Половина экрана: панель со значками, а не телефонная', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(700, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app([_profile('p1', 'Александр')]));
+    await tester.pump();
+
+    expect(find.byType(NavigationBar), findsNothing);
+    final sidebar = tester.widget<NavSidebar>(find.byType(NavSidebar));
+    expect(sidebar.collapsed, isTrue);
+    // Разделы никуда не делись — их по-прежнему все двенадцать.
+    expect(
+      sidebar.groups.fold<int>(0, (n, g) => n + g.items.length),
+      greaterThan(_bottomBarSections),
+    );
+  });
+
+  testWidgets('Широкое окно: панель с подписями', (tester) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app([_profile('p1', 'Александр')]));
+    await tester.pump();
+
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(
+      tester.widget<NavSidebar>(find.byType(NavSidebar)).collapsed,
+      isFalse,
+    );
+  });
 }
+
+/// Сколько разделов помещается в нижнюю панель телефона: четыре плюс «Ещё».
+const _bottomBarSections = 5;

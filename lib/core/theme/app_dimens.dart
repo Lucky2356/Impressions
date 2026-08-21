@@ -77,6 +77,9 @@ class AppDimens {
   static const double breakpointUltra = 2200;
 
   // ---- Ширины панелей на широком экране ----
+  /// Панель со значками: окно уже 1200, подписи не помещаются, но прятать
+  /// восемь разделов из двенадцати в «Ещё» на экране такой ширины незачем.
+  static const double navRailCollapsedWidth = 76;
   static const double navRailWidth = 268;
   static const double navRailWidthUltra = 300;
 

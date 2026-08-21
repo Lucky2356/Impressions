@@ -70,6 +70,12 @@ class AppLayout {
 
   bool get isWide => size == LayoutSize.expanded || size == LayoutSize.ultra;
 
+  /// Боковая панель есть у всего, кроме телефона.
+  bool get hasSidebar => size != LayoutSize.compact;
+
+  /// Панель показывает одни значки: подписи в 76 точек не помещаются.
+  bool get navCollapsed => size == LayoutSize.medium;
+
   /// Ширина колонки, которую читают строками.
   ///
   /// Умножается на [scale], а не на ширину окна: колонка должна расти вместе
@@ -121,7 +127,7 @@ class AppLayout {
         width: width,
         gutter: AppDimens.space20,
         gridTileWidth: 168,
-        sidebarWidth: 0,
+        sidebarWidth: AppDimens.navRailCollapsedWidth,
         scale: 1,
       );
     }
