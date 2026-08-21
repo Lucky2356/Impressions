@@ -248,7 +248,18 @@ class AppDropdown<T> extends StatelessWidget {
             const SizedBox(width: AppDimens.space8),
           ],
           if (showLabel) ...[
-            Text(label, style: context.text.labelSmall?.copyWith(color: tint)),
+            // Подпись тоже обязана уметь сжиматься. Список рядом с ней стоит в
+            // Expanded и забирает остаток строки — если подпись держит свою
+            // естественную ширину, остатка не остаётся вовсе, и таблетка
+            // переполняется вместо того, чтобы обрезать подпись.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.labelSmall?.copyWith(color: tint),
+              ),
+            ),
             const SizedBox(width: AppDimens.space8),
           ],
           // В растянутом режиме список забирает остаток строки, стрелка встаёт

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/domain/app_icons.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../app/data_refresh.dart';
 import '../../data/db/database.dart';
@@ -17,6 +18,11 @@ import '../entry/photo_source.dart';
 import '../home/home_providers.dart';
 import 'category_palette.dart';
 import 'category_providers.dart';
+
+/// Целевая ширина миниатюры при выборе обложки. Раньше колонок было ровно
+/// три при любой ширине: на телефоне миниатюра выходила мелкой, а в диалоге
+/// на широком экране — вдвое крупнее, чем нужно.
+const double _coverTileWidth = 120;
 
 /// Оформление ветки: имя, описание, цвет, значок и обложка.
 ///
@@ -446,29 +452,35 @@ class _BranchPhotoPicker extends StatelessWidget {
           Text(l10n.categoryCoverPick, style: context.text.titleMedium),
           const SizedBox(height: AppDimens.space16),
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: AppDimens.space8,
-                crossAxisSpacing: AppDimens.space8,
-                childAspectRatio: 3 / 4,
-              ),
-              itemCount: photos.length,
-              itemBuilder: (context, i) {
-                final photo = photos[i];
-                return InkWell(
-                  borderRadius: AppDimens.brMd,
-                  onTap: () => Navigator.of(context).pop(photo),
-                  child: ClipRRect(
-                    borderRadius: AppDimens.brMd,
-                    child: Image.file(
-                      File(photo.path),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    ),
+            child: LayoutBuilder(
+              builder: (context, cns) => GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: context.layout.columnsFor(
+                    cns.maxWidth,
+                    tileWidth: _coverTileWidth,
+                    spacing: AppDimens.space8,
                   ),
-                );
-              },
+                  mainAxisSpacing: AppDimens.space8,
+                  crossAxisSpacing: AppDimens.space8,
+                  childAspectRatio: 3 / 4,
+                ),
+                itemCount: photos.length,
+                itemBuilder: (context, i) {
+                  final photo = photos[i];
+                  return InkWell(
+                    borderRadius: AppDimens.brMd,
+                    onTap: () => Navigator.of(context).pop(photo),
+                    child: ClipRRect(
+                      borderRadius: AppDimens.brMd,
+                      child: Image.file(
+                        File(photo.path),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],

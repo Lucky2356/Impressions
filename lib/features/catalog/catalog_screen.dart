@@ -308,7 +308,11 @@ class _Results extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, cns) {
-        final cols = layout.columnsFor(cns.maxWidth, tileWidth: tile);
+        final cols = layout.columnsFor(
+          cns.maxWidth - layout.gutter * 2,
+          tileWidth: tile,
+          spacing: AppDimens.space12,
+        );
         return NotificationListener<ScrollNotification>(
           onNotification: (n) => _onScroll(n, ref),
           child: GridView.builder(

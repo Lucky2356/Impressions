@@ -25,6 +25,10 @@ import 'category_providers.dart';
 /// название.
 const double _wideHeaderWidth = 660;
 
+/// Наименьшая приемлемая ширина карточки-полки подкатегории: значок,
+/// название и счётчик записей.
+const double _shelfTileWidth = 200;
+
 /// Страница ветки: что она такое и что в ней лежит.
 ///
 /// Раньше это была правая панель, к которой вёл один из двух режимов обзора, и
@@ -422,7 +426,12 @@ class CategoryShelves extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, cns) {
-        final cols = (cns.maxWidth / 210).floor().clamp(1, 6);
+        final cols = context.layout.columnsFor(
+          cns.maxWidth,
+          tileWidth: _shelfTileWidth,
+          min: 1,
+          spacing: AppDimens.space12,
+        );
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

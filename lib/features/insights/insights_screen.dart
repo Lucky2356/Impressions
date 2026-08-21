@@ -21,6 +21,9 @@ import '../categories/category_providers.dart';
 import '../quick_add/category_picker.dart';
 import '../year/year_screen.dart';
 
+/// Целевая ширина плитки сводки: число и подпись под ним.
+const double _insightTileWidth = 170;
+
 /// Срез статистики: за какой срок и по какой ветке считать.
 ///
 /// Экран показывал распределения по всему профилю: вопрос «а что было в этом
@@ -290,7 +293,14 @@ class _SummaryRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, cns) {
-        final columns = cns.maxWidth >= 720 ? 4 : 2;
+        final columns = context.layout.columnsFor(
+          cns.maxWidth,
+          tileWidth: _insightTileWidth,
+          // Плиток восемь: раскладывать их на шесть колонок незачем — ряд
+          // становится рваным, а сама сводка перестаёт читаться сеткой.
+          max: 4,
+          spacing: AppDimens.space12,
+        );
         // Высота задана явно, а не соотношением сторон: при двух колонках на
         // узком экране ячейка получалась ниже содержимого, и плитки
         // переполнялись.

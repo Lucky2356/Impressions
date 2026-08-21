@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/models/entry_view.dart';
 import '../../design_system/design_system.dart';
@@ -10,6 +11,10 @@ import '../entry/entry_card_data.dart';
 import '../entry/entry_detail_sheet.dart';
 import 'category_drag.dart';
 import 'category_providers.dart';
+
+/// Целевая ширина компактной карточки записи: обложка слева, название и
+/// строка метаданных справа.
+const double _entryTileWidth = 380;
 
 /// Панель над списком записей ветки: охват и порядок.
 ///
@@ -120,7 +125,12 @@ class BranchEntriesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, cns) {
-        final columns = (cns.maxWidth / 380).floor().clamp(1, 4);
+        final columns = context.layout.columnsFor(
+          cns.maxWidth,
+          tileWidth: _entryTileWidth,
+          min: 1,
+          spacing: AppDimens.space8,
+        );
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

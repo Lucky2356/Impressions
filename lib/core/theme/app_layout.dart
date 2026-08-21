@@ -65,12 +65,27 @@ class AppLayout {
   bool get isWide => size == LayoutSize.expanded || size == LayoutSize.ultra;
 
   /// Число колонок сетки под целевую ширину ячейки.
-  int columnsFor(double available, {required double tileWidth, int min = 2}) {
-    final usable = available - gutter * 2;
-    if (usable <= 0) return min;
-    final raw = ((usable + AppDimens.space16) / (tileWidth + AppDimens.space16))
-        .floor();
-    return raw.clamp(min, 10);
+  ///
+  /// [available] — ширина, доставшаяся самой сетке: боковые отступы вычитает
+  /// вызывающая сторона, потому что у одних сеток они есть, а у других нет.
+  /// [spacing] — промежуток между ячейками, тот же, что передан делегату:
+  /// раньше здесь всегда стояло 16, а каталог рисовал 12, и колонок выходило
+  /// на одну меньше, чем помещалось.
+  ///
+  /// Потолок [max] нужен сеткам с заведомо коротким списком: раскладывать
+  /// восемь плиток статистики на шестнадцать колонок незачем. Общего потолка
+  /// нет намеренно — на широком окне должно расти число ячеек, а не их размер,
+  /// а прежний `clamp(min, 10)` на 4K растягивал десять карточек вдвое.
+  int columnsFor(
+    double available, {
+    required double tileWidth,
+    int min = 2,
+    int max = 99,
+    double spacing = AppDimens.space16,
+  }) {
+    if (available <= 0) return min;
+    final raw = ((available + spacing) / (tileWidth + spacing)).floor();
+    return raw.clamp(min, max);
   }
 
   static AppLayout resolve(double width) {

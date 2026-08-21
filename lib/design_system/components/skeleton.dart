@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import 'appear.dart';
 import 'entry_card.dart';
@@ -151,7 +152,10 @@ class SkeletonGrid extends StatelessWidget {
       padding: padding,
       child: LayoutBuilder(
         builder: (context, cns) {
-          final cols = (cns.maxWidth / minTileWidth).floor().clamp(2, 6);
+          final cols = context.layout.columnsFor(
+            cns.maxWidth,
+            tileWidth: minTileWidth,
+          );
           return GridView.builder(
             // Внутри чужого списка сетка обязана вкладываться, в отведённой
             // коробке — обрезаться по ней. Прокрутки у заглушки нет в обоих

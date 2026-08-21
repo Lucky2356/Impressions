@@ -4,6 +4,11 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import 'app_card.dart';
 
+/// Сколько места должно остаться подписи, чтобы строку стоило собирать
+/// горизонтально. Меньше — переносить бессмысленно: подпись всё равно
+/// рассыпается по слогам.
+const double _minLabelWidth = 140;
+
 /// Раздел настроек: заголовок, необязательное действие справа и карточка
 /// с содержимым.
 class SettingsGroup extends StatelessWidget {
@@ -96,12 +101,11 @@ class SettingsRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, cns) {
-        // Подписи нужно хотя бы немного места: иначе переносить бессмысленно.
-        final fits = cns.maxWidth - minControlWidth >= 140;
+        final fits = cns.maxWidth - minControlWidth >= _minLabelWidth;
         if (fits) {
           // Место под элемент — остаток строки, но не больше предела: иначе
           // трёхсегментный переключатель растягивался бы на полстраницы.
-          final room = cns.maxWidth - 140 - AppDimens.space12;
+          final room = cns.maxWidth - _minLabelWidth - AppDimens.space12;
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [

@@ -69,7 +69,6 @@ class AppDimens {
   // ---- Адаптивные брейкпоинты ----
   /// Ниже — компактная (мобильная) раскладка; выше — широкая (десктоп).
   static const double breakpointCompact = 640;
-  static const double breakpointMedium = 960;
 
   /// Порог трёхпанельной раскладки Windows (§4.1).
   static const double breakpointExpanded = 1200;
@@ -80,7 +79,6 @@ class AppDimens {
   // ---- Ширины панелей на широком экране ----
   static const double navRailWidth = 268;
   static const double navRailWidthUltra = 300;
-  static const double catalogPaneWidth = 340;
   static const double maxContentWidth = 1160;
   static const double maxContentWidthUltra = 1560;
 }

@@ -25,6 +25,10 @@ import 'collection_entry_picker.dart';
 import 'collection_providers.dart';
 import 'smart_collections.dart';
 
+/// Наименьшая приемлемая ширина карточки подборки. Карточка широкая и низкая:
+/// в ней стоят название, описание и строка счётчиков.
+const double _collectionTileWidth = 260;
+
 /// Экран подборок (§27): ручные списки записей внутри профиля.
 /// Подборки не заменяют категории.
 class CollectionsScreen extends ConsumerStatefulWidget {
@@ -102,7 +106,11 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
           ),
           child: LayoutBuilder(
             builder: (context, cns) {
-              final cols = (cns.maxWidth / 300).floor().clamp(1, 5);
+              final cols = context.layout.columnsFor(
+                cns.maxWidth - context.layout.gutter * 2,
+                tileWidth: _collectionTileWidth,
+                min: 1,
+              );
               return GridView.builder(
                 padding: EdgeInsets.fromLTRB(
                   context.layout.gutter,

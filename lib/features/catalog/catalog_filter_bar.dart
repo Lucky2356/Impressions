@@ -8,6 +8,7 @@ import '../../app/data_refresh.dart';
 import '../../core/domain/relation.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
+import '../../core/theme/app_layout.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
@@ -18,6 +19,14 @@ import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'catalog_providers.dart';
 import 'catalog_screen.dart';
+
+/// Целевая ширина ячейки в панели отбора.
+///
+/// Списки стоят в сетке одной ширины: так фильтры выглядят единообразно, а не
+/// «короткий — длинный — короткий». Мерка считается по самой тесной ячейке —
+/// сортировке: рядом с её списком стоит ещё и кнопка направления, и на её
+/// 44 точки список у сортировки всегда уже остальных.
+const double _dropdownWidth = 250;
 
 class FilterBar extends ConsumerWidget {
   const FilterBar({
@@ -208,8 +217,13 @@ class FilterBar extends ConsumerWidget {
     // длинный — короткий».
     final filterGrid = LayoutBuilder(
       builder: (context, cns) {
-        final cols = cns.maxWidth >= 900 ? 4 : (cns.maxWidth >= 520 ? 2 : 1);
-        final gap = AppDimens.space8;
+        const gap = AppDimens.space8;
+        final cols = context.layout.columnsFor(
+          cns.maxWidth,
+          tileWidth: _dropdownWidth,
+          min: 1,
+          spacing: gap,
+        );
         final cellWidth = cols == 1
             ? cns.maxWidth
             : (cns.maxWidth - gap * (cols - 1)) / cols;

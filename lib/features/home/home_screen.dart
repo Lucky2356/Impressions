@@ -20,6 +20,16 @@ import '../wishlist/wishlist_screen.dart';
 import 'home_providers.dart';
 import 'pinned_store.dart';
 
+/// Целевая ширина широкой плитки: значок, название и счётчик в одну строку.
+/// Такие плитки стоят у корневых категорий и в «Закреплённом».
+const double _wideTileWidth = 200;
+
+/// С какой ширины рядом с главной колонкой помещается боковая.
+///
+/// Считается по содержимому: главная колонка с сеткой обложек плюс 360 точек
+/// боковой. Уже — колонки встают друг под друга.
+const double _sideColumnWidth = 1080;
+
 /// Главная (§14): визуальная сводка активного профиля на реальных данных.
 /// Пустые блоки не показываются.
 class HomeScreen extends ConsumerWidget {
@@ -63,7 +73,8 @@ class HomeScreen extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final layout = AppLayout.resolve(constraints.maxWidth);
-        final showSide = hasWishlist && constraints.maxWidth >= 1080;
+        final showSide =
+            hasWishlist && constraints.maxWidth >= _sideColumnWidth;
         final horizontal = layout.gutter;
 
         return SingleChildScrollView(
@@ -164,13 +175,12 @@ class _MainColumn extends ConsumerWidget {
         const SizedBox(height: AppDimens.space16),
         LayoutBuilder(
           builder: (context, cns) {
-            final cols = cns.maxWidth >= 1100
-                ? 5
-                : cns.maxWidth >= 820
-                ? 4
-                : cns.maxWidth >= 520
-                ? 3
-                : 2;
+            // Обложки те же, что в каталоге, — и мерка ячейки та же: иначе
+            // главная и каталог показывают карточки разного размера.
+            final cols = context.layout.columnsFor(
+              cns.maxWidth,
+              tileWidth: context.layout.gridTileWidth,
+            );
             return _grid(
               context,
               [
@@ -203,11 +213,11 @@ class _MainColumn extends ConsumerWidget {
           const SizedBox(height: AppDimens.space16),
           LayoutBuilder(
             builder: (context, cns) {
-              final cols = cns.maxWidth >= 900
-                  ? 4
-                  : cns.maxWidth >= 560
-                  ? 2
-                  : 1;
+              final cols = context.layout.columnsFor(
+                cns.maxWidth,
+                tileWidth: _wideTileWidth,
+                min: 1,
+              );
               final palette = c.profilePalette;
               return _grid(
                 context,
@@ -367,18 +377,20 @@ class _YearAgoBlock extends ConsumerWidget {
         const SizedBox(height: AppDimens.space16),
         LayoutBuilder(
           builder: (context, cns) {
-            final cols = cns.maxWidth >= 900
-                ? 4
-                : cns.maxWidth >= 560
-                ? 3
-                : 2;
+            final cols = context.layout.columnsFor(
+              cns.maxWidth,
+              tileWidth: context.layout.gridTileWidth,
+            );
             return GridView.count(
               crossAxisCount: cols,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: AppDimens.space16,
               crossAxisSpacing: AppDimens.space16,
-              childAspectRatio: 0.62,
+              // Поправка на масштаб шрифта — по тому же правилу, что и в
+              // [_grid]: подписи под обложкой растут вместе с ним.
+              childAspectRatio:
+                  0.62 / MediaQuery.textScalerOf(context).scale(1),
               children: [
                 for (final e in then.take(cols))
                   EntryMenuTarget(
@@ -450,11 +462,11 @@ class _PinnedBlock extends ConsumerWidget {
         const SizedBox(height: AppDimens.space16),
         LayoutBuilder(
           builder: (context, cns) {
-            final cols = cns.maxWidth >= 900
-                ? 4
-                : cns.maxWidth >= 560
-                ? 2
-                : 1;
+            final cols = context.layout.columnsFor(
+              cns.maxWidth,
+              tileWidth: _wideTileWidth,
+              min: 1,
+            );
             return GridView.count(
               crossAxisCount: cols,
               shrinkWrap: true,
