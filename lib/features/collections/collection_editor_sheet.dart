@@ -201,9 +201,12 @@ class _CollectionEditorSheetState extends ConsumerState<CollectionEditorSheet> {
               children: [
                 _preview(),
                 const SizedBox(height: AppDimens.space20),
+                // Enter в названии сохраняет: ради одного поля тянуться к
+                // кнопке в конце длинной формы незачем.
                 TextField(
                   key: const Key('collection-name'),
                   controller: _name,
+                  onSubmitted: (_) => _saving ? null : _save(),
                   decoration: InputDecoration(
                     labelText: l10n.collectionNameLabel,
                   ),

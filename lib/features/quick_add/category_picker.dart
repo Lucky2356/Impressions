@@ -92,12 +92,11 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: TextField(
+          // То же поле, что и в каталоге, дереве и настройках: сырой
+          // TextField был единственным поиском без кнопки очистки.
+          child: AppSearchField(
             autofocus: true,
-            decoration: InputDecoration(
-              hintText: l10n.quickAddSearchCategory,
-              prefixIcon: const Icon(Icons.search_rounded, size: 20),
-            ),
+            hint: l10n.quickAddSearchCategory,
             onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
           ),
         ),

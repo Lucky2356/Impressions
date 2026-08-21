@@ -694,6 +694,8 @@
 
   "hotkeysTitle": "Горячие клавиши",
   "hotkeyNewEntry": "Новая запись",
+  "hotkeyPalette": "Палитра команд",
+  "hotkeySelectAll": "Выделить всё в каталоге",
   "hotkeySearch": "Поиск",
   "hotkeyImport": "Импорт",
   "hotkeyExport": "Экспорт",

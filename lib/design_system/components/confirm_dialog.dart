@@ -55,12 +55,17 @@ class ConfirmDialog extends StatelessWidget {
         AppDimens.space16,
         AppDimens.space16,
       ),
+      // Кнопке нужен фокус, иначе Enter в самом частом диалоге приложения не
+      // делает ничего. У необратимого действия фокус стоит на «Отмене»:
+      // случайный Enter не должен удалять.
       actions: [
         TextButton(
+          autofocus: destructive,
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(cancelLabel ?? l10n.commonCancel),
         ),
         FilledButton(
+          autofocus: !destructive,
           style: destructive
               ? FilledButton.styleFrom(backgroundColor: c.coral)
               : null,

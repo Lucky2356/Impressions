@@ -3710,6 +3710,18 @@ abstract class AppLocalizations {
   /// **'Новая запись'**
   String get hotkeyNewEntry;
 
+  /// No description provided for @hotkeyPalette.
+  ///
+  /// In ru, this message translates to:
+  /// **'Палитра команд'**
+  String get hotkeyPalette;
+
+  /// No description provided for @hotkeySelectAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выделить всё в каталоге'**
+  String get hotkeySelectAll;
+
   /// No description provided for @hotkeySearch.
   ///
   /// In ru, this message translates to:

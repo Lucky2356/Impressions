@@ -217,9 +217,12 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
               children: [
                 _preview(l10n),
                 const SizedBox(height: AppDimens.space20),
+                // Enter в названии сохраняет: ради одного поля тянуться к
+                // кнопке в конце длинной формы незачем.
                 TextField(
                   key: const Key('category-name'),
                   controller: _name,
+                  onSubmitted: (_) => _saving ? null : _save(),
                   decoration: InputDecoration(
                     labelText: l10n.categoryNameLabel,
                   ),

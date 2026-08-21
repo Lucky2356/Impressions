@@ -2246,6 +2246,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hotkeyNewEntry => 'Новая запись';
 
   @override
+  String get hotkeyPalette => 'Палитра команд';
+
+  @override
+  String get hotkeySelectAll => 'Выделить всё в каталоге';
+
+  @override
   String get hotkeySearch => 'Поиск';
 
   @override

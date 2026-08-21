@@ -174,6 +174,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         error: (e, _) => ErrorState(error: e),
         data: (found) {
           final list = found.items;
+          // Обёртка стоит выше пустого состояния и берёт фокус сама: раньше
+          // Ctrl+A и Escape не существовали, пока не щёлкнешь мышью в список,
+          // а в пустом каталоге их не было вовсе.
           if (list.isEmpty) {
             final filtered = state.hasFilters;
             return EmptyState(
@@ -234,22 +237,47 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 /// Стрелки и Enter работают через обычный обход фокуса Flutter: карточки
 /// фокусируемы, поэтому отдельный обработчик нужен только для действий над
 /// выделением.
-class _CatalogShortcuts extends ConsumerWidget {
+class _CatalogShortcuts extends ConsumerStatefulWidget {
   const _CatalogShortcuts({required this.entries, required this.child});
 
   final List<EntryView> entries;
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CatalogShortcuts> createState() => _CatalogShortcutsState();
+}
+
+class _CatalogShortcutsState extends ConsumerState<_CatalogShortcuts> {
+  final _focus = FocusNode(debugLabel: 'catalog');
+
+  @override
+  void initState() {
+    super.initState();
+    // Фокус берётся сразу при входе в раздел: `autofocus` здесь не работает —
+    // фокус уже держит оболочка, — а без фокуса Ctrl+A и Escape не
+    // существовали, пока не щёлкнешь мышью в список. Горячие клавиши
+    // оболочки при этом продолжают работать: они ловятся выше по дереву.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selection = ref.read(catalogSelectionProvider.notifier);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyA, control: true): () =>
-            selection.selectAll(entries.map((e) => e.entryId)),
+            selection.selectAll(widget.entries.map((e) => e.entryId)),
         const SingleActivator(LogicalKeyboardKey.escape): selection.clear,
       },
-      child: Focus(child: child),
+      child: Focus(focusNode: _focus, child: widget.child),
     );
   }
 }

@@ -52,6 +52,7 @@ class BackupPasswordDialog extends StatefulWidget {
 class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
   final _password = TextEditingController();
   final _repeat = TextEditingController();
+  final _repeatFocus = FocusNode();
   String? _error;
   bool _hidden = true;
 
@@ -63,6 +64,7 @@ class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
   void dispose() {
     _password.dispose();
     _repeat.dispose();
+    _repeatFocus.dispose();
     super.dispose();
   }
 
@@ -107,7 +109,11 @@ class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
               controller: _password,
               autofocus: true,
               obscureText: _hidden,
-              onSubmitted: (_) => widget.confirmPassword ? null : _submit(),
+              // С подтверждением Enter переводит в поле повтора, без него
+              // отправляет: раньше в первом случае он не делал ничего.
+              onSubmitted: (_) => widget.confirmPassword
+                  ? _repeatFocus.requestFocus()
+                  : _submit(),
               decoration: InputDecoration(
                 labelText: l10n.backupPasswordField,
                 suffixIcon: IconButton(
@@ -126,6 +132,7 @@ class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
               const SizedBox(height: AppDimens.space12),
               TextField(
                 controller: _repeat,
+                focusNode: _repeatFocus,
                 obscureText: _hidden,
                 onSubmitted: (_) => _submit(),
                 decoration: InputDecoration(

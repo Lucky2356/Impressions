@@ -30,7 +30,6 @@ export 'components/rating_picker.dart';
 export 'components/rating_view.dart';
 export 'components/relation_chip.dart';
 export 'components/screen_header.dart';
-export 'components/section_async.dart';
 export 'components/section_header.dart';
 export 'components/settings_group.dart';
 export 'components/skeleton.dart';

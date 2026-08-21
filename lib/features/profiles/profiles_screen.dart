@@ -269,6 +269,11 @@ class _LocalSettingsDialogState extends State<_LocalSettingsDialog> {
     super.dispose();
   }
 
+  /// Закрывает диалог с набранным. То же делает Enter в поле имени.
+  void _submit(BuildContext context) => Navigator.of(
+    context,
+  ).pop((name: _nameCtrl.text.trim(), note: _noteCtrl.text.trim()));
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -286,6 +291,7 @@ class _LocalSettingsDialogState extends State<_LocalSettingsDialog> {
           TextField(
             controller: _nameCtrl,
             autofocus: true,
+            onSubmitted: (_) => _submit(context),
             decoration: InputDecoration(
               labelText: l10n.profileLocalName,
               hintText: l10n.profileLocalNameHint,
@@ -306,9 +312,7 @@ class _LocalSettingsDialogState extends State<_LocalSettingsDialog> {
           child: Text(l10n.commonCancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(
-            context,
-          ).pop((name: _nameCtrl.text.trim(), note: _noteCtrl.text.trim())),
+          onPressed: () => _submit(context),
           child: Text(l10n.commonSave),
         ),
       ],

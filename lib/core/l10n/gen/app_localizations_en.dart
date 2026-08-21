@@ -2191,6 +2191,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hotkeyNewEntry => 'New entry';
 
   @override
+  String get hotkeyPalette => 'Command palette';
+
+  @override
+  String get hotkeySelectAll => 'Select everything in the catalog';
+
+  @override
   String get hotkeySearch => 'Search';
 
   @override

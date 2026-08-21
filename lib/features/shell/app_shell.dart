@@ -22,6 +22,7 @@ import '../categories/categories_screen.dart';
 import '../categories/category_providers.dart';
 import '../collections/collections_screen.dart';
 import '../compare/compare_screen.dart';
+import '../exchange/export_dialog.dart';
 import '../exchange/import_screen.dart';
 import '../exchange/incoming_screen.dart';
 import '../home/home_screen.dart';
@@ -333,6 +334,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     await QuickAddSheet.show(context, queue: scanned);
   }
 
+  /// Выгрузка активного профиля.
+  ///
+  /// До 1.21.0 Ctrl+E вёл в «Профили», то есть делал ровно то же, что Ctrl+P,
+  /// хотя справка обещала экспорт.
+  Future<void> _export() async {
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+    await ExportDialog.show(context, profile);
+  }
+
   /// Горячие клавиши Windows (§4.1). Escape обрабатывают сами диалоги.
   Map<ShortcutActivator, VoidCallback> _shortcuts() => {
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
@@ -345,8 +356,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         _searchFocus.requestFocus,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true): () =>
         _go(NavIds.import),
-    const SingleActivator(LogicalKeyboardKey.keyE, control: true): () =>
-        _go(NavIds.profiles),
+    const SingleActivator(LogicalKeyboardKey.keyE, control: true): _export,
     const SingleActivator(LogicalKeyboardKey.keyP, control: true): () =>
         _go(NavIds.profiles),
     const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>

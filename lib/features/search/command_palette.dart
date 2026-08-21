@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/navigation.dart';
@@ -7,6 +8,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/utils/normalize.dart';
 import '../../data/db/database.dart';
+import '../../design_system/design_system.dart';
 import '../categories/category_providers.dart';
 import '../catalog/catalog_providers.dart';
 import 'recent_store.dart';
@@ -29,8 +31,8 @@ class PaletteItem {
 /// Палитра команд: одно поле вместо восьми горячих клавиш.
 ///
 /// Сочетания были фиксированными и вели каждое в своё место; чтобы попасть в
-/// категорию или к записи, всё равно приходилось идти руками. Здесь ищутся
-/// разделы, категории, записи и действия сразу.
+/// категорию, всё равно приходилось идти руками. Здесь ищутся разделы и
+/// категории профиля, а на пустом поле сверху стоят недавние запросы.
 class CommandPalette extends ConsumerStatefulWidget {
   const CommandPalette({super.key});
 
@@ -50,10 +52,19 @@ class CommandPalette extends ConsumerStatefulWidget {
 
 class _CommandPaletteState extends ConsumerState<CommandPalette> {
   final _query = TextEditingController();
+  final _scroll = ScrollController();
+
+  /// Куда указывают стрелки. Палитру открывают с клавиатуры, а водила по ней
+  /// до 1.21.0 только мышь.
+  int _selected = 0;
+
+  /// Строка, до которой надо долистать после ближайшей отрисовки.
+  final _selectedKey = GlobalKey();
 
   @override
   void dispose() {
     _query.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -69,10 +80,35 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
     _go(NavIds.catalog);
   }
 
-  /// Всё, что палитра умеет предложить под запрос.
+  void _search(String query) {
+    ref.read(catalogStateProvider.notifier)
+      ..reset()
+      ..setSearch(query);
+    _go(NavIds.catalog);
+  }
+
+  /// Всё, что палитра умеет предложить под запрос, одним списком.
+  ///
+  /// Недавние запросы — такие же строки, как остальные: иначе выделение
+  /// стрелками пришлось бы вести по двум спискам сразу.
   List<PaletteItem> _items(AppLocalizations l10n, String query) {
     final normalized = Normalize.forMatch(query);
     final items = <PaletteItem>[];
+
+    // Недавнее — подсказка, а не результат: показываем только на пустом поле.
+    if (normalized.isEmpty) {
+      final recent = ref.watch(recentStoreProvider).value?.searches ?? const [];
+      for (final text in recent.take(5)) {
+        items.add(
+          PaletteItem(
+            group: l10n.recentSearches,
+            label: text,
+            icon: Icons.history_rounded,
+            run: () => _search(text),
+          ),
+        );
+      }
+    }
 
     for (final id in NavIds.all) {
       items.add(
@@ -106,103 +142,99 @@ class _CommandPaletteState extends ConsumerState<CommandPalette> {
     ];
   }
 
+  void _move(int delta, int count) {
+    if (count == 0) return;
+    setState(() => _selected = (_selected + delta) % count);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final box = _selectedKey.currentContext;
+      if (box != null) Scrollable.ensureVisible(box, alignment: 0.5);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final items = _items(l10n, _query.text);
-    final recent = ref.watch(recentStoreProvider).value?.searches ?? const [];
+    if (_selected >= items.length) _selected = 0;
 
-    // Строки собираются построителями: палитра знает все разделы и все
+    // Строки собираются построителем: палитра знает все разделы и все
     // категории профиля, и раньше каждая из них становилась виджетом на
     // каждый набранный символ — при том что на экране их помещается десяток.
-    final rows = <WidgetBuilder>[];
-
-    // Недавние запросы — сверху и только на пустом поле: они подсказка, а не
-    // результат.
-    if (_query.text.isEmpty && recent.isNotEmpty) {
-      rows.add(
-        (context) => Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimens.space16,
-            AppDimens.space8,
-            AppDimens.space16,
-            AppDimens.space4,
-          ),
-          child: Text(
-            l10n.recentSearches,
-            style: context.text.labelSmall?.copyWith(color: c.textMuted),
-          ),
-        ),
-      );
-      for (final query in recent.take(5)) {
-        rows.add(
-          (_) => ListTile(
-            dense: true,
-            leading: const Icon(Icons.history_rounded, size: 18),
-            title: Text(query),
-            onTap: () {
-              ref.read(catalogStateProvider.notifier)
-                ..reset()
-                ..setSearch(query);
-              _go(NavIds.catalog);
-            },
-          ),
-        );
-      }
-      rows.add((_) => Divider(height: 1, color: c.border));
-    }
-
-    for (final item in items) {
-      rows.add(
-        (context) => ListTile(
-          dense: true,
-          leading: Icon(item.icon, size: 18),
-          title: Text(item.label),
-          subtitle: Text(
-            item.group,
-            style: context.text.labelSmall?.copyWith(color: c.textMuted),
-          ),
-          onTap: item.run,
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: TextField(
-            controller: _query,
-            autofocus: true,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: l10n.commandPaletteHint,
-              prefixIcon: const Icon(Icons.bolt_rounded),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+            _move(1, items.length),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+            _move(-1, items.length),
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(AppDimens.space16),
+            child: AppSearchField(
+              controller: _query,
+              autofocus: true,
+              hint: l10n.commandPaletteHint,
+              onChanged: (_) => setState(() => _selected = 0),
+              onSubmitted: (_) {
+                if (_selected < items.length) items[_selected].run();
+              },
             ),
           ),
-        ),
-        Divider(height: 1, color: c.border),
-        Expanded(
-          child: items.isEmpty && recent.isEmpty
-              ? Center(
-                  child: Text(
-                    l10n.commonNothingFound,
-                    style: context.text.bodyMedium?.copyWith(
-                      color: c.textMuted,
+          Divider(height: 1, color: c.border),
+          Expanded(
+            child: items.isEmpty
+                ? EmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: l10n.commonNothingFound,
+                  )
+                : ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimens.space8,
                     ),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      final selected = i == _selected;
+                      final newGroup =
+                          i == 0 || items[i - 1].group != item.group;
+                      return Column(
+                        key: selected ? _selectedKey : null,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (newGroup)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppDimens.space16,
+                                AppDimens.space8,
+                                AppDimens.space16,
+                                AppDimens.space4,
+                              ),
+                              child: Text(
+                                item.group,
+                                style: context.text.labelSmall?.copyWith(
+                                  color: c.textMuted,
+                                ),
+                              ),
+                            ),
+                          ListTile(
+                            dense: true,
+                            selected: selected,
+                            selectedTileColor: c.navActiveBg,
+                            leading: Icon(item.icon, size: 18),
+                            title: Text(item.label),
+                            onTap: item.run,
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppDimens.space8,
-                  ),
-                  itemCount: rows.length,
-                  itemBuilder: (context, i) => rows[i](context),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }

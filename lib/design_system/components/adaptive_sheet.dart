@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/app_dimens.dart';
 
@@ -36,8 +37,64 @@ Future<T?> showAdaptiveSheet<T>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (ctx) => heightFactor == null
-        ? builder(ctx)
-        : FractionallySizedBox(heightFactor: heightFactor, child: builder(ctx)),
+    builder: (ctx) => _EscapeScope(
+      child: heightFactor == null
+          ? builder(ctx)
+          : FractionallySizedBox(
+              heightFactor: heightFactor,
+              child: builder(ctx),
+            ),
+    ),
   );
+}
+
+/// Закрывает нижний лист по Escape.
+///
+/// Escape обещан в справке, но `showModalBottomSheet` его не ловит: на Windows
+/// листы открывают так же часто, как диалоги, а закрыть их с клавиатуры было
+/// нечем. Перехват стоит здесь, а не в каждом листе.
+class _EscapeScope extends StatefulWidget {
+  const _EscapeScope({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_EscapeScope> createState() => _EscapeScopeState();
+}
+
+class _EscapeScopeState extends State<_EscapeScope> {
+  final _node = FocusNode(debugLabel: 'sheet-escape', skipTraversal: true);
+
+  @override
+  void initState() {
+    super.initState();
+    // Фокус берём, только если внутри его никто не взял: без фокуса нажатие
+    // до нас не долетит, но отбирать курсор у поля нельзя — форма записи
+    // открывается с курсором в названии, и так это и должно остаться.
+    // Через кадр после первого: автофокус поля разбирается в конце первого
+    // кадра, и проверка, сделанная там же, успевала увидеть «фокуса нет» — а
+    // взяв его, отменила бы автофокус вовсе.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_node.hasFocus) _node.requestFocus();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _node.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).maybePop(),
+      },
+      child: Focus(focusNode: _node, child: widget.child),
+    );
+  }
 }

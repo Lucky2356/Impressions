@@ -120,6 +120,30 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
     super.dispose();
   }
 
+  /// Закрывает диалог с набранным. Пустое название не сохраняем.
+  ///
+  /// Отдельным методом, а не телом кнопки: то же самое делает Enter в любом
+  /// однострочном поле, и второй экземпляр той же логики разошёлся бы с этим.
+  void _save() {
+    final title = _title.text.trim();
+    if (title.isEmpty) return;
+
+    // Пустое поле — это «стереть», а не «оставить как было»: форма показывает
+    // всё сразу, и очистить её человек может нарочно.
+    String? orNull(String value) {
+      final text = value.trim();
+      return text.isEmpty ? null : text;
+    }
+
+    Navigator.of(context).pop((
+      title: title,
+      altTitle: orNull(_altTitle.text),
+      summary: orNull(_summary.text),
+      creator: orNull(_creator.text),
+      year: int.tryParse(_year.text.trim()),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -137,9 +161,12 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
               style: context.text.labelSmall?.copyWith(color: c.textMuted),
             ),
             const SizedBox(height: AppDimens.space16),
+            // Enter в однострочном поле сохраняет: до 1.21.0 он не делал
+            // ничего ни в одном из четырёх.
             TextField(
               controller: _title,
               autofocus: true,
+              onSubmitted: (_) => _save(),
               decoration: InputDecoration(labelText: l10n.quickAddNameLabel),
             ),
             const SizedBox(height: AppDimens.space16),
@@ -149,6 +176,7 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
             // сериал, и искать его хочется обоими написаниями.
             TextField(
               controller: _altTitle,
+              onSubmitted: (_) => _save(),
               decoration: InputDecoration(
                 labelText: l10n.objectAltTitle,
                 hintText: l10n.objectAltTitleHint,
@@ -157,12 +185,14 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
             const SizedBox(height: AppDimens.space16),
             TextField(
               controller: _creator,
+              onSubmitted: (_) => _save(),
               decoration: InputDecoration(labelText: l10n.entryCreatorLabel),
             ),
             const SizedBox(height: AppDimens.space16),
             TextField(
               controller: _year,
               keyboardType: TextInputType.number,
+              onSubmitted: (_) => _save(),
               decoration: InputDecoration(labelText: l10n.entryYearLabel),
             ),
             const SizedBox(height: AppDimens.space16),
@@ -185,27 +215,7 @@ class ObjectEditDialogState extends State<ObjectEditDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.commonCancel),
         ),
-        FilledButton(
-          onPressed: () {
-            final title = _title.text.trim();
-            if (title.isEmpty) return;
-            // Пустое поле — это «стереть», а не «оставить как было»: форма
-            // показывает всё сразу, и очистить её человек может нарочно.
-            String? orNull(String value) {
-              final text = value.trim();
-              return text.isEmpty ? null : text;
-            }
-
-            Navigator.of(context).pop((
-              title: title,
-              altTitle: orNull(_altTitle.text),
-              summary: orNull(_summary.text),
-              creator: orNull(_creator.text),
-              year: int.tryParse(_year.text.trim()),
-            ));
-          },
-          child: Text(l10n.commonSave),
-        ),
+        FilledButton(onPressed: _save, child: Text(l10n.commonSave)),
       ],
     );
   }
