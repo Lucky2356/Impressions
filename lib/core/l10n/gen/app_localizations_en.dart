@@ -1109,6 +1109,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorRetry => 'Try again';
 
   @override
+  String get busyBackup => 'Making a backup…';
+
+  @override
+  String get busyVerify => 'Checking the backup…';
+
+  @override
+  String get busyRestore => 'Restoring the backup…';
+
+  @override
+  String get busyDoctor => 'Checking the data…';
+
+  @override
+  String get busyEncrypt => 'Rewriting the database…';
+
+  @override
+  String get stageCollecting => 'Collecting entries…';
+
+  @override
+  String get stageWriting => 'Writing the file…';
+
+  @override
+  String get stageBackup => 'Making a backup before the import…';
+
+  @override
+  String get stageApplying => 'Transferring entries…';
+
+  @override
   String get imageMissing => 'File not found';
 
   @override

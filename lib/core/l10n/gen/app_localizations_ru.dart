@@ -1138,6 +1138,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errorRetry => 'Повторить';
 
   @override
+  String get busyBackup => 'Делаю копию…';
+
+  @override
+  String get busyVerify => 'Проверяю копию…';
+
+  @override
+  String get busyRestore => 'Разворачиваю копию…';
+
+  @override
+  String get busyDoctor => 'Сверяю данные…';
+
+  @override
+  String get busyEncrypt => 'Переписываю базу…';
+
+  @override
+  String get stageCollecting => 'Собираю записи…';
+
+  @override
+  String get stageWriting => 'Пишу файл…';
+
+  @override
+  String get stageBackup => 'Делаю копию перед импортом…';
+
+  @override
+  String get stageApplying => 'Переношу записи…';
+
+  @override
   String get imageMissing => 'Файл не найден';
 
   @override

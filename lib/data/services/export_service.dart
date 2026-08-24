@@ -113,6 +113,9 @@ class ExportResult {
 }
 
 /// Сборка подписанного контейнера профиля `*.impressions` (§19).
+/// Чем занята выгрузка прямо сейчас.
+enum ExportStage { collecting, writing }
+
 class ExportService {
   /// [mediaDirectory] — каталог снимков; задаётся только в тестах, чтобы они
   /// не писали в папку приложения.
@@ -136,8 +139,17 @@ class ExportService {
   }
 
   /// Экспортирует профиль в байты контейнера.
-  Future<ExportResult> export(String profileId, ExportOptions options) async {
+  /// [onStage] — куда сообщать, чем занят: сбор записей и запись файла на
+  /// большом профиле занимают заметное время, а полоса всё это время просто
+  /// висела, ничего не объясняя.
+  Future<ExportResult> export(
+    String profileId,
+    ExportOptions options, {
+    void Function(ExportStage stage)? onStage,
+  }) async {
+    onStage?.call(ExportStage.collecting);
     final data = await _collect(profileId, options);
+    onStage?.call(ExportStage.writing);
     final packageId = Ids.newId();
 
     final files = <String, List<int>>{};

@@ -61,7 +61,11 @@ class BackupsSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final service = BackupService(ref.read(appDatabaseProvider));
 
-    var check = await service.verify(backup.path);
+    var check = await runBusy(
+      context,
+      () => service.verify(backup.path),
+      label: l10n.busyVerify,
+    );
     if (check == BackupCheck.passwordRequired) {
       if (!context.mounted) return;
       final password = await BackupPasswordDialog.show(
@@ -70,7 +74,12 @@ class BackupsSection extends ConsumerWidget {
         message: l10n.backupUnlockMessage,
       );
       if (password == null) return;
-      check = await service.verify(backup.path, password: password);
+      if (!context.mounted) return;
+      check = await runBusy(
+        context,
+        () => service.verify(backup.path, password: password),
+        label: l10n.busyVerify,
+      );
     }
     if (!context.mounted) return;
 
@@ -180,7 +189,11 @@ class BackupsSection extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final db = ref.read(appDatabaseProvider);
-    var result = await BackupService(db).restore(path, closeDatabase: db.close);
+    var result = await runBusy(
+      context,
+      () => BackupService(db).restore(path, closeDatabase: db.close),
+      label: l10n.busyRestore,
+    );
 
     // Копия с другого устройства: ключа здесь нет, но пароль знает владелец.
     if (result.status == RestoreStatus.passwordRequired) {
@@ -191,9 +204,14 @@ class BackupsSection extends ConsumerWidget {
         message: l10n.backupUnlockMessage,
       );
       if (password == null) return;
-      result = await BackupService(
-        db,
-      ).restore(path, closeDatabase: db.close, password: password);
+      if (!context.mounted) return;
+      result = await runBusy(
+        context,
+        () => BackupService(
+          db,
+        ).restore(path, closeDatabase: db.close, password: password),
+        label: l10n.busyRestore,
+      );
     }
     if (!context.mounted) return;
 
@@ -243,7 +261,11 @@ class BackupsSection extends ConsumerWidget {
       trailing: FilledButton.icon(
         onPressed: () async {
           final db = ref.read(appDatabaseProvider);
-          await BackupService(db).create(reason: 'manual');
+          await runBusy(
+            context,
+            () => BackupService(db).create(reason: 'manual'),
+            label: l10n.busyBackup,
+          );
           ref.read(dataRefreshProvider.notifier).bump();
           if (!context.mounted) return;
           showMessage(context, l10n.backupCreated);

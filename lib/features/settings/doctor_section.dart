@@ -26,10 +26,13 @@ class _DoctorSectionState extends ConsumerState<DoctorSection> {
   IntegrityReport? _report;
   bool _busy = false;
 
+  /// Флаг занятости гасил кнопки, но на большой базе это выглядело как
+  /// «нажал, и ничего не произошло»: сверка идёт по всем файлам и связям.
   Future<void> _run(Future<IntegrityReport> Function() action) async {
+    final label = AppLocalizations.of(context).busyDoctor;
     setState(() => _busy = true);
     try {
-      final report = await action();
+      final report = await runBusy(context, action, label: label);
       if (!mounted) return;
       setState(() => _report = report);
     } finally {

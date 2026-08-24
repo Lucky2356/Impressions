@@ -40,6 +40,10 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   bool _includePhotos = true;
   bool _protect = false;
   bool _busy = false;
+
+  /// Чем занята выгрузка прямо сейчас. Полоса без слов на большом профиле
+  /// висела минуту, ничего не объясняя.
+  String? _stage;
   ExportSummary? _summary;
 
   @override
@@ -74,10 +78,23 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
   }
 
   Future<void> _export() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
       final service = ExportService(ref.read(appDatabaseProvider));
-      final result = await service.export(widget.profile.id, _options);
+      final result = await service.export(
+        widget.profile.id,
+        _options,
+        onStage: (stage) {
+          if (!mounted) return;
+          setState(
+            () => _stage = switch (stage) {
+              ExportStage.collecting => l10n.stageCollecting,
+              ExportStage.writing => l10n.stageWriting,
+            },
+          );
+        },
+      );
 
       final delivery = await ref
           .read(fileDeliveryProvider)
@@ -93,7 +110,12 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
       if (!mounted) return;
       reportDeliveryFailure(context, error);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _stage = null;
+        });
+      }
     }
   }
 
@@ -309,6 +331,17 @@ class _ExportDialogState extends ConsumerState<ExportDialog> {
               icon: const Icon(Icons.upload_rounded, size: 20),
               label: Text(l10n.exportAction),
             ),
+            if (_busy) ...[
+              const SizedBox(height: AppDimens.space12),
+              const LinearProgressIndicator(),
+              if (_stage case final stage?) ...[
+                const SizedBox(height: AppDimens.space8),
+                Text(
+                  stage,
+                  style: context.text.labelSmall?.copyWith(color: c.textMuted),
+                ),
+              ],
+            ],
           ],
         ],
       ),

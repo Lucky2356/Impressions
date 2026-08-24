@@ -51,6 +51,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   /// Текст исключения: нужен, только если об ошибке сообщают.
   String? _errorDetails;
   bool _busy = false;
+
+  /// Чем занят импорт прямо сейчас. Копия перед импортом делалась молча, и
+  /// полоса просто висела дольше.
+  String? _stage;
   bool _dragging = false;
   bool _needPassword = false;
   final _password = TextEditingController();
@@ -117,7 +121,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _error = e.message;
       });
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _stage = null;
+        });
+      }
     }
   }
 
@@ -126,11 +135,15 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     if (preview == null) return;
     final l10n = AppLocalizations.of(context);
 
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _stage = l10n.stageBackup;
+    });
     try {
       final db = ref.read(appDatabaseProvider);
       // Резервная копия перед импортом (§28).
       await BackupService(db).create(reason: 'beforeImport');
+      if (mounted) setState(() => _stage = l10n.stageApplying);
       final result = await ImportService(db).apply(preview);
       ref.read(dataRefreshProvider.notifier).bump();
       if (!mounted) return;
@@ -148,7 +161,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _errorDetails = '$e';
       });
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _stage = null;
+        });
+      }
     }
   }
 
@@ -200,6 +218,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         if (_busy) ...[
           const SizedBox(height: AppDimens.space16),
           const LinearProgressIndicator(),
+          if (_stage case final stage?) ...[
+            const SizedBox(height: AppDimens.space8),
+            Text(
+              stage,
+              style: context.text.labelSmall?.copyWith(color: c.textMuted),
+            ),
+          ],
         ],
 
         // Перенос списка из таблицы: выгрузка в CSV была, обратного пути не

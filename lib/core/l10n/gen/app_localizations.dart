@@ -1928,6 +1928,60 @@ abstract class AppLocalizations {
   /// **'Повторить'**
   String get errorRetry;
 
+  /// No description provided for @busyBackup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Делаю копию…'**
+  String get busyBackup;
+
+  /// No description provided for @busyVerify.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверяю копию…'**
+  String get busyVerify;
+
+  /// No description provided for @busyRestore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разворачиваю копию…'**
+  String get busyRestore;
+
+  /// No description provided for @busyDoctor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сверяю данные…'**
+  String get busyDoctor;
+
+  /// No description provided for @busyEncrypt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переписываю базу…'**
+  String get busyEncrypt;
+
+  /// No description provided for @stageCollecting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собираю записи…'**
+  String get stageCollecting;
+
+  /// No description provided for @stageWriting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пишу файл…'**
+  String get stageWriting;
+
+  /// No description provided for @stageBackup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Делаю копию перед импортом…'**
+  String get stageBackup;
+
+  /// No description provided for @stageApplying.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переношу записи…'**
+  String get stageApplying;
+
   /// No description provided for @imageMissing.
   ///
   /// In ru, this message translates to:

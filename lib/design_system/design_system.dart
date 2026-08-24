@@ -8,6 +8,7 @@ export 'components/app_logo.dart';
 export 'components/appear.dart';
 export 'components/app_controls.dart';
 export 'components/breadcrumbs.dart';
+export 'components/busy_overlay.dart';
 export 'components/collection_card.dart';
 export 'components/color_swatches.dart';
 export 'components/confirm_dialog.dart';
