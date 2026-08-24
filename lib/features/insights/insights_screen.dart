@@ -51,6 +51,10 @@ class InsightsScopeNotifier extends Notifier<InsightsScope> {
   InsightsScope build() => const InsightsScope();
 
   void setYearOnly(bool value) => state = state.copyWith(yearOnly: value);
+
+  /// Снимает сужение целиком — разбирать его по одному переключателю, чтобы
+  /// увидеть хоть что-то, незачем.
+  void showEverything() => state = const InsightsScope();
   void setCategory(CategoryRow? category) =>
       state = state.copyWith(category: category, clear: category == null);
 }
@@ -128,7 +132,16 @@ class InsightsScreen extends ConsumerWidget {
         child: EmptyState(
           icon: Icons.insights_rounded,
           title: narrowed ? l10n.insightsScopeEmpty : l10n.insightsEmptyTitle,
-          message: narrowed ? '' : l10n.insightsEmptyMessage,
+          message: narrowed
+              ? l10n.insightsScopeEmptyMessage
+              : l10n.insightsEmptyMessage,
+          action: narrowed
+              ? OutlinedButton(
+                  onPressed: () =>
+                      ref.read(insightsScopeProvider.notifier).showEverything(),
+                  child: Text(l10n.insightsScopeReset),
+                )
+              : null,
         ),
       );
     }

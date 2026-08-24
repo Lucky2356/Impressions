@@ -21,6 +21,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonUndo => 'Вернуть';
 
   @override
+  String get commonClear => 'Очистить';
+
+  @override
   String get commonEdit => 'Редактировать';
 
   @override
@@ -1136,6 +1139,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get errorRetry => 'Повторить';
+
+  @override
+  String get insightsScopeEmptyMessage =>
+      'Отбор сузил выборку до нуля: попробуйте другой год или другую ветку.';
+
+  @override
+  String get insightsScopeReset => 'Показать всё';
+
+  @override
+  String get archiveEmptyAction => 'В каталог';
+
+  @override
+  String get incomingEmptyAction => 'Импортировать файл';
+
+  @override
+  String get compareCreateProfile => 'Создать профиль';
+
+  @override
+  String get settingsSearchClear => 'Очистить поиск';
+
+  @override
+  String get settingsRecentClear => 'Очистить историю поиска';
+
+  @override
+  String get settingsRecentCleared => 'История поиска очищена';
 
   @override
   String get busyBackup => 'Делаю копию…';

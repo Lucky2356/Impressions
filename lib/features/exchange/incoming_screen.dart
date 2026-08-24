@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show OrderingMode, OrderingTerm, Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/navigation.dart';
 import '../../app/data_refresh.dart';
 import '../../core/utils/dates.dart';
 import '../../core/l10n/gen/app_localizations.dart';
@@ -133,6 +134,10 @@ class IncomingScreen extends ConsumerWidget {
             icon: Icons.inbox_rounded,
             title: l10n.incomingEmptyTitle,
             message: l10n.incomingEmptyMessage,
+            action: OutlinedButton(
+              onPressed: () => ref.read(navProvider.notifier).go(NavIds.import),
+              child: Text(l10n.incomingEmptyAction),
+            ),
           );
         }
 

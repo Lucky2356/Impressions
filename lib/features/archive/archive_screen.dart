@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/navigation.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/domain/app_icons.dart';
@@ -163,6 +164,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
         icon: Icons.archive_outlined,
         title: l10n.archiveEmptyTitle,
         message: l10n.archiveEmptyMessage,
+        action: OutlinedButton(
+          onPressed: () => ref.read(navProvider.notifier).go(NavIds.catalog),
+          child: Text(l10n.archiveEmptyAction),
+        ),
       );
     }
 

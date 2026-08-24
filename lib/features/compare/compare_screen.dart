@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/navigation.dart';
 import '../../app/app_state.dart';
 import '../../app/data_refresh.dart';
 import '../../core/domain/relation.dart';
@@ -113,6 +114,10 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
         icon: Icons.compare_arrows_rounded,
         title: l10n.compareNeedTwo,
         message: l10n.compareNeedTwoMessage,
+        action: FilledButton(
+          onPressed: () => ref.read(navProvider.notifier).go(NavIds.profiles),
+          child: Text(l10n.compareCreateProfile),
+        ),
       );
     }
 

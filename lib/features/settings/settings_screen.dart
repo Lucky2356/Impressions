@@ -17,6 +17,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/services/changelog_service.dart';
 import '../../design_system/design_system.dart';
 import '../onboarding/app_tour.dart';
+import '../search/recent_store.dart';
 import 'network_section.dart';
 import 'settings_sections.dart';
 import 'whats_new_dialog.dart';
@@ -165,6 +166,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: Icons.search_off_rounded,
               title: l10n.settingsSearchEmpty,
               message: l10n.settingsSearchEmptyHint,
+              action: OutlinedButton(
+                onPressed: () => setState(_search.clear),
+                child: Text(l10n.settingsSearchClear),
+              ),
             ),
           for (final (i, s) in main.indexed) ...[
             Appear(
@@ -539,6 +544,28 @@ class BehaviourSection extends ConsumerWidget {
                 ])
                   PopupMenuItem(value: mode, child: Text(label(mode))),
               ],
+            ),
+          ],
+        ),
+        Divider(height: AppDimens.space24, color: c.divider),
+        // Историю запросов приложение вело с 1.16.0, а стереть её было нечем:
+        // метод очистки был написан и не вызывался ниоткуда.
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.settingsRecentClear,
+                style: context.text.bodyMedium,
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () async {
+                await ref.read(recentStoreProvider.notifier).clear();
+                if (context.mounted) {
+                  showMessage(context, l10n.settingsRecentCleared);
+                }
+              },
+              child: Text(l10n.commonClear),
             ),
           ],
         ),

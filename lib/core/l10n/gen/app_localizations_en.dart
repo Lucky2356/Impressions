@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonUndo => 'Undo';
 
   @override
+  String get commonClear => 'Clear';
+
+  @override
   String get commonEdit => 'Edit';
 
   @override
@@ -1107,6 +1110,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorRetry => 'Try again';
+
+  @override
+  String get insightsScopeEmptyMessage =>
+      'The filter narrowed the selection to nothing: try another year or branch.';
+
+  @override
+  String get insightsScopeReset => 'Show everything';
+
+  @override
+  String get archiveEmptyAction => 'Go to the catalog';
+
+  @override
+  String get incomingEmptyAction => 'Import a file';
+
+  @override
+  String get compareCreateProfile => 'Create a profile';
+
+  @override
+  String get settingsSearchClear => 'Clear the search';
+
+  @override
+  String get settingsRecentClear => 'Clear the search history';
+
+  @override
+  String get settingsRecentCleared => 'Search history cleared';
 
   @override
   String get busyBackup => 'Making a backup…';

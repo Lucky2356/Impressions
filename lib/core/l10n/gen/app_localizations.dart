@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Вернуть'**
   String get commonUndo;
 
+  /// No description provided for @commonClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get commonClear;
+
   /// No description provided for @commonEdit.
   ///
   /// In ru, this message translates to:
@@ -1927,6 +1933,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Повторить'**
   String get errorRetry;
+
+  /// No description provided for @insightsScopeEmptyMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отбор сузил выборку до нуля: попробуйте другой год или другую ветку.'**
+  String get insightsScopeEmptyMessage;
+
+  /// No description provided for @insightsScopeReset.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать всё'**
+  String get insightsScopeReset;
+
+  /// No description provided for @archiveEmptyAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'В каталог'**
+  String get archiveEmptyAction;
+
+  /// No description provided for @incomingEmptyAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импортировать файл'**
+  String get incomingEmptyAction;
+
+  /// No description provided for @compareCreateProfile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать профиль'**
+  String get compareCreateProfile;
+
+  /// No description provided for @settingsSearchClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить поиск'**
+  String get settingsSearchClear;
+
+  /// No description provided for @settingsRecentClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить историю поиска'**
+  String get settingsRecentClear;
+
+  /// No description provided for @settingsRecentCleared.
+  ///
+  /// In ru, this message translates to:
+  /// **'История поиска очищена'**
+  String get settingsRecentCleared;
 
   /// No description provided for @busyBackup.
   ///
