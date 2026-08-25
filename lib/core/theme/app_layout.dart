@@ -129,7 +129,7 @@ class AppLayout {
       return AppLayout(
         size: LayoutSize.medium,
         width: width,
-        gutter: AppDimens.space20,
+        gutter: AppDimens.space16,
         gridTileWidth: 168,
         sidebarWidth: AppDimens.navRailCollapsedWidth,
         scale: 1,
@@ -139,7 +139,7 @@ class AppLayout {
       return AppLayout(
         size: LayoutSize.expanded,
         width: width,
-        gutter: AppDimens.space24,
+        gutter: AppDimens.space20,
         gridTileWidth: 184,
         sidebarWidth: AppDimens.navRailWidth,
         scale: 1,
@@ -150,7 +150,7 @@ class AppLayout {
     return AppLayout(
       size: LayoutSize.ultra,
       width: width,
-      gutter: AppDimens.space32,
+      gutter: AppDimens.space24,
       gridTileWidth: 216,
       sidebarWidth: AppDimens.navRailWidthUltra,
       scale: 1.15,

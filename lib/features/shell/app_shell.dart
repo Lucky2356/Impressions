@@ -440,7 +440,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           SizedBox(
             width: layout.sidebarWidth,
             child: NavSidebar(
-              appTitle: AppConfig.appName,
+              header: const _ProfileChip(fill: true),
               groups: _groups(l10n, incoming),
               activeId: activeId,
               collapsed: layout.navCollapsed,
@@ -454,6 +454,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 _TopHeader(
                   title: _titleFor(activeId, l10n),
                   wide: wide,
+                  showProfile: false,
                   searchFocus: _searchFocus,
                   onSearch: _search,
                   onSearchSubmitted: _searchSubmitted,
@@ -501,6 +502,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: _TopHeader(
               title: _titleFor(activeId, l10n),
               wide: false,
+              showProfile: true,
               searchFocus: _searchFocus,
               onSearch: _search,
               onSearchSubmitted: _searchSubmitted,
@@ -559,6 +561,7 @@ class _TopHeader extends ConsumerWidget {
   const _TopHeader({
     required this.title,
     required this.wide,
+    required this.showProfile,
     required this.searchFocus,
     required this.onSearch,
     required this.onSearchSubmitted,
@@ -568,6 +571,11 @@ class _TopHeader extends ConsumerWidget {
 
   final String title;
   final bool wide;
+
+  /// Профиль показывается в шапке только там, где нет боковой панели: с
+  /// панелью он стоит в её шапке, а последним в правом углу — колокольчик.
+  final bool showProfile;
+
   final FocusNode searchFocus;
   final ValueChanged<String> onSearch;
   final ValueChanged<String> onSearchSubmitted;
@@ -585,17 +593,21 @@ class _TopHeader extends ConsumerWidget {
     return Container(
       height: wide ? AppDimens.headerHeight : AppDimens.headerHeightCompact,
       color: c.surface,
-      padding: EdgeInsets.symmetric(
-        horizontal: wide ? AppDimens.space24 : AppDimens.space16,
-      ),
+      // Тот же отступ, что у содержимого под шапкой, — иначе заголовок и
+      // первая карточка раздела начинаются на разной высоте от края.
+      padding: EdgeInsets.symmetric(horizontal: context.layout.gutter),
       child: Row(
         children: [
           // Заголовок стоит первым, но уступает место кнопкам: на телефоне
           // «Хочу попробовать» вместе с тремя значками и профилем в 400 точек
           // не помещалось, и шапка показывала полосатую ленту переполнения.
           // Обрезать заголовок многоточием можно, убрать кнопку — нет.
-          Flexible(
-            fit: wide ? FlexFit.loose : FlexFit.tight,
+          //
+          // Свободное место забирает он один. Раньше он делил его поровну с
+          // полем поиска и своей половиной не пользовался: строка кончалась
+          // задолго до края, и справа от колокольчика оставалась пустая треть
+          // шапки — при том что правый угол самый приметный.
+          Expanded(
             child: Text(
               title,
               maxLines: 1,
@@ -608,21 +620,16 @@ class _TopHeader extends ConsumerWidget {
           // Гарантированный зазор между заголовком и поиском.
           const SizedBox(width: AppDimens.space24),
           if (wide) ...[
-            // Поиск прижат вправо и сам сжимается, когда места мало: важнее
-            // сохранить заголовок и кнопки, чем ширину поля. Раньше поле имело
-            // фиксированные 360 и наезжало на заголовок.
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 380),
-                  child: AppSearchField(
-                    hint: l10n.searchGlobalHint,
-                    focusNode: searchFocus,
-                    onChanged: onSearch,
-                    onSubmitted: onSearchSubmitted,
-                  ),
-                ),
+            // Ширина поля постоянная: сжимается заголовок, а не оно. Обрезать
+            // заголовок многоточием можно, поле ввода — нет. Развёрнутая шапка
+            // приходит с 1200 точек, и места хватает всем.
+            SizedBox(
+              width: _searchFieldWidth,
+              child: AppSearchField(
+                hint: l10n.searchGlobalHint,
+                focusNode: searchFocus,
+                onChanged: onSearch,
+                onSubmitted: onSearchSubmitted,
               ),
             ),
             const SizedBox(width: AppDimens.space12),
@@ -685,8 +692,10 @@ class _TopHeader extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(width: AppDimens.space12),
-          const _ProfileChip(),
+          if (showProfile) ...[
+            const SizedBox(width: AppDimens.space12),
+            const _ProfileChip(),
+          ],
         ],
       ),
     );
@@ -755,10 +764,17 @@ class _KeyCap extends StatelessWidget {
   }
 }
 
-/// Профиль в шапке. Меню открывается всегда, даже когда профиль один: раньше
-/// нажатие просто ничего не делало.
+/// Поле поиска в развёрнутой шапке.
+const double _searchFieldWidth = 380;
+
+/// Профиль. Меню открывается всегда, даже когда профиль один: раньше нажатие
+/// просто ничего не делало.
 class _ProfileChip extends ConsumerWidget {
-  const _ProfileChip();
+  const _ProfileChip({this.fill = false});
+
+  /// Шапка боковой панели: строка занимает её целиком, а шеврон уходит к
+  /// правому краю. Без этого профиль сжимался бы в комок у левого края.
+  final bool fill;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -773,10 +789,31 @@ class _ProfileChip extends ConsumerWidget {
     final wide = context.layout.isWide;
     final profiles = ref.watch(profilesProvider).value ?? const [];
 
+    final info = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.labelMedium,
+        ),
+        Text(
+          profile.type == 'myPrimary'
+              ? l10n.profileTypePrimary
+              : l10n.profileTypeExternal,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
+        ),
+      ],
+    );
+
     final chip = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space4),
+      padding: EdgeInsets.symmetric(horizontal: fill ? 0 : AppDimens.space4),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: fill && wide ? MainAxisSize.max : MainAxisSize.min,
         children: [
           ProfileAvatar(
             name: name,
@@ -785,31 +822,13 @@ class _ProfileChip extends ConsumerWidget {
           ),
           if (wide) ...[
             const SizedBox(width: AppDimens.space8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 180),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.labelMedium,
-                  ),
-                  Text(
-                    profile.type == 'myPrimary'
-                        ? l10n.profileTypePrimary
-                        : l10n.profileTypeExternal,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.text.labelSmall?.copyWith(
-                      color: c.textMuted,
-                    ),
-                  ),
-                ],
+            if (fill)
+              Expanded(child: info)
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 180),
+                child: info,
               ),
-            ),
             const SizedBox(width: AppDimens.space4),
             Icon(
               Icons.keyboard_arrow_down_rounded,
@@ -823,7 +842,9 @@ class _ProfileChip extends ConsumerWidget {
 
     return PopupMenuButton<String>(
       tooltip: '',
-      offset: const Offset(0, 52),
+      // В шапке панели меню открывается вплотную под профилем; в шапке
+      // раздела ему нужно разминуться с разделителем под ней.
+      offset: fill ? const Offset(0, 8) : const Offset(0, 52),
       position: PopupMenuPosition.under,
       onSelected: (value) {
         switch (value) {

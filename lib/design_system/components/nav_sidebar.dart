@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 
-import 'app_logo.dart';
-
 /// Пункт боковой навигации.
 class NavItemData {
   const NavItemData({
@@ -28,7 +26,7 @@ class NavGroup {
   final List<NavItemData> items;
 }
 
-/// Боковая навигация (ориентир YowBooks): логотип, сгруппированные пункты,
+/// Боковая навигация (ориентир YowBooks): шапка, сгруппированные пункты,
 /// активный пункт — мягкая персиковая заливка + оранжевый текст.
 class NavSidebar extends StatelessWidget {
   const NavSidebar({
@@ -36,7 +34,7 @@ class NavSidebar extends StatelessWidget {
     required this.groups,
     required this.activeId,
     required this.onSelected,
-    required this.appTitle,
+    required this.header,
     this.footer,
     this.collapsed = false,
   });
@@ -44,7 +42,12 @@ class NavSidebar extends StatelessWidget {
   final List<NavGroup> groups;
   final String activeId;
   final ValueChanged<String> onSelected;
-  final String appTitle;
+
+  /// Шапка панели. Раньше здесь стоял значок приложения с названием — самое
+  /// бесполезное место экрана: приложение человек и так узнаёт, а нажать на
+  /// него было нельзя.
+  final Widget header;
+
   final Widget? footer;
 
   /// Только значки: окно шире телефона, но подписям места нет.
@@ -67,7 +70,7 @@ class NavSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Logo(title: appTitle, collapsed: collapsed),
+          _SidebarHeader(collapsed: collapsed, child: header),
           Expanded(
             child: ListView(
               padding: EdgeInsets.symmetric(
@@ -127,46 +130,32 @@ class NavSidebar extends StatelessWidget {
   }
 }
 
-class _Logo extends StatelessWidget {
-  const _Logo({required this.title, required this.collapsed});
-  final String title;
+class _SidebarHeader extends StatelessWidget {
+  const _SidebarHeader({required this.collapsed, required this.child});
+
   final bool collapsed;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     return Container(
       // Ровно та же высота, что у шапки раздела справа, — иначе разделитель
-      // под логотипом и разделитель под шапкой идут двумя разными линиями.
-      // Со значками панель стоит рядом с компактной шапкой, с подписями — с
-      // полной.
+      // под шапкой панели и разделитель под шапкой раздела идут двумя разными
+      // линиями. Со значками панель стоит рядом с компактной шапкой, с
+      // подписями — с полной.
       height: collapsed
           ? AppDimens.headerHeightCompact
           : AppDimens.headerHeight,
       padding: EdgeInsets.symmetric(
-        horizontal: collapsed ? AppDimens.space12 : AppDimens.space24,
+        horizontal: collapsed ? AppDimens.space12 : AppDimens.space16,
       ),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: c.border)),
       ),
-      child: Row(
-        mainAxisAlignment: collapsed
-            ? MainAxisAlignment.center
-            : MainAxisAlignment.start,
-        children: [
-          const AppLogo(size: 34),
-          if (!collapsed) ...[
-            const SizedBox(width: AppDimens.space12),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.text.titleLarge,
-              ),
-            ),
-          ],
-        ],
+      child: Align(
+        alignment: collapsed ? Alignment.center : Alignment.centerLeft,
+        child: child,
       ),
     );
   }

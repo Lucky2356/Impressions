@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:impressions/app/app.dart';
 import 'package:impressions/app/app_state.dart';
+import 'package:impressions/core/theme/app_layout.dart';
 import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/models/entry_view.dart';
 import 'package:impressions/design_system/design_system.dart';
@@ -197,6 +198,54 @@ void main() {
       tester.widget<NavSidebar>(find.byType(NavSidebar)).collapsed,
       isFalse,
     );
+  });
+
+  // Шапку панели занимал значок приложения с названием: нажать на него было
+  // нельзя, а смена профиля пряталась в противоположном углу окна.
+  testWidgets('Профиль стоит в шапке боковой панели, а не в шапке раздела', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app([_profile('p1', 'Александр')]));
+    await tester.pump();
+
+    // Ровно один: в шапке раздела профиля больше нет.
+    expect(find.byType(ProfileAvatar), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(NavSidebar),
+        matching: find.byType(ProfileAvatar),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  // Колокольчик стоял предпоследним, за ним — профиль. Правый угол шапки самый
+  // приметный, и занимать его должно то, что сообщает о новом.
+  testWidgets('Уведомления — последнее, что стоит в шапке справа', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_app([_profile('p1', 'Александр')]));
+    await tester.pump();
+
+    final bell = find.ancestor(
+      of: find.byIcon(Icons.notifications_none_rounded),
+      matching: find.byType(IconActionButton),
+    );
+    expect(bell, findsOneWidget);
+    // Отступ у шапки тот же, что у содержимого раздела: иначе заголовок и
+    // первая карточка начинаются на разном расстоянии от края.
+    final gutter = AppLayout.resolve(1400).gutter;
+    expect(tester.getBottomRight(bell).dx, closeTo(1400 - gutter, 0.5));
   });
 }
 
