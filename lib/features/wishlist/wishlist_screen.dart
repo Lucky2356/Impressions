@@ -76,18 +76,21 @@ class WishlistScreen extends ConsumerWidget {
           ),
         ],
       ),
-      child: ListView.separated(
-        padding: EdgeInsets.fromLTRB(
-          layout.gutter,
-          AppDimens.space16,
-          layout.gutter,
-          AppDimens.space40,
-        ),
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-        itemBuilder: (context, i) => Appear(
-          index: i,
-          child: WishlistTile(entry: items[i]),
+      child: AppearScope(
+        child: ListView.separated(
+          padding: EdgeInsets.fromLTRB(
+            layout.gutter,
+            AppDimens.space16,
+            layout.gutter,
+            AppDimens.space40,
+          ),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
+          itemBuilder: (context, i) => Appear(
+            index: i,
+            id: items[i].entryId,
+            child: WishlistTile(entry: items[i]),
+          ),
         ),
       ),
     );

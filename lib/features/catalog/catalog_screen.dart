@@ -317,30 +317,34 @@ class _Results extends ConsumerWidget {
     final order = [for (final e in entries) e.entryId];
 
     if (view == CatalogViewMode.list) {
-      return NotificationListener<ScrollNotification>(
-        onNotification: (n) => _onScroll(n, ref),
-        child: ListView.separated(
-          // Разделы живут в `KeyedSubtree` и при переключении уничтожаются:
-          // без своего ключа в хранилище страницы каталог возвращался в
-          // начало, и подгруженное приходилось докручивать заново.
-          key: const PageStorageKey('catalog-list'),
-          padding: EdgeInsets.fromLTRB(
-            layout.gutter,
-            AppDimens.space16,
-            layout.gutter,
-            AppDimens.space40,
-          ),
-          itemCount: entries.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppDimens.space8),
-          itemBuilder: (context, i) => Appear(
-            index: i,
-            child: EntryTile(
-              entry: entries[i],
-              selectionActive: selectionActive,
-              order: order,
-              builder: (onTap) => EntryCardCompact(
-                data: entryCardData(context, entries[i], hero: true),
-                onTap: onTap,
+      return AppearScope(
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (n) => _onScroll(n, ref),
+          child: ListView.separated(
+            // Разделы живут в `KeyedSubtree` и при переключении уничтожаются:
+            // без своего ключа в хранилище страницы каталог возвращался в
+            // начало, и подгруженное приходилось докручивать заново.
+            key: const PageStorageKey('catalog-list'),
+            padding: EdgeInsets.fromLTRB(
+              layout.gutter,
+              AppDimens.space16,
+              layout.gutter,
+              AppDimens.space40,
+            ),
+            itemCount: entries.length,
+            separatorBuilder: (_, _) =>
+                const SizedBox(height: AppDimens.space8),
+            itemBuilder: (context, i) => Appear(
+              index: i,
+              id: entries[i].entryId,
+              child: EntryTile(
+                entry: entries[i],
+                selectionActive: selectionActive,
+                order: order,
+                builder: (onTap) => EntryCardCompact(
+                  data: entryCardData(context, entries[i], hero: true),
+                  onTap: onTap,
+                ),
               ),
             ),
           ),
@@ -360,39 +364,42 @@ class _Results extends ConsumerWidget {
           tileWidth: tile,
           spacing: AppDimens.space12,
         );
-        return NotificationListener<ScrollNotification>(
-          onNotification: (n) => _onScroll(n, ref),
-          child: GridView.builder(
-            key: const PageStorageKey('catalog-grid'),
-            padding: EdgeInsets.fromLTRB(
-              layout.gutter,
-              AppDimens.space16,
-              layout.gutter,
-              AppDimens.space40,
-            ),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: cols,
-              mainAxisSpacing: AppDimens.space12,
-              crossAxisSpacing: AppDimens.space12,
-              childAspectRatio: entryCardAspectRatio(
-                availableWidth: cns.maxWidth,
-                columns: cols,
-                outerPadding: layout.gutter * 2,
-                dense: dense,
-                textScale: MediaQuery.textScalerOf(context).scale(1),
+        return AppearScope(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (n) => _onScroll(n, ref),
+            child: GridView.builder(
+              key: const PageStorageKey('catalog-grid'),
+              padding: EdgeInsets.fromLTRB(
+                layout.gutter,
+                AppDimens.space16,
+                layout.gutter,
+                AppDimens.space40,
               ),
-            ),
-            itemCount: entries.length,
-            itemBuilder: (context, i) => Appear(
-              index: i,
-              child: EntryTile(
-                entry: entries[i],
-                selectionActive: selectionActive,
-                order: order,
-                builder: (onTap) => EntryCard(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                mainAxisSpacing: AppDimens.space12,
+                crossAxisSpacing: AppDimens.space12,
+                childAspectRatio: entryCardAspectRatio(
+                  availableWidth: cns.maxWidth,
+                  columns: cols,
+                  outerPadding: layout.gutter * 2,
                   dense: dense,
-                  data: entryCardData(context, entries[i], hero: true),
-                  onTap: onTap,
+                  textScale: MediaQuery.textScalerOf(context).scale(1),
+                ),
+              ),
+              itemCount: entries.length,
+              itemBuilder: (context, i) => Appear(
+                index: i,
+                id: entries[i].entryId,
+                child: EntryTile(
+                  entry: entries[i],
+                  selectionActive: selectionActive,
+                  order: order,
+                  builder: (onTap) => EntryCard(
+                    dense: dense,
+                    data: entryCardData(context, entries[i], hero: true),
+                    onTap: onTap,
+                  ),
                 ),
               ),
             ),
