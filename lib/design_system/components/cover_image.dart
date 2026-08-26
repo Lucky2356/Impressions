@@ -63,10 +63,23 @@ class CoverImage extends StatelessWidget {
             // заглушку — и проверять ничего не нужно.
             _Placeholder(title: title, seedColor: seedColor),
             if (path != null)
-              Image.file(
-                File(path),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              // Ширина ячейки известна только здесь: снаружи её не задают, её
+              // выбирает сетка.
+              LayoutBuilder(
+                builder: (context, cns) => Image.file(
+                  File(path),
+                  fit: BoxFit.cover,
+                  // Обложка — это обычно миниатюра в 400 точек, но у записи
+                  // без миниатюры сюда попадает оригинал до 2048, и без этого
+                  // он разворачивался в памяти целиком: сорок таких карточек
+                  // в сетке каталога — сотни мегабайт ради ячейки в две сотни
+                  // точек шириной.
+                  cacheWidth: cns.maxWidth.isFinite
+                      ? (cns.maxWidth * MediaQuery.devicePixelRatioOf(context))
+                            .round()
+                      : null,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
               ),
           ],
         ),
