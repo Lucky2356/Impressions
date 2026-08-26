@@ -19,9 +19,8 @@ class ThemeModeController extends Notifier<ThemeMode> {
   }
 
   Future<void> _restore() async {
-    final raw = await ref
-        .read(settingsRepositoryProvider)
-        .get(SettingKeys.themeMode);
+    final settings = await ref.read(startupSettingsProvider.future);
+    final raw = settings[SettingKeys.themeMode];
     final restored = ThemeMode.values.where((m) => m.name == raw).firstOrNull;
     if (restored != null) state = restored;
   }

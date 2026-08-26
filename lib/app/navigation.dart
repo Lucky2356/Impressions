@@ -52,9 +52,8 @@ class NavController extends Notifier<String> {
   }
 
   Future<void> _restore() async {
-    final saved = await ref
-        .read(settingsRepositoryProvider)
-        .get(SettingKeys.lastSection);
+    final settings = await ref.read(startupSettingsProvider.future);
+    final saved = settings[SettingKeys.lastSection];
     // Настройку могли дочитать уже после того, как провайдер выбросили —
     // например, при смене профиля.
     if (!ref.mounted) return;

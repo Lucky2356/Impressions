@@ -34,10 +34,8 @@ class LocaleController extends Notifier<Locale?> {
   }
 
   Future<void> _restore() async {
-    final raw = await ref
-        .read(settingsRepositoryProvider)
-        .get(SettingKeys.language);
-    final restored = parse(raw);
+    final settings = await ref.read(startupSettingsProvider.future);
+    final restored = parse(settings[SettingKeys.language]);
     if (restored != null) state = restored;
   }
 

@@ -48,12 +48,10 @@ class UiScaleController extends Notifier<UiScale> {
   }
 
   Future<void> _restore() async {
-    final raw = await ref
-        .read(settingsRepositoryProvider)
-        .get(SettingKeys.uiScale);
+    final settings = await ref.read(startupSettingsProvider.future);
     if (_settled) return;
     _settled = true;
-    state = UiScale.parse(raw);
+    state = UiScale.parse(settings[SettingKeys.uiScale]);
   }
 
   Future<void> set(UiScale value) async {

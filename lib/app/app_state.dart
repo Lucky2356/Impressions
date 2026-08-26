@@ -13,6 +13,25 @@ final seedServiceProvider = Provider<SeedService>((ref) {
   return SeedService(ref.watch(appDatabaseProvider));
 });
 
+/// Настройки, которые нужны на запуске, — одним запросом.
+///
+/// Тема, язык, масштаб интерфейса, последний раздел и активный профиль
+/// восстанавливались каждый своим `get`: пять обращений к базе на первом
+/// кадре, при том что `getAll` написан ровно для такого случая.
+///
+/// Это снимок на запуск, а не наблюдение: после старта значения меняются
+/// только через `set` у самих контроллеров, и состояние держат они же.
+/// Перечитывать нечего, и провайдер живёт всё время работы приложения.
+final startupSettingsProvider = FutureProvider<Map<String, String>>((ref) {
+  return ref.read(settingsRepositoryProvider).getAll(const [
+    SettingKeys.themeMode,
+    SettingKeys.language,
+    SettingKeys.uiScale,
+    SettingKeys.lastSection,
+    SettingKeys.activeProfileId,
+  ]);
+});
+
 /// Все неархивные профили, реактивно.
 final profilesProvider = StreamProvider<List<ProfileRow>>((ref) {
   return ref.watch(profileRepositoryProvider).watchAll();
@@ -28,9 +47,8 @@ final needsOnboardingProvider = Provider<bool>((ref) {
 class ActiveProfileController extends AsyncNotifier<String?> {
   @override
   Future<String?> build() async {
-    return ref
-        .watch(settingsRepositoryProvider)
-        .get(SettingKeys.activeProfileId);
+    final settings = await ref.read(startupSettingsProvider.future);
+    return settings[SettingKeys.activeProfileId];
   }
 
   Future<void> setActive(String profileId) async {
