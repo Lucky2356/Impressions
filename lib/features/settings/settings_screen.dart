@@ -501,7 +501,9 @@ class BehaviourSection extends ConsumerWidget {
                   SettingKeys.catalogIncludeSubcategories,
                   v,
                 );
-                ref.read(dataRefreshProvider.notifier).bump();
+                ref.read(dataRefreshProvider.notifier).bump(const [
+                  DataKind.settings,
+                ]);
               },
             ),
           ],
@@ -533,7 +535,9 @@ class BehaviourSection extends ConsumerWidget {
               icon: Icon(Icons.edit_rounded, size: 18, color: c.textSecondary),
               onSelected: (v) async {
                 await settings.set(SettingKeys.transferMode, v);
-                ref.read(dataRefreshProvider.notifier).bump();
+                ref.read(dataRefreshProvider.notifier).bump(const [
+                  DataKind.settings,
+                ]);
               },
               itemBuilder: (_) => [
                 for (final mode in const [

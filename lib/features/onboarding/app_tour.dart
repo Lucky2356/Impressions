@@ -109,7 +109,7 @@ class _AppTourState extends ConsumerState<AppTour> {
     await ref
         .read(settingsRepositoryProvider)
         .setBool(SettingKeys.tourDone, true);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
     if (mounted) Navigator.of(context).pop();
   }
 

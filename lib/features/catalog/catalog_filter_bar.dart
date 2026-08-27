@@ -497,7 +497,7 @@ class SaveAsCollectionButton extends ConsumerWidget {
           name.trim(),
           filterJson: jsonEncode(ref.read(catalogStateProvider).toJson()),
         );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
     if (!context.mounted) return;
     showMessage(context, l10n.collectionFromFilterSaved(name.trim()));
   }

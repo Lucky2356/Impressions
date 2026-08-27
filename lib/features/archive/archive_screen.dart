@@ -69,7 +69,7 @@ Future<void> _confirmPurge(
     });
     return;
   }
-  ref.read(dataRefreshProvider.notifier).bump();
+  ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
   if (!context.mounted) return;
   showMessage(context, l10n.purgeDone);
 }
@@ -101,7 +101,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     final l10n = AppLocalizations.of(context);
     final ids = _selected.toList();
     await ref.read(entryRepositoryProvider).restoreEntries(ids);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (!mounted) return;
     setState(_selected.clear);
     showMessage(context, l10n.archiveRestoredMany(ids.length));
@@ -121,7 +121,7 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
     if (!ok || !mounted) return;
 
     await PurgeService(ref.read(appDatabaseProvider)).purgeEntries(ids);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (!mounted) return;
     setState(_selected.clear);
     showMessage(context, l10n.purgeDone);
@@ -219,7 +219,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               await ref
                   .read(entryRepositoryProvider)
                   .restoreEntry(entry.entryId);
-              ref.read(dataRefreshProvider.notifier).bump();
+              ref.read(dataRefreshProvider.notifier).bump(const [
+                DataKind.entries,
+              ]);
             },
             onPurge: () => _confirmPurge(
               context,
@@ -246,7 +248,10 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
             subtitle: l10n.archiveCategoryLevel(category.level + 1),
             onRestore: () async {
               await ref.read(categoryRepositoryProvider).restore(category.id);
-              ref.read(dataRefreshProvider.notifier).bump();
+              ref.read(dataRefreshProvider.notifier).bump(const [
+                DataKind.categories,
+                DataKind.entries,
+              ]);
             },
             onPurge: () => _confirmPurge(
               context,
@@ -275,7 +280,9 @@ class _ArchiveScreenState extends ConsumerState<ArchiveScreen> {
               await ref
                   .read(collectionRepositoryProvider)
                   .restore(collection.id);
-              ref.read(dataRefreshProvider.notifier).bump();
+              ref.read(dataRefreshProvider.notifier).bump(const [
+                DataKind.collections,
+              ]);
             },
             onPurge: () => _confirmPurge(
               context,

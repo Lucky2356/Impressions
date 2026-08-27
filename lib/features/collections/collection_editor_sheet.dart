@@ -164,7 +164,7 @@ class _CollectionEditorSheetState extends ConsumerState<CollectionEditorSheet> {
       color: _color,
       coverAttachmentId: _coverId,
     );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.collections]);
     if (!mounted) return;
     Navigator.of(context).pop(true);
   }

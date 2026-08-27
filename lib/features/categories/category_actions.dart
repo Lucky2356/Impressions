@@ -29,7 +29,10 @@ class CategoryActions {
 
   CategoryRepository get _repo => ref.read(categoryRepositoryProvider);
   AppLocalizations get _l10n => AppLocalizations.of(context);
-  void _bump() => ref.read(dataRefreshProvider.notifier).bump();
+  void _bump() => ref.read(dataRefreshProvider.notifier).bump(const [
+    DataKind.categories,
+    DataKind.entries,
+  ]);
 
   void select(CategoryRow category) {
     ref.read(selectedCategoryProvider.notifier).select(category.id);

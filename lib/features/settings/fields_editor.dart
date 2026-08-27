@@ -51,7 +51,7 @@ class _FieldsEditorState extends ConsumerState<FieldsEditor> {
         fieldsSchema: Value(CustomField.encodeSchema(_fields)),
       ),
     );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (!mounted) return;
     Navigator.of(context).pop();
     showMessage(context, AppLocalizations.of(context).savedShort);

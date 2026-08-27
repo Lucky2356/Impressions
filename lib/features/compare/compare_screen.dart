@@ -283,7 +283,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
         );
         moved++;
       }
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
       setState(() => _selected.clear());
     } finally {
       if (mounted) setState(() => _busy = false);

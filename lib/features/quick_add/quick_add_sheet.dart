@@ -571,7 +571,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       await _clearDraft();
       await _rememberLastPlace();
 
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       if (!mounted) return;
       if (keepOpen || _queue.isNotEmpty) {
         _savedInARow++;

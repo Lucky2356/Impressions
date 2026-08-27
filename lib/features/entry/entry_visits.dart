@@ -83,7 +83,7 @@ class EntryVisitsBlock extends ConsumerWidget {
           rating: result.rating,
           note: result.note,
         );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (context.mounted) {
       showMessage(context, AppLocalizations.of(context).visitAdded);
     }
@@ -107,7 +107,7 @@ class EntryVisitsBlock extends ConsumerWidget {
     final removed = await ref
         .read(entryRepositoryProvider)
         .removeVisit(visit.id);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (!context.mounted || removed == null) return;
 
     // Подтверждение спрашивали, но вернуть было нечем: оценка записи следует
@@ -117,7 +117,7 @@ class EntryVisitsBlock extends ConsumerWidget {
       message: l10n.visitRemoved,
       onUndo: () async {
         await ref.read(entryRepositoryProvider).restoreVisit(removed);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       },
     );
   }

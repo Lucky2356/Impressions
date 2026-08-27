@@ -64,7 +64,8 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
     );
   }
 
-  void _bump() => ref.read(dataRefreshProvider.notifier).bump();
+  void _bump() =>
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
 
   @override
   Widget build(BuildContext context) {
@@ -515,7 +516,9 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
       message: l10n.entryArchived,
       onUndo: () async {
         await container.read(entryRepositoryProvider).restoreEntry(entryId);
-        container.read(dataRefreshProvider.notifier).bump();
+        container.read(dataRefreshProvider.notifier).bump(const [
+          DataKind.entries,
+        ]);
       },
     );
   }

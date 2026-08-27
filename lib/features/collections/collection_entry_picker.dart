@@ -77,7 +77,7 @@ class _CollectionEntryPickerState extends ConsumerState<CollectionEntryPicker> {
         widget.collectionId,
         _initial.difference(selected).toList(),
       );
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.collections]);
       if (mounted) Navigator.of(context).pop(true);
     } finally {
       if (mounted) setState(() => _busy = false);

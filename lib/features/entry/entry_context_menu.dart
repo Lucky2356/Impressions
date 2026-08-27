@@ -145,7 +145,7 @@ class EntryContextMenu {
             // карточке записи.
             relation: entry.relation == name ? null : name,
           );
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       return;
     }
 
@@ -164,7 +164,7 @@ class EntryContextMenu {
         await ref
             .read(entryRepositoryProvider)
             .updateEntry(entry.entryId, rating: rating);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       case 'category':
         final picked = await CategoryPicker.show(context);
         final category = picked?.category;
@@ -172,7 +172,7 @@ class EntryContextMenu {
         await ref
             .read(entryRepositoryProvider)
             .setPrimaryCategory(entry.entryId, category.id);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       case 'duplicate':
         // Копия не создаётся молча: форма открывается заполненной, человек
         // меняет то, что отличается, — бренд, год, оценку.
@@ -181,14 +181,16 @@ class EntryContextMenu {
         await _pickCollection(context, ref, entry);
       case 'archive':
         await ref.read(entryRepositoryProvider).archiveEntry(entry.entryId);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
         if (!context.mounted) return;
         showUndoSnackBar(
           context,
           message: l10n.entryArchived,
           onUndo: () async {
             await ref.read(entryRepositoryProvider).restoreEntry(entry.entryId);
-            ref.read(dataRefreshProvider.notifier).bump();
+            ref.read(dataRefreshProvider.notifier).bump(const [
+              DataKind.entries,
+            ]);
           },
         );
     }
@@ -204,7 +206,7 @@ class EntryContextMenu {
     await ref
         .read(collectionRepositoryProvider)
         .addEntry(chosen, entry.entryId);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
   }
 }
 

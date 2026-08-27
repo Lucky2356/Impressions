@@ -65,7 +65,7 @@ class _StatusesEditorState extends ConsumerState<StatusesEditor> {
         progressUnit: Value(unit.isEmpty ? null : unit),
       ),
     );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     if (!mounted) return;
     Navigator.of(context).pop();
     showMessage(context, AppLocalizations.of(context).savedShort);

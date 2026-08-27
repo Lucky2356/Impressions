@@ -50,7 +50,10 @@ class TagsSection extends ConsumerWidget {
       final kept = await ref
           .read(entryRepositoryProvider)
           .renameTag(tag.id, name.trim());
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [
+        DataKind.tags,
+        DataKind.entries,
+      ]);
       if (!context.mounted) return;
 
       // Слияние — не то, о чём просили вслух: если тег с таким названием уже
@@ -70,7 +73,10 @@ class TagsSection extends ConsumerWidget {
       );
       if (!ok) return;
       await ref.read(entryRepositoryProvider).deleteTag(tag.id);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [
+        DataKind.tags,
+        DataKind.entries,
+      ]);
       if (context.mounted) showMessage(context, l10n.tagRemoved);
     }
 

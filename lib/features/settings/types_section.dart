@@ -37,7 +37,8 @@ class TypesSection extends ConsumerWidget {
     final c = context.colors;
     final types = ref.watch(allObjectTypesProvider).value ?? const [];
 
-    Future<void> bump() async => ref.read(dataRefreshProvider.notifier).bump();
+    Future<void> bump() async =>
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
 
     Future<void> rename(ObjectTypeRow type) async {
       final name = await TextInputDialog.show(

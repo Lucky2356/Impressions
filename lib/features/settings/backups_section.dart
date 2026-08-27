@@ -266,7 +266,9 @@ class BackupsSection extends ConsumerWidget {
             () => BackupService(db).create(reason: 'manual'),
             label: l10n.busyBackup,
           );
-          ref.read(dataRefreshProvider.notifier).bump();
+          ref.read(dataRefreshProvider.notifier).bump(const [
+            DataKind.settings,
+          ]);
           if (!context.mounted) return;
           showMessage(context, l10n.backupCreated);
         },
@@ -351,7 +353,7 @@ class _BackupAutoRow extends ConsumerWidget {
       await ref
           .read(settingsRepositoryProvider)
           .setBool(SettingKeys.autoBackupEnabled, value);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
       if (!context.mounted) return;
       showMessage(context, value ? l10n.backupAutoOn : l10n.backupAutoOff);
     }
@@ -400,7 +402,7 @@ class _BackupMirrorRow extends ConsumerWidget {
       await ref
           .read(settingsRepositoryProvider)
           .set(SettingKeys.backupMirrorDir, path ?? '');
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
       if (context.mounted) showMessage(context, l10n.savedShort);
     }
 
@@ -488,7 +490,7 @@ class _BackupEncryptionRow extends ConsumerWidget {
     final ok = await BackupService(
       ref.read(appDatabaseProvider),
     ).enableEncryption(password);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
     if (!context.mounted) return;
 
     showMessage(
@@ -507,7 +509,7 @@ class _BackupEncryptionRow extends ConsumerWidget {
     if (!ok || !context.mounted) return;
 
     await BackupService(ref.read(appDatabaseProvider)).disableEncryption();
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
     if (!context.mounted) return;
     showMessage(context, l10n.backupEncryptionOff);
   }

@@ -269,7 +269,7 @@ class CollectionField extends ConsumerWidget {
       final created = await ref
           .read(collectionRepositoryProvider)
           .create(profile.id, name);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       onChanged(created.id);
     }
 

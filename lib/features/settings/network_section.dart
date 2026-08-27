@@ -53,7 +53,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
 
   Future<void> _toggle(String key, bool value) async {
     await ref.read(settingsRepositoryProvider).setBool(key, value);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
   }
 
   Future<void> _refreshProducts() async {
@@ -66,7 +66,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
       await ref
           .read(settingsRepositoryProvider)
           .set('product_auto_update_count', '${report.updated}');
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
       if (!mounted) return;
       showMessage(
         context,
@@ -85,7 +85,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
       final result = await ref
           .read(updateServiceProvider)
           .checkAppUpdateManually(version);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
       if (!mounted) return;
 
       switch (result.status) {
@@ -169,7 +169,9 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
                           await ref
                               .read(updateServiceProvider)
                               .setSourceEnabled(source.id, v);
-                          ref.read(dataRefreshProvider.notifier).bump();
+                          ref.read(dataRefreshProvider.notifier).bump(const [
+                            DataKind.profiles,
+                          ]);
                         }
                       : null,
                 ),
@@ -275,7 +277,9 @@ class KeyStorageSection extends ConsumerWidget {
                   final moved = await ref
                       .read(keyServiceProvider)
                       .moveSecretToOs();
-                  ref.read(dataRefreshProvider.notifier).bump();
+                  ref.read(dataRefreshProvider.notifier).bump(const [
+                    DataKind.profiles,
+                  ]);
                   if (!context.mounted) return;
                   // Сообщаем и об отказе: молчащая кнопка выглядит сломанной.
                   showMessage(

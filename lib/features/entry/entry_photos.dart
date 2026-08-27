@@ -107,7 +107,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
         attachmentId: row.id,
       );
       // Обложка видна в каталоге и на главной — их нужно перерисовать.
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       await _load();
     });
   }
@@ -142,7 +142,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
         }
         return;
     }
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     await _load();
   }
 
@@ -175,7 +175,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     if (revisionId == null) return;
 
     final link = await _service.detach(revisionId, row.id);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     await _load();
     if (!mounted || link == null) return;
 
@@ -184,7 +184,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
       message: l10n.photoRemoved,
       onUndo: () async {
         await _service.restoreLink(link);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
         await _load();
       },
     );
@@ -322,7 +322,7 @@ class _EntryPhotosState extends ConsumerState<EntryPhotos> {
     );
     // Обложка выбирается по пометке, а при её отсутствии — по порядку: список
     // мог поменяться и в каталоге.
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
     await _load();
   }
 }

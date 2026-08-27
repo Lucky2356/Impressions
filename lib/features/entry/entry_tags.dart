@@ -43,12 +43,18 @@ class EntryTags extends ConsumerWidget {
       );
       if (name == null) return;
       await ref.read(entryRepositoryProvider).addTag(profile.id, entryId, name);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [
+        DataKind.entries,
+        DataKind.tags,
+      ]);
     }
 
     Future<void> remove(TagRow tag) async {
       await ref.read(entryRepositoryProvider).removeTag(entryId, tag.id);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [
+        DataKind.entries,
+        DataKind.tags,
+      ]);
     }
 
     if (tags.isEmpty && !editable) return const SizedBox.shrink();

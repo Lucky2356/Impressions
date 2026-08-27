@@ -41,7 +41,8 @@ class CollectionsScreen extends ConsumerStatefulWidget {
 class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
   String? _openId;
 
-  void _bump() => ref.read(dataRefreshProvider.notifier).bump();
+  void _bump() =>
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.collections]);
 
   Future<void> _create() async {
     final l10n = AppLocalizations.of(context);
@@ -231,7 +232,9 @@ class _CollectionDetail extends ConsumerWidget {
                 );
               } else if (v == 'archive') {
                 await repo.archive(collectionId);
-                ref.read(dataRefreshProvider.notifier).bump();
+                ref.read(dataRefreshProvider.notifier).bump(const [
+                  DataKind.collections,
+                ]);
                 onBack();
                 if (!context.mounted) return;
                 showUndoSnackBar(
@@ -239,7 +242,9 @@ class _CollectionDetail extends ConsumerWidget {
                   message: l10n.collectionArchived,
                   onUndo: () async {
                     await repo.restore(collectionId);
-                    ref.read(dataRefreshProvider.notifier).bump();
+                    ref.read(dataRefreshProvider.notifier).bump(const [
+                      DataKind.collections,
+                    ]);
                   },
                 );
               }
@@ -360,7 +365,9 @@ class _CollectionDetail extends ConsumerWidget {
                 collectionId,
                 [for (final e in reordered) e.entryId],
               );
-              ref.read(dataRefreshProvider.notifier).bump();
+              ref.read(dataRefreshProvider.notifier).bump(const [
+                DataKind.collections,
+              ]);
             },
             itemBuilder: (context, i) {
               final e = list[i];
@@ -393,7 +400,9 @@ class _CollectionDetail extends ConsumerWidget {
                         final link = await ref
                             .read(collectionRepositoryProvider)
                             .removeEntry(collectionId, e.entryId);
-                        ref.read(dataRefreshProvider.notifier).bump();
+                        ref.read(dataRefreshProvider.notifier).bump(const [
+                          DataKind.collections,
+                        ]);
                         if (!context.mounted || link == null) return;
                         showUndoSnackBar(
                           context,
@@ -402,7 +411,9 @@ class _CollectionDetail extends ConsumerWidget {
                             await ref
                                 .read(collectionRepositoryProvider)
                                 .restoreEntry(link);
-                            ref.read(dataRefreshProvider.notifier).bump();
+                            ref.read(dataRefreshProvider.notifier).bump(const [
+                              DataKind.collections,
+                            ]);
                           },
                         );
                       },

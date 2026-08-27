@@ -50,7 +50,7 @@ class DevicesSection extends ConsumerWidget {
       await DeviceService(
         ref.read(appDatabaseProvider),
       ).rename(device.id, name);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
     }
 
     return SettingsGroup(

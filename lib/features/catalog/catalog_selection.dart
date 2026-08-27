@@ -92,7 +92,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
     setState(() => _busy = true);
     try {
       await action(ids);
-      ref.read(dataRefreshProvider.notifier).bump();
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       ref.read(catalogSelectionProvider.notifier).clear();
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -252,7 +252,7 @@ class _BulkActionsBarState extends ConsumerState<BulkActionsBar> {
       message: l10n.bulkArchived(ids.length),
       onUndo: () async {
         await ref.read(entryRepositoryProvider).restoreEntries(ids);
-        ref.read(dataRefreshProvider.notifier).bump();
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
       },
     );
   }

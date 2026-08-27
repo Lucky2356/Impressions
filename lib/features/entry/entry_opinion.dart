@@ -106,7 +106,8 @@ class EntryOpinionCardState extends ConsumerState<EntryOpinionCard> {
     super.dispose();
   }
 
-  void _bump() => ref.read(dataRefreshProvider.notifier).bump();
+  void _bump() =>
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
 
   /// Сколько раз молча сохранилось набранное.
   ///

@@ -181,7 +181,10 @@ class _CategoryEditorSheetState extends ConsumerState<CategoryEditorSheet> {
       coverAttachmentId: _coverId,
       defaultTypeId: _typeId,
     );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [
+      DataKind.categories,
+      DataKind.entries,
+    ]);
     if (!mounted) return;
     Navigator.of(context).pop(true);
   }

@@ -124,7 +124,7 @@ class WishlistTile extends ConsumerWidget {
           status: EntryStatus.doneKey,
           impressionDate: DateTime.now(),
         );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
   }
 
   @override

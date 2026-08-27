@@ -103,7 +103,7 @@ class ProfilesScreen extends ConsumerWidget {
         .read(profileRepositoryProvider)
         .createOwnProfile(firstName: name, type: 'external');
     await ref.read(seedServiceProvider).seedForProfile(profile.id);
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
     if (context.mounted) showMessage(context, l10n.profileSaved);
   }
 }
@@ -238,7 +238,7 @@ class _ProfileTile extends ConsumerWidget {
           localName: result.name,
           localNote: result.note,
         );
-    ref.read(dataRefreshProvider.notifier).bump();
+    ref.read(dataRefreshProvider.notifier).bump(const [DataKind.profiles]);
     if (context.mounted) {
       showMessage(context, AppLocalizations.of(context).profileSaved);
     }
