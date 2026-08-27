@@ -11,6 +11,23 @@ import '../../data/providers.dart';
 import '../../data/services/image_service.dart';
 import '../catalog/catalog_providers.dart' show CatalogResults;
 
+/// Категории активного профиля по идентификатору.
+///
+/// Одна карта на экран вместо чтения таблицы в каждом запросе: карточка записи
+/// показывает путь вроде «Продукты / Колбасы», и ради него таблица категорий
+/// поднималась целиком на каждый вызов — шесть раз на одно обновление главной.
+///
+/// Наблюдает только категории: пока они не изменились, перечитывать нечего,
+/// сколько бы записей ни правили.
+final categoryIndexProvider = FutureProvider<Map<String, CategoryRow>>((
+  ref,
+) async {
+  ref.watchData(DataKind.categories);
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return const {};
+  return ref.watch(entryRepositoryProvider).categoryIndexOf(profile.id);
+});
+
 /// Ветка, открытая на экране категорий.
 ///
 /// Общий для всего приложения, а не внутреннее состояние экрана: на категорию

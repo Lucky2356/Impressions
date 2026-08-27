@@ -1134,6 +1134,10 @@ class EntryRepository {
     bool archived = false,
     int? limit,
     int offset = 0,
+
+    /// Готовая карта категорий профиля — чтобы не поднимать её таблицу заново.
+    /// См. [_viewsOf].
+    Map<String, CategoryRow>? categoryIndex,
   }) async {
     final query = await _matching(
       profileId,
@@ -1157,7 +1161,7 @@ class EntryRepository {
     if (query == null) return const [];
     if (limit != null) query.limit(limit, offset: offset);
 
-    return _viewsOf(profileId, await query.get());
+    return _viewsOf(profileId, await query.get(), categoryIndex);
   }
 
   /// Записи, похожие на эту.
@@ -1357,6 +1361,9 @@ class EntryRepository {
     bool archived = false,
     required int limit,
     int offset = 0,
+
+    /// Готовая карта категорий профиля — см. [_viewsOf].
+    Map<String, CategoryRow>? categoryIndex,
   }) async {
     final where = await _filters(
       profileId,
@@ -1388,16 +1395,34 @@ class EntryRepository {
     final page = _selectMatching(where, sort, reverseSort)
       ..limit(limit, offset: offset);
     return EntryPage(
-      items: await _viewsOf(profileId, await page.get()),
+      items: await _viewsOf(profileId, await page.get(), categoryIndex),
       total: total,
     );
   }
 
+  /// Категории профиля по идентификатору.
+  ///
+  /// Нужна для путей в карточках. Отдаётся наружу, чтобы её можно было
+  /// прочитать один раз на экран и передать во все запросы разом.
+  Future<Map<String, CategoryRow>> categoryIndexOf(String profileId) async {
+    final cats = await (db.select(
+      db.categories,
+    )..where((c) => c.profileId.equals(profileId))).get();
+    return {for (final c in cats) c.id: c};
+  }
+
   /// Собирает карточки по уже выбранным строкам.
+  ///
+  /// [categoryIndex] — карта категорий профиля, если она уже есть у
+  /// вызывающего. Без неё таблица категорий поднимается здесь целиком, и это
+  /// повторялось на каждый вызов: главная спрашивает записи шестью разными
+  /// провайдерами, то есть шесть раз читала все категории ради одних и тех же
+  /// путей вроде «Продукты / Колбасы».
   Future<List<EntryView>> _viewsOf(
     String profileId,
-    List<TypedResult> rows,
-  ) async {
+    List<TypedResult> rows, [
+    Map<String, CategoryRow>? categoryIndex,
+  ]) async {
     if (rows.isEmpty) return const [];
 
     // Основные категории записей — только для выбранных строк.
@@ -1418,10 +1443,7 @@ class EntryRepository {
     );
 
     // Карта категорий профиля для построения путей.
-    final cats = await (db.select(
-      db.categories,
-    )..where((c) => c.profileId.equals(profileId))).get();
-    final catById = {for (final c in cats) c.id: c};
+    final catById = categoryIndex ?? await categoryIndexOf(profileId);
 
     List<String> pathNamesFor(String? categoryId) {
       if (categoryId == null) return const [];

@@ -433,6 +433,10 @@ class CatalogFeed extends AsyncNotifier<CatalogResults> {
           recommendedOnly: s.recommendedOnly,
           limit: limit,
           offset: offset,
+          // Карта категорий одна на весь список, включая подгруженные
+          // страницы: путь в карточке строится по ней, а сама она меняется
+          // только вместе с деревом.
+          categoryIndex: await ref.read(categoryIndexProvider.future),
         );
     return CatalogResults(items: page.items, total: page.total);
   }

@@ -7,6 +7,7 @@ import '../../data/db/database.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/entry_stats.dart';
+import '../categories/category_providers.dart';
 
 /// Сводка по активному профилю.
 final profileStatsProvider = FutureProvider<ProfileStats?>((ref) async {
@@ -39,7 +40,13 @@ final recentEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   ref.watch(dataRefreshProvider);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
-  return ref.watch(entryRepositoryProvider).entryViews(profile.id, limit: 10);
+  return ref
+      .watch(entryRepositoryProvider)
+      .entryViews(
+        profile.id,
+        limit: 10,
+        categoryIndex: await ref.watch(categoryIndexProvider.future),
+      );
 });
 
 /// Задуманное: записи на стадии «Задумано».
@@ -52,7 +59,12 @@ final plannedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   if (profile == null) return const [];
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(profile.id, status: EntryStatus.planned, limit: 5);
+      .entryViews(
+        profile.id,
+        status: EntryStatus.planned,
+        limit: 5,
+        categoryIndex: await ref.watch(categoryIndexProvider.future),
+      );
 });
 
 /// Начатое: записи на стадии «В процессе».
@@ -65,7 +77,12 @@ final inProgressEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
   if (profile == null) return const [];
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(profile.id, status: EntryStatus.inProgress, limit: 8);
+      .entryViews(
+        profile.id,
+        status: EntryStatus.inProgress,
+        limit: 8,
+        categoryIndex: await ref.watch(categoryIndexProvider.future),
+      );
 });
 
 /// Что случилось примерно год назад — по дате впечатления.
@@ -88,6 +105,7 @@ final yearAgoEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
         impressionTo: target.add(const Duration(days: 7)),
         sort: EntrySort.impressionDate,
         limit: 6,
+        categoryIndex: await ref.watch(categoryIndexProvider.future),
       );
 });
 
@@ -117,7 +135,12 @@ final plannedSuggestionPoolProvider = FutureProvider<List<EntryView>>((
   if (profile == null) return const [];
   return ref
       .watch(entryRepositoryProvider)
-      .entryViews(profile.id, status: EntryStatus.planned, limit: 50);
+      .entryViews(
+        profile.id,
+        status: EntryStatus.planned,
+        limit: 50,
+        categoryIndex: await ref.watch(categoryIndexProvider.future),
+      );
 });
 
 /// Корневые категории активного профиля.
