@@ -26,7 +26,7 @@ final appVersionProvider = FutureProvider<String>((ref) async {
 
 /// Включённые источники товарных данных.
 final enabledSourcesProvider = FutureProvider<Set<String>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   return ref.watch(updateServiceProvider).enabledSources();
 });
 
@@ -34,7 +34,7 @@ final _boolSettingProvider = FutureProvider.family<bool, (String, bool)>((
   ref,
   args,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   return ref
       .watch(settingsRepositoryProvider)
       .getBool(args.$1, defaultValue: args.$2);
@@ -222,7 +222,7 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
 
 /// Где хранится секрет, которым зашифрован закрытый ключ профиля.
 final secretLocationProvider = FutureProvider<SecretLocation>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   return ref.watch(keyServiceProvider).secretLocation();
 });
 

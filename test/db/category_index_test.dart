@@ -9,6 +9,7 @@ import 'package:impressions/data/repositories/category_repository.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
 import 'package:impressions/features/categories/category_providers.dart';
+import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/home/home_providers.dart';
 
 import 'query_counter.dart';
@@ -109,6 +110,65 @@ void main() {
     await c.read(recentEntriesProvider.future);
 
     expect(categoryReads(), 0);
+  });
+
+  /// Даёт провайдерам пересчитаться после пробуждения.
+  Future<void> settle() =>
+      Future<void>.delayed(const Duration(milliseconds: 50));
+
+  test('правка записи не будит запросы дерева', () async {
+    final c = container();
+    // Подписка держит провайдеры живыми: без неё они пересчитываются лениво,
+    // и проверка мерила бы не «кого разбудило», а «кого потом прочитали».
+    c.listen(recentEntriesProvider, (_, _) {});
+    c.listen(allCategoriesProvider, (_, _) {});
+    c.listen(collectionsProvider, (_, _) {});
+    await settle();
+    counter.reset();
+
+    c.read(dataRefreshProvider.notifier).bump(const [DataKind.entries]);
+    await settle();
+
+    expect(
+      counter.matching('FROM "categories"'),
+      0,
+      reason: 'дерево не читалось: его никто не трогал',
+    );
+    expect(
+      counter.matching('FROM "collections"'),
+      isNot(0),
+      reason: 'у живой подборки счётчик считается по записям',
+    );
+  });
+
+  test('правка настройки не будит ни записи, ни дерево', () async {
+    final c = container();
+    c.listen(recentEntriesProvider, (_, _) {});
+    c.listen(allCategoriesProvider, (_, _) {});
+    await settle();
+    counter.reset();
+
+    c.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
+    await settle();
+
+    expect(counter.matching('FROM "profile_entries"'), 0);
+    expect(counter.matching('FROM "categories"'), 0);
+  });
+
+  // Обратная сторона: правка дерева обязана дойти до карточек. Путь
+  // «Продукты / Колбасы» показывает карточка записи, и после переименования
+  // ветки он должен смениться — значит запросы записей будятся, и это не
+  // упущение, а требование.
+  test('правка дерева доходит до карточек', () async {
+    final c = container();
+    c.listen(recentEntriesProvider, (_, _) {});
+    await settle();
+    counter.reset();
+
+    c.read(dataRefreshProvider.notifier).bump(const [DataKind.categories]);
+    await settle();
+
+    expect(counter.matching('FROM "profile_entries"'), isNot(0));
   });
 
   test('правка дерева заставляет перечитать карту', () async {

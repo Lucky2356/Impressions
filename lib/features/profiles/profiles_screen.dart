@@ -16,7 +16,7 @@ import '../exchange/export_dialog.dart';
 /// Локальные настройки профиля (§5.3) — не экспортируются.
 final localSettingsProvider =
     FutureProvider.family<ProfileLocalSettingRow?, String>((ref, id) async {
-      ref.watch(dataRefreshProvider);
+      ref.watchData(DataKind.profiles);
       return ref.watch(profileRepositoryProvider).localSettings(id);
     });
 
@@ -24,7 +24,7 @@ final localSettingsProvider =
 final entryCountsByProfileProvider = FutureProvider<Map<String, int>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   final db = ref.watch(appDatabaseProvider);
   final rows = await db
       .customSelect(

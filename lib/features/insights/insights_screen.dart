@@ -66,7 +66,7 @@ final insightsScopeProvider =
 
 /// Развёрнутая статистика активного профиля.
 final profileInsightsProvider = FutureProvider<ProfileInsights>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return ProfileInsights.empty;
 

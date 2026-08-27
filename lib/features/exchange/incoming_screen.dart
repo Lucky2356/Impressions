@@ -31,6 +31,8 @@ class IncomingItem {
 
 /// Входящие изменения из импортированных профилей (§23).
 final incomingChangesProvider = FutureProvider<List<IncomingItem>>((ref) async {
+  // Наблюдает изменения целиком: входящие приходят с импортом пакета и приёмом
+  // правок, а те честно меняют всё сразу. Своего вида у них нет.
   ref.watch(dataRefreshProvider);
   final db = ref.watch(appDatabaseProvider);
 

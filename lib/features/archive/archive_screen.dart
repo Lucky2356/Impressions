@@ -18,7 +18,7 @@ import '../categories/category_providers.dart';
 
 /// Архивные записи активного профиля.
 final archivedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
@@ -30,7 +30,7 @@ final archivedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
 final archivedCollectionsProvider = FutureProvider<List<CollectionRow>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.collections);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final db = ref.watch(appDatabaseProvider);

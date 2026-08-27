@@ -19,19 +19,19 @@ import 'backup_password_dialog.dart';
 
 /// Список резервных копий (§28).
 final backupsProvider = FutureProvider<List<BackupInfo>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   return BackupService(ref.watch(appDatabaseProvider)).list();
 });
 
 /// Защищены ли новые копии паролем.
 final backupEncryptionProvider = FutureProvider<bool>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   return BackupService(ref.watch(appDatabaseProvider)).encryptionEnabled();
 });
 
 /// Делает ли приложение копию само.
 final backupAutoProvider = FutureProvider<bool>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   return ref
       .watch(settingsRepositoryProvider)
       .getBool(SettingKeys.autoBackupEnabled, defaultValue: true);
@@ -39,7 +39,7 @@ final backupAutoProvider = FutureProvider<bool>((ref) async {
 
 /// Куда копия кладётся ещё и наружу.
 final backupMirrorProvider = FutureProvider<String?>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   final value = await ref
       .watch(settingsRepositoryProvider)
       .get(SettingKeys.backupMirrorDir);

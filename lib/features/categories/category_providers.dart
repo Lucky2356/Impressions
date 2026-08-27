@@ -167,7 +167,7 @@ class CategoryBranchView extends Notifier<CategoryBranchState> {
 /// Все неархивные категории активного профиля, отсортированные так, чтобы
 /// потомки шли сразу за родителем (сортировка по материализованному пути).
 final allCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.categories);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final db = ref.watch(appDatabaseProvider);
@@ -183,7 +183,7 @@ final allCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {
 final archivedCategoriesProvider = FutureProvider<List<CategoryRow>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.categories);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final db = ref.watch(appDatabaseProvider);
@@ -197,7 +197,7 @@ final archivedCategoriesProvider = FutureProvider<List<CategoryRow>>((
 final categoryDirectCountsProvider = FutureProvider<Map<String, int>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const {};
   final db = ref.watch(appDatabaseProvider);
@@ -262,7 +262,7 @@ class CategoryFeed extends AsyncNotifier<CatalogResults> {
 
   @override
   Future<CatalogResults> build() {
-    ref.watch(dataRefreshProvider);
+    ref.watchData(DataKind.entries);
     ref.watch(activeProfileProvider);
     ref.watch(allCategoriesProvider);
 
@@ -348,7 +348,7 @@ final categoryBranchResultsProvider = FutureProvider<CatalogResults>(
 /// а тот поднимает всю ветку с обложками.
 final branchTypeCountsProvider =
     FutureProvider.family<Map<String, int>, String>((ref, categoryId) async {
-      ref.watch(dataRefreshProvider);
+      ref.watchData(DataKind.entries);
       final profile = ref.watch(activeProfileProvider);
       if (profile == null) return const {};
 
@@ -390,7 +390,8 @@ final categoryCoverPathsProvider = FutureProvider<Map<String, String>>((
 final categoryCoversProvider = FutureProvider<Map<String, List<String>>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.categories);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const {};
   return ref.watch(entryRepositoryProvider).categoryCovers(profile.id);

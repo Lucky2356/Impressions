@@ -57,7 +57,8 @@ class _ComparePair {
 /// Строки сравнения пары профилей — собираются один раз на пару.
 final _comparePairProvider =
     FutureProvider.family<List<CompareRow>, _ComparePair>((ref, pair) async {
-      ref.watch(dataRefreshProvider);
+      ref.watchData(DataKind.profiles);
+      ref.watchData(DataKind.entries);
       return CompareService(
         ref.watch(appDatabaseProvider),
       ).rows(firstProfileId: pair.firstId, secondProfileId: pair.secondId);

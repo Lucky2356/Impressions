@@ -58,7 +58,8 @@ const _productCountKey = 'product_auto_update_count';
 final notificationsProvider = FutureProvider<List<AppNotification>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
+  ref.watchData(DataKind.settings);
   final db = ref.watch(appDatabaseProvider);
   final settings = ref.watch(settingsRepositoryProvider);
   final profile = ref.watch(activeProfileProvider);
@@ -456,6 +457,7 @@ class NotificationPanel extends ConsumerWidget {
 
 /// Число непросмотренных входящих изменений.
 final incomingCountProvider = FutureProvider<int>((ref) async {
+  // Как и сам список входящих: их пишут только широкие вызовы.
   ref.watch(dataRefreshProvider);
   final db = ref.watch(appDatabaseProvider);
   final rows = await (db.select(
@@ -466,7 +468,7 @@ final incomingCountProvider = FutureProvider<int>((ref) async {
 
 /// Сколько карточек товаров дополнено при последнем обновлении.
 final lastProductUpdateCountProvider = FutureProvider<int>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   final raw = await ref.watch(settingsRepositoryProvider).get(_productCountKey);
   return int.tryParse(raw ?? '') ?? 0;
 });

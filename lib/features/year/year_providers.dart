@@ -25,7 +25,7 @@ final yearReviewYearProvider = NotifierProvider<YearReviewYear, int>(
 
 /// Итоги выбранного года для активного профиля.
 final yearReviewProvider = FutureProvider<YearReview>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return YearReview.empty;
   return ref

@@ -14,7 +14,7 @@ import '../../design_system/design_system.dart';
 
 /// Устройства активного профиля; текущее регистрируется при первом обращении.
 final devicesProvider = FutureProvider<List<ProfileDeviceRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final service = DeviceService(ref.watch(appDatabaseProvider));
@@ -23,7 +23,7 @@ final devicesProvider = FutureProvider<List<ProfileDeviceRow>>((ref) async {
 });
 
 final currentDeviceIdProvider = FutureProvider<String?>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.profiles);
   return DeviceService(ref.watch(appDatabaseProvider)).currentDeviceId();
 });
 

@@ -24,7 +24,7 @@ import 'whats_new_dialog.dart';
 
 /// Значение настройки «при переносе записей» (§7.4).
 final transferModeProvider = FutureProvider<String>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   final value = await ref
       .read(settingsRepositoryProvider)
       .get(SettingKeys.transferMode);
@@ -33,7 +33,7 @@ final transferModeProvider = FutureProvider<String>((ref) async {
 
 /// Значение настройки «показывать записи из подкатегорий» (§7.5).
 final includeSubcategoriesProvider = FutureProvider<bool>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   return ref
       .read(settingsRepositoryProvider)
       .getBool(SettingKeys.catalogIncludeSubcategories, defaultValue: true);

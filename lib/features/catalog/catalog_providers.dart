@@ -394,7 +394,7 @@ class CatalogFeed extends AsyncNotifier<CatalogResults> {
 
   @override
   Future<CatalogResults> build() {
-    ref.watch(dataRefreshProvider);
+    ref.watchData(DataKind.entries);
     ref.watch(activeProfileProvider);
     // Ветка категорий считается по дереву: его изменение меняет и отбор.
     ref.watch(allCategoriesProvider);

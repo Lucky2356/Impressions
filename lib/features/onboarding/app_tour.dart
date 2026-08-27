@@ -14,7 +14,7 @@ import '../../design_system/design_system.dart';
 
 /// Показывалось ли обучение.
 final tourDoneProvider = FutureProvider<bool>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.settings);
   return ref
       .read(settingsRepositoryProvider)
       .getBool(SettingKeys.tourDone, defaultValue: false);

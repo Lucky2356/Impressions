@@ -20,7 +20,7 @@ import '../quick_add/quick_add_sheet.dart';
 /// Раньше отбирались по отношению «Хочу попробовать»: отношение подменяло
 /// собой стадию, и запись не могла быть одновременно начатой и без мнения.
 final wishlistProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref

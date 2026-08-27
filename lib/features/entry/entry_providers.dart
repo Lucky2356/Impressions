@@ -65,7 +65,7 @@ final entryDetailProvider = FutureProvider.family<EntryDetail?, String>((
   ref,
   entryId,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final db = ref.watch(appDatabaseProvider);
 
   final entry = await (db.select(
@@ -137,7 +137,7 @@ final similarEntriesProvider = FutureProvider.family<List<EntryView>, String>((
   ref,
   entryId,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref.watch(entryRepositoryProvider).similarTo(profile.id, entryId);

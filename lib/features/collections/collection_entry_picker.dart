@@ -250,7 +250,7 @@ final _pickerEntriesProvider = FutureProvider.family<List<EntryView>, String>((
   ref,
   query,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
 
@@ -267,7 +267,8 @@ final _pickerEntriesProvider = FutureProvider.family<List<EntryView>, String>((
 /// Идентификаторы записей, уже входящих в подборку.
 final _entriesInCollectionProvider = FutureProvider.family<Set<String>, String>(
   (ref, collectionId) async {
-    ref.watch(dataRefreshProvider);
+    ref.watchData(DataKind.collections);
+    ref.watchData(DataKind.entries);
     final profile = ref.watch(activeProfileProvider);
     if (profile == null) return const {};
     final entries = ref.watch(entryRepositoryProvider);

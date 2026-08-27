@@ -14,7 +14,7 @@ import '../../design_system/design_system.dart';
 final tagsWithUsageProvider = FutureProvider<List<({TagRow tag, int count})>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.tags);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
 

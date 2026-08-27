@@ -16,7 +16,8 @@ final entryTagsProvider = FutureProvider.family<List<TagRow>, String>((
   ref,
   entryId,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
+  ref.watchData(DataKind.tags);
   return ref.watch(entryRepositoryProvider).tagsOfEntry(entryId);
 });
 

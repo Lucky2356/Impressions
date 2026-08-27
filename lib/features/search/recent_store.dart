@@ -16,7 +16,7 @@ class RecentStore extends AsyncNotifier<RecentData> {
 
   @override
   Future<RecentData> build() async {
-    ref.watch(dataRefreshProvider);
+    ref.watchData(DataKind.settings);
     final settings = ref.read(settingsRepositoryProvider);
     return RecentData(
       searches: parse(await settings.get(SettingKeys.recentSearches)),

@@ -23,7 +23,7 @@ import 'entry_tile.dart';
 
 /// Теги активного профиля — источник для фильтра.
 final profileTagsProvider = FutureProvider<List<TagRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.tags);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref.watch(entryRepositoryProvider).tagsOfProfile(profile.id);

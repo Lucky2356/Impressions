@@ -16,7 +16,7 @@ import 'statuses_editor.dart';
 
 /// Типы объектов активного профиля, включая скрытые.
 final allObjectTypesProvider = FutureProvider<List<ObjectTypeRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final db = ref.watch(appDatabaseProvider);

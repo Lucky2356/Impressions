@@ -15,7 +15,10 @@ import 'smart_collections.dart';
 /// У живых подборок счётчик считается по условию: в `collection_entries` у них
 /// пусто, и без этого они все показывали бы «0 записей».
 final collectionsProvider = FutureProvider<List<CollectionView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.collections);
+  // И записи тоже: у живой подборки счётчик считается по условию, поэтому
+  // новая запись меняет его, не трогая саму подборку.
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   // Отбор живой подборки может опираться на ветку категорий — значит зависит
@@ -44,7 +47,8 @@ final collectionsProvider = FutureProvider<List<CollectionView>>((ref) async {
 /// условие прямо сейчас.
 final collectionEntriesProvider =
     FutureProvider.family<List<EntryView>, String>((ref, collectionId) async {
-      ref.watch(dataRefreshProvider);
+      ref.watchData(DataKind.collections);
+      ref.watchData(DataKind.entries);
       final profile = ref.watch(activeProfileProvider);
       if (profile == null) return const [];
       ref.watch(allCategoriesProvider);

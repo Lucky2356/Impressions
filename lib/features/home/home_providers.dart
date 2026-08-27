@@ -11,7 +11,7 @@ import '../categories/category_providers.dart';
 
 /// Сводка по активному профилю.
 final profileStatsProvider = FutureProvider<ProfileStats?>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return null;
   return ref.watch(entryRepositoryProvider).stats(profile.id);
@@ -22,7 +22,7 @@ final profileStatsProvider = FutureProvider<ProfileStats?>((ref) async {
 /// Раньше плитки рисовали «рост», вычисленный из текущего числа: линия шла
 /// вверх независимо от того, что происходило на самом деле.
 final entriesByMonthProvider = FutureProvider<List<double>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   final insights = await ref
@@ -37,7 +37,7 @@ final entriesByMonthProvider = FutureProvider<List<double>>((ref) async {
 
 /// Недавние записи активного профиля.
 final recentEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
@@ -54,7 +54,7 @@ final recentEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
 /// Раньше отбиралось по отношению «Хочу попробовать» — то есть по мнению,
 /// которого у задумки как раз ещё нет.
 final plannedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
@@ -72,7 +72,7 @@ final plannedEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
 /// Самый частый вопрос к приложению — «на чём я остановился», — и ответить на
 /// него было нечем: стадия в базе была и не читалась ни одним экраном.
 final inProgressEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
@@ -91,7 +91,7 @@ final inProgressEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
 /// блок не показывался бы никогда. Дата впечатления, а не заведения записи:
 /// впечатление могло случиться задолго до того, как его записали.
 final yearAgoEntriesProvider = FutureProvider<List<EntryView>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
 
@@ -130,7 +130,7 @@ final dailySuggestionProvider = FutureProvider<EntryView?>((ref) async {
 final plannedSuggestionPoolProvider = FutureProvider<List<EntryView>>((
   ref,
 ) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref
@@ -145,7 +145,7 @@ final plannedSuggestionPoolProvider = FutureProvider<List<EntryView>>((
 
 /// Корневые категории активного профиля.
 final rootCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.categories);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref.watch(categoryRepositoryProvider).roots(profile.id);
@@ -153,7 +153,7 @@ final rootCategoriesProvider = FutureProvider<List<CategoryRow>>((ref) async {
 
 /// Типы объектов активного профиля.
 final objectTypesProvider = FutureProvider<List<ObjectTypeRow>>((ref) async {
-  ref.watch(dataRefreshProvider);
+  ref.watchData(DataKind.entries);
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return const [];
   return ref.watch(entryRepositoryProvider).objectTypes(profile.id);
