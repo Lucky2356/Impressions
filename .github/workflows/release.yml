@@ -48,12 +48,15 @@ jobs:
             exit 1
           fi
 
-          if gh release view "v$version" >/dev/null 2>&1; then
+          # При пробном прогоне ничего не публикуется, поэтому уже
+          # выпущенная версия ему не мешает.
+          if [ "$DRY_RUN" != "true" ] && gh release view "v$version" >/dev/null 2>&1; then
             echo "::error::Релиз v$version уже выпущен — поднимите версию в pubspec.yaml"
             exit 1
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry-run }}
 
   check:
     name: Проверки
