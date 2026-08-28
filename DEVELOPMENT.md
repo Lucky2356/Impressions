@@ -1,5 +1,13 @@
 # Разработка
 
+## Где всё собирается
+
+Сборка и выпуск живут на GitHub: `.github/workflows/check.yml` гоняет формат, анализ и тесты на каждый пуш в `main`, `.github/workflows/release.yml` собирает установщик Windows и APK и выкладывает релиз. Своя машина ни для того, ни для другого не нужна.
+
+Правки без своей машины — Codespaces: окружение с Flutter описано в `.devcontainer/`, проверки запускаются `./scripts/check.sh`. Android SDK и Visual Studio туда не входят — сборки делают раннеры.
+
+Требования ниже — для работы своей машиной.
+
 ## Требования
 
 - Flutter stable 3.44+ (в этом проекте установлен в `C:\src\flutter`).
@@ -19,6 +27,8 @@
 | `test.ps1` | все тесты |
 | `build_windows.ps1` | сборка Windows release |
 | `build_android.ps1` | сборка Android APK |
+
+Для Linux и Codespaces рядом лежат `check.sh` и `generate.sh` — то же самое, что одноимённые `.ps1`.
 
 ## Кодогенерация
 

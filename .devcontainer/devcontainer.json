@@ -1,0 +1,28 @@
+{
+  // Рабочее окружение для GitHub Codespaces: Flutter и Dart ставятся сами,
+  // машина разработчика для правок больше не нужна.
+  //
+  // Android SDK и Visual Studio сюда не входят намеренно — сборки делает
+  // .github/workflows/release.yml на раннерах. Здесь живут правки, формат,
+  // анализ и тесты: `./scripts/check.sh`.
+  "name": "Впечатления",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "onCreateCommand": "bash .devcontainer/setup.sh",
+  "postCreateCommand": "bash -lc 'flutter pub get && ./scripts/generate.sh'",
+  "remoteEnv": {
+    "PATH": "/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${containerEnv:PATH}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["Dart-Code.dart-code", "Dart-Code.flutter"],
+      "settings": {
+        "dart.flutterSdkPath": "/usr/local/flutter",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb"
+  }
+}

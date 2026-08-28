@@ -105,7 +105,20 @@ Flutter · Dart · Material 3 · Riverpod · Drift/SQLite (FTS5) · cryptography
 
 ### Сборка
 
-Нужны Flutter stable 3.44+, Android SDK для APK, Visual Studio с компонентами Desktop C++ и включённый режим разработчика Windows. Для установщика — [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`).
+Собирает GitHub. `.github/workflows/release.yml` делает установщик Windows и APK на раннерах и выкладывает готовый релиз — своя машина для выпуска не нужна.
+
+**Выпуск.** Поднять `version` в `pubspec.yaml`, добавить раздел в `CHANGELOG.md`, закоммитить в `main` — и нажать «Run workflow» у сборки «Релиз» на вкладке Actions. Тег `v<версия>` создаётся сам вместе с релизом, описание выпуска собирается из `CHANGELOG.md`. Пуш готового тега `v<версия>` делает то же самое.
+
+До публикации проверяется: формат, анализ и все тесты; версия в теге совпадает с `pubspec.yaml`; релиз с таким номером ещё не выходил; APK подписан тем же ключом, что и прошлые выпуски. Не сошлось — релиза не будет.
+
+**Правки без своей машины.** Codespaces поднимает окружение с Flutter по `.devcontainer/`. Android SDK и Visual Studio туда не входят: сборки делают раннеры.
+
+```bash
+./scripts/generate.sh         # кодогенерация
+./scripts/check.sh            # формат, анализ, все тесты
+```
+
+**Своей машиной.** Нужны Flutter stable 3.44+, Android SDK для APK, Visual Studio с компонентами Desktop C++ и включённый режим разработчика Windows. Для установщика — [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`).
 
 ```powershell
 ./scripts/bootstrap.ps1       # зависимости и кодогенерация
@@ -149,6 +162,17 @@ keyPassword=<пароль ключа>
 ```
 
 Оба файла в `.gitignore` и в репозиторий не попадают. Образец полей — `android/key.properties.example`.
+
+**Тот же ключ для сборки на GitHub.** Раннер получает его из секретов репозитория (Settings → Secrets and variables → Actions). Четыре секрета:
+
+| Секрет | Значение |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | сам `impressions.jks` в base64: `base64 -w0 android/impressions.jks` |
+| `ANDROID_STORE_PASSWORD` | пароль хранилища |
+| `ANDROID_KEY_PASSWORD` | пароль ключа |
+| `ANDROID_KEY_ALIAS` | `impressions` |
+
+Ключ живёт на раннере только внутри сборки: файл собирается из секрета перед `flutter build` и удаляется после неё. Собранный APK сверяется по отпечатку сертификата с прошлыми выпусками — подпись чужим ключом останавливает выпуск, а не уезжает к людям, у которых приложение уже стоит.
 
 **Ключ нельзя терять.** Android разрешает обновление только сборкой с той же подписью. Потеряв ключ, обновить уже установленные копии будет нечем: приложение хранит всё локально, поэтому переустановка означает потерю записей. Храните `.jks` и пароли там же, где остальные важные пароли, и держите отдельную копию.
 

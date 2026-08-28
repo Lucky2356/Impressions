@@ -7,6 +7,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Те же проверки перед выпуском: релиз собирается из них, а не рядом.
+  workflow_call:
 
 jobs:
   check:

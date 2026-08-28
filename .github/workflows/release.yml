@@ -1,0 +1,207 @@
+name: Релиз
+
+# Сборка и выпуск целиком на серверах GitHub: рабочая машина в этом не
+# участвует. Windows-установщик собирается на windows-раннере — собрать его
+# больше негде, — APK на linux-раннере, и оба уезжают в релиз одним шагом.
+#
+# Запуск: кнопкой «Run workflow» на вкладке Actions. Версия берётся из
+# pubspec.yaml, тег `v<версия>` создаётся сам вместе с релизом. Пуш готового
+# тега тоже работает — тогда тег обязан совпадать с версией в pubspec.yaml.
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Собрать, но релиз не публиковать
+        type: boolean
+        default: false
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    name: Версия
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Прочитать версию из pubspec.yaml
+        id: read
+        # Тег, разошедшийся с pubspec.yaml, даёт релиз, в котором номер на
+        # странице и номер внутри приложения разные, — а обновление сверяется
+        # именно с внутренним. Поэтому расхождение останавливает выпуск.
+        run: |
+          version=$(sed -n 's/^version: *\([0-9.]*\)+.*/\1/p' pubspec.yaml)
+          if [ -z "$version" ]; then
+            echo "::error::Не удалось прочитать версию из pubspec.yaml"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Версия: $version"
+
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "::error::Тег ${GITHUB_REF_NAME} не совпадает с версией в pubspec.yaml (ожидался v$version)"
+            exit 1
+          fi
+
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "::error::Релиз v$version уже выпущен — поднимите версию в pubspec.yaml"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  check:
+    name: Проверки
+    needs: version
+    uses: ./.github/workflows/check.yml
+
+  windows:
+    name: Установщик Windows
+    needs: [version, check]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.x
+          cache: true
+
+      - name: Зависимости и кодогенерация
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Inno Setup
+        # На образе раннера он обычно уже есть; если версия образа сменится и
+        # он пропадёт — ставится здесь, а не роняет сборку в самом конце.
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe')) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Сборка установщика
+        shell: pwsh
+        run: ./scripts/build_installer.ps1 -Version ${{ needs.version.outputs.version }}
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: windows-setup
+          path: dist/Impressions-*-windows-x64-setup.exe
+          if-no-files-found: error
+
+  android:
+    name: APK
+    needs: [version, check]
+    runs-on: ubuntu-latest
+    env:
+      # Отпечаток сертификата, которым подписаны все выпуски начиная с 1.0.0.
+      # Android обновляет приложение только сборкой с той же подписью, поэтому
+      # чужой ключ в секретах должен остановить выпуск, а не уехать к людям,
+      # у которых приложение уже стоит.
+      EXPECTED_CERT: d0f039909dbed1e984dd3035c9b47f906bd838c52d2a856eac01f7226f3d45b4
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.x
+          cache: true
+
+      - name: Ключ подписи
+        # Ключ и пароли лежат в секретах репозитория, а не в нём самом. Как их
+        # завести — в README, раздел «Ключ подписи Android».
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Нет секрета ANDROID_KEYSTORE_BASE64 — подписать APK нечем. См. README, раздел «Ключ подписи Android»."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/impressions.jks
+          {
+            echo "storeFile=impressions.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Зависимости и кодогенерация
+        run: |
+          flutter pub get
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Сборка APK
+        run: flutter build apk --release --target-platform android-arm,android-arm64
+
+      - name: Подпись та же, что у прошлых выпусков
+        run: |
+          actual=$(keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk \
+            | sed -n 's/.*SHA256: *//p' | head -1 | tr -d ': ' | tr 'A-Z' 'a-z')
+          echo "Отпечаток: $actual"
+          if [ "$actual" != "$EXPECTED_CERT" ]; then
+            echo "::error::APK подписан не тем ключом — установленные копии таким обновлением не обновятся"
+            exit 1
+          fi
+
+      - name: Переименовать под номер версии
+        run: mv build/app/outputs/flutter-apk/app-release.apk "Impressions-${{ needs.version.outputs.version }}.apk"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: android-apk
+          path: Impressions-*.apk
+          if-no-files-found: error
+
+      - name: Убрать ключ
+        if: always()
+        run: rm -f android/impressions.jks android/key.properties
+
+  release:
+    name: Выпуск
+    needs: [version, windows, android]
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Описание релиза из changelog
+        run: python3 scripts/release_notes.py ${{ needs.version.outputs.version }} > notes.md
+
+      - name: Опубликовать
+        # Тег создаётся здесь же на текущем коммите, если его ещё нет: выпуск
+        # начинается кнопкой, а не отдельным пушем тега с рабочей машины.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          ls -la dist
+          gh release create "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "Впечатления $VERSION" \
+            --notes-file notes.md \
+            "dist/Impressions-$VERSION-windows-x64-setup.exe" \
+            "dist/Impressions-$VERSION.apk"
