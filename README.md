@@ -223,6 +223,7 @@ keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk
 | [CLAUDE.md](CLAUDE.md) | Договорённости и ориентиры для тех, кто правит проект |
 | [TESTING.md](TESTING.md) | Состав тестов, golden-эталоны |
 | [CHANGELOG.md](CHANGELOG.md) | История изменений |
+| [ROADMAP.md](ROADMAP.md) | Что дальше: трение в интерфейсе, ручной ввод, напоминания |
 
 ### Горячие клавиши
 
