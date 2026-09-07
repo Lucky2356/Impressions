@@ -186,6 +186,10 @@ class _MainColumn extends ConsumerWidget {
               cns.maxWidth,
               tileWidth: context.layout.gridTileWidth,
             );
+            final aspect = coverProgressAspectRatio(
+              availableWidth: cns.maxWidth,
+              columns: cols,
+            );
             return _grid(
               context,
               [
@@ -208,7 +212,7 @@ class _MainColumn extends ConsumerWidget {
                   ),
               ],
               cols,
-              0.62,
+              aspect,
             );
           },
         ),
@@ -386,6 +390,10 @@ class _YearAgoBlock extends ConsumerWidget {
               cns.maxWidth,
               tileWidth: context.layout.gridTileWidth,
             );
+            final aspect = coverProgressAspectRatio(
+              availableWidth: cns.maxWidth,
+              columns: cols,
+            );
             return GridView.count(
               crossAxisCount: cols,
               shrinkWrap: true,
@@ -395,7 +403,7 @@ class _YearAgoBlock extends ConsumerWidget {
               // Поправка на масштаб шрифта — по тому же правилу, что и в
               // [_grid]: подписи под обложкой растут вместе с ним.
               childAspectRatio:
-                  0.62 / MediaQuery.textScalerOf(context).scale(1),
+                  aspect / MediaQuery.textScalerOf(context).scale(1),
               children: [
                 for (final e in then.take(cols))
                   EntryMenuTarget(
