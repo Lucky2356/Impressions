@@ -4370,6 +4370,78 @@ abstract class AppLocalizations {
   /// **'Источники данных'**
   String get settingsBarcodeSources;
 
+  /// No description provided for @settingsTitleLookup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Искать сведения по названию'**
+  String get settingsTitleLookup;
+
+  /// No description provided for @settingsTitleLookupHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Книги — Open Library, фильмы, сериалы и игры — Wikidata. Наружу уходит только название.'**
+  String get settingsTitleLookupHint;
+
+  /// No description provided for @lookupAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти сведения'**
+  String get lookupAction;
+
+  /// No description provided for @lookupTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что из этого?'**
+  String get lookupTitle;
+
+  /// No description provided for @lookupSearching.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ищем…'**
+  String get lookupSearching;
+
+  /// No description provided for @lookupNothing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ничего не нашлось'**
+  String get lookupNothing;
+
+  /// No description provided for @lookupNothingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте название или заполните поля сами.'**
+  String get lookupNothingHint;
+
+  /// No description provided for @lookupOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск по названию выключен в настройках сети'**
+  String get lookupOff;
+
+  /// No description provided for @lookupKindBook.
+  ///
+  /// In ru, this message translates to:
+  /// **'Книга'**
+  String get lookupKindBook;
+
+  /// No description provided for @lookupKindFilm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильм'**
+  String get lookupKindFilm;
+
+  /// No description provided for @lookupKindSeries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сериал'**
+  String get lookupKindSeries;
+
+  /// No description provided for @lookupKindGame.
+  ///
+  /// In ru, this message translates to:
+  /// **'Игра'**
+  String get lookupKindGame;
+
   /// No description provided for @settingsProductAutoUpdate.
   ///
   /// In ru, this message translates to:

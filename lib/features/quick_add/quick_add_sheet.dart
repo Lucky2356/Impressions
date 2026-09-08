@@ -28,6 +28,7 @@ import '../entry/pending_photos_field.dart';
 import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
+import 'title_lookup_sheet.dart';
 import 'quick_add_draft.dart';
 import 'quick_add_fields.dart';
 
@@ -122,6 +123,10 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Штрихкод и бренд, полученные сканированием.
   String? _barcode;
   String? _creator;
+  int? _year;
+
+  /// Включён ли поиск сведений по названию — настройка сети.
+  bool _lookupEnabled = true;
 
   /// Значения пользовательских полей типа (§9).
   final Map<String, String> _customValues = {};
@@ -174,6 +179,19 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     _progressCurrent.addListener(_scheduleDraftSave);
     _progressTotal.addListener(_scheduleDraftSave);
     _restoreDraft();
+    _readLookupSetting();
+  }
+
+  /// Настройка сети: включён ли поиск сведений по названию.
+  ///
+  /// Читается один раз при открытии формы. Кнопка появляется только если
+  /// поиск разрешён — предлагать выключенное значило бы обещать несделанное.
+  Future<void> _readLookupSetting() async {
+    final enabled = await ref
+        .read(settingsRepositoryProvider)
+        .getBool(SettingKeys.titleLookupEnabled, defaultValue: true);
+    if (!mounted || enabled == _lookupEnabled) return;
+    setState(() => _lookupEnabled = enabled);
   }
 
   /// Заполняет форму по записи, с которой снимают копию.
@@ -308,6 +326,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _showDetails = draft.showDetails || _showDetails;
       _barcode = draft.barcode;
       _creator = draft.creator;
+      _year = draft.year;
       _customValues
         ..clear()
         ..addAll(draft.customValues);
@@ -372,6 +391,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     showDetails: _showDetails,
     barcode: _barcode,
     creator: _creator,
+    year: _year,
     customValues: Map.of(_customValues),
     impressionDate: _impressionDate,
     tags: List.of(_tags),
@@ -448,6 +468,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _status = null;
       _barcode = null;
       _creator = null;
+      _year = null;
       _customValues.clear();
       _impressionDate = null;
       _tags.clear();
@@ -494,12 +515,30 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       _tags.clear();
       _barcode = null;
       _creator = null;
+      _year = null;
       _customValues.clear();
       _impressionDate = null;
       // Следующий код из пачки заполняет форму сам.
       if (_queue.isNotEmpty) _applyPrefill(_queue.removeAt(0));
     });
     _titleFocus.requestFocus();
+  }
+
+  /// Ищет сведения по введённому названию и подставляет выбранное.
+  ///
+  /// Заменяет название, автора и год — ровно то, что человек иначе печатал бы
+  /// руками. Оценку, отношение и заметку не трогает: это его слова, а не
+  /// сведения из справочника.
+  Future<void> _lookupByTitle() async {
+    final query = _title.text.trim();
+    if (query.isEmpty) return;
+    final match = await TitleLookupSheet.show(context, query: query);
+    if (match == null || !mounted) return;
+    setState(() {
+      _title.text = match.title;
+      if (match.creator != null) _creator = match.creator;
+      if (match.year != null) _year = match.year;
+    });
   }
 
   Future<void> _save({bool keepOpen = false}) async {
@@ -534,6 +573,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         typeId: typeId,
         title: title,
         creator: _creator,
+        year: _year,
         barcode: _barcode,
         customFields: _customValues.isEmpty
             ? null
@@ -833,6 +873,20 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       ? l10n.quickAddNameRequired
                       : null,
                 ),
+                // Поиск сведений по названию. Кнопка появляется, только
+                // когда есть что искать: на пустом поле она предлагала бы
+                // искать пустоту.
+                if (_lookupEnabled && _title.text.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppDimens.space4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _busy ? null : _lookupByTitle,
+                      icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                      label: Text(l10n.lookupAction),
+                    ),
+                  ),
+                ],
                 if (_barcode != null) ...[
                   const SizedBox(height: AppDimens.space8),
                   Row(

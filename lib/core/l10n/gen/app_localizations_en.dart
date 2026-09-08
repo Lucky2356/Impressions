@@ -2587,6 +2587,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBarcodeSources => 'Data sources';
 
   @override
+  String get settingsTitleLookup => 'Look up details by title';
+
+  @override
+  String get settingsTitleLookupHint =>
+      'Books from Open Library; films, series and games from Wikidata. Only the title leaves your device.';
+
+  @override
+  String get lookupAction => 'Find details';
+
+  @override
+  String get lookupTitle => 'Which one?';
+
+  @override
+  String get lookupSearching => 'Searching…';
+
+  @override
+  String get lookupNothing => 'Nothing found';
+
+  @override
+  String get lookupNothingHint =>
+      'Check the title or fill the fields in yourself.';
+
+  @override
+  String get lookupOff => 'Title lookup is turned off in network settings';
+
+  @override
+  String get lookupKindBook => 'Book';
+
+  @override
+  String get lookupKindFilm => 'Film';
+
+  @override
+  String get lookupKindSeries => 'Series';
+
+  @override
+  String get lookupKindGame => 'Game';
+
+  @override
   String get settingsProductAutoUpdate => 'Fill in product cards automatically';
 
   @override
