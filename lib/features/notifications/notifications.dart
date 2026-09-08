@@ -10,6 +10,7 @@ import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/entry_stats.dart';
 import '../../data/repositories/settings_repository.dart';
 
 /// Что за событие показывает уведомление.
@@ -20,6 +21,7 @@ enum NotificationKind {
   import,
   backup,
   yearReview,
+  wishlist,
 }
 
 /// Событие для центра уведомлений.
@@ -74,6 +76,7 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     SettingKeys.appUpdateDismissed,
     SettingKeys.appUpdateCheckedAt,
     SettingKeys.productAutoUpdateAt,
+    SettingKeys.wishlistReminder,
   ]);
 
   final seenRaw = stored[_seenKey];
@@ -214,6 +217,41 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     }
   }
 
+  // Задуманное, до которого не дошли руки. Список «Хочу попробовать» пассивен:
+  // пока сам не откроешь — не вспомнишь, а смысл приложения ровно обратный.
+  //
+  // По умолчанию выключено и включается в настройках: напоминать о себе тому,
+  // кто об этом не просил, приложение не должно.
+  //
+  // Отметка времени — начало месяца, как у итогов года начало года: событие
+  // гасится общей отметкой «прочитано» и возвращается в следующем месяце.
+  // Своей таблицы и своих таймеров для этого не нужно.
+  if (profile != null && stored[SettingKeys.wishlistReminder] == 'true') {
+    // Счёт и давность одним агрегатом, в слое данных: сюда drift импортирован
+    // через show, иначе его Column и Table столкнутся с material.
+    final planned = await ref
+        .watch(entryRepositoryProvider)
+        .plannedWaiting(profile.id);
+    final since = planned.since;
+    // Молчим, пока задуманное свежее: напоминать о том, что заведено на этой
+    // неделе, — навязчивость, а не помощь.
+    final stale = DateTime.now().subtract(const Duration(days: 30));
+    if (planned.count > 0 && since != null && since.isBefore(stale)) {
+      final at = DateTime(now.year, now.month);
+      result.add(
+        AppNotification(
+          kind: NotificationKind.wishlist,
+          title: '${planned.count}',
+          body: since.toIso8601String(),
+          icon: Icons.bookmark_add_rounded,
+          at: at,
+          unread: unread(at),
+          target: NavIds.wishlist,
+        ),
+      );
+    }
+  }
+
   result.sort((a, b) => b.at.compareTo(a.at));
   return result;
 });
@@ -279,6 +317,7 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.import => l10n.notificationImportTitle,
       NotificationKind.backup => l10n.notificationBackupTitle,
       NotificationKind.yearReview => l10n.notificationYearTitle,
+      NotificationKind.wishlist => l10n.notificationWishlistTitle,
     };
 
     final dateFormat = localeDate(context, 'd MMMM, HH:mm');
@@ -300,6 +339,12 @@ class NotificationPanel extends ConsumerWidget {
       // Год лежит в заголовке события: считать его заново в панели значило бы
       // получить другой ответ первого января в полночь.
       NotificationKind.yearReview => l10n.notificationYearBody(n.title),
+      // Счёт и давность посчитаны при сборке события: перезапрашивать их в
+      // панели значило бы сходить в базу ради строки, которая уже готова.
+      NotificationKind.wishlist => l10n.notificationWishlistBody(
+        int.tryParse(n.title) ?? 0,
+        localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
+      ),
     };
 
     return Container(

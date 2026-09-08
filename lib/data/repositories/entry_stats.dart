@@ -68,6 +68,25 @@ extension EntryStats on EntryRepository {
     );
   }
 
+  /// Сколько задумок ждёт очереди и с каких пор — для напоминания.
+  ///
+  /// Одним агрегатом, без подъёма самих записей: панель уведомлений
+  /// пересчитывается на каждое изменение данных, ради точки на колокольчике.
+  Future<PlannedWaiting> plannedWaiting(String profileId) async {
+    final count = db.profileEntries.id.count();
+    final oldest = db.profileEntries.createdAt.min();
+    final row =
+        await (db.selectOnly(db.profileEntries)
+              ..addColumns([count, oldest])
+              ..where(
+                db.profileEntries.profileId.equals(profileId) &
+                    db.profileEntries.archivedAt.isNull() &
+                    db.profileEntries.status.equals(EntryStatus.planned),
+              ))
+            .getSingle();
+    return PlannedWaiting(count: row.read(count) ?? 0, since: row.read(oldest));
+  }
+
   /// Развёрнутая статистика профиля (§14).
   ///
   /// Считается агрегатами в базе. Раньше сюда поднимались все записи профиля

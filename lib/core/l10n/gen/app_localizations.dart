@@ -1196,6 +1196,18 @@ abstract class AppLocalizations {
   /// **'Посмотрите, каким был {year}'**
   String notificationYearBody(String year);
 
+  /// No description provided for @notificationWishlistTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задуманное ждёт'**
+  String get notificationWishlistTitle;
+
+  /// No description provided for @notificationWishlistBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} задумка ждёт с {since}} few{{count} задумки ждут с {since}} many{{count} задумок ждут с {since}} other{{count} задумок ждут с {since}}}'**
+  String notificationWishlistBody(int count, String since);
+
   /// No description provided for @homeContinue.
   ///
   /// In ru, this message translates to:
@@ -3311,7 +3323,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsWordsBehaviour.
   ///
   /// In ru, this message translates to:
-  /// **'поведение подкатегории перенос записей обучение'**
+  /// **'поведение подкатегории перенос записей обучение напоминания задуманное'**
   String get settingsWordsBehaviour;
 
   /// No description provided for @settingsWordsBackups.
@@ -3475,6 +3487,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'По умолчанию показывать записи из подкатегорий'**
   String get settingsShowSubcategoriesDefault;
+
+  /// No description provided for @settingsWishlistReminder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать о задуманном'**
+  String get settingsWishlistReminder;
+
+  /// No description provided for @settingsWishlistReminderHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз в месяц, если в «Хочу попробовать» что-то лежит давно'**
+  String get settingsWishlistReminderHint;
 
   /// No description provided for @settingsTransferMode.
   ///

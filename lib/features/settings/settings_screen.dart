@@ -39,6 +39,14 @@ final includeSubcategoriesProvider = FutureProvider<bool>((ref) async {
       .getBool(SettingKeys.catalogIncludeSubcategories, defaultValue: true);
 });
 
+/// Значение настройки «напоминать о задуманном».
+final wishlistReminderProvider = FutureProvider<bool>((ref) async {
+  ref.watchData(DataKind.settings);
+  return ref
+      .read(settingsRepositoryProvider)
+      .getBool(SettingKeys.wishlistReminder, defaultValue: false);
+});
+
 /// Ширина колонки настроек: формы шире читать неудобно.
 const double _settingsMaxWidth = 880;
 
@@ -473,6 +481,7 @@ class BehaviourSection extends ConsumerWidget {
     final c = context.colors;
     final settings = ref.read(settingsRepositoryProvider);
     final includeSub = ref.watch(includeSubcategoriesProvider).value ?? true;
+    final remindWishlist = ref.watch(wishlistReminderProvider).value ?? false;
     final transferMode =
         ref.watch(transferModeProvider).value ?? 'suggestMatch';
 
@@ -501,6 +510,39 @@ class BehaviourSection extends ConsumerWidget {
                   SettingKeys.catalogIncludeSubcategories,
                   v,
                 );
+                ref.read(dataRefreshProvider.notifier).bump(const [
+                  DataKind.settings,
+                ]);
+              },
+            ),
+          ],
+        ),
+        Divider(height: AppDimens.space24, color: c.divider),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.settingsWishlistReminder,
+                    style: context.text.bodyMedium,
+                  ),
+                  const SizedBox(height: AppDimens.space4),
+                  Text(
+                    l10n.settingsWishlistReminderHint,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: remindWishlist,
+              onChanged: (v) async {
+                await settings.setBool(SettingKeys.wishlistReminder, v);
                 ref.read(dataRefreshProvider.notifier).bump(const [
                   DataKind.settings,
                 ]);
