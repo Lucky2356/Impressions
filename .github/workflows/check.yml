@@ -33,6 +33,7 @@ jobs:
         run: |
           flutter gen-l10n
           dart run build_runner build --delete-conflicting-outputs
+          python scripts/changelog_asset.py
 
       - name: Формат
         run: dart format --set-exit-if-changed lib test

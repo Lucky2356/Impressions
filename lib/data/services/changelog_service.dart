@@ -15,16 +15,21 @@ class ChangelogEntry {
   final String body;
 }
 
-/// Читает `CHANGELOG.md` из ресурсов приложения.
+/// Читает историю изменений из ресурсов приложения.
+///
+/// В сборку едет не весь `CHANGELOG.md`, а несколько последних разделов:
+/// приложению нужен только раздел текущей версии, а полная история к 1.22.0
+/// весила 156 КБ и росла с каждым выпуском. Свежую часть собирает
+/// `scripts/changelog_asset.py`; полная лежит в корне репозитория.
 class ChangelogService {
   const ChangelogService({this.load = _loadAsset});
 
   /// Откуда берётся файл. Подменяется в тестах.
   final Future<String> Function() load;
 
-  static Future<String> _loadAsset() => rootBundle.loadString('CHANGELOG.md');
+  static Future<String> _loadAsset() => rootBundle.loadString(assetPath);
 
-  static const assetPath = 'CHANGELOG.md';
+  static const assetPath = 'assets/changelog.md';
 
   /// Раздел нужной версии или null, если такого нет.
   Future<ChangelogEntry?> forVersion(String version) async {

@@ -63,21 +63,35 @@ void main() {
     expect(await service.forVersion('1.12.0'), isNull);
   });
 
-  test('в настоящем CHANGELOG.md есть раздел текущей версии', () {
-    // Файл едет в сборку ресурсом, и окно «Что нового» показывает раздел ровно
-    // той версии, что в pubspec: разошлись — и после обновления окно молчит.
+  test('в поставляемой истории есть раздел текущей версии', () {
+    // В сборку едет не весь CHANGELOG.md, а свежая часть, собранная
+    // scripts/changelog_asset.py. Пересобрать её после правки истории легко
+    // забыть, и тогда окно «Что нового» после обновления молчит — а заметить
+    // это можно только обновившись.
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final version = RegExp(
       r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)',
       multiLine: true,
     ).firstMatch(pubspec)!.group(1)!;
 
-    final entry = ChangelogService.sectionOf(
-      File('CHANGELOG.md').readAsStringSync(),
-      version,
-    );
+    final full = File('CHANGELOG.md').readAsStringSync();
+    final shipped = File(ChangelogService.assetPath).readAsStringSync();
 
-    expect(entry, isNotNull, reason: 'нет раздела [$version] в CHANGELOG.md');
+    expect(
+      ChangelogService.sectionOf(shipped, version),
+      isNotNull,
+      reason:
+          'нет раздела [$version] в ${ChangelogService.assetPath} — '
+          'пересоберите: python3 scripts/changelog_asset.py',
+    );
+    expect(
+      ChangelogService.sectionOf(full, version),
+      isNotNull,
+      reason: 'нет раздела [$version] в CHANGELOG.md',
+    );
+    // Свежая часть не должна незаметно снова стать полной историей: ради
+    // этого всё и затевалось.
+    expect(shipped.length, lessThan(full.length));
   });
 }
 
