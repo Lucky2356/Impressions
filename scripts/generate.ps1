@@ -7,4 +7,8 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host '== build_runner ==' -ForegroundColor Cyan
 dart run build_runner build --delete-conflicting-outputs
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host '== changelog для сборки ==' -ForegroundColor Cyan
+python3 scripts/changelog_asset.py
 exit $LASTEXITCODE

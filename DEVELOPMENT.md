@@ -37,7 +37,12 @@
 ```powershell
 flutter gen-l10n
 dart run build_runner build --delete-conflicting-outputs
+python3 scripts/changelog_asset.py
 ```
+
+Последняя строка — после правки `CHANGELOG.md`: в сборку едет не весь файл, а
+свежая часть (`assets/changelog.md`). Приложению нужен раздел текущей версии, а
+полная история к 1.22.0 весила 156 КБ и росла с каждым выпуском.
 
 ## Структура
 
