@@ -691,6 +691,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationWishlistTitle => 'Something you planned is waiting';
+
+  @override
+  String notificationWishlistBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ideas waiting since $since',
+      one: '$count idea waiting since $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get homeContinue => 'Pick up where you left off';
 
   @override
@@ -1959,7 +1973,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsWordsBehaviour =>
-      'behaviour subcategories transfer entries tour';
+      'behaviour subcategories transfer entries tour reminders planned';
 
   @override
   String get settingsWordsBackups =>
@@ -2046,6 +2060,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsShowSubcategoriesDefault =>
       'Show entries from subcategories by default';
+
+  @override
+  String get settingsWishlistReminder => 'Remind me about things I planned';
+
+  @override
+  String get settingsWishlistReminderHint =>
+      'Once a month, if something has been sitting in “Want to try” for a while';
 
   @override
   String get settingsTransferMode => 'When transferring entries';

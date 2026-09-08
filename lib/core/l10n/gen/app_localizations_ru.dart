@@ -716,6 +716,22 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get notificationWishlistTitle => 'Задуманное ждёт';
+
+  @override
+  String notificationWishlistBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count задумок ждут с $since',
+      many: '$count задумок ждут с $since',
+      few: '$count задумки ждут с $since',
+      one: '$count задумка ждёт с $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get homeContinue => 'Продолжить начатое';
 
   @override
@@ -2010,7 +2026,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsWordsBehaviour =>
-      'поведение подкатегории перенос записей обучение';
+      'поведение подкатегории перенос записей обучение напоминания задуманное';
 
   @override
   String get settingsWordsBackups =>
@@ -2099,6 +2115,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsShowSubcategoriesDefault =>
       'По умолчанию показывать записи из подкатегорий';
+
+  @override
+  String get settingsWishlistReminder => 'Напоминать о задуманном';
+
+  @override
+  String get settingsWishlistReminderHint =>
+      'Раз в месяц, если в «Хочу попробовать» что-то лежит давно';
 
   @override
   String get settingsTransferMode => 'При переносе записей';

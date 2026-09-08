@@ -47,6 +47,11 @@ class SettingKeys {
   /// Версия, о новшествах которой уже рассказали.
   static const changelogSeenVersion = 'changelog_seen_version';
 
+  /// Напоминать ли о задуманном: «Хочу попробовать» — список пассивный, пока
+  /// сам не откроешь. По умолчанию выключено: приложение не должно напоминать
+  /// о себе тому, кто об этом не просил.
+  static const wishlistReminder = 'wishlist_reminder';
+
   /// Режим переноса записей между профилями (§7.4).
   static const transferMode = 'transfer_mode';
 
