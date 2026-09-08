@@ -158,10 +158,27 @@ jobs:
         run: flutter build apk --release --target-platform android-arm,android-arm64
 
       - name: Подпись та же, что у прошлых выпусков
+        # Отпечаток читает apksigner, а не keytool. У приложения minSdk 24, а
+        # начиная с него Gradle подписывает APK только схемами v2/v3;
+        # `keytool -printcert -jarfile` знает лишь подпись v1 и на таком файле
+        # молча отдаёт пустую строку — проверка притворялась несовпадением
+        # ключа. Пустой отпечаток теперь останавливает выпуск сам по себе:
+        # непрочитанная подпись — это не проверенная подпись.
         run: |
-          actual=$(keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk \
-            | sed -n 's/.*SHA256: *//p' | head -1 | tr -d ': ' | tr 'A-Z' 'a-z')
+          apksigner=$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" \
+            -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+          if [ -z "$apksigner" ]; then
+            echo "::error::apksigner не найден в Android SDK — проверить подпись нечем"
+            exit 1
+          fi
+          actual=$("$apksigner" verify --print-certs \
+            build/app/outputs/flutter-apk/app-release.apk \
+            | sed -n 's/^Signer #1 certificate SHA-256 digest: *//p' | head -1 | tr 'A-Z' 'a-z')
           echo "Отпечаток: $actual"
+          if [ -z "$actual" ]; then
+            echo "::error::Не удалось прочитать отпечаток из APK — подпись не проверена"
+            exit 1
+          fi
           if [ "$actual" != "$EXPECTED_CERT" ]; then
             echo "::error::APK подписан не тем ключом — установленные копии таким обновлением не обновятся"
             exit 1
