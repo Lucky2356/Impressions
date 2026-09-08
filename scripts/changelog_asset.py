@@ -40,7 +40,12 @@ def recent(changelog, keep=KEEP):
     lines = changelog.splitlines()
     starts = head(lines)
     if not starts:
-        sys.exit("В CHANGELOG.md нет ни одного раздела версии")
+        # Тоже байтами: на Windows сообщение об ошибке иначе само упало бы на
+        # кириллице, подменив причину сбоя.
+        sys.stderr.buffer.write(
+            "В CHANGELOG.md нет ни одного раздела версии\n".encode("utf-8")
+        )
+        sys.exit(1)
     end = starts[keep] if len(starts) > keep else len(lines)
     return "\n".join(lines[:end]).rstrip() + "\n"
 
@@ -58,7 +63,11 @@ def main():
 
     full = len(changelog.encode("utf-8"))
     part = len(text.encode("utf-8"))
-    print("{}: {} КБ из {} КБ".format(OUTPUT, part // 1024, full // 1024))
+    # Явные байты, как в release_notes.py: кодировка stdout зависит от системы,
+    # а текст русский. На раннере Windows это cp1252, и обычный print на «КБ»
+    # роняет шаг кодогенерации целиком.
+    line = "{}: {} КБ из {} КБ\n".format(OUTPUT, part // 1024, full // 1024)
+    sys.stdout.buffer.write(line.encode("utf-8"))
 
 
 if __name__ == "__main__":
