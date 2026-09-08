@@ -2652,6 +2652,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsBarcodeSources => 'Источники данных';
 
   @override
+  String get settingsTitleLookup => 'Искать сведения по названию';
+
+  @override
+  String get settingsTitleLookupHint =>
+      'Книги — Open Library, фильмы, сериалы и игры — Wikidata. Наружу уходит только название.';
+
+  @override
+  String get lookupAction => 'Найти сведения';
+
+  @override
+  String get lookupTitle => 'Что из этого?';
+
+  @override
+  String get lookupSearching => 'Ищем…';
+
+  @override
+  String get lookupNothing => 'Ничего не нашлось';
+
+  @override
+  String get lookupNothingHint => 'Проверьте название или заполните поля сами.';
+
+  @override
+  String get lookupOff => 'Поиск по названию выключен в настройках сети';
+
+  @override
+  String get lookupKindBook => 'Книга';
+
+  @override
+  String get lookupKindFilm => 'Фильм';
+
+  @override
+  String get lookupKindSeries => 'Сериал';
+
+  @override
+  String get lookupKindGame => 'Игра';
+
+  @override
   String get settingsProductAutoUpdate =>
       'Дополнять карточки товаров автоматически';
 

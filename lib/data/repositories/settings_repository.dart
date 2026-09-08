@@ -68,6 +68,12 @@ class SettingKeys {
   /// Включённые источники товарных данных, через запятую.
   static const barcodeSources = 'barcode_sources';
 
+  /// Поиск сведений о книге, фильме, сериале или игре по названию.
+  ///
+  /// Отдельно от поиска по штрихкоду: там ищут товар по коду, здесь — по
+  /// названию, и человек может хотеть одно без другого.
+  static const titleLookupEnabled = 'title_lookup_enabled';
+
   /// Фоновое обновление сведений о товарах с штрихкодом.
   static const productAutoUpdate = 'product_auto_update';
 

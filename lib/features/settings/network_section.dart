@@ -134,6 +134,11 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
             .watch(_boolSettingProvider((SettingKeys.appUpdateCheck, true)))
             .value ??
         true;
+    final titleLookup =
+        ref
+            .watch(_boolSettingProvider((SettingKeys.titleLookupEnabled, true)))
+            .value ??
+        true;
     final enabled = ref.watch(enabledSourcesProvider).value ?? const <String>{};
 
     return SettingsGroup(
@@ -149,6 +154,21 @@ class _NetworkSectionState extends ConsumerState<NetworkSection> {
           label: l10n.settingsBarcodeLookup,
           value: lookup,
           onChanged: (v) => _toggle(SettingKeys.barcodeLookupEnabled, v),
+        ),
+        Divider(height: AppDimens.space24, color: c.divider),
+
+        // Рядом с поиском по коду и по тем же правилам, но переключается
+        // отдельно: там ищут товар по коду, здесь книгу или фильм по
+        // названию, и одно можно хотеть без другого.
+        _SwitchRow(
+          label: l10n.settingsTitleLookup,
+          value: titleLookup,
+          onChanged: (v) => _toggle(SettingKeys.titleLookupEnabled, v),
+        ),
+        const SizedBox(height: AppDimens.space4),
+        Text(
+          l10n.settingsTitleLookupHint,
+          style: context.text.labelSmall?.copyWith(color: c.textMuted),
         ),
         Divider(height: AppDimens.space24, color: c.divider),
 

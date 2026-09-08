@@ -21,6 +21,7 @@ class QuickAddDraft {
     this.showDetails = false,
     this.barcode,
     this.creator,
+    this.year,
     this.customValues = const {},
     this.impressionDate,
     this.tags = const [],
@@ -47,6 +48,9 @@ class QuickAddDraft {
   final bool showDetails;
   final String? barcode;
   final String? creator;
+
+  /// Год выхода: подставляется поиском по названию вместе с автором.
+  final int? year;
   final Map<String, String> customValues;
   final DateTime? impressionDate;
   final List<String> tags;
@@ -67,6 +71,7 @@ class QuickAddDraft {
       progressTotal == null &&
       barcode == null &&
       creator == null &&
+      year == null &&
       impressionDate == null &&
       tags.isEmpty &&
       collectionId == null &&
@@ -86,6 +91,7 @@ class QuickAddDraft {
     'showDetails': showDetails,
     'barcode': barcode,
     'creator': creator,
+    'year': year,
     'customValues': customValues,
     'impressionDate': impressionDate?.toIso8601String(),
     'tags': tags,
@@ -126,6 +132,10 @@ class QuickAddDraft {
       showDetails: json['showDetails'] == true,
       barcode: text('barcode'),
       creator: text('creator'),
+      year: switch (json['year']) {
+        final num value => value.toInt(),
+        _ => null,
+      },
       customValues: switch (json['customValues']) {
         final Map<String, Object?> map => {
           for (final e in map.entries)
