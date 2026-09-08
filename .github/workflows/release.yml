@@ -148,6 +148,27 @@ jobs:
             echo "keyPassword=$KEY_PASSWORD"
           } > android/key.properties
 
+      - name: Ключ в секретах — тот самый
+        # Сверка до сборки, а не после: чужой ключ в секретах должен
+        # останавливать выпуск сразу, а не через шесть минут сборки APK.
+        # Хранилище — PKCS12, схем подписи APK в нём нет, поэтому keytool
+        # читает его отпечаток без оговорок.
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          actual=$(keytool -list -v -keystore android/impressions.jks \
+            -storepass "$STORE_PASSWORD" 2>/dev/null \
+            | sed -n 's/.*SHA256: *//p' | head -1 | tr -d ': ' | tr 'A-Z' 'a-z')
+          echo "Отпечаток ключа: $actual"
+          if [ -z "$actual" ]; then
+            echo "::error::Не удалось прочитать отпечаток из хранилища — пароль или файл неверны"
+            exit 1
+          fi
+          if [ "$actual" != "$EXPECTED_CERT" ]; then
+            echo "::error::В секретах чужой ключ — установленные копии таким обновлением не обновятся"
+            exit 1
+          fi
+
       - name: Зависимости и кодогенерация
         run: |
           flutter pub get
@@ -157,24 +178,31 @@ jobs:
       - name: Сборка APK
         run: flutter build apk --release --target-platform android-arm,android-arm64
 
-      - name: Подпись та же, что у прошлых выпусков
-        # Отпечаток читает apksigner, а не keytool. У приложения minSdk 24, а
-        # начиная с него Gradle подписывает APK только схемами v2/v3;
+      - name: Подпись собранного APK
+        # Отпечаток читает apksigner, а не keytool: у приложения minSdk 24, а
+        # начиная с него Gradle подписывает APK только схемами v2/v3, тогда как
         # `keytool -printcert -jarfile` знает лишь подпись v1 и на таком файле
-        # молча отдаёт пустую строку — проверка притворялась несовпадением
-        # ключа. Пустой отпечаток теперь останавливает выпуск сам по себе:
-        # непрочитанная подпись — это не проверенная подпись.
+        # молча отдаёт пустую строку.
+        #
+        # Вывод apksigner целиком уходит в лог вместе с кодом возврата, а поток
+        # ошибок не теряется: разбирать «отпечаток пустой, почему — неизвестно»
+        # вслепую уже приходилось, и второй раз этого делать не надо.
         run: |
+          apk=build/app/outputs/flutter-apk/app-release.apk
           apksigner=$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" \
             -name apksigner -type f 2>/dev/null | sort -V | tail -1)
           if [ -z "$apksigner" ]; then
             echo "::error::apksigner не найден в Android SDK — проверить подпись нечем"
             exit 1
           fi
-          actual=$("$apksigner" verify --print-certs \
-            build/app/outputs/flutter-apk/app-release.apk \
-            | sed -n 's/^Signer #1 certificate SHA-256 digest: *//p' | head -1 | tr 'A-Z' 'a-z')
-          echo "Отпечаток: $actual"
+          echo "apksigner: $apksigner"
+          out=$("$apksigner" verify --print-certs "$apk" 2>&1) && rc=0 || rc=$?
+          echo "код возврата: $rc"
+          printf '%s\n' "$out"
+          actual=$(printf '%s\n' "$out" \
+            | sed -n 's/.*certificate SHA-256 digest: *//p' | head -1 \
+            | tr -d ': ' | tr 'A-Z' 'a-z')
+          echo "Отпечаток APK: $actual"
           if [ -z "$actual" ]; then
             echo "::error::Не удалось прочитать отпечаток из APK — подпись не проверена"
             exit 1
