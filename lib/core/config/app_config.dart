@@ -84,6 +84,15 @@ class AppConfig {
   /// Страница выпусков для человека.
   static const String releasesPageUrl = '$repositoryUrl/releases';
 
+  /// Как приложение представляется внешним сервисам.
+  ///
+  /// Без версии: раньше в запросах поиска уходило зашитое `Impressions/1.1`,
+  /// когда приложение было уже 1.23, — неверная версия хуже никакой. Названию
+  /// же источники (Open Food Facts, Wikidata) требуют представляться, иначе
+  /// ограничивают. Заголовок только ASCII, поэтому берётся `appId`, а не
+  /// отображаемое имя.
+  static const String userAgent = '$appId (local personal library)';
+
   /// Последний выпуск в машиночитаемом виде.
   static const String releasesApiUrl =
       'https://api.github.com/repos/Lucky2356/Impressions/releases/latest';

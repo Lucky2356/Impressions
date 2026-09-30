@@ -4355,7 +4355,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsNetworkHint.
   ///
   /// In ru, this message translates to:
-  /// **'Единственные сетевые запросы приложения. Наружу уходит только штрихкод и номер версии.'**
+  /// **'Единственные сетевые запросы приложения. Наружу уходит только штрихкод или название, и только когда вы сами что-то ищете; проверка обновлений не передаёт ничего.'**
   String get settingsNetworkHint;
 
   /// No description provided for @settingsBarcodeLookup.

@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../core/config/app_config.dart';
+
 /// Поиск сведений о книге, фильме, сериале или игре по названию.
 ///
 /// Второе и последнее место, которое обращается в сеть, — рядом с поиском по
@@ -174,9 +176,9 @@ class TitleLookupService {
 
   static const _timeout = Duration(seconds: 15);
 
-  static const _headers = {
+  static final _headers = {
     // Оба источника просят представляться; Wikidata без этого ограничивает.
-    'User-Agent': 'Impressions/1.1 (local personal library)',
+    'User-Agent': AppConfig.userAgent,
     'Accept': 'application/json, application/sparql-results+json',
   };
 
