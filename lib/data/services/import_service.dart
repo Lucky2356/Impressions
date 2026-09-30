@@ -82,6 +82,7 @@ Map<String, Uint8List> _unpackPackage(Uint8List archiveBytes) {
 enum ImportProblem {
   tooLarge,
   notAnArchive,
+  needsPassword,
   wrongPassword,
   unexpectedFile,
   unsafePath,
@@ -233,6 +234,15 @@ class ImportService {
         );
       }
       archiveBytes = decrypted;
+    } else if (KeyService.looksPasswordProtected(bytes)) {
+      // Спросить пароль, а не объявлять пакет испорченным: без этой ветки
+      // защищённый пакет доходил до проверки оглавления и получал отказ
+      // «в пакете нет manifest.json», а поля для пароля на экране не
+      // появлялось — свой же защищённый файл импортировать было нечем.
+      throw ImportException(
+        ImportProblem.needsPassword,
+        'Пакет защищён паролем',
+      );
     }
 
     // Распаковка — в отдельном изоляте: пакет с фотографиями разжимается
