@@ -226,11 +226,11 @@ void main() {
     expect(size.width, greaterThan(120));
     expect(size.height, lessThan(40));
 
-    // Обе кнопки шапки при этом остаются на экране целиком. «Добавить» ищем
-    // первой: такая же кнопка есть в пустом состоянии ветки ниже.
+    // Обе кнопки шапки при этом остаются на экране целиком. «Новую запись»
+    // ищем первой: такая же кнопка есть в пустом состоянии ветки ниже.
     final buttons = [
       find.widgetWithText(OutlinedButton, 'Добавить подкатегорию'),
-      find.widgetWithText(FilledButton, 'Добавить').first,
+      find.widgetWithText(FilledButton, 'Новая запись').first,
     ];
     for (final button in buttons) {
       final rect = tester.getRect(button);

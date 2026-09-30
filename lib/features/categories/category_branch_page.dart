@@ -287,12 +287,14 @@ class _Header extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
         );
+        // Рядом стоит «Добавить подкатегорию», и «Добавить» читалось как её
+        // пара, хотя заводит запись. Называем обе по тому, что они делают.
         final addEntry = FilledButton.icon(
           onPressed: () =>
               QuickAddSheet.show(context, initialCategory: category),
           icon: const Icon(Icons.add_rounded, size: 20),
           label: Text(
-            l10n.commonAdd,
+            l10n.quickAddTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

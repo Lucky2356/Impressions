@@ -195,10 +195,17 @@ class _RootShelves extends ConsumerWidget {
             tooltip: l10n.categoryOpenTree,
             onPressed: onOpenTree,
           ),
+          // Та же подпись, что у этого же действия в пустом состоянии ниже:
+          // кнопка заводит корневую ветку, а не запись, и «Добавить» тут
+          // совпадало с кнопкой записи, которая есть на любой раскладке.
           FilledButton.icon(
             onPressed: actions.createRoot,
             icon: const Icon(Icons.add_rounded, size: 20),
-            label: Text(l10n.commonAdd),
+            label: Text(
+              l10n.categoryAddRoot,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
