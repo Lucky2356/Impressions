@@ -172,6 +172,38 @@ void main() {
       );
     });
 
+    test('обратная косая в названии не съедает закрывающую кавычку', () {
+      String search(String title) =>
+          TitleLookupService.uriFor(title, LookupKind.film)
+              .queryParameters['query']!
+              .split('\n')
+              .firstWhere((line) => line.contains('mwapi:search'));
+
+      // Косая удваивается: `a\` в запросе — это `"a\\"`, а не `"a\"`,
+      // где `\"` считался бы экранированной кавычкой и строка не закрывалась.
+      expect(search(r'a\'), contains(r'"a\\"'));
+      expect(search('Кто "он"'), contains(r'"Кто \"он\""'));
+      // Перевод строки в названии оборвал бы строку так же.
+      expect(search('а\nб'), contains(r'"а\nб"'));
+    });
+
+    test('подстановки внутри названия не превращаются в шаблон', () {
+      final query = TitleLookupService.uriFor(
+        '{kind} {creator}',
+        LookupKind.game,
+      ).queryParameters['query']!;
+
+      // Название попадает в запрос как есть, а не заменённым на Q7889 и P178.
+      expect(query, contains('"{kind} {creator}"'));
+    });
+
+    test('неизвестный вид из настроек не выбирается', () {
+      expect(lookupKindNamed('book'), LookupKind.book);
+      expect(lookupKindNamed(null), isNull);
+      expect(lookupKindNamed(''), isNull);
+      expect(lookupKindNamed('music'), isNull);
+    });
+
     test('вид поиска задаёт класс сущности и свойство автора', () {
       String query(LookupKind kind) =>
           TitleLookupService.uriFor('Дюна', kind).queryParameters['query']!;
