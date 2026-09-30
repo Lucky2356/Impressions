@@ -5,6 +5,9 @@ import '../../core/theme/theme_context.dart';
 import 'app_card.dart';
 import 'sparkline.dart';
 
+/// Сколько точек нужно, чтобы рисовать график значения.
+const int _minTrendPoints = 3;
+
 /// Одно число в строке сводки.
 class SummaryItem {
   const SummaryItem({
@@ -21,7 +24,8 @@ class SummaryItem {
   final IconData icon;
   final Color color;
 
-  /// Настоящая история значения. Пустая или из одной точки — графика нет.
+  /// Настоящая история значения. Меньше трёх точек — графика нет: две точки
+  /// дают прямую линию, и трендом это не назвать.
   final List<double> trend;
 
   final VoidCallback? onTap;
@@ -107,7 +111,7 @@ class _Tile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (!compact && item.trend.length > 1) ...[
+                if (!compact && item.trend.length >= _minTrendPoints) ...[
                   const SizedBox(width: AppDimens.space12),
                   Expanded(
                     child: Sparkline(

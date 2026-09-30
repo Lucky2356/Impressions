@@ -292,7 +292,7 @@ class _Header extends ConsumerWidget {
               QuickAddSheet.show(context, initialCategory: category),
           icon: const Icon(Icons.add_rounded, size: 20),
           label: Text(
-            l10n.commonAdd,
+            l10n.quickAddTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
