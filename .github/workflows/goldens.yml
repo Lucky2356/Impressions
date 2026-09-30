@@ -1,0 +1,79 @@
+name: Эталоны
+
+# Golden-эталоны платформозависимы: Linux и Windows растеризуют текст
+# по-разному, поэтому снятые не на Windows гарантированно валят `check.yml`,
+# который проверяет их на windows-latest. Прогон на неизменённом дереве под
+# Linux валит все 12 из 12 — проверено.
+#
+# Раньше из этого следовало, что правку экрана под эталоном нельзя довести до
+# конца без машины владельца. Но Windows у нас есть — это тот же раннер.
+# Поэтому эталоны пересоздаются здесь, кнопкой, и коммитятся в ту же ветку.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Пересоздать эталоны
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Не отсоединённая голова: коммит с эталонами уходит в ту же ветку,
+          # из которой запущен прогон.
+          ref: ${{ github.ref_name }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.x
+          cache: true
+
+      - name: Зависимости
+        run: flutter pub get
+
+      - name: Кодогенерация
+        run: |
+          flutter gen-l10n
+          dart run build_runner build --delete-conflicting-outputs
+          python scripts/changelog_asset.py
+
+      - name: Снять эталоны заново
+        run: flutter test test/golden --update-goldens
+
+      - name: Проверить, что новые эталоны проходят
+        # Пересозданные эталоны обязаны совпасть с тем, что рисует экран:
+        # иначе в репозиторий уедут картинки, которые сами же и не проходят.
+        run: flutter test test/golden
+
+      - name: Вернуть эталоны в ветку
+        shell: bash
+        env:
+          # Авторство коммитов в этом репозитории — владельца, и прогон не
+          # исключение: иначе история пестрит ботами, а `git blame` врёт.
+          GIT_AUTHOR_NAME: Lucky2356
+          GIT_AUTHOR_EMAIL: vin.dizel.1999@mail.ru
+          GIT_COMMITTER_NAME: Lucky2356
+          GIT_COMMITTER_EMAIL: vin.dizel.1999@mail.ru
+        run: |
+          if git diff --quiet -- test/golden; then
+            echo "Эталоны не изменились — коммитить нечего."
+            exit 0
+          fi
+          git add test/golden
+          git commit \
+            -m "Эталоны сняты заново на Windows" \
+            -m "Снято прогоном «Эталоны» для ветки ${GITHUB_REF_NAME}."
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "Эталоны обновлены и отправлены в ${GITHUB_REF_NAME}."
+
+      - name: Артефакты неудачных golden-тестов
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: golden-failures
+          path: test/golden/failures/
+          if-no-files-found: ignore
