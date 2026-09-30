@@ -7,13 +7,22 @@ import '../../core/theme/theme_context.dart';
 import '../../data/services/title_lookup_service.dart';
 import '../../design_system/design_system.dart';
 
+/// Выбранный вариант и вид поиска, которым он найден: вид запоминается за
+/// типом записи.
+typedef TitleLookupChoice = ({TitleMatch match, LookupKind kind});
+
 /// Выбор варианта, найденного по названию.
 ///
 /// Вариантов всегда несколько, и подставлять первый попавшийся нельзя:
 /// «Солярис» — это фильм 1968 года, фильм Тарковского и фильм Содерберга.
 /// Поэтому лист показывает список, а решает человек.
 class TitleLookupSheet extends ConsumerStatefulWidget {
-  const TitleLookupSheet({super.key, required this.query, this.initialKind});
+  const TitleLookupSheet({
+    super.key,
+    required this.query,
+    this.initialKind,
+    this.service,
+  });
 
   final String query;
 
@@ -21,13 +30,17 @@ class TitleLookupSheet extends ConsumerStatefulWidget {
   /// поэтому вид здесь выбирается отдельно, а не выводится из типа.
   final LookupKind? initialKind;
 
+  /// Готовый сервис — для проверки без сети. Не передан — лист заводит свой и
+  /// сам его закрывает.
+  final TitleLookupService? service;
+
   /// Возвращает выбранный вариант или null, если человек закрыл лист.
-  static Future<TitleMatch?> show(
+  static Future<TitleLookupChoice?> show(
     BuildContext context, {
     required String query,
     LookupKind? initialKind,
   }) {
-    return showAdaptiveSheet<TitleMatch>(
+    return showAdaptiveSheet<TitleLookupChoice>(
       context,
       builder: (_) => TitleLookupSheet(query: query, initialKind: initialKind),
     );
@@ -39,7 +52,8 @@ class TitleLookupSheet extends ConsumerStatefulWidget {
 
 class _TitleLookupSheetState extends ConsumerState<TitleLookupSheet> {
   late LookupKind _kind = widget.initialKind ?? LookupKind.film;
-  late final TitleLookupService _service = TitleLookupService();
+  late final TitleLookupService _service =
+      widget.service ?? TitleLookupService();
 
   List<TitleMatch>? _found;
   bool _busy = false;
@@ -52,7 +66,7 @@ class _TitleLookupSheetState extends ConsumerState<TitleLookupSheet> {
 
   @override
   void dispose() {
-    _service.dispose();
+    if (widget.service == null) _service.dispose();
     super.dispose();
   }
 
@@ -168,7 +182,8 @@ class _TitleLookupSheetState extends ConsumerState<TitleLookupSheet> {
                       color: c.textMuted,
                     ),
                   ),
-                  onTap: () => Navigator.of(context).pop(match),
+                  onTap: () =>
+                      Navigator.of(context).pop((match: match, kind: _kind)),
                 ),
           ],
         ),

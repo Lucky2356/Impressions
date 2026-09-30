@@ -21,6 +21,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/draft_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/image_service.dart';
+import '../../data/services/title_lookup_service.dart';
 import '../../design_system/design_system.dart';
 import '../barcode/barcode_scan_sheet.dart';
 import '../categories/category_providers.dart';
@@ -28,9 +29,9 @@ import '../entry/pending_photos_field.dart';
 import '../entry/status_field.dart';
 import '../home/home_providers.dart';
 import 'category_picker.dart';
-import 'title_lookup_sheet.dart';
 import 'quick_add_draft.dart';
 import 'quick_add_fields.dart';
+import 'title_lookup_sheet.dart';
 
 /// Быстрое добавление записи (§11).
 ///
@@ -532,8 +533,32 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   Future<void> _lookupByTitle() async {
     final query = _title.text.trim();
     if (query.isEmpty) return;
-    final match = await TitleLookupSheet.show(context, query: query);
-    if (match == null || !mounted) return;
+
+    // Вид поиска помнится за типом записи: книги не переключают с «Фильма»
+    // каждый раз. Тип известен не всегда — тогда начинаем с умолчания.
+    final settings = ref.read(settingsRepositoryProvider);
+    final typeId = _typeId;
+    final remembered = typeId == null
+        ? null
+        : lookupKindNamed(
+            await settings.get(SettingKeys.titleLookupKindOf(typeId)),
+          );
+    if (!mounted) return;
+
+    final choice = await TitleLookupSheet.show(
+      context,
+      query: query,
+      initialKind: remembered,
+    );
+    if (choice == null || !mounted) return;
+    if (typeId != null) {
+      await settings.set(
+        SettingKeys.titleLookupKindOf(typeId),
+        choice.kind.name,
+      );
+    }
+    if (!mounted) return;
+    final match = choice.match;
     setState(() {
       _title.text = match.title;
       if (match.creator != null) _creator = match.creator;

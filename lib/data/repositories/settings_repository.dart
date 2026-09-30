@@ -74,6 +74,13 @@ class SettingKeys {
   /// названию, и человек может хотеть одно без другого.
   static const titleLookupEnabled = 'title_lookup_enabled';
 
+  /// Вид поиска сведений, выбранный последним для этого типа записи.
+  ///
+  /// Вид выбирается человеком, а не выводится из названия типа — тип можно
+  /// переименовать, — поэтому лист запоминает выбор по идентификатору типа:
+  /// книги не приходится каждый раз переключать с «Фильма».
+  static String titleLookupKindOf(String typeId) => 'title_lookup_kind_$typeId';
+
   /// Фоновое обновление сведений о товарах с штрихкодом.
   static const productAutoUpdate = 'product_auto_update';
 

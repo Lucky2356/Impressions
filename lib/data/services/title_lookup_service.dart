@@ -20,6 +20,10 @@ import '../../core/config/app_config.dart';
 /// поэтому вид поиска выбирается отдельно, а не выводится из названия типа.
 enum LookupKind { book, film, series, game }
 
+/// Вид поиска по имени, каким его хранят настройки; неизвестное имя — null.
+LookupKind? lookupKindNamed(String? name) =>
+    LookupKind.values.asNameMap()[name];
+
 /// Один найденный вариант.
 ///
 /// Вариантов всегда несколько: «Солярис» — это фильм 1968 года, фильм
@@ -95,6 +99,19 @@ const _wikidata = {
   LookupKind.series: ('Q5398426', 'P57'),
   LookupKind.game: ('Q7889', 'P178'),
 };
+
+/// Название для подстановки в строку SPARQL.
+///
+/// Экранировать надо не только кавычку: обратная косая в конце названия
+/// (`a\`) съедала закрывающую кавычку строки, сервер отвечал 400, а человек
+/// видел «ничего не нашлось». Косая идёт первой — иначе она удвоила бы
+/// косые, добавленные экранированием кавычки.
+String _sparqlEscaped(String text) => text
+    .replaceAll(r'\', r'\\')
+    .replaceAll('"', r'\"')
+    .replaceAll('\n', r'\n')
+    .replaceAll('\r', r'\r')
+    .replaceAll('\t', r'\t');
 
 /// Разбор ответа Wikidata SPARQL.
 List<TitleMatch> _parseWikidata(String body) {
@@ -193,11 +210,12 @@ class TitleLookupService {
       });
     }
     final (entity, creator) = _wikidata[kind]!;
+    // Название подставляется последним: иначе `{kind}` или `{creator}` внутри
+    // самого названия заменились бы вместе с шаблоном.
     final sparql = _sparql
-        // Кавычка в названии оборвала бы строку в запросе и сломала разбор.
-        .replaceAll('{query}', text.replaceAll('"', r'\"'))
         .replaceAll('{kind}', entity)
-        .replaceAll('{creator}', creator);
+        .replaceAll('{creator}', creator)
+        .replaceAll('{query}', _sparqlEscaped(text));
     return Uri.https('query.wikidata.org', '/sparql', {
       'query': sparql,
       'format': 'json',
