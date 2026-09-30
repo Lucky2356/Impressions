@@ -198,7 +198,7 @@ class _RootShelves extends ConsumerWidget {
           FilledButton.icon(
             onPressed: actions.createRoot,
             icon: const Icon(Icons.add_rounded, size: 20),
-            label: Text(l10n.commonAdd),
+            label: Text(l10n.categoryAddRoot),
           ),
         ],
       ),
