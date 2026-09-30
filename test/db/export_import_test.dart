@@ -555,6 +555,88 @@ void main() {
     expect(summary.includesPhotos, isTrue);
     expect(summary.entries, 1);
   });
+
+  group('защищённый паролем пакет', () {
+    /// Пакет с паролем — не архив, а JSON-конверт. Разбор обязан узнать его
+    /// до распаковки: ZipDecoder на таком тексте не падает, а отдаёт пустой
+    /// архив, и отказ приходил как «в пакете нет manifest.json» — по нему
+    /// экран не мог понять, что надо спросить пароль.
+    Future<Uint8List> protectedPackage(String password) async {
+      final source = openTestDb();
+      final me = await ProfileRepository(
+        source,
+      ).createOwnProfile(firstName: 'Марина');
+      final exported = await ExportService(
+        source,
+      ).export(me.id, ExportOptions(password: password));
+      await source.close();
+      return Uint8List.fromList(exported.bytes);
+    }
+
+    test(
+      'разбор без пароля просит пароль, а не жалуется на оглавление',
+      () async {
+        final db = openTestDb();
+        addTearDown(db.close);
+        final bytes = await protectedPackage('тайна');
+
+        await expectLater(
+          ImportService(db).inspect(bytes),
+          throwsA(
+            isA<ImportException>().having(
+              (e) => e.problem,
+              'problem',
+              ImportProblem.needsPassword,
+            ),
+          ),
+        );
+      },
+    );
+
+    test('разбор с верным паролем проходит', () async {
+      final db = openTestDb();
+      addTearDown(db.close);
+      final bytes = await protectedPackage('тайна');
+
+      final preview = await ImportService(db).inspect(bytes, password: 'тайна');
+      expect(preview.profileName, 'Марина');
+    });
+
+    test('неверный пароль отличим от «пароль нужен»', () async {
+      final db = openTestDb();
+      addTearDown(db.close);
+      final bytes = await protectedPackage('тайна');
+
+      await expectLater(
+        ImportService(db).inspect(bytes, password: 'не тайна'),
+        throwsA(
+          isA<ImportException>().having(
+            (e) => e.problem,
+            'problem',
+            ImportProblem.wrongPassword,
+          ),
+        ),
+      );
+    });
+
+    test('обычный пакет за защищённый не принимается', () async {
+      final db = openTestDb();
+      addTearDown(db.close);
+      final source = openTestDb();
+      final me = await ProfileRepository(
+        source,
+      ).createOwnProfile(firstName: 'Марина');
+      final exported = await ExportService(
+        source,
+      ).export(me.id, const ExportOptions());
+      await source.close();
+
+      final preview = await ImportService(
+        db,
+      ).inspect(Uint8List.fromList(exported.bytes));
+      expect(preview.profileName, 'Марина');
+    });
+  });
 }
 
 /// Небольшой помощник: закрытие базы в tearDown.

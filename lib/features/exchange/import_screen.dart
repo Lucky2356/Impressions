@@ -114,9 +114,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       setState(() {
         _preview = null;
-        // Пакет зашифрован — запрашиваем пароль.
+        // Пароль спрашивается там, где он и правда нужен: у пакета,
+        // опознанного как защищённый, и после неверной попытки. Раньше сюда
+        // попадал ещё и notAnArchive — догадка, которая на защищённых пакетах
+        // не срабатывала вовсе, а на просто испорченных увела бы не туда.
         _needPassword =
-            e.problem == ImportProblem.notAnArchive ||
+            e.problem == ImportProblem.needsPassword ||
             e.problem == ImportProblem.wrongPassword;
         _error = e.message;
       });

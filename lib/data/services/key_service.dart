@@ -243,6 +243,23 @@ class KeyService {
     return Uint8List.fromList(utf8.encode(payload));
   }
 
+  /// Защищён ли пакет паролем.
+  ///
+  /// Защищённый пакет — не архив, а JSON-конверт, который делает
+  /// [encryptWithPassword]. Отличить его надо до распаковки: `ZipDecoder` на
+  /// таком тексте не падает, а возвращает пустой архив, и разбор доходил до
+  /// «в пакете нет manifest.json» вместо того, чтобы спросить пароль.
+  static bool looksPasswordProtected(Uint8List data) {
+    try {
+      final map = jsonDecode(utf8.decode(data)) as Map<String, Object?>;
+      return map['cipher'] is String &&
+          map['nonce'] is String &&
+          map['mac'] is String;
+    } on Object {
+      return false;
+    }
+  }
+
   /// Расшифровка пакета паролем. Возвращает null при неверном пароле.
   static Future<Uint8List?> decryptWithPassword(
     Uint8List data,
