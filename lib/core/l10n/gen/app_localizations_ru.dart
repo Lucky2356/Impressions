@@ -2643,7 +2643,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsNetworkHint =>
-      'Единственные сетевые запросы приложения. Наружу уходит только штрихкод и номер версии.';
+      'Единственные сетевые запросы приложения. Наружу уходит только штрихкод или название, и только когда вы сами что-то ищете; проверка обновлений не передаёт ничего.';
 
   @override
   String get settingsBarcodeLookup => 'Искать товар по штрихкоду';

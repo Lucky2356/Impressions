@@ -104,9 +104,9 @@ class UpdateService {
       final response = await _client
           .get(
             Uri.parse(AppConfig.releasesApiUrl),
-            headers: const {
+            headers: {
               'Accept': 'application/vnd.github+json',
-              'User-Agent': 'Impressions',
+              'User-Agent': AppConfig.userAgent,
             },
           )
           .timeout(_timeout);
@@ -168,9 +168,9 @@ class UpdateService {
       final response = await _client
           .get(
             Uri.parse(AppConfig.releasesApiUrl),
-            headers: const {
+            headers: {
               'Accept': 'application/vnd.github+json',
-              'User-Agent': 'Impressions',
+              'User-Agent': AppConfig.userAgent,
             },
           )
           .timeout(_timeout);

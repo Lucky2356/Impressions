@@ -2578,7 +2578,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNetworkHint =>
-      'The only network requests the app makes. Only the barcode and the version number leave the device.';
+      'The only network requests the app makes. Only a barcode or a title leaves the device, and only when you search for something yourself; the update check sends nothing.';
 
   @override
   String get settingsBarcodeLookup => 'Look products up by barcode';

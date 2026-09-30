@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:impressions/core/config/app_config.dart';
 import 'package:impressions/data/services/title_lookup_service.dart';
 
 /// Поиск сведений по названию (§2 плана).
@@ -138,6 +139,24 @@ void main() {
       expect(found[0].subtitle, 'Лев Толстой');
       expect(found[1].year, 2021);
       expect(found[0].source, 'Open Library');
+    });
+  });
+
+  group('представление источнику', () {
+    test('заголовок берётся из AppConfig и не несёт версии', () async {
+      String? sent;
+      final service = TitleLookupService(
+        client: MockClient((request) async {
+          sent = request.headers['User-Agent'];
+          return http.Response.bytes(utf8.encode('{}'), 200);
+        }),
+      );
+      await service.lookup('Дюна', LookupKind.book);
+
+      expect(sent, AppConfig.userAgent);
+      // Зашитое `Impressions/1.1` осталось от версии 1.1, когда приложение
+      // было уже 1.23: неверная версия хуже никакой.
+      expect(sent, isNot(matches(RegExp(r'\d+\.\d+'))));
     });
   });
 
