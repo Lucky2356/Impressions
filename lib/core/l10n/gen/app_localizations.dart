@@ -5162,6 +5162,42 @@ abstract class AppLocalizations {
   /// **'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.'**
   String get dbEncryptionFailed;
 
+  /// No description provided for @idleLockSetting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запирать при бездействии'**
+  String get idleLockSetting;
+
+  /// No description provided for @idleLockSettingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Через сколько минут простоя снова спрашивать пароль. Это и есть ответ на то, от чего шифрование не защищает: от подошедшего к включённому устройству.'**
+  String get idleLockSettingHint;
+
+  /// No description provided for @idleLockNever.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не запирать'**
+  String get idleLockNever;
+
+  /// No description provided for @idleLockAfter.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Через {count} минуту} few{Через {count} минуты} many{Через {count} минут} other{Через {count} минут}}'**
+  String idleLockAfter(int count);
+
+  /// No description provided for @idleLockTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение заперто'**
+  String get idleLockTitle;
+
+  /// No description provided for @idleLockMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'С приложением давно не работали. Введите пароль, чтобы вернуться туда же.'**
+  String get idleLockMessage;
+
   /// No description provided for @dbEncryptionRememberTitle.
   ///
   /// In ru, this message translates to:
@@ -5177,7 +5213,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsWordsDbEncryption.
   ///
   /// In ru, this message translates to:
-  /// **'шифрование база пароль защита диск'**
+  /// **'шифрование база пароль защита диск замок бездействие'**
   String get settingsWordsDbEncryption;
 
   /// No description provided for @keyStorageTitle.

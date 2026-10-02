@@ -3068,6 +3068,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Re-encryption failed. The database is unchanged and the backup is in place.';
 
   @override
+  String get idleLockSetting => 'Lock when idle';
+
+  @override
+  String get idleLockSettingHint =>
+      'How many idle minutes before the password is asked again. This is the answer to what encryption does not cover: someone walking up to your unlocked device.';
+
+  @override
+  String get idleLockNever => 'Never';
+
+  @override
+  String idleLockAfter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'After $count minutes',
+      one: 'After $count minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get idleLockTitle => 'The app is locked';
+
+  @override
+  String get idleLockMessage =>
+      'You have not worked with the app for a while. Enter the password to get back where you were.';
+
+  @override
   String get dbEncryptionRememberTitle =>
       'Do not ask for the password on this device';
 
@@ -3077,7 +3105,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsWordsDbEncryption =>
-      'encryption database password protection disk';
+      'encryption database password protection disk lock idle';
 
   @override
   String get keyStorageTitle => 'Where the private key is kept';

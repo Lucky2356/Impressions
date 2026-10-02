@@ -3146,6 +3146,36 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.';
 
   @override
+  String get idleLockSetting => 'Запирать при бездействии';
+
+  @override
+  String get idleLockSettingHint =>
+      'Через сколько минут простоя снова спрашивать пароль. Это и есть ответ на то, от чего шифрование не защищает: от подошедшего к включённому устройству.';
+
+  @override
+  String get idleLockNever => 'Не запирать';
+
+  @override
+  String idleLockAfter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Через $count минут',
+      many: 'Через $count минут',
+      few: 'Через $count минуты',
+      one: 'Через $count минуту',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get idleLockTitle => 'Приложение заперто';
+
+  @override
+  String get idleLockMessage =>
+      'С приложением давно не работали. Введите пароль, чтобы вернуться туда же.';
+
+  @override
   String get dbEncryptionRememberTitle =>
       'Не спрашивать пароль на этом устройстве';
 
@@ -3154,7 +3184,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.';
 
   @override
-  String get settingsWordsDbEncryption => 'шифрование база пароль защита диск';
+  String get settingsWordsDbEncryption =>
+      'шифрование база пароль защита диск замок бездействие';
 
   @override
   String get keyStorageTitle => 'Хранение закрытого ключа';

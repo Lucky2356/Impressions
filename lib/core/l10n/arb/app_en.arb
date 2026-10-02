@@ -1023,9 +1023,22 @@
   "dbEncryptionOffDone": "Encryption is off",
   "dbEncryptionRestartMessage": "Close the app and open it again — the re-encrypted database can only be used after a restart.",
   "dbEncryptionFailed": "Re-encryption failed. The database is unchanged and the backup is in place.",
+  "idleLockSetting": "Lock when idle",
+  "idleLockSettingHint": "How many idle minutes before the password is asked again. This is the answer to what encryption does not cover: someone walking up to your unlocked device.",
+  "idleLockNever": "Never",
+  "idleLockAfter": "{count, plural, one{After {count} minute} other{After {count} minutes}}",
+  "@idleLockAfter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "idleLockTitle": "The app is locked",
+  "idleLockMessage": "You have not worked with the app for a while. Enter the password to get back where you were.",
   "dbEncryptionRememberTitle": "Do not ask for the password on this device",
   "dbEncryptionRememberHint": "The key goes into the system store, next to the profile key. Convenient — but then the password only protects you from another device, not from your own while it is unlocked.",
-  "settingsWordsDbEncryption": "encryption database password protection disk",
+  "settingsWordsDbEncryption": "encryption database password protection disk lock idle",
   "keyStorageTitle": "Where the private key is kept",
   "keyStorageOs": "Apart from the database, protected by the system",
   "keyStorageOsWindows": "The file is encrypted by Windows (DPAPI) for your account: on another computer it is useless.",
