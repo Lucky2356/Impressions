@@ -705,6 +705,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationStalledTitle => 'Something you started has stalled';
+
+  @override
+  String notificationStalledBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries started and untouched since $since',
+      one: '$count entry started and untouched since $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsStalledReminder => 'Remind me about unfinished things';
+
+  @override
+  String get settingsStalledReminderHint =>
+      'Once a month, if something you started has not moved for a while';
+
+  @override
   String get homeContinue => 'Pick up where you left off';
 
   @override

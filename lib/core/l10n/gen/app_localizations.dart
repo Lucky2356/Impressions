@@ -1208,6 +1208,30 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} задумка ждёт с {since}} few{{count} задумки ждут с {since}} many{{count} задумок ждут с {since}} other{{count} задумок ждут с {since}}}'**
   String notificationWishlistBody(int count, String since);
 
+  /// No description provided for @notificationStalledTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начатое стоит на месте'**
+  String get notificationStalledTitle;
+
+  /// No description provided for @notificationStalledBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} запись начата и не двигалась с {since}} few{{count} записи начаты и не двигались с {since}} many{{count} записей начаты и не двигались с {since}} other{{count} записей начаты и не двигались с {since}}}'**
+  String notificationStalledBody(int count, String since);
+
+  /// No description provided for @settingsStalledReminder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать о незавершённом'**
+  String get settingsStalledReminder;
+
+  /// No description provided for @settingsStalledReminderHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз в месяц, если начатое давно не двигалось'**
+  String get settingsStalledReminderHint;
+
   /// No description provided for @homeContinue.
   ///
   /// In ru, this message translates to:

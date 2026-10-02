@@ -87,6 +87,51 @@ extension EntryStats on EntryRepository {
     return PlannedWaiting(count: row.read(count) ?? 0, since: row.read(oldest));
   }
 
+  /// Начатое и брошенное: записи на полпути, которых давно не трогали.
+  ///
+  /// «Давно не трогали» берётся по свежайшей версии записи, а не по дате
+  /// заведения: любая правка пишет версию ([EntryRepository.updateEntry]),
+  /// поэтому продвижение прогресса видно именно там. По `createdAt` самой
+  /// записи вышло бы наоборот — напоминание про книгу, которую читают каждый
+  /// день, если начали её год назад.
+  ///
+  /// Здесь нужен `GROUP BY` по записи, а не один агрегат, как у
+  /// [plannedWaiting]: «когда трогали» — это максимум по версиям каждой
+  /// записи. Строк отдаётся по одной на запись, и только идентификатор с
+  /// датой: самих записей с заметками в памяти не оказывается.
+  Future<StalledProgress> stalledProgress(
+    String profileId, {
+    Duration untouched = const Duration(days: 60),
+  }) async {
+    final e = db.profileEntries;
+    final r = db.profileEntryRevisions;
+    final touched = r.createdAt.max();
+    final cutoff = DateTime.now().subtract(untouched);
+
+    final rows =
+        await (db.selectOnly(e).join([
+                innerJoin(r, r.entryId.equalsExp(e.id), useColumns: false),
+              ])
+              ..addColumns([e.id, touched])
+              ..where(
+                e.profileId.equals(profileId) &
+                    e.archivedAt.isNull() &
+                    e.progressCurrent.isBiggerThanValue(0) &
+                    (e.progressTotal.isNull() |
+                        e.progressCurrent.isSmallerThan(e.progressTotal)),
+              )
+              ..groupBy([e.id], having: touched.isSmallerThanValue(cutoff)))
+            .get();
+
+    if (rows.isEmpty) return const StalledProgress(count: 0);
+    final dates = rows.map((row) => row.read(touched)).nonNulls.toList()
+      ..sort();
+    return StalledProgress(
+      count: rows.length,
+      since: dates.isEmpty ? null : dates.first,
+    );
+  }
+
   /// Развёрнутая статистика профиля (§14).
   ///
   /// Считается агрегатами в базе. Раньше сюда поднимались все записи профиля
