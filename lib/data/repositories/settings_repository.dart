@@ -51,6 +51,7 @@ class SettingKeys {
   /// сам не откроешь. По умолчанию выключено: приложение не должно напоминать
   /// о себе тому, кто об этом не просил.
   static const wishlistReminder = 'wishlist_reminder';
+  static const stalledReminder = 'stalled_reminder';
 
   /// Режим переноса записей между профилями (§7.4).
   static const transferMode = 'transfer_mode';

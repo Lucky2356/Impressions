@@ -732,6 +732,29 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get notificationStalledTitle => 'Начатое стоит на месте';
+
+  @override
+  String notificationStalledBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count записей начаты и не двигались с $since',
+      many: '$count записей начаты и не двигались с $since',
+      few: '$count записи начаты и не двигались с $since',
+      one: '$count запись начата и не двигалась с $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsStalledReminder => 'Напоминать о незавершённом';
+
+  @override
+  String get settingsStalledReminderHint =>
+      'Раз в месяц, если начатое давно не двигалось';
+
+  @override
   String get homeContinue => 'Продолжить начатое';
 
   @override

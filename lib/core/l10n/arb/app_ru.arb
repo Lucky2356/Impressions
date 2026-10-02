@@ -1,7 +1,5 @@
 {
   "@@locale": "ru",
-
-
   "commonSave": "Сохранить",
   "commonCancel": "Отмена",
   "commonRestore": "Восстановить",
@@ -17,7 +15,6 @@
   "commonSkip": "Пропустить",
   "commonYes": "Да",
   "commonNothingFound": "Ничего не найдено",
-
   "navHome": "Главная",
   "navCatalog": "Каталог",
   "navCollections": "Подборки",
@@ -30,17 +27,12 @@
   "navSectionOther": "Ещё",
   "navMore": "Ещё",
   "navAllSections": "Все разделы",
-
   "headerHelp": "Помощь",
   "homeTitle": "Главная",
-
   "statEntries": "Записей",
   "statCategories": "Категорий",
-
   "sectionRecent": "Недавние записи",
   "sectionWantToTry": "Хочу попробовать",
-
-
   "quickAddTitle": "Новая запись",
   "quickAddNameLabel": "Название",
   "quickAddNameHint": "Например: Папа может",
@@ -50,7 +42,13 @@
   "quickAddNoCategory": "Без категории",
   "quickAddSaveAndMore": "И ещё",
   "quickAddSavedInARow": "{count, plural, one{Заведена {count} запись подряд} few{Заведено {count} записи подряд} many{Заведено {count} записей подряд} other{Заведено {count} записей подряд}}",
-  "@quickAddSavedInARow": { "placeholders": { "count": { "type": "int" } } },
+  "@quickAddSavedInARow": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "quickAddRelationLabel": "Отношение",
   "quickAddDetails": "Добавить подробности",
   "quickAddDraftRestored": "Продолжаем недописанное",
@@ -62,7 +60,6 @@
   "quickAddNoteLabel": "Заметка",
   "quickAddPickCategory": "Выбрать категорию",
   "quickAddSearchCategory": "Поиск категории",
-
   "categoriesTitle": "Категории",
   "categoryAddRoot": "Новая корневая категория",
   "categoryAddChild": "Добавить подкатегорию",
@@ -76,16 +73,33 @@
   "categorySelectMany": "Выбрать несколько",
   "categoryMoveSelected": "Перенести выбранные",
   "categorySelectedCount": "{count, plural, one{Выбрана {count} ветка} few{Выбрано {count} ветки} many{Выбрано {count} веток} other{Выбрано {count} веток}}",
-  "@categorySelectedCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categorySelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryArchivedCount": "{count, plural, one{{count} ветка убрана в архив} few{{count} ветки убраны в архив} many{{count} веток убрано в архив} other{{count} веток убрано в архив}}",
-  "@categoryArchivedCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryArchivedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryNameLabel": "Название категории",
   "categoryEmptyTitle": "Категорий пока нет",
   "categoryEmptyMessage": "Создайте первую категорию, чтобы раскладывать записи по полкам.",
   "categoryEntriesCount": "{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}",
-  "@categoryEntriesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryShowSubcategories": "Показывать записи из подкатегорий",
-
   "catalogEmptyTitle": "Записей пока нет",
   "catalogEmptyMessage": "Добавьте первую запись — это займёт несколько секунд.",
   "catalogAllTypes": "Все типы",
@@ -96,7 +110,13 @@
   "catalogNothingFoundMessage": "Попробуйте изменить фильтры или поисковый запрос.",
   "catalogResetFilters": "Сбросить фильтры",
   "bulkSelected": "{count, plural, one{Выбрана {count} запись} few{Выбрано {count} записи} many{Выбрано {count} записей} other{Выбрано {count} записей}}",
-  "@bulkSelected": { "placeholders": { "count": { "type": "int" } } },
+  "@bulkSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bulkSelectAll": "Выбрать все",
   "bulkSelectOne": "Выделить",
   "bulkCancel": "Снять выделение",
@@ -109,12 +129,23 @@
   "bulkRemoveTagEmpty": "У выделенных записей нет тегов",
   "bulkMore": "Ещё",
   "bulkDone": "{count, plural, one{Изменена {count} запись} few{Изменено {count} записи} many{Изменено {count} записей} other{Изменено {count} записей}}",
-  "@bulkDone": { "placeholders": { "count": { "type": "int" } } },
+  "@bulkDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "bulkArchive": "В архив",
   "bulkArchived": "{count, plural, one{{count} запись убрана в архив} few{{count} записи убраны в архив} many{{count} записей убрано в архив} other{{count} записей убрано в архив}}",
-  "@bulkArchived": { "placeholders": { "count": { "type": "int" } } },
+  "@bulkArchived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryOpen": "Открыть",
-
   "catalogAddedHiddenByFilters": "Запись добавлена, но не подходит под текущие фильтры",
   "catalogViewGrid": "Крупная сетка",
   "catalogViewCompact": "Компактная сетка",
@@ -131,8 +162,13 @@
   "catalogWithoutPhoto": "Без фотографии",
   "catalogRecommended": "Мне посоветовали",
   "catalogFound": "{count, plural, one{Найдена {count} запись} few{Найдено {count} записи} many{Найдено {count} записей} other{Найдено {count} записей}}",
-  "@catalogFound": { "placeholders": { "count": { "type": "int" } } },
-
+  "@catalogFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryDetailTitle": "Запись",
   "entryHistory": "История изменений",
   "entryRestoreRevision": "Восстановить эту версию",
@@ -140,7 +176,13 @@
   "entryNoteLabel": "Заметка",
   "entryEditObject": "Изменить описание",
   "entryRecommendedBy": "Посоветовал: {name}",
-  "@entryRecommendedBy": { "placeholders": { "name": { "type": "String" } } },
+  "@entryRecommendedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "entryEditObjectHint": "Название, бренд и год относятся к самому объекту и видны во всех профилях, где он есть. Прежние значения останутся в истории.",
   "entryMerge": "Объединить с…",
   "entryMergeTitle": "С чем объединить",
@@ -165,20 +207,43 @@
   "visitRemoveMessage": "Запись вернётся к предыдущему впечатлению.",
   "visitCount": "{count, plural, one{{count} раз} few{{count} раза} many{{count} раз} other{{count} раз}}",
   "yearReturned": "{count, plural, one{Вернулись к {count} впечатлению} few{Вернулись к {count} впечатлениям} many{Вернулись к {count} впечатлениям} other{Вернулись к {count} впечатлениям}}",
-  "@yearReturned": { "placeholders": { "count": { "type": "int" } } },
-  "@visitCount": { "placeholders": { "count": { "type": "int" } } },
+  "@yearReturned": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@visitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryArchive": "Архивировать запись",
   "entryArchived": "Запись убрана в архив",
   "entryVersionAt": "Версия от {date}",
-  "@entryVersionAt": { "placeholders": { "date": { "type": "String" } } },
-
+  "@entryVersionAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "collectionsTitle": "Подборки",
   "collectionCreate": "Новая подборка",
   "collectionNameLabel": "Название подборки",
   "collectionEmptyTitle": "Подборок пока нет",
   "collectionEmptyMessage": "Подборки — это ручные списки: «Посмотреть вместе», «Купить», «Посетить летом».",
   "collectionEntriesCount": "{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}",
-  "@collectionEntriesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@collectionEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "collectionOpenEmpty": "В подборке пока нет записей",
   "collectionAddTo": "Добавить в подборку",
   "collectionRemoveFrom": "Убрать из подборки",
@@ -191,15 +256,48 @@
   "yearPrevious": "Предыдущий год",
   "yearNext": "Следующий год",
   "yearYours": "Ваш {year}",
-  "@yearYours": { "placeholders": { "year": { "type": "String" } } },
+  "@yearYours": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
   "yearImpressions": "{count, plural, one{{count} впечатление} few{{count} впечатления} many{{count} впечатлений} other{{count} впечатлений}}",
-  "@yearImpressions": { "placeholders": { "count": { "type": "int" } } },
+  "@yearImpressions": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "yearAverage": "Средняя оценка {value} — по {count} записям",
-  "@yearAverage": { "placeholders": { "value": { "type": "String" }, "count": { "type": "int" } } },
+  "@yearAverage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "yearFinished": "{count, plural, one{Доведено до конца: {count}} other{Доведено до конца: {count}}}",
-  "@yearFinished": { "placeholders": { "count": { "type": "int" } } },
+  "@yearFinished": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "yearNewCategories": "{count, plural, one{Заведена {count} новая ветка} few{Заведено {count} новые ветки} many{Заведено {count} новых веток} other{Заведено {count} новых веток}}",
-  "@yearNewCategories": { "placeholders": { "count": { "type": "int" } } },
+  "@yearNewCategories": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "yearBest": "Лучшее за год",
   "yearWhereAndWhen": "Где и когда",
   "yearTopCategory": "Любимая ветка",
@@ -212,13 +310,48 @@
   "yearImageType": "Картинка PNG",
   "yearEmptyTitle": "Год пока пуст",
   "yearEmptyMessage": "За {year} записей нет. Заведите первую — и здесь появятся итоги.",
-  "@yearEmptyMessage": { "placeholders": { "year": { "type": "String" } } },
+  "@yearEmptyMessage": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
   "notificationYearTitle": "Итоги года готовы",
   "notificationYearBody": "Посмотрите, каким был {year}",
-  "@notificationYearBody": { "placeholders": { "year": { "type": "String" } } },
+  "@notificationYearBody": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
   "notificationWishlistTitle": "Задуманное ждёт",
   "notificationWishlistBody": "{count, plural, one{{count} задумка ждёт с {since}} few{{count} задумки ждут с {since}} many{{count} задумок ждут с {since}} other{{count} задумок ждут с {since}}}",
-  "@notificationWishlistBody": { "placeholders": { "count": { "type": "int" }, "since": { "type": "String" } } },
+  "notificationStalledTitle": "Начатое стоит на месте",
+  "notificationStalledBody": "{count, plural, one{{count} запись начата и не двигалась с {since}} few{{count} записи начаты и не двигались с {since}} many{{count} записей начаты и не двигались с {since}} other{{count} записей начаты и не двигались с {since}}}",
+  "@notificationStalledBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsStalledReminder": "Напоминать о незавершённом",
+  "settingsStalledReminderHint": "Раз в месяц, если начатое давно не двигалось",
+  "@notificationWishlistBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
   "homeContinue": "Продолжить начатое",
   "homeYearAgo": "Год назад",
   "homeSuggestion": "Может, сегодня?",
@@ -241,8 +374,13 @@
   "collectionOpenInCatalog": "Открыть в каталоге",
   "collectionFromFilter": "Сохранить как подборку",
   "collectionFromFilterSaved": "Подборка «{name}» собрана",
-  "@collectionFromFilterSaved": { "placeholders": { "name": { "type": "String" } } },
-
+  "@collectionFromFilterSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "photoAdd": "Добавить фото",
   "photoCapture": "Снять камерой",
   "photoSectionTitle": "Фотографии",
@@ -276,7 +414,13 @@
   "catalogFilters": "Фильтры",
   "statusesTitle": "Стадии",
   "statusesEditFor": "Стадии типа «{name}»",
-  "@statusesEditFor": { "placeholders": { "name": { "type": "String" } } },
+  "@statusesEditFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "statusesHint": "Стадия отвечает на вопрос «дошли ли вы до этого», а отношение — «понравилось ли». Названия у каждого типа свои.",
   "statusesEmpty": "У этого типа стадий нет: запись сразу считается состоявшейся.",
   "statusesAllUsed": "Все три стадии уже заведены",
@@ -294,9 +438,30 @@
   "statusTypeHasNone": "У этого типа стадий нет — задать их можно в настройках типа",
   "progressLabel": "Прогресс",
   "progressOf": "{current} {unit} из {total}",
-  "@progressOf": { "placeholders": { "current": { "type": "int" }, "unit": { "type": "String" }, "total": { "type": "int" } } },
+  "@progressOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "progressCurrentOnly": "{current} {unit}",
-  "@progressCurrentOnly": { "placeholders": { "current": { "type": "int" }, "unit": { "type": "String" } } },
+  "@progressCurrentOnly": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
   "progressCurrentLabel": "Пройдено",
   "progressTotalLabel": "Всего",
   "catalogStatusLabel": "Стадия",
@@ -307,9 +472,21 @@
   "categoryDefaultTypeHint": "С него начинается новая запись в этой ветке",
   "categoryDefaultTypeNone": "Не задан",
   "categoryDefaultTypeFrom": "Тип взят из «{name}»",
-  "@categoryDefaultTypeFrom": { "placeholders": { "name": { "type": "String" } } },
+  "@categoryDefaultTypeFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "categoryDefaultTypeSuggest": "В ветке чаще всего «{name}». Сделать типом по умолчанию?",
-  "@categoryDefaultTypeSuggest": { "placeholders": { "name": { "type": "String" } } },
+  "@categoryDefaultTypeSuggest": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "categoryDefaultTypeApply": "Сделать",
   "categoryPrimary": "Основная категория",
   "categoryExtra": "Ещё категории",
@@ -319,18 +496,42 @@
   "categoryMerge": "Объединить с…",
   "categoryMergeTitle": "С какой веткой объединить",
   "categoryMergeMessage": "Записи и подкатегории переедут в выбранную ветку, а «{name}» уйдёт в архив. Отменить одним нажатием будет нельзя.",
-  "@categoryMergeMessage": { "placeholders": { "name": { "type": "String" } } },
+  "@categoryMergeMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "categoryMergeAction": "Объединить",
   "categoryMergeDone": "Ветки объединены",
   "categoryMoveChildren": "Перенести подкатегории…",
   "categoryMoveEntries": "Перенести записи…",
   "categoryMovedCount": "{count, plural, one{Перенесена {count} ветка} few{Перенесено {count} ветки} many{Перенесено {count} веток} other{Перенесено {count} веток}}",
-  "@categoryMovedCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryMovedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryMovedEntries": "{count, plural, one{Перенесена {count} запись} few{Перенесено {count} записи} many{Перенесено {count} записей} other{Перенесено {count} записей}}",
-  "@categoryMovedEntries": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryMovedEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryDragHint": "Перетащите, чтобы переместить",
   "categoryMovedTo": "Перенесено в «{name}»",
-  "@categoryMovedTo": { "placeholders": { "name": { "type": "String" } } },
+  "@categoryMovedTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "categoryAppearance": "Оформление",
   "categoryColor": "Цвет",
   "categoryColorInherit": "Как у родителя",
@@ -372,10 +573,22 @@
   "stageApplying": "Переношу записи…",
   "imageMissing": "Файл не найден",
   "catalogSearchChip": "Поиск: {query}",
-  "@catalogSearchChip": { "placeholders": { "query": { "type": "String" } } },
+  "@catalogSearchChip": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "purgeAction": "Удалить навсегда",
   "purgeConfirmTitle": "Удалить «{title}» навсегда?",
-  "@purgeConfirmTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@purgeConfirmTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "purgeConfirmMessage": "Это не архивирование: запись, её версии и фотографии будут стёрты. Отменить будет нельзя — вернуть можно только из резервной копии.",
   "purgeDone": "Удалено навсегда",
   "purgeCategoryHasChildren": "Сначала разберитесь с подкатегориями: удалять ветку целиком нельзя.",
@@ -401,7 +614,6 @@
   "categoryRemovedFromEntry": "Категория снята с записи",
   "privacyChanged": "Доступность изменена",
   "profileSaved": "Профиль сохранён",
-
   "profilesTitle": "Профили",
   "profileCreate": "Новый профиль",
   "profileSwitchTo": "Сделать активным",
@@ -416,8 +628,13 @@
   "profileLocalNameHint": "Например: Саша с работы",
   "profileLocalNote": "Заметка о человеке",
   "profileEntriesCount": "{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}",
-  "@profileEntriesCount": { "placeholders": { "count": { "type": "int" } } },
-
+  "@profileEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "compareTitle": "Сравнение профилей",
   "compareFirst": "Первый профиль",
   "compareSecond": "Второй профиль",
@@ -432,16 +649,26 @@
   "compareEmpty": "Совпадений нет",
   "compareEmptyMessage": "Попробуйте другой режим сравнения или профили.",
   "compareSelected": "Выбрано: {count}",
-  "@compareSelected": { "placeholders": { "count": { "type": "int" } } },
+  "@compareSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "compareTransferSelected": "Добавить выбранное себе",
   "compareTransferred": "Добавлено записей: {count}",
-  "@compareTransferred": { "placeholders": { "count": { "type": "int" } } },
+  "@compareTransferred": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "compareNoEntry": "Нет записи",
-
   "transferTitle": "Добавить в мой профиль",
   "transferDone": "Запись добавлена в ваш профиль",
   "transferAlreadyHave": "У вас уже есть запись об этом объекте",
-
   "exportTitle": "Экспорт профиля",
   "exportAction": "Экспортировать",
   "exportIncludePhotos": "С фотографиями",
@@ -456,22 +683,44 @@
   "exportPhotos": "Фотографий",
   "exportExcludedPrivate": "Исключено приватных записей",
   "exportForbidden": "Владелец запретил повторную передачу этого профиля",
-
   "fileSaved": "Файл сохранён: {path}",
-  "@fileSaved": { "placeholders": { "path": { "type": "String" } } },
+  "@fileSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "fileShared": "Файл готов и передан выбранному приложению",
   "fileSaveCancelled": "Сохранение отменено",
   "fileSaveFailed": "Не удалось сохранить: {error}",
-  "@fileSaveFailed": { "placeholders": { "error": { "type": "String" } } },
-
+  "@fileSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "importTitle": "Импорт профиля",
   "importPickFile": "Выбрать файл",
   "importDropHint": "Перетащите файл профиля сюда или выберите его",
   "importPreviewTitle": "Предварительный просмотр",
   "importProfileLine": "Профиль: {name}",
-  "@importProfileLine": { "placeholders": { "name": { "type": "String" } } },
+  "@importProfileLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "importFingerprintLine": "Отпечаток: {value}",
-  "@importFingerprintLine": { "placeholders": { "value": { "type": "String" } } },
+  "@importFingerprintLine": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "importTrustQuestion": "Новый профиль. Доверять этому профилю?",
   "importVerified": "Профиль подтверждён, подпись файла корректна",
   "importNoChanges": "Этот пакет уже был импортирован. Новых изменений нет.",
@@ -487,7 +736,6 @@
   "importPasswordNeeded": "Пакет защищён паролем",
   "importErrorTitle": "Импорт не выполнен",
   "importErrorUnexpected": "Не удалось разобрать пакет. Возможно, файл повреждён или собран другой версией приложения.",
-
   "backupsTitle": "Резервные копии",
   "backupCreate": "Создать копию",
   "backupCreated": "Копия создана",
@@ -508,20 +756,37 @@
   "backupEmpty": "Резервных копий пока нет",
   "backupVerify": "Проверить целостность",
   "backupSizeLabel": "{size} КБ",
-  "@backupSizeLabel": { "placeholders": { "size": { "type": "String" } } },
+  "@backupSizeLabel": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "backupRetentionHint": "Автоматические копии создаются раз в неделю, а также перед импортом и восстановлением. Хранятся последние 7 автоматических и 20 созданных вручную.",
   "backupRestore": "Восстановить",
   "backupRestoreConfirmTitle": "Восстановить из копии?",
   "backupRestoreConfirmMessage": "Все записи, категории и фотографии будут заменены содержимым копии от {date}. Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.",
-  "@backupRestoreConfirmMessage": { "placeholders": { "date": { "type": "String" } } },
+  "@backupRestoreConfirmMessage": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "backupRestoreFileConfirmMessage": "Все записи, категории и фотографии будут заменены содержимым файла «{name}». Копия нынешнего состояния будет создана автоматически, так что вернуться будет куда.",
-  "@backupRestoreFileConfirmMessage": { "placeholders": { "name": { "type": "String" } } },
+  "@backupRestoreFileConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "backupRestoreDoneTitle": "Копия восстановлена",
   "backupRestoreDoneMessage": "Данные заменены. Закройте приложение и откройте снова — работать с восстановленной базой можно только после перезапуска.",
   "backupRestoreQuit": "Закрыть приложение",
   "backupRestoreNotFound": "Файл копии не найден",
   "backupRestoreTooNew": "Копия сделана более новой версией приложения. Обновите приложение и попробуйте снова.",
-
   "backupEncryptionTitle": "Защищать копии паролем",
   "backupEncryptionHint": "Копия, унесённая с устройства, без пароля не читается. На этом устройстве копии открываются сами — пароль спрашивают только чужие.",
   "backupEncryptionOn": "Копии защищены паролем",
@@ -541,7 +806,6 @@
   "backupUnlockMessage": "Эта копия сделана на другом устройстве или до переустановки, поэтому ключа к ней здесь нет.",
   "backupWrongPassword": "Неверный пароль",
   "backupEncryptedBadge": "под паролем",
-
   "quickAddTypeVsCategory": "Тип задаёт набор полей записи, категория — вашу полку в дереве.",
   "entryRatingOf": "оценка {value}",
   "a11yCategoryShelf": "{name}, {count}",
@@ -559,7 +823,13 @@
   "settingsAdvancedHint": "Настраивают один раз или не трогают вовсе",
   "whatsNewTitle": "Что нового",
   "whatsNewVersion": "Версия {version}",
-  "@whatsNewVersion": { "placeholders": { "version": { "type": "String" } } },
+  "@whatsNewVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "whatsNewOpen": "Что нового в этой версии",
   "whatsNewNothing": "Для этой версии описания нет",
   "recentSearches": "Недавние запросы",
@@ -572,23 +842,59 @@
   "barcodeBatchNext": "Взять и сканировать дальше",
   "barcodeBatchFinish": "Хватит",
   "barcodeBatchCollected": "{count, plural, one{Собран {count} код} few{Собрано {count} кода} many{Собрано {count} кодов} other{Собрано {count} кодов}}",
-  "@barcodeBatchCollected": { "placeholders": { "count": { "type": "int" } } },
+  "@barcodeBatchCollected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "barcodeBatchQueue": "{count, plural, one{Осталось ещё {count} код} few{Осталось ещё {count} кода} many{Осталось ещё {count} кодов} other{Осталось ещё {count} кодов}}",
-  "@barcodeBatchQueue": { "placeholders": { "count": { "type": "int" } } },
+  "@barcodeBatchQueue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "entryDuplicate": "Дублировать",
   "csvImportTitle": "Список из таблицы",
   "csvImportHint": "Перенести записи из CSV — своей же выгрузки или таблицы из другого приложения. Недостающие типы и категории заведутся сами.",
   "csvImportPick": "Выбрать таблицу",
   "csvImportFound": "{count, plural, one{Готова {count} запись} few{Готовы {count} записи} many{Готово {count} записей} other{Готово {count} записей}}",
-  "@csvImportFound": { "placeholders": { "count": { "type": "int" } } },
+  "@csvImportFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "csvImportSkipped": "{count, plural, one{{count} строка без названия пропущена} few{{count} строки без названия пропущены} many{{count} строк без названия пропущено} other{{count} строк без названия пропущено}}",
-  "@csvImportSkipped": { "placeholders": { "count": { "type": "int" } } },
+  "@csvImportSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "csvImportColumns": "Колонки: {columns}",
-  "@csvImportColumns": { "placeholders": { "columns": { "type": "String" } } },
+  "@csvImportColumns": {
+    "placeholders": {
+      "columns": {
+        "type": "String"
+      }
+    }
+  },
   "csvImportApply": "Перенести",
   "csvImportNothing": "В таблице не нашлось ни одной записи с названием",
   "csvImportDone": "{count, plural, one{Перенесена {count} запись} few{Перенесено {count} записи} many{Перенесено {count} записей} other{Перенесено {count} записей}}",
-  "@csvImportDone": { "placeholders": { "count": { "type": "int" } } },
+  "@csvImportDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "backupMirrorTitle": "Класть копию ещё и сюда",
   "backupMirrorHint": "Копии лежат рядом с базой: потеряли устройство — потеряли и копии. Папка на флешке или в облачном клиенте переживёт устройство.",
   "backupMirrorChoose": "Выбрать папку",
@@ -601,15 +907,45 @@
   "doctorClean": "Расхождений не найдено",
   "doctorFixed": "Починено",
   "doctorOrphanFiles": "{count, plural, one{{count} лишний файл фотографии} few{{count} лишних файла фотографий} many{{count} лишних файлов фотографий} other{{count} лишних файлов фотографий}}",
-  "@doctorOrphanFiles": { "placeholders": { "count": { "type": "int" } } },
+  "@doctorOrphanFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "doctorMissingFiles": "{count, plural, one{{count} фотография потеряна} few{{count} фотографии потеряны} many{{count} фотографий потеряно} other{{count} фотографий потеряно}}",
-  "@doctorMissingFiles": { "placeholders": { "count": { "type": "int" } } },
+  "@doctorMissingFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "doctorEntriesWithoutRevision": "{count, plural, one{{count} запись без текущей версии} few{{count} записи без текущей версии} many{{count} записей без текущей версии} other{{count} записей без текущей версии}}",
-  "@doctorEntriesWithoutRevision": { "placeholders": { "count": { "type": "int" } } },
+  "@doctorEntriesWithoutRevision": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "doctorDanglingCategories": "{count, plural, one{{count} связь с исчезнувшей категорией} few{{count} связи с исчезнувшими категориями} many{{count} связей с исчезнувшими категориями} other{{count} связей с исчезнувшими категориями}}",
-  "@doctorDanglingCategories": { "placeholders": { "count": { "type": "int" } } },
+  "@doctorDanglingCategories": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "doctorDanglingCollectionEntries": "{count, plural, one{{count} запись подборки указывает в пустоту} few{{count} записи подборки указывают в пустоту} many{{count} записей подборки указывают в пустоту} other{{count} записей подборки указывают в пустоту}}",
-  "@doctorDanglingCollectionEntries": { "placeholders": { "count": { "type": "int" } } },
+  "@doctorDanglingCollectionEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "doctorSearchOutOfSync": "Поисковый индекс отстал от записей",
   "settingsSearch": "Поиск по настройкам",
   "settingsSearchEmpty": "Ничего не нашлось",
@@ -660,21 +996,40 @@
   "settingsUiScale": "Масштаб интерфейса",
   "settingsUiScaleAuto": "По размеру окна",
   "settingsUiScaleHint": "На большом мониторе интерфейс сам становится крупнее. Если система уже увеличивает шрифт, масштаб домножается к ней.",
-
   "tagsTitle": "Теги",
-  "tagsHint": "Теги заводятся прямо в записи и остаются в списке фильтров, пока их кто-то носит. Переименование в уже занятое название сливает два тега в один.",
+  "tagsHint": "Теги — свободные метки без вложенности, они не заменяют категории.",
   "tagsEmpty": "Тегов пока нет",
   "tagNameLabel": "Название тега",
   "tagRename": "Переименовать тег",
   "tagDelete": "Удалить тег",
   "tagUsage": "{count, plural, =0{нет записей} one{{count} запись} few{{count} записи} other{{count} записей}}",
-  "@tagUsage": { "placeholders": { "count": { "type": "int" } } },
+  "@tagUsage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "tagDeleteTitle": "Удалить тег?",
   "tagDeleteMessage": "Тег «{name}» будет снят со всех записей и удалён. Записи останутся на месте. Сейчас им помечено {count, plural, =0{ничего} one{{count} запись} few{{count} записи} other{{count} записей}}.",
-  "@tagDeleteMessage": { "placeholders": { "name": { "type": "String" }, "count": { "type": "int" } } },
+  "@tagDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "tagMerged": "Теги объединены в «{name}»",
-  "@tagMerged": { "placeholders": { "name": { "type": "String" } } },
-
+  "@tagMerged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "typesTitle": "Типы объектов",
   "typeRename": "Переименовать тип",
   "typeHide": "Скрыть",
@@ -683,38 +1038,35 @@
   "typeHidden": "Скрыт",
   "typeCreate": "Новый тип",
   "typeEmpty": "Типов пока нет",
-
   "devicesTitle": "Устройства",
   "deviceThis": "Это устройство",
   "deviceRename": "Переименовать устройство",
   "deviceNameLabel": "Название устройства",
   "deviceRegisteredAt": "Зарегистрировано {date}",
-  "@deviceRegisteredAt": { "placeholders": { "date": { "type": "String" } } },
+  "@deviceRegisteredAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "deviceEmpty": "Устройств пока нет",
-
   "tagsLabel": "Теги",
   "tagAdd": "Добавить тег",
-  "tagNameLabel": "Название тега",
-  "tagsHint": "Теги — свободные метки без вложенности, они не заменяют категории.",
-
   "privacyLabel": "Доступность",
   "privacyOnlyMe": "Только мне",
   "privacyShareable": "Можно передавать",
   "privacyNoNote": "Передавать без заметки",
   "privacyNoPhotos": "Передавать без фотографий",
   "privacyBasic": "Передавать только основную информацию",
-
-
   "duplicateTitle": "Возможные дубли",
   "duplicateMessage": "Похожие объекты уже есть. Связать их или оставить раздельно?",
   "duplicateKeepSeparate": "Оставить раздельно",
   "duplicateUseExisting": "Использовать существующий",
-
   "exportModeFull": "Весь профиль",
   "exportModeBranch": "Ветка категории",
   "exportModeCollection": "Подборка",
   "exportModeLabel": "Что экспортировать",
-
   "hotkeysTitle": "Горячие клавиши",
   "hotkeyNewEntry": "Новая запись",
   "hotkeyPalette": "Палитра команд",
@@ -726,7 +1078,6 @@
   "hotkeyClose": "Закрыть диалог",
   "hotkeyScan": "Сканировать штрихкод",
   "hotkeySettings": "Настройки",
-
   "onboardingWelcomeSubtitle": "Храните предпочтения, рекомендации и коллекции. Всё локально, без сети и регистрации.",
   "onboardingCreateProfile": "Создать профиль",
   "onboardingProfileNameHint": "Как вас зовут?",
@@ -738,78 +1089,127 @@
   "onboardingStarterSubcategories": "Создать примерные подкатегории",
   "onboardingStarterHint": "Например: Продукты → Колбасы, Сыры, Напитки. Всё можно переименовать или удалить позже.",
   "onboardingCreating": "Создаём профиль…",
-
-
   "themeSystem": "Системная",
   "themeLight": "Светлая",
   "themeDark": "Тёмная",
-
   "relationLove": "Обожаю",
   "relationLike": "Нравится",
   "relationNeutral": "Нейтрально",
   "relationDislike": "Не нравится",
   "relationAvoid": "Избегаю",
-
-
   "entryAddToMyProfile": "Добавить в мой профиль",
-
   "breadcrumbObjectSeparator": " / ",
-
   "categorySearchHint": "Найти категорию",
   "categoryExpandAll": "Развернуть всё",
   "categoryCollapseAll": "Свернуть всё",
   "categoryIcon": "Значок категории",
   "typeIcon": "Значок типа",
   "categorySubcategoriesCount": "{count, plural, one{{count} подкатегория} few{{count} подкатегории} many{{count} подкатегорий} other{{count} подкатегорий}}",
-  "@categorySubcategoriesCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categorySubcategoriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryDirectCount": "{count, plural, one{{count} прямо здесь} few{{count} прямо здесь} many{{count} прямо здесь} other{{count} прямо здесь}}",
-  "@categoryDirectCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryDirectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categoryBranchCount": "{count, plural, one{{count} запись в ветке} few{{count} записи в ветке} many{{count} записей в ветке} other{{count} записей в ветке}}",
-  "@categoryBranchCount": { "placeholders": { "count": { "type": "int" } } },
+  "@categoryBranchCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "categorySubcategoriesTitle": "Подкатегории",
   "categoryEntriesTitle": "Записи",
   "categoryBranchEmpty": "В этой ветке пока нет записей",
   "categoryPickTitle": "Выберите категорию",
   "categoryPickMessage": "Выберите ветку слева, чтобы увидеть, что в ней лежит: её подкатегории и её записи.",
-
   "catalogTypeLabel": "Тип",
   "catalogCategoryLabel": "Категория",
   "catalogRelationLabel": "Отношение",
-
   "searchGlobalHint": "Поиск по записям",
-
   "headerNotifications": "Уведомления",
   "notificationsTitle": "Уведомления",
   "notificationsEmpty": "Новых событий нет",
   "notificationsEmptyHint": "Здесь появятся входящие изменения, обновления и итоги импорта.",
   "notificationsMarkAllRead": "Отметить всё прочитанным",
-
   "notificationIncomingTitle": "Входящие изменения",
   "notificationIncomingBody": "{count, plural, one{{count} изменение в импортированных профилях} few{{count} изменения в импортированных профилях} many{{count} изменений в импортированных профилях} other{{count} изменений в импортированных профилях}}",
-  "@notificationIncomingBody": { "placeholders": { "count": { "type": "int" } } },
+  "@notificationIncomingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notificationUpdateTitle": "Доступна новая версия",
   "notificationUpdateBody": "Версия {version} готова к установке",
-  "@notificationUpdateBody": { "placeholders": { "version": { "type": "String" } } },
+  "@notificationUpdateBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "notificationProductsTitle": "Сведения о товарах обновлены",
   "notificationProductsBody": "Дополнено карточек: {count}",
-  "@notificationProductsBody": { "placeholders": { "count": { "type": "int" } } },
+  "@notificationProductsBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notificationImportTitle": "Импорт завершён",
   "notificationImportBody": "Пакет от {date}",
-  "@notificationImportBody": { "placeholders": { "date": { "type": "String" } } },
+  "@notificationImportBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "notificationBackupTitle": "Резервная копия создана",
   "notificationBackupBody": "Последняя копия от {date}",
-  "@notificationBackupBody": { "placeholders": { "date": { "type": "String" } } },
-
+  "@notificationBackupBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "collectionPickTitle": "Добавить записи",
   "collectionPickEmpty": "В профиле пока нет записей, которые можно добавить",
   "collectionPickSelected": "Выбрано: {count}",
-  "@collectionPickSelected": { "placeholders": { "count": { "type": "int" } } },
-
+  "@collectionPickSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profilesSubtitle": "{count} из {max} возможных",
-  "@profilesSubtitle": { "placeholders": { "count": { "type": "int" }, "max": { "type": "int" } } },
+  "@profilesSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "profileMenuManage": "Все профили",
   "profileMenuSettings": "Настройки приложения",
-
   "barcodeTitle": "Добавить по штрихкоду",
   "barcodeHintMobile": "Наведите камеру на штрихкод или QR-код либо введите цифры вручную.",
   "barcodeHintDesktop": "Введите код вручную, отсканируйте USB-сканером или распознайте с фотографии.",
@@ -821,13 +1221,18 @@
   "barcodeNotRecognized": "Код на изображении не найден. Попробуйте снимок покрупнее и без бликов.",
   "barcodeUseResult": "Добавить",
   "barcodeFoundIn": "Источник: {source}",
-  "@barcodeFoundIn": { "placeholders": { "source": { "type": "String" } } },
+  "@barcodeFoundIn": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
   "barcodeNotFound": "Товар не найден ни в одной базе",
   "barcodeLookupFailed": "Не удалось связаться с базами товаров",
   "barcodeFillManually": "Код сохранится в карточке — название можно ввести вручную.",
   "barcodeTorch": "Подсветка",
   "barcodeScanAction": "Сканировать код",
-
   "settingsNetworkTitle": "Товарные базы и обновления",
   "settingsNetworkHint": "Единственные сетевые запросы приложения. Наружу уходит только штрихкод или название, и только когда вы сами что-то ищете; проверка обновлений не передаёт ничего.",
   "settingsBarcodeLookup": "Искать товар по штрихкоду",
@@ -848,16 +1253,30 @@
   "settingsProductAutoUpdateHint": "Не чаще раза в сутки. Введённые вручную названия не заменяются.",
   "settingsProductRefreshNow": "Обновить сейчас",
   "settingsProductRefreshed": "Проверено {checked}, дополнено {updated}",
-  "@settingsProductRefreshed": { "placeholders": { "checked": { "type": "int" }, "updated": { "type": "int" } } },
+  "@settingsProductRefreshed": {
+    "placeholders": {
+      "checked": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      }
+    }
+  },
   "settingsAppUpdateCheck": "Проверять обновления приложения",
   "settingsAppUpdateNow": "Проверить сейчас",
   "settingsUpToDate": "Установлена последняя версия",
   "settingsUpdateUnavailable": "Список версий недоступен. Возможно, репозиторий закрыт — тогда обновляйте приложение вручную со страницы выпусков.",
   "settingsUpdateFailed": "Не удалось проверить обновления. Проверьте подключение к интернету и попробуйте позже.",
-
   "updateTitle": "Обновление приложения",
   "updateAvailable": "Доступна версия {version}",
-  "@updateAvailable": { "placeholders": { "version": { "type": "String" } } },
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "updateDownload": "Скачать установщик",
   "updateOpenPage": "Открыть страницу выпуска",
   "updateLater": "Позже",
@@ -866,10 +1285,15 @@
   "updateInstallHint": "Приложение закроется, обновится и запустится снова.",
   "updateInstallHintAndroid": "Приложение скачает обновление и передаст его системе. В первый раз Android попросит разрешить установку из этого источника.",
   "updateDownloading": "Скачивание: {percent}%",
-  "@updateDownloading": { "placeholders": { "percent": { "type": "int" } } },
+  "@updateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "updateDownloadingUnknown": "Скачивание…",
   "updateFailed": "Не удалось обновить",
-
   "onboardingStep1Title": "Ваши вкусы, а не чужие оценки",
   "onboardingStep1Body": "Продукты, блюда, фильмы, книги, места — всё, о чём хочется помнить, понравилось оно или нет. Для новой записи хватает названия.",
   "onboardingStep2Title": "Мнение отдельно от вещи",
@@ -877,14 +1301,18 @@
   "onboardingStep3Title": "Всё остаётся у вас",
   "onboardingStep3Body": "Без аккаунта, сервера и облака. Поделиться можно файлом, который вы создаёте сами и передаёте кому хотите.",
   "onboardingStart": "Начать",
-
   "exportReadable": "Для чтения",
   "exportCsv": "Таблица CSV",
   "exportMarkdown": "Текст Markdown",
-
   "insightsTitle": "Статистика",
   "insightsSubtitle": "{count, plural, one{По {count} записи} few{По {count} записям} many{По {count} записям} other{По {count} записям}}",
-  "@insightsSubtitle": { "placeholders": { "count": { "type": "int" } } },
+  "@insightsSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "insightsEmptyTitle": "Пока нечего показывать",
   "insightsEmptyMessage": "Добавьте несколько записей — здесь появятся распределение оценок, отношения и динамика по месяцам.",
   "insightsTotal": "Записей",
@@ -899,31 +1327,58 @@
   "insightsScopeEmpty": "В этом срезе записей нет",
   "insightsCategories": "Самые заполненные категории",
   "insightsTimeline": "Добавления по месяцам",
-
   "wishlistTitle": "Хочу попробовать",
   "wishlistSubtitle": "{count, plural, one{{count} задумка} few{{count} задумки} many{{count} задумок} other{{count} задумок}}",
-  "@wishlistSubtitle": { "placeholders": { "count": { "type": "int" } } },
+  "@wishlistSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "wishlistEmptyTitle": "Список пуст",
   "wishlistEmptyMessage": "Ставьте записи стадию «Задумано» тому, до чего ещё не дошли руки, — оно соберётся здесь.",
   "wishlistMarkTried": "Попробовал",
   "wishlistRatingTitle": "Как впечатления?",
   "wishlistRatingHint": "Отношение подставится по оценке, дата впечатления — сегодняшняя. Всё можно изменить в карточке.",
-
   "archiveTitle": "Архив",
   "archiveSubtitle": "{count, plural, one{{count} убранный объект} few{{count} убранных объекта} many{{count} убранных объектов} other{{count} убранных объектов}}",
-  "@archiveSubtitle": { "placeholders": { "count": { "type": "int" } } },
+  "@archiveSubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "archiveEmptyTitle": "Архив пуст",
   "archiveEmptyMessage": "Здесь появляется всё, что вы убрали из работы. Ничего не удаляется — любое можно вернуть.",
   "archiveEntries": "Записи",
   "archiveCategories": "Категории",
   "archiveCollections": "Подборки",
   "archiveCategoryLevel": "Уровень вложенности: {level}",
-  "@archiveCategoryLevel": { "placeholders": { "level": { "type": "int" } } },
+  "@archiveCategoryLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "archiveRestoredMany": "{count, plural, one{{count} запись возвращена} few{{count} записи возвращены} many{{count} записей возвращено} other{{count} записей возвращено}}",
-  "@archiveRestoredMany": { "placeholders": { "count": { "type": "int" } } },
+  "@archiveRestoredMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "archivePurgeConfirmMany": "{count, plural, one{Удалить {count} запись навсегда?} few{Удалить {count} записи навсегда?} many{Удалить {count} записей навсегда?} other{Удалить {count} записей навсегда?}}",
-  "@archivePurgeConfirmMany": { "placeholders": { "count": { "type": "int" } } },
-
+  "@archivePurgeConfirmMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "incomingTitle": "Входящие изменения",
   "incomingSubtitle": "Что изменилось в импортированных профилях",
   "incomingEmptyTitle": "Изменений нет",
@@ -934,9 +1389,14 @@
   "incomingKindObject": "Объект",
   "incomingKindCategory": "Категория",
   "incomingReceivedAt": "Получено {date}",
-  "@incomingReceivedAt": { "placeholders": { "date": { "type": "String" } } },
+  "@incomingReceivedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "incomingNewBadge": "Новое",
-
   "fieldsTitle": "Поля типа",
   "fieldsHint": "Дополнительные поля, которые появятся у записей этого типа.",
   "fieldsAdd": "Добавить поле",
@@ -951,12 +1411,22 @@
   "fieldsChoicesLabel": "Варианты через запятую",
   "fieldsRemove": "Удалить поле",
   "fieldsEditFor": "Поля типа «{type}»",
-  "@fieldsEditFor": { "placeholders": { "type": { "type": "String" } } },
+  "@fieldsEditFor": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "fieldsValuesTitle": "Дополнительно",
-
   "quickAddBarcodeHint": "Заполнено по штрихкоду {code}",
-  "@quickAddBarcodeHint": { "placeholders": { "code": { "type": "String" } } },
-
+  "@quickAddBarcodeHint": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "lockTitle": "База под паролем",
   "lockMessage": "Введите пароль, чтобы открыть записи.",
   "lockPasswordLabel": "Пароль",
@@ -966,7 +1436,6 @@
   "lockStaleKey": "Запомненный ключ не подходит к нынешней базе. Так бывает после восстановления копии, сделанной под другим паролем.",
   "lockForgotWarning": "Забытый пароль восстановить нечем: данные откроются только из резервной копии, снятой до включения.",
   "lockQuit": "Закрыть приложение",
-
   "dbEncryptionTitle": "Шифровать базу паролем",
   "dbEncryptionHint": "Файл базы становится нечитаемым без пароля: унесённый ноутбук, вытащенный диск или скопированный файл не выдадут записи. От того, кто сидит за вашим разблокированным устройством, это не защищает.",
   "dbEncryptionOn": "База зашифрована",
@@ -986,7 +1455,6 @@
   "dbEncryptionRememberTitle": "Не спрашивать пароль на этом устройстве",
   "dbEncryptionRememberHint": "Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.",
   "settingsWordsDbEncryption": "шифрование база пароль защита диск",
-
   "keyStorageTitle": "Хранение закрытого ключа",
   "keyStorageOs": "Отдельно от базы, под защитой системы",
   "keyStorageOsWindows": "Файл зашифрован средствами Windows (DPAPI) на вашу учётную запись: на другом компьютере он бесполезен.",

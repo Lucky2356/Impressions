@@ -22,6 +22,7 @@ enum NotificationKind {
   backup,
   yearReview,
   wishlist,
+  stalled,
 }
 
 /// Событие для центра уведомлений.
@@ -77,6 +78,7 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     SettingKeys.appUpdateCheckedAt,
     SettingKeys.productAutoUpdateAt,
     SettingKeys.wishlistReminder,
+    SettingKeys.stalledReminder,
   ]);
 
   final seenRaw = stored[_seenKey];
@@ -252,6 +254,32 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     }
   }
 
+  // Начатое и брошенное. Про задуманное напоминание выше есть, про начатое —
+  // не было, хотя забытое на середине ближе к потере: за него уже взялись.
+  //
+  // Порог давности здесь вдвое больше, чем у задуманного: быть на середине
+  // книги месяц — обычное дело, и ходить за этим напоминанием не надо.
+  if (profile != null && stored[SettingKeys.stalledReminder] == 'true') {
+    final stalled = await ref
+        .watch(entryRepositoryProvider)
+        .stalledProgress(profile.id);
+    final since = stalled.since;
+    if (stalled.count > 0 && since != null) {
+      final at = DateTime(now.year, now.month);
+      result.add(
+        AppNotification(
+          kind: NotificationKind.stalled,
+          title: '${stalled.count}',
+          body: since.toIso8601String(),
+          icon: Icons.pause_circle_outline_rounded,
+          at: at,
+          unread: unread(at),
+          target: NavIds.catalog,
+        ),
+      );
+    }
+  }
+
   result.sort((a, b) => b.at.compareTo(a.at));
   return result;
 });
@@ -318,6 +346,7 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.backup => l10n.notificationBackupTitle,
       NotificationKind.yearReview => l10n.notificationYearTitle,
       NotificationKind.wishlist => l10n.notificationWishlistTitle,
+      NotificationKind.stalled => l10n.notificationStalledTitle,
     };
 
     final dateFormat = localeDate(context, 'd MMMM, HH:mm');
@@ -342,6 +371,10 @@ class NotificationPanel extends ConsumerWidget {
       // Счёт и давность посчитаны при сборке события: перезапрашивать их в
       // панели значило бы сходить в базу ради строки, которая уже готова.
       NotificationKind.wishlist => l10n.notificationWishlistBody(
+        int.tryParse(n.title) ?? 0,
+        localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
+      ),
+      NotificationKind.stalled => l10n.notificationStalledBody(
         int.tryParse(n.title) ?? 0,
         localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
       ),
