@@ -120,6 +120,14 @@ class SettingKeys {
   /// Копии лежат рядом с базой, и потеря устройства уносит их вместе с ней.
   static const backupMirrorDir = 'backup_mirror_dir';
 
+  // ---- Цель на год ----
+
+  /// Сколько впечатлений человек задумал на этот год; нет записи — цели нет.
+  ///
+  /// По ключу на год, а не одним значением: прошлогодняя цель не должна
+  /// подменяться нынешней — с ней сверяются итоги того года.
+  static String yearGoalOf(int year) => 'year_goal_$year';
+
   // ---- Замок ----
 
   /// Сколько минут бездействия запирают приложение; `0` — не запирать.
@@ -170,6 +178,18 @@ class SettingsRepository {
 
   Future<void> setBool(String key, bool value) =>
       set(key, value ? 'true' : 'false');
+
+  /// Цель на год; 0 — не поставлена.
+  ///
+  /// Отрицательное и нечисловое значение означает то же самое: цель, которую
+  /// нельзя выполнить, — это отсутствие цели.
+  Future<int> yearGoal(int year) async {
+    final value = int.tryParse(await get(SettingKeys.yearGoalOf(year)) ?? '');
+    return (value == null || value <= 0) ? 0 : value;
+  }
+
+  Future<void> setYearGoal(int year, int goal) =>
+      set(SettingKeys.yearGoalOf(year), goal <= 0 ? '' : '$goal');
 
   Stream<String?> watch(String key) {
     return (db.select(db.settings)..where((s) => s.key.equals(key)))

@@ -595,6 +595,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionAdded => 'Added to the collection';
 
   @override
+  String get yearGoalTitle => 'Goal for the year';
+
+  @override
+  String yearGoalNone(String year) {
+    return 'No goal set for $year';
+  }
+
+  @override
+  String get yearGoalSet => 'Set a goal';
+
+  @override
+  String get yearGoalChange => 'Change the goal';
+
+  @override
+  String get yearGoalRemove => 'Remove the goal';
+
+  @override
+  String yearGoalProgress(int done, int goal) {
+    return '$done of $goal';
+  }
+
+  @override
+  String yearGoalLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count impressions to go',
+      one: '$count impression to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearGoalDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left in the year',
+      one: '$count day left in the year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearGoalReached => 'Goal reached';
+
+  @override
+  String yearGoalDialogTitle(String year) {
+    return 'Goal for $year';
+  }
+
+  @override
+  String get yearGoalDialogLabel => 'How many impressions';
+
+  @override
+  String get yearGoalDialogHint => 'For example: 50';
+
+  @override
+  String get yearGoalEmptyHint => 'Not a single impression yet';
+
+  @override
   String get yearTitle => 'Year in review';
 
   @override

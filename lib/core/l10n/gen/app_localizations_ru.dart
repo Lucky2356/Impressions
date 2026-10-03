@@ -616,6 +616,71 @@ class AppLocalizationsRu extends AppLocalizations {
   String get collectionAdded => 'Добавлено в подборку';
 
   @override
+  String get yearGoalTitle => 'Цель на год';
+
+  @override
+  String yearGoalNone(String year) {
+    return 'Цель на $year не поставлена';
+  }
+
+  @override
+  String get yearGoalSet => 'Поставить цель';
+
+  @override
+  String get yearGoalChange => 'Изменить цель';
+
+  @override
+  String get yearGoalRemove => 'Убрать цель';
+
+  @override
+  String yearGoalProgress(int done, int goal) {
+    return '$done из $goal';
+  }
+
+  @override
+  String yearGoalLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'осталось $count впечатлений',
+      many: 'осталось $count впечатлений',
+      few: 'осталось $count впечатления',
+      one: 'осталось $count впечатление',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearGoalDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'до конца года $count дней',
+      many: 'до конца года $count дней',
+      few: 'до конца года $count дня',
+      one: 'до конца года $count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearGoalReached => 'Цель выполнена';
+
+  @override
+  String yearGoalDialogTitle(String year) {
+    return 'Цель на $year год';
+  }
+
+  @override
+  String get yearGoalDialogLabel => 'Сколько впечатлений';
+
+  @override
+  String get yearGoalDialogHint => 'Например: 50';
+
+  @override
+  String get yearGoalEmptyHint => 'Пока ни одного впечатления';
+
+  @override
   String get yearTitle => 'Итоги года';
 
   @override

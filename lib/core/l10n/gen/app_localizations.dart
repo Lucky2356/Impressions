@@ -1064,6 +1064,84 @@ abstract class AppLocalizations {
   /// **'Добавлено в подборку'**
   String get collectionAdded;
 
+  /// No description provided for @yearGoalTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на год'**
+  String get yearGoalTitle;
+
+  /// No description provided for @yearGoalNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на {year} не поставлена'**
+  String yearGoalNone(String year);
+
+  /// No description provided for @yearGoalSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить цель'**
+  String get yearGoalSet;
+
+  /// No description provided for @yearGoalChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить цель'**
+  String get yearGoalChange;
+
+  /// No description provided for @yearGoalRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать цель'**
+  String get yearGoalRemove;
+
+  /// No description provided for @yearGoalProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'{done} из {goal}'**
+  String yearGoalProgress(int done, int goal);
+
+  /// No description provided for @yearGoalLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{осталось {count} впечатление} few{осталось {count} впечатления} many{осталось {count} впечатлений} other{осталось {count} впечатлений}}'**
+  String yearGoalLeft(int count);
+
+  /// No description provided for @yearGoalDaysLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{до конца года {count} день} few{до конца года {count} дня} many{до конца года {count} дней} other{до конца года {count} дней}}'**
+  String yearGoalDaysLeft(int count);
+
+  /// No description provided for @yearGoalReached.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель выполнена'**
+  String get yearGoalReached;
+
+  /// No description provided for @yearGoalDialogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на {year} год'**
+  String yearGoalDialogTitle(String year);
+
+  /// No description provided for @yearGoalDialogLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сколько впечатлений'**
+  String get yearGoalDialogLabel;
+
+  /// No description provided for @yearGoalDialogHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например: 50'**
+  String get yearGoalDialogHint;
+
+  /// No description provided for @yearGoalEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока ни одного впечатления'**
+  String get yearGoalEmptyHint;
+
   /// No description provided for @yearTitle.
   ///
   /// In ru, this message translates to:

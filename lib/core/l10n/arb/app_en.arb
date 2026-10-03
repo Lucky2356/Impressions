@@ -196,6 +196,57 @@
   "collectionArchive": "Archive collection",
   "collectionArchived": "Collection moved to the archive",
   "collectionAdded": "Added to the collection",
+  "yearGoalTitle": "Goal for the year",
+  "yearGoalNone": "No goal set for {year}",
+  "@yearGoalNone": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalSet": "Set a goal",
+  "yearGoalChange": "Change the goal",
+  "yearGoalRemove": "Remove the goal",
+  "yearGoalProgress": "{done} of {goal}",
+  "@yearGoalProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalLeft": "{count, plural, one{{count} impression to go} other{{count} impressions to go}}",
+  "@yearGoalLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalDaysLeft": "{count, plural, one{{count} day left in the year} other{{count} days left in the year}}",
+  "@yearGoalDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalReached": "Goal reached",
+  "yearGoalDialogTitle": "Goal for {year}",
+  "@yearGoalDialogTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalDialogLabel": "How many impressions",
+  "yearGoalDialogHint": "For example: 50",
+  "yearGoalEmptyHint": "Not a single impression yet",
   "yearTitle": "Year in review",
   "yearOpen": "Year in review",
   "yearPrevious": "Previous year",

@@ -9,7 +9,10 @@ import '../../core/utils/dates.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/repositories/year_review.dart';
 import '../../design_system/design_system.dart';
+import '../../app/app_state.dart';
+import '../../app/data_refresh.dart';
 import '../entry/entry_detail_sheet.dart';
+import 'year_goal_dialog.dart';
 import 'year_providers.dart';
 import 'year_share_card.dart';
 
@@ -65,6 +68,9 @@ class YearScreen extends ConsumerWidget {
               icon: Icons.celebration_outlined,
               title: l10n.yearEmptyTitle,
               message: l10n.yearEmptyMessage('$year'),
+              // Цель ставят как раз до того, как год наберётся: в январе
+              // итоги пусты, а решение на год уже принято.
+              action: const _GoalAction(),
             )
           : _Pages(review: review),
     );
@@ -99,6 +105,7 @@ class _PagesState extends State<_Pages> {
 
     final pages = <Widget>[
       _TotalCard(review: review),
+      _GoalCard(review: review),
       if (review.best.isNotEmpty) _BestCard(review: review),
       if (review.topCategory != null || review.busiestMonth != null)
         _PlacesCard(review: review),
@@ -417,6 +424,140 @@ class _Line extends StatelessWidget {
           const SizedBox(width: AppDimens.space12),
           Expanded(child: Text(label, style: context.text.bodyMedium)),
         ],
+      ),
+    );
+  }
+}
+
+/// Цель года: сколько задумано и сколько уже случилось.
+///
+/// Пройденное — то же число, что на первой карточке: цель проверяют по
+/// итогам, и расходиться с ними она не должна.
+class _GoalCard extends ConsumerWidget {
+  const _GoalCard({required this.review});
+
+  final YearReview review;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final goal = ref.watch(yearGoalProvider).value;
+
+    return _YearCard(
+      title: l10n.yearGoalTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (goal == null) ...[
+            Text(
+              l10n.yearGoalNone('${review.year}'),
+              style: context.text.titleMedium?.copyWith(color: c.textSecondary),
+            ),
+            const SizedBox(height: AppDimens.space16),
+            _GoalAction(year: review.year),
+          ] else ...[
+            Text(
+              l10n.yearGoalProgress(goal.done, goal.goal),
+              style: context.text.displaySmall,
+            ),
+            const SizedBox(height: AppDimens.space16),
+            YearGoalBar(goal: goal),
+            const SizedBox(height: AppDimens.space16),
+            _Line(
+              icon: goal.reached
+                  ? Icons.emoji_events_rounded
+                  : Icons.flag_rounded,
+              label: goal.reached
+                  ? l10n.yearGoalReached
+                  : l10n.yearGoalLeft(goal.left),
+            ),
+            // Про остаток времени — только пока он есть: у прошлого года
+            // «до конца года ноль дней» звучало бы упрёком.
+            if (goal.daysLeft > 0)
+              _Line(
+                icon: Icons.event_rounded,
+                label: l10n.yearGoalDaysLeft(goal.daysLeft),
+              ),
+            const SizedBox(height: AppDimens.space8),
+            _GoalAction(year: review.year, current: goal.goal),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Кнопка «поставить цель» или «изменить цель».
+///
+/// Год по умолчанию берётся из того, который показывают итоги: кнопка стоит
+/// и в пустом состоянии, где карточек с годом ещё нет.
+class _GoalAction extends ConsumerWidget {
+  const _GoalAction({this.year, this.current = 0});
+
+  final int? year;
+  final int current;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    // Год либо задан карточкой, либо берётся у экрана: кнопка стоит ещё и в
+    // пустом состоянии, где карточки с годом нет.
+    final int target = year ?? ref.watch(yearReviewYearProvider);
+
+    Future<void> edit() async {
+      final value = await YearGoalDialog.show(
+        context,
+        year: target,
+        current: current,
+      );
+      if (value == null) return;
+      await ref.read(settingsRepositoryProvider).setYearGoal(target, value);
+      ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
+    }
+
+    if (current > 0) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton(
+          onPressed: edit,
+          child: Text(l10n.yearGoalChange),
+        ),
+      );
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FilledButton.icon(
+        onPressed: edit,
+        icon: const Icon(Icons.flag_rounded, size: 18),
+        label: Text(l10n.yearGoalSet),
+      ),
+    );
+  }
+}
+
+/// Полоса пройденного по цели.
+///
+/// Тот же вид, что у полосы прогресса под обложкой: это одна и та же мысль —
+/// «сколько из задуманного пройдено».
+class YearGoalBar extends StatelessWidget {
+  const YearGoalBar({super.key, required this.goal});
+
+  final YearGoal goal;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimens.radiusPill),
+      child: LinearProgressIndicator(
+        value: goal.share,
+        minHeight: 8,
+        backgroundColor: c.surfaceMuted,
+        valueColor: AlwaysStoppedAnimation(
+          goal.reached ? c.chartGreen : c.accentPrimary,
+        ),
       ),
     );
   }
