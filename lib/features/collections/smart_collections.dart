@@ -58,6 +58,7 @@ Future<List<EntryView>> smartEntriesOf(
         withoutRating: filter.withoutRating,
         withoutCategory: filter.withoutCategory,
         withoutPhoto: filter.withoutPhoto,
+        withoutNote: filter.withoutNote,
         recommendedOnly: filter.recommendedOnly,
         limit: limit,
       );
@@ -82,6 +83,7 @@ Future<int> smartCountOf(Ref ref, String profileId, CatalogState filter) async {
         withoutRating: filter.withoutRating,
         withoutCategory: filter.withoutCategory,
         withoutPhoto: filter.withoutPhoto,
+        withoutNote: filter.withoutNote,
         recommendedOnly: filter.recommendedOnly,
         limit: 1,
       );
@@ -111,6 +113,7 @@ List<String> smartFilterWords(
   if (filter.withoutRating) l10n.catalogWithoutRating,
   if (filter.withoutCategory) l10n.catalogWithoutCategory,
   if (filter.withoutPhoto) l10n.catalogWithoutPhoto,
+  if (filter.withoutNote) l10n.catalogWithoutNote,
   if (filter.recommendedOnly) l10n.catalogRecommended,
 ];
 

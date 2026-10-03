@@ -133,6 +133,7 @@
   "catalogWithoutRating": "Without a rating",
   "catalogWithoutCategory": "Without a category",
   "catalogWithoutPhoto": "Without a photo",
+  "catalogWithoutNote": "No note",
   "catalogRecommended": "Recommended to me",
   "catalogFound": "{count, plural, one{{count} entry found} other{{count} entries found}}",
   "entryDetailTitle": "Entry",

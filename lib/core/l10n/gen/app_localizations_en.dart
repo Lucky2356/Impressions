@@ -408,6 +408,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogWithoutPhoto => 'Without a photo';
 
   @override
+  String get catalogWithoutNote => 'No note';
+
+  @override
   String get catalogRecommended => 'Recommended to me';
 
   @override

@@ -770,6 +770,12 @@ abstract class AppLocalizations {
   /// **'Без фотографии'**
   String get catalogWithoutPhoto;
 
+  /// No description provided for @catalogWithoutNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без заметки'**
+  String get catalogWithoutNote;
+
   /// No description provided for @catalogRecommended.
   ///
   /// In ru, this message translates to:

@@ -67,6 +67,7 @@ class FilterBar extends ConsumerWidget {
       state.withoutRating,
       state.withoutCategory,
       state.withoutPhoto,
+      state.withoutNote,
       state.recommendedOnly,
     ].where((x) => x).length;
 
@@ -296,6 +297,20 @@ class FilterBar extends ConsumerWidget {
           state.withoutPhoto
               ? Icons.check_rounded
               : Icons.image_not_supported_outlined,
+          size: 16,
+        ),
+      ),
+      // Запись без заметки — это впечатление, от которого осталась одна
+      // оценка. Через год она не напомнит, чем именно оно было.
+      FilterChip(
+        selected: state.withoutNote,
+        onSelected: controller.setWithoutNote,
+        label: Text(l10n.catalogWithoutNote),
+        showCheckmark: false,
+        avatar: Icon(
+          state.withoutNote
+              ? Icons.check_rounded
+              : Icons.sticky_note_2_outlined,
           size: 16,
         ),
       ),

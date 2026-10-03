@@ -422,6 +422,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogWithoutPhoto => 'Без фотографии';
 
   @override
+  String get catalogWithoutNote => 'Без заметки';
+
+  @override
   String get catalogRecommended => 'Мне посоветовали';
 
   @override

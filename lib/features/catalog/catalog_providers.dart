@@ -28,6 +28,7 @@ class CatalogState {
     this.withoutRating = false,
     this.withoutCategory = false,
     this.withoutPhoto = false,
+    this.withoutNote = false,
     this.recommendedOnly = false,
     this.view = CatalogViewMode.grid,
   });
@@ -50,10 +51,12 @@ class CatalogState {
   /// Порядок развёрнут: «худшие сначала», «Я → А», «самые старые».
   final bool reverseSort;
 
-  /// «Что я не доделал»: без оценки, мимо категорий, без фотографии.
+  /// «Что я не доделал»: без оценки, мимо категорий, без фотографии, без
+  /// заметки.
   final bool withoutRating;
   final bool withoutCategory;
   final bool withoutPhoto;
+  final bool withoutNote;
 
   /// Только записи, которые кто-то посоветовал.
   final bool recommendedOnly;
@@ -72,6 +75,7 @@ class CatalogState {
       withoutRating ||
       withoutCategory ||
       withoutPhoto ||
+      withoutNote ||
       recommendedOnly;
 
   CatalogState copyWith({
@@ -87,6 +91,7 @@ class CatalogState {
     bool? withoutRating,
     bool? withoutCategory,
     bool? withoutPhoto,
+    bool? withoutNote,
     bool? recommendedOnly,
     CatalogViewMode? view,
   }) {
@@ -107,6 +112,7 @@ class CatalogState {
       withoutRating: withoutRating ?? this.withoutRating,
       withoutCategory: withoutCategory ?? this.withoutCategory,
       withoutPhoto: withoutPhoto ?? this.withoutPhoto,
+      withoutNote: withoutNote ?? this.withoutNote,
       recommendedOnly: recommendedOnly ?? this.recommendedOnly,
       view: view ?? this.view,
     );
@@ -128,6 +134,7 @@ class CatalogState {
     'withoutRating': withoutRating,
     'withoutCategory': withoutCategory,
     'withoutPhoto': withoutPhoto,
+    'withoutNote': withoutNote,
     'recommendedOnly': recommendedOnly,
   };
 
@@ -160,6 +167,7 @@ class CatalogState {
       withoutRating: json['withoutRating'] == true,
       withoutCategory: json['withoutCategory'] == true,
       withoutPhoto: json['withoutPhoto'] == true,
+      withoutNote: json['withoutNote'] == true,
       recommendedOnly: json['recommendedOnly'] == true,
     );
   }
@@ -284,6 +292,11 @@ class CatalogController extends Notifier<CatalogState> {
 
   void setWithoutPhoto(bool value) {
     state = state.copyWith(withoutPhoto: value);
+    _persist();
+  }
+
+  void setWithoutNote(bool value) {
+    state = state.copyWith(withoutNote: value);
     _persist();
   }
 
@@ -430,6 +443,7 @@ class CatalogFeed extends AsyncNotifier<CatalogResults> {
           withoutRating: s.withoutRating,
           withoutCategory: s.withoutCategory,
           withoutPhoto: s.withoutPhoto,
+          withoutNote: s.withoutNote,
           recommendedOnly: s.recommendedOnly,
           limit: limit,
           offset: offset,
