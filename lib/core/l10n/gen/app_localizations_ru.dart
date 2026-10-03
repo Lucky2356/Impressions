@@ -117,6 +117,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddNameHint => 'Например: Папа может';
 
   @override
+  String quickAddPaste(String title) {
+    return 'Вставить: $title';
+  }
+
+  @override
   String get quickAddNameRequired => 'Укажите название';
 
   @override

@@ -36,6 +36,14 @@
   "quickAddTitle": "Новая запись",
   "quickAddNameLabel": "Название",
   "quickAddNameHint": "Например: Папа может",
+  "quickAddPaste": "Вставить: {title}",
+  "@quickAddPaste": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "quickAddNameRequired": "Укажите название",
   "quickAddTypeLabel": "Тип",
   "quickAddCategoryLabel": "Категория",

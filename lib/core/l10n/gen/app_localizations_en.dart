@@ -117,6 +117,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAddNameHint => 'For example: Earl Grey tea';
 
   @override
+  String quickAddPaste(String title) {
+    return 'Paste: $title';
+  }
+
+  @override
   String get quickAddNameRequired => 'Enter a title';
 
   @override

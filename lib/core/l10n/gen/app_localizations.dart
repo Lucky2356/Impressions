@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Например: Папа может'**
   String get quickAddNameHint;
 
+  /// No description provided for @quickAddPaste.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вставить: {title}'**
+  String quickAddPaste(String title);
+
   /// No description provided for @quickAddNameRequired.
   ///
   /// In ru, this message translates to:

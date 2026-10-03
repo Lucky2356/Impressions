@@ -36,6 +36,14 @@
   "quickAddTitle": "New entry",
   "quickAddNameLabel": "Title",
   "quickAddNameHint": "For example: Earl Grey tea",
+  "quickAddPaste": "Paste: {title}",
+  "@quickAddPaste": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "quickAddNameRequired": "Enter a title",
   "quickAddTypeLabel": "Type",
   "quickAddCategoryLabel": "Category",
