@@ -24,6 +24,7 @@ import 'entry_opinion.dart';
 import 'entry_photos.dart';
 import 'entry_visits.dart';
 import 'entry_providers.dart';
+import 'entry_share_card.dart';
 import 'entry_tags.dart';
 
 /// Карточка записи: путь категорий, отношение, оценка, заметка, история версий
@@ -291,12 +292,19 @@ class _EntryDetailSheetState extends ConsumerState<EntryDetailSheet> {
             _editObject(d);
           case 'merge':
             _mergeObject(d);
+          case 'card':
+            EntryShareCard.show(context, d);
           case 'archive':
             _archive(d.entry.id);
         }
       },
       itemBuilder: (_) => [
         _item('collection', Icons.playlist_add_rounded, l10n.collectionAddTo),
+        // Картинки нет у записи «только мне»: эта пометка значит, что запись
+        // не покидает устройство, а картинка — такой же выход наружу, как
+        // файл обмена.
+        if (EntryCardContent.allowed(d.entry.privacy))
+          _item('card', Icons.image_outlined, l10n.entryCardAction),
         _item('object', Icons.edit_rounded, l10n.entryEditObject),
         _item('merge', Icons.merge_rounded, l10n.entryMerge),
         const PopupMenuDivider(),

@@ -179,6 +179,9 @@
     }
   },
   "entryDetailTitle": "Запись",
+  "entryCardAction": "Показать картинкой",
+  "entryCardTitle": "Карточка записи",
+  "entryCardSaved": "Картинка готова",
   "entryHistory": "История изменений",
   "entryRestoreRevision": "Восстановить эту версию",
   "entryRestored": "Версия восстановлена",
