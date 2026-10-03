@@ -444,6 +444,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entryDetailTitle => 'Запись';
 
   @override
+  String get entryCardAction => 'Показать картинкой';
+
+  @override
+  String get entryCardTitle => 'Карточка записи';
+
+  @override
+  String get entryCardSaved => 'Картинка готова';
+
+  @override
   String get entryHistory => 'История изменений';
 
   @override

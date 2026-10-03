@@ -794,6 +794,24 @@ abstract class AppLocalizations {
   /// **'Запись'**
   String get entryDetailTitle;
 
+  /// No description provided for @entryCardAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать картинкой'**
+  String get entryCardAction;
+
+  /// No description provided for @entryCardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Карточка записи'**
+  String get entryCardTitle;
+
+  /// No description provided for @entryCardSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Картинка готова'**
+  String get entryCardSaved;
+
   /// No description provided for @entryHistory.
   ///
   /// In ru, this message translates to:

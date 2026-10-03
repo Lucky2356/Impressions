@@ -6,6 +6,7 @@ import 'package:impressions/data/db/database.dart';
 import 'package:impressions/data/providers.dart';
 import 'package:impressions/data/repositories/entry_repository.dart';
 import 'package:impressions/data/repositories/profile_repository.dart';
+import 'package:impressions/data/services/export_service.dart';
 import 'package:impressions/features/entry/entry_detail_sheet.dart';
 import 'package:impressions/features/entry/entry_disclosure.dart';
 import 'package:impressions/features/entry/entry_hero.dart';
@@ -113,5 +114,35 @@ void main() {
 
     expect(find.text('Изменить описание'), findsOneWidget);
     expect(find.text('Архивировать запись'), findsOneWidget);
+    expect(find.text('Показать картинкой'), findsOneWidget);
+  });
+
+  testWidgets('пункт меню открывает карточку картинкой', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Показать картинкой'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Карточка записи'), findsOneWidget);
+    expect(find.text('Сохранить картинкой'), findsOneWidget);
+  });
+
+  testWidgets('записи «только мне» картинку не предлагают', (tester) async {
+    // Эта пометка значит, что запись не покидает устройство, а картинка —
+    // такой же выход наружу, как файл обмена.
+    await entries.updateEntry(entryId, privacy: ExportService.privacyOnlyMe);
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Показать картинкой'), findsNothing);
+    expect(
+      find.text('Архивировать запись'),
+      findsOneWidget,
+      reason: 'остальные действия над записью остаются',
+    );
   });
 }

@@ -428,6 +428,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entryDetailTitle => 'Entry';
 
   @override
+  String get entryCardAction => 'Make a picture';
+
+  @override
+  String get entryCardTitle => 'Entry card';
+
+  @override
+  String get entryCardSaved => 'The picture is ready';
+
+  @override
   String get entryHistory => 'Change history';
 
   @override
