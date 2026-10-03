@@ -4838,6 +4838,60 @@ abstract class AppLocalizations {
   /// **'Добавления по месяцам'**
   String get insightsTimeline;
 
+  /// No description provided for @statsExportAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выгрузить'**
+  String get statsExportAction;
+
+  /// No description provided for @statsExportScope.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез'**
+  String get statsExportScope;
+
+  /// No description provided for @statsExportExported.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выгружено'**
+  String get statsExportExported;
+
+  /// No description provided for @statsExportMetric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показатель'**
+  String get statsExportMetric;
+
+  /// No description provided for @statsExportValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение'**
+  String get statsExportValue;
+
+  /// No description provided for @statsExportRated.
+  ///
+  /// In ru, this message translates to:
+  /// **'С оценкой'**
+  String get statsExportRated;
+
+  /// No description provided for @statsExportRating.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оценка'**
+  String get statsExportRating;
+
+  /// No description provided for @statsExportCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория'**
+  String get statsExportCategory;
+
+  /// No description provided for @statsExportMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Месяц'**
+  String get statsExportMonth;
+
   /// No description provided for @wishlistTitle.
   ///
   /// In ru, this message translates to:

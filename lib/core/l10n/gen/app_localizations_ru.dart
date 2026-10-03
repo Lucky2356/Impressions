@@ -2952,6 +2952,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get insightsTimeline => 'Добавления по месяцам';
 
   @override
+  String get statsExportAction => 'Выгрузить';
+
+  @override
+  String get statsExportScope => 'Срез';
+
+  @override
+  String get statsExportExported => 'Выгружено';
+
+  @override
+  String get statsExportMetric => 'Показатель';
+
+  @override
+  String get statsExportValue => 'Значение';
+
+  @override
+  String get statsExportRated => 'С оценкой';
+
+  @override
+  String get statsExportRating => 'Оценка';
+
+  @override
+  String get statsExportCategory => 'Категория';
+
+  @override
+  String get statsExportMonth => 'Месяц';
+
+  @override
   String get wishlistTitle => 'Хочу попробовать';
 
   @override

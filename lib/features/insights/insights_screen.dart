@@ -15,8 +15,11 @@ import '../../data/models/category_tree.dart';
 import '../../data/models/entry_view.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/entry_stats.dart';
+import '../../data/services/readable_export_service.dart';
+import '../../data/services/stats_export_service.dart';
 import '../../design_system/design_system.dart';
 import '../catalog/catalog_providers.dart';
+import '../exchange/file_delivery_report.dart';
 import '../categories/category_providers.dart';
 import '../quick_add/category_picker.dart';
 import '../year/year_screen.dart';
@@ -152,6 +155,9 @@ class InsightsScreen extends ConsumerWidget {
         subtitle: l10n.insightsSubtitle(data.total),
         bottom: const _ScopeBar(),
         actions: [
+          // Числа за графиками — те же самые, но посчитать по картинке
+          // что-то своё нельзя.
+          _ExportButton(data: data),
           // Итоги года стоят рядом со статистикой, но отвечают на другой
           // вопрос: не «каковы мои вкусы», а «каким был этот год».
           OutlinedButton.icon(
@@ -206,6 +212,136 @@ class InsightsScreen extends ConsumerWidget {
     );
   }
 }
+
+/// Выгрузка показанной статистики — таблицей или текстом.
+class _ExportButton extends ConsumerStatefulWidget {
+  const _ExportButton({required this.data});
+
+  final ProfileInsights data;
+
+  @override
+  ConsumerState<_ExportButton> createState() => _ExportButtonState();
+}
+
+class _ExportButtonState extends ConsumerState<_ExportButton> {
+  bool _busy = false;
+
+  /// Срез словами — то же, что написано в строке среза над графиками.
+  String _scope(AppLocalizations l10n) {
+    final scope = ref.read(insightsScopeProvider);
+    final period = scope.yearOnly
+        ? l10n.insightsPeriodYear
+        : l10n.insightsPeriodAll;
+    return '${scope.category?.name ?? l10n.insightsScopeAll} · $period';
+  }
+
+  Future<void> _export(ReadableFormat format) async {
+    final l10n = AppLocalizations.of(context);
+    final profile = ref.read(activeProfileProvider);
+    if (profile == null) return;
+
+    setState(() => _busy = true);
+    try {
+      String relationLabel(String? name) {
+        if (name == null) return '';
+        for (final r in Relation.values) {
+          if (r.name == name) return r.label(l10n);
+        }
+        return name;
+      }
+
+      final text = const StatsExportService().build(
+        data: widget.data,
+        format: format,
+        profileName: profile.firstName,
+        scope: _scope(l10n),
+        labels: statsExportLabels(l10n),
+        relationLabel: relationLabel,
+      );
+      final extension = const ReadableExportService().extensionFor(format);
+
+      final delivery = await ref
+          .read(fileDeliveryProvider)
+          .deliver(
+            fileName: '${l10n.insightsTitle}-${profile.firstName}.$extension',
+            typeLabel: extension.toUpperCase(),
+            extension: extension,
+            write: (file) => file.writeAsString(text, flush: true),
+          );
+      if (!mounted) return;
+      reportDelivery(context, delivery);
+    } catch (error) {
+      if (!mounted) return;
+      reportDeliveryFailure(context, error);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return PopupMenuButton<ReadableFormat>(
+      tooltip: '',
+      enabled: !_busy,
+      onSelected: _export,
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: ReadableFormat.csv,
+          height: 40,
+          child: Row(
+            children: [
+              const Icon(Icons.table_chart_rounded, size: 18),
+              const SizedBox(width: AppDimens.space12),
+              Text(l10n.exportCsv),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: ReadableFormat.markdown,
+          height: 40,
+          child: Row(
+            children: [
+              const Icon(Icons.description_rounded, size: 18),
+              const SizedBox(width: AppDimens.space12),
+              Text(l10n.exportMarkdown),
+            ],
+          ),
+        ),
+      ],
+      // Нажатие ловит сам PopupMenuButton, поэтому обработчик кнопке не
+      // нужен; `onPressed: null` красил бы рабочую кнопку как отключённую.
+      child: OutlinedButton.icon(
+        onPressed: _busy ? null : () {},
+        icon: const Icon(Icons.download_rounded, size: 18),
+        label: Text(l10n.statsExportAction),
+      ),
+    );
+  }
+}
+
+/// Подписи выгрузки — те же слова, что на экране.
+StatsExportLabels statsExportLabels(AppLocalizations l10n) => (
+  title: l10n.insightsTitle,
+  scope: l10n.statsExportScope,
+  exported: l10n.statsExportExported,
+  metric: l10n.statsExportMetric,
+  value: l10n.statsExportValue,
+  entries: l10n.insightsTotal,
+  total: l10n.insightsTotal,
+  rated: l10n.statsExportRated,
+  average: l10n.insightsAverage,
+  withPhotos: l10n.insightsWithPhotos,
+  withNotes: l10n.insightsWithNotes,
+  ratings: l10n.insightsRatings,
+  rating: l10n.statsExportRating,
+  relations: l10n.insightsRelations,
+  categories: l10n.insightsCategories,
+  category: l10n.statsExportCategory,
+  months: l10n.insightsTimeline,
+  month: l10n.statsExportMonth,
+);
 
 /// Строка среза: период и ветка категорий.
 class _ScopeBar extends ConsumerWidget {

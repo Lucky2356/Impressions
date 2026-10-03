@@ -2878,6 +2878,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get insightsTimeline => 'Additions by month';
 
   @override
+  String get statsExportAction => 'Export';
+
+  @override
+  String get statsExportScope => 'Scope';
+
+  @override
+  String get statsExportExported => 'Exported';
+
+  @override
+  String get statsExportMetric => 'Metric';
+
+  @override
+  String get statsExportValue => 'Value';
+
+  @override
+  String get statsExportRated => 'Rated';
+
+  @override
+  String get statsExportRating => 'Rating';
+
+  @override
+  String get statsExportCategory => 'Category';
+
+  @override
+  String get statsExportMonth => 'Month';
+
+  @override
   String get wishlistTitle => 'Want to try';
 
   @override
