@@ -1304,6 +1304,30 @@ abstract class AppLocalizations {
   /// **'Начатое стоит на месте'**
   String get notificationStalledTitle;
 
+  /// No description provided for @notificationRevisitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любимое ждёт возвращения'**
+  String get notificationRevisitTitle;
+
+  /// No description provided for @notificationRevisitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{К {count} любимой записи вы не возвращались с {since}} few{К {count} любимым записям вы не возвращались с {since}} many{К {count} любимым записям вы не возвращались с {since}} other{К {count} любимым записям вы не возвращались с {since}}}'**
+  String notificationRevisitBody(int count, String since);
+
+  /// No description provided for @settingsRevisitReminder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать вернуться к любимому'**
+  String get settingsRevisitReminder;
+
+  /// No description provided for @settingsRevisitReminderHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз в месяц, если к высокой оценке не возвращались два года'**
+  String get settingsRevisitReminderHint;
+
   /// No description provided for @notificationStalledBody.
   ///
   /// In ru, this message translates to:

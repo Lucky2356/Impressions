@@ -389,6 +389,20 @@
   "notificationWishlistTitle": "Задуманное ждёт",
   "notificationWishlistBody": "{count, plural, one{{count} задумка ждёт с {since}} few{{count} задумки ждут с {since}} many{{count} задумок ждут с {since}} other{{count} задумок ждут с {since}}}",
   "notificationStalledTitle": "Начатое стоит на месте",
+  "notificationRevisitTitle": "Любимое ждёт возвращения",
+  "notificationRevisitBody": "{count, plural, one{К {count} любимой записи вы не возвращались с {since}} few{К {count} любимым записям вы не возвращались с {since}} many{К {count} любимым записям вы не возвращались с {since}} other{К {count} любимым записям вы не возвращались с {since}}}",
+  "@notificationRevisitBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsRevisitReminder": "Напоминать вернуться к любимому",
+  "settingsRevisitReminderHint": "Раз в месяц, если к высокой оценке не возвращались два года",
   "notificationStalledBody": "{count, plural, one{{count} запись начата и не двигалась с {since}} few{{count} записи начаты и не двигались с {since}} many{{count} записей начаты и не двигались с {since}} other{{count} записей начаты и не двигались с {since}}}",
   "@notificationStalledBody": {
     "placeholders": {

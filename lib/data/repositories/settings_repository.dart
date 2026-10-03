@@ -53,6 +53,9 @@ class SettingKeys {
   static const wishlistReminder = 'wishlist_reminder';
   static const stalledReminder = 'stalled_reminder';
 
+  /// Напоминать ли вернуться к любимому, к которому давно не возвращались.
+  static const revisitReminder = 'revisit_reminder';
+
   /// Режим переноса записей между профилями (§7.4).
   static const transferMode = 'transfer_mode';
 

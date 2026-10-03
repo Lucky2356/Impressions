@@ -132,6 +132,46 @@ extension EntryStats on EntryRepository {
     );
   }
 
+  /// Любимое, к которому давно не возвращались.
+  ///
+  /// «Когда это было» — дата впечатления самой записи: повторное посещение
+  /// обновляет её вместе с оценкой, поэтому она и значит «в последний раз».
+  /// Без неё берётся дата заведения — иначе напоминание обходило бы записи,
+  /// где дату не проставили руками, а их большинство.
+  ///
+  /// Одним агрегатом, без `GROUP BY`, в отличие от [stalledProgress]: там
+  /// «когда трогали» — максимум по версиям записи, а здесь дата лежит на
+  /// самой записи.
+  Future<RevisitFavourites> favouritesToRevisit(
+    String profileId, {
+    Duration untouched = const Duration(days: 730),
+    double minRating = 9,
+  }) async {
+    final e = db.profileEntries;
+    final at = CustomExpression<DateTime>(
+      'COALESCE(profile_entries.impression_date, profile_entries.created_at)',
+    );
+    final count = e.id.count();
+    final oldest = at.min();
+    final cutoff = DateTime.now().subtract(untouched);
+
+    final row =
+        await (db.selectOnly(e)
+              ..addColumns([count, oldest])
+              ..where(
+                e.profileId.equals(profileId) &
+                    e.archivedAt.isNull() &
+                    e.rating.isBiggerOrEqualValue(minRating) &
+                    at.isSmallerThanValue(cutoff),
+              ))
+            .getSingle();
+
+    return RevisitFavourites(
+      count: row.read(count) ?? 0,
+      since: row.read(oldest),
+    );
+  }
+
   /// Развёрнутая статистика профиля (§14).
   ///
   /// Считается агрегатами в базе. Раньше сюда поднимались все записи профиля

@@ -777,6 +777,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationStalledTitle => 'Something you started has stalled';
 
   @override
+  String get notificationRevisitTitle => 'A favourite is waiting';
+
+  @override
+  String notificationRevisitBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You have not returned to $count favourites since $since',
+      one: 'You have not returned to $count favourite since $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsRevisitReminder => 'Remind me to return to favourites';
+
+  @override
+  String get settingsRevisitReminderHint =>
+      'Once a month, if a highly rated entry has not come up in two years';
+
+  @override
   String notificationStalledBody(int count, String since) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

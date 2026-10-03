@@ -808,6 +808,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationStalledTitle => 'Начатое стоит на месте';
 
   @override
+  String get notificationRevisitTitle => 'Любимое ждёт возвращения';
+
+  @override
+  String notificationRevisitBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'К $count любимым записям вы не возвращались с $since',
+      many: 'К $count любимым записям вы не возвращались с $since',
+      few: 'К $count любимым записям вы не возвращались с $since',
+      one: 'К $count любимой записи вы не возвращались с $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsRevisitReminder => 'Напоминать вернуться к любимому';
+
+  @override
+  String get settingsRevisitReminderHint =>
+      'Раз в месяц, если к высокой оценке не возвращались два года';
+
+  @override
   String notificationStalledBody(int count, String since) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

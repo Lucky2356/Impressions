@@ -326,6 +326,20 @@
   "notificationWishlistTitle": "Something you planned is waiting",
   "notificationWishlistBody": "{count, plural, one{{count} idea waiting since {since}} other{{count} ideas waiting since {since}}}",
   "notificationStalledTitle": "Something you started has stalled",
+  "notificationRevisitTitle": "A favourite is waiting",
+  "notificationRevisitBody": "{count, plural, one{You have not returned to {count} favourite since {since}} other{You have not returned to {count} favourites since {since}}}",
+  "@notificationRevisitBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsRevisitReminder": "Remind me to return to favourites",
+  "settingsRevisitReminderHint": "Once a month, if a highly rated entry has not come up in two years",
   "notificationStalledBody": "{count, plural, one{{count} entry started and untouched since {since}} other{{count} entries started and untouched since {since}}}",
   "@notificationStalledBody": {
     "placeholders": {
