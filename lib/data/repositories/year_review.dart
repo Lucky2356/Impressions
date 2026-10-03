@@ -93,6 +93,32 @@ extension YearReviewStats on EntryRepository {
     'COALESCE(profile_entries.impression_date, profile_entries.created_at)',
   );
 
+  /// Сколько впечатлений случилось за год — одним запросом.
+  ///
+  /// Для цели года. [yearReview] отвечает на тот же вопрос, но вместе с
+  /// лучшим, первым, последним и ветками — это десяток запросов, часть с
+  /// обложками. Главная пересчитывается на каждое изменение данных, и ради
+  /// одной цифры столько ходить незачем.
+  ///
+  /// Год записи определяется тем же выражением, что и в итогах: иначе цель
+  /// считалась бы по одному набору записей, а итоги того же года — по
+  /// другому.
+  Future<int> yearCount(String profileId, int year) async {
+    final e = db.profileEntries;
+    final total = e.id.count();
+    final row =
+        await (db.selectOnly(e)
+              ..addColumns([total])
+              ..where(
+                e.profileId.equals(profileId) &
+                    e.archivedAt.isNull() &
+                    _at.isBiggerOrEqualValue(DateTime(year)) &
+                    _at.isSmallerThanValue(DateTime(year + 1)),
+              ))
+            .getSingle();
+    return row.read(total) ?? 0;
+  }
+
   Future<YearReview> yearReview(String profileId, int year) async {
     final e = db.profileEntries;
     final from = DateTime(year);

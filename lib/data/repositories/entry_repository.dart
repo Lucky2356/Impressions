@@ -892,6 +892,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
     bool recommendedOnly = false,
     DateTime? impressionFrom,
     DateTime? impressionTo,
@@ -958,8 +959,9 @@ class EntryRepository {
       where.add(db.profileEntries.id.isIn(ids));
     }
 
-    // «Что я не доделал»: без оценки, мимо категорий, без фотографии. Отвечать
-    // на такие вопросы фильтрами «покажи вот такие» было нельзя вовсе.
+    // «Что я не доделал»: без оценки, мимо категорий, без фотографии, без
+    // заметки. Отвечать на такие вопросы фильтрами «покажи вот такие» было
+    // нельзя вовсе.
     if (withoutRating) {
       where.add(db.profileEntries.rating.isNull());
     }
@@ -980,6 +982,21 @@ class EntryRepository {
                 ra.entityKind.equals('entry') &
                 ra.revisionId.equalsExp(db.profileEntries.currentRevisionId),
           ),
+        ),
+      );
+    }
+
+    if (withoutNote) {
+      // Пустая строка — то же, что отсутствие заметки: поле стирают, а не
+      // убирают, и запись с пустым полем заметки не имеет. Пробелы тоже:
+      // заметка из одного пробела — это стёртая заметка.
+      // TRIM без второго довода снимает только пробелы, а заметку стирают
+      // и переводом строки: 'Enter' в пустом поле — это стёртая заметка.
+      const blank = 'char(32)||char(9)||char(10)||char(13)';
+      where.add(
+        const CustomExpression<bool>(
+          "COALESCE(TRIM(profile_entries.short_note, $blank), '') = '' AND "
+          "COALESCE(TRIM(profile_entries.detailed_note, $blank), '') = ''",
         ),
       );
     }
@@ -1036,6 +1053,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
     bool recommendedOnly = false,
     DateTime? impressionFrom,
     DateTime? impressionTo,
@@ -1053,6 +1071,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      withoutNote: withoutNote,
       recommendedOnly: recommendedOnly,
       impressionFrom: impressionFrom,
       impressionTo: impressionTo,
@@ -1080,6 +1099,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
     bool recommendedOnly = false,
     DateTime? impressionFrom,
     DateTime? impressionTo,
@@ -1099,6 +1119,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      withoutNote: withoutNote,
       recommendedOnly: recommendedOnly,
       impressionFrom: impressionFrom,
       impressionTo: impressionTo,
@@ -1128,6 +1149,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
     bool recommendedOnly = false,
     DateTime? impressionFrom,
     DateTime? impressionTo,
@@ -1153,6 +1175,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      withoutNote: withoutNote,
       recommendedOnly: recommendedOnly,
       impressionFrom: impressionFrom,
       impressionTo: impressionTo,
@@ -1355,6 +1378,7 @@ class EntryRepository {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
     bool recommendedOnly = false,
     DateTime? impressionFrom,
     DateTime? impressionTo,
@@ -1376,6 +1400,7 @@ class EntryRepository {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      withoutNote: withoutNote,
       recommendedOnly: recommendedOnly,
       impressionFrom: impressionFrom,
       impressionTo: impressionTo,

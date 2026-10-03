@@ -55,6 +55,14 @@ final stalledReminderProvider = FutureProvider<bool>((ref) async {
       .getBool(SettingKeys.stalledReminder, defaultValue: false);
 });
 
+/// Значение настройки «напоминать вернуться к любимому».
+final revisitReminderProvider = FutureProvider<bool>((ref) async {
+  ref.watchData(DataKind.settings);
+  return ref
+      .read(settingsRepositoryProvider)
+      .getBool(SettingKeys.revisitReminder, defaultValue: false);
+});
+
 /// Ширина колонки настроек: формы шире читать неудобно.
 const double _settingsMaxWidth = 880;
 
@@ -491,6 +499,7 @@ class BehaviourSection extends ConsumerWidget {
     final includeSub = ref.watch(includeSubcategoriesProvider).value ?? true;
     final remindWishlist = ref.watch(wishlistReminderProvider).value ?? false;
     final remindStalled = ref.watch(stalledReminderProvider).value ?? false;
+    final remindRevisit = ref.watch(revisitReminderProvider).value ?? false;
     final transferMode =
         ref.watch(transferModeProvider).value ?? 'suggestMatch';
 
@@ -587,6 +596,41 @@ class BehaviourSection extends ConsumerWidget {
               value: remindStalled,
               onChanged: (v) async {
                 await settings.setBool(SettingKeys.stalledReminder, v);
+                ref.read(dataRefreshProvider.notifier).bump(const [
+                  DataKind.settings,
+                ]);
+              },
+            ),
+          ],
+        ),
+        Divider(height: AppDimens.space24, color: c.divider),
+        // Третье напоминание той же семьи, и последнее: два выше про то, до
+        // чего не дошли руки, это — про то, что уже понравилось.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.settingsRevisitReminder,
+                    style: context.text.bodyMedium,
+                  ),
+                  const SizedBox(height: AppDimens.space4),
+                  Text(
+                    l10n.settingsRevisitReminderHint,
+                    style: context.text.labelSmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: remindRevisit,
+              onChanged: (v) async {
+                await settings.setBool(SettingKeys.revisitReminder, v);
                 ref.read(dataRefreshProvider.notifier).bump(const [
                   DataKind.settings,
                 ]);

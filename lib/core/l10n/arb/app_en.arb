@@ -36,6 +36,14 @@
   "quickAddTitle": "New entry",
   "quickAddNameLabel": "Title",
   "quickAddNameHint": "For example: Earl Grey tea",
+  "quickAddPaste": "Paste: {title}",
+  "@quickAddPaste": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "quickAddNameRequired": "Enter a title",
   "quickAddTypeLabel": "Type",
   "quickAddCategoryLabel": "Category",
@@ -125,6 +133,7 @@
   "catalogWithoutRating": "Without a rating",
   "catalogWithoutCategory": "Without a category",
   "catalogWithoutPhoto": "Without a photo",
+  "catalogWithoutNote": "No note",
   "catalogRecommended": "Recommended to me",
   "catalogFound": "{count, plural, one{{count} entry found} other{{count} entries found}}",
   "entryDetailTitle": "Entry",
@@ -188,6 +197,57 @@
   "collectionArchive": "Archive collection",
   "collectionArchived": "Collection moved to the archive",
   "collectionAdded": "Added to the collection",
+  "yearGoalTitle": "Goal for the year",
+  "yearGoalNone": "No goal set for {year}",
+  "@yearGoalNone": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalSet": "Set a goal",
+  "yearGoalChange": "Change the goal",
+  "yearGoalRemove": "Remove the goal",
+  "yearGoalProgress": "{done} of {goal}",
+  "@yearGoalProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalLeft": "{count, plural, one{{count} impression to go} other{{count} impressions to go}}",
+  "@yearGoalLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalDaysLeft": "{count, plural, one{{count} day left in the year} other{{count} days left in the year}}",
+  "@yearGoalDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalReached": "Goal reached",
+  "yearGoalDialogTitle": "Goal for {year}",
+  "@yearGoalDialogTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalDialogLabel": "How many impressions",
+  "yearGoalDialogHint": "For example: 50",
+  "yearGoalEmptyHint": "Not a single impression yet",
   "yearTitle": "Year in review",
   "yearOpen": "Year in review",
   "yearPrevious": "Previous year",
@@ -266,6 +326,20 @@
   "notificationWishlistTitle": "Something you planned is waiting",
   "notificationWishlistBody": "{count, plural, one{{count} idea waiting since {since}} other{{count} ideas waiting since {since}}}",
   "notificationStalledTitle": "Something you started has stalled",
+  "notificationRevisitTitle": "A favourite is waiting",
+  "notificationRevisitBody": "{count, plural, one{You have not returned to {count} favourite since {since}} other{You have not returned to {count} favourites since {since}}}",
+  "@notificationRevisitBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsRevisitReminder": "Remind me to return to favourites",
+  "settingsRevisitReminderHint": "Once a month, if a highly rated entry has not come up in two years",
   "notificationStalledBody": "{count, plural, one{{count} entry started and untouched since {since}} other{{count} entries started and untouched since {since}}}",
   "@notificationStalledBody": {
     "placeholders": {
@@ -954,6 +1028,15 @@
   "insightsScopeEmpty": "There are no entries in this slice",
   "insightsCategories": "Fullest categories",
   "insightsTimeline": "Additions by month",
+  "statsExportAction": "Export",
+  "statsExportScope": "Scope",
+  "statsExportExported": "Exported",
+  "statsExportMetric": "Metric",
+  "statsExportValue": "Value",
+  "statsExportRated": "Rated",
+  "statsExportRating": "Rating",
+  "statsExportCategory": "Category",
+  "statsExportMonth": "Month",
   "wishlistTitle": "Want to try",
   "wishlistSubtitle": "{count, plural, one{{count} idea} other{{count} ideas}}",
   "wishlistEmptyTitle": "The list is empty",
@@ -1023,9 +1106,22 @@
   "dbEncryptionOffDone": "Encryption is off",
   "dbEncryptionRestartMessage": "Close the app and open it again — the re-encrypted database can only be used after a restart.",
   "dbEncryptionFailed": "Re-encryption failed. The database is unchanged and the backup is in place.",
+  "idleLockSetting": "Lock when idle",
+  "idleLockSettingHint": "How many idle minutes before the password is asked again. This is the answer to what encryption does not cover: someone walking up to your unlocked device.",
+  "idleLockNever": "Never",
+  "idleLockAfter": "{count, plural, one{After {count} minute} other{After {count} minutes}}",
+  "@idleLockAfter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "idleLockTitle": "The app is locked",
+  "idleLockMessage": "You have not worked with the app for a while. Enter the password to get back where you were.",
   "dbEncryptionRememberTitle": "Do not ask for the password on this device",
   "dbEncryptionRememberHint": "The key goes into the system store, next to the profile key. Convenient — but then the password only protects you from another device, not from your own while it is unlocked.",
-  "settingsWordsDbEncryption": "encryption database password protection disk",
+  "settingsWordsDbEncryption": "encryption database password protection disk lock idle",
   "keyStorageTitle": "Where the private key is kept",
   "keyStorageOs": "Apart from the database, protected by the system",
   "keyStorageOsWindows": "The file is encrypted by Windows (DPAPI) for your account: on another computer it is useless.",

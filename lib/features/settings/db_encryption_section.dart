@@ -3,14 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/app_state.dart';
+import '../../app/data_refresh.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
 import '../../data/db/database_cipher.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../data/services/backup_service.dart';
 import '../../data/services/database_lock_service.dart';
 import '../../design_system/design_system.dart';
+import '../lock/idle_lock.dart';
 import 'backup_password_dialog.dart';
 
 /// Зашифрована ли база сейчас.
@@ -283,8 +287,75 @@ class _DbEncryptionSectionState extends ConsumerState<DbEncryptionSection> {
               ),
             ],
           ),
+          Divider(height: AppDimens.space24, color: c.divider),
+          // Сразу под «не спрашивать пароль»: там сказано, что тогда пароль
+          // защищает только от чужого устройства, — здесь то, чем закрыть
+          // своё же включённое.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.idleLockSetting, style: context.text.bodyMedium),
+                    const SizedBox(height: AppDimens.space4),
+                    Text(
+                      l10n.idleLockSettingHint,
+                      style: context.text.labelSmall?.copyWith(
+                        color: c.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const _IdleLockPicker(),
+            ],
+          ),
         ],
       ],
+    );
+  }
+}
+
+/// Выбор срока бездействия, после которого приложение запирается.
+class _IdleLockPicker extends ConsumerWidget {
+  const _IdleLockPicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final minutes = ref.watch(idleLockMinutesProvider).value ?? 0;
+
+    String label(int value) =>
+        value == 0 ? l10n.idleLockNever : l10n.idleLockAfter(value);
+
+    return PopupMenuButton<int>(
+      tooltip: '',
+      onSelected: (value) async {
+        await ref
+            .read(settingsRepositoryProvider)
+            .set(SettingKeys.idleLockMinutes, '$value');
+        ref.read(dataRefreshProvider.notifier).bump(const [DataKind.settings]);
+      },
+      itemBuilder: (_) => [
+        for (final value in idleLockChoices)
+          PopupMenuItem(value: value, child: Text(label(value))),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label(minutes),
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: c.textSecondary),
+            ),
+          ),
+          Icon(Icons.arrow_drop_down_rounded, color: c.textSecondary),
+        ],
+      ),
     );
   }
 }

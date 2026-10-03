@@ -36,6 +36,8 @@ void main() {
     String title, {
     double? rating,
     String? categoryId,
+    String? shortNote,
+    String? detailedNote,
   }) async {
     final object = await entries.createObject(typeId: type.id, title: title);
     return entries.createEntry(
@@ -43,6 +45,8 @@ void main() {
       objectId: object.id,
       rating: rating,
       primaryCategoryId: categoryId,
+      shortNote: shortNote,
+      detailedNote: detailedNote,
     );
   }
 
@@ -52,6 +56,7 @@ void main() {
     bool withoutRating = false,
     bool withoutCategory = false,
     bool withoutPhoto = false,
+    bool withoutNote = false,
   }) async {
     final views = await entries.entryViews(
       me.id,
@@ -60,6 +65,7 @@ void main() {
       withoutRating: withoutRating,
       withoutCategory: withoutCategory,
       withoutPhoto: withoutPhoto,
+      withoutNote: withoutNote,
     );
     return [for (final v in views) v.title];
   }
@@ -121,6 +127,28 @@ void main() {
     );
 
     expect(await titles(withoutPhoto: true), ['Без снимка']);
+  });
+
+  test('«без заметки» показывает впечатления без слов', () async {
+    // От записи с одной оценкой через год не останется, чем именно это было.
+    await add('С короткой', shortNote: 'Вкусно');
+    await add('С подробной', detailedNote: 'Долго рассказывать');
+    await add('Без слов');
+
+    expect(await titles(withoutNote: true), ['Без слов']);
+  });
+
+  test('стёртая заметка считается отсутствующей', () async {
+    // Заметку стирают, оставляя пустое поле, а не убирают: пустая строка и
+    // строка из пробелов — это отсутствие заметки, а не заметка.
+    await add('Пустая строка', shortNote: '');
+    await add('Пробелы', detailedNote: '   \n ');
+    await add('С заметкой', shortNote: 'Есть что сказать');
+
+    expect(await titles(withoutNote: true, sort: EntrySort.title), [
+      'Пробелы',
+      'Пустая строка',
+    ]);
   });
 
   test('фильтры складываются друг с другом', () async {

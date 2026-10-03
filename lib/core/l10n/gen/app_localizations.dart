@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Например: Папа может'**
   String get quickAddNameHint;
 
+  /// No description provided for @quickAddPaste.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вставить: {title}'**
+  String quickAddPaste(String title);
+
   /// No description provided for @quickAddNameRequired.
   ///
   /// In ru, this message translates to:
@@ -764,6 +770,12 @@ abstract class AppLocalizations {
   /// **'Без фотографии'**
   String get catalogWithoutPhoto;
 
+  /// No description provided for @catalogWithoutNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без заметки'**
+  String get catalogWithoutNote;
+
   /// No description provided for @catalogRecommended.
   ///
   /// In ru, this message translates to:
@@ -1058,6 +1070,84 @@ abstract class AppLocalizations {
   /// **'Добавлено в подборку'**
   String get collectionAdded;
 
+  /// No description provided for @yearGoalTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на год'**
+  String get yearGoalTitle;
+
+  /// No description provided for @yearGoalNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на {year} не поставлена'**
+  String yearGoalNone(String year);
+
+  /// No description provided for @yearGoalSet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поставить цель'**
+  String get yearGoalSet;
+
+  /// No description provided for @yearGoalChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить цель'**
+  String get yearGoalChange;
+
+  /// No description provided for @yearGoalRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать цель'**
+  String get yearGoalRemove;
+
+  /// No description provided for @yearGoalProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'{done} из {goal}'**
+  String yearGoalProgress(int done, int goal);
+
+  /// No description provided for @yearGoalLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{осталось {count} впечатление} few{осталось {count} впечатления} many{осталось {count} впечатлений} other{осталось {count} впечатлений}}'**
+  String yearGoalLeft(int count);
+
+  /// No description provided for @yearGoalDaysLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{до конца года {count} день} few{до конца года {count} дня} many{до конца года {count} дней} other{до конца года {count} дней}}'**
+  String yearGoalDaysLeft(int count);
+
+  /// No description provided for @yearGoalReached.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель выполнена'**
+  String get yearGoalReached;
+
+  /// No description provided for @yearGoalDialogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель на {year} год'**
+  String yearGoalDialogTitle(String year);
+
+  /// No description provided for @yearGoalDialogLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сколько впечатлений'**
+  String get yearGoalDialogLabel;
+
+  /// No description provided for @yearGoalDialogHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например: 50'**
+  String get yearGoalDialogHint;
+
+  /// No description provided for @yearGoalEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока ни одного впечатления'**
+  String get yearGoalEmptyHint;
+
   /// No description provided for @yearTitle.
   ///
   /// In ru, this message translates to:
@@ -1213,6 +1303,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начатое стоит на месте'**
   String get notificationStalledTitle;
+
+  /// No description provided for @notificationRevisitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любимое ждёт возвращения'**
+  String get notificationRevisitTitle;
+
+  /// No description provided for @notificationRevisitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{К {count} любимой записи вы не возвращались с {since}} few{К {count} любимым записям вы не возвращались с {since}} many{К {count} любимым записям вы не возвращались с {since}} other{К {count} любимым записям вы не возвращались с {since}}}'**
+  String notificationRevisitBody(int count, String since);
+
+  /// No description provided for @settingsRevisitReminder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминать вернуться к любимому'**
+  String get settingsRevisitReminder;
+
+  /// No description provided for @settingsRevisitReminderHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз в месяц, если к высокой оценке не возвращались два года'**
+  String get settingsRevisitReminderHint;
 
   /// No description provided for @notificationStalledBody.
   ///
@@ -4748,6 +4862,60 @@ abstract class AppLocalizations {
   /// **'Добавления по месяцам'**
   String get insightsTimeline;
 
+  /// No description provided for @statsExportAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выгрузить'**
+  String get statsExportAction;
+
+  /// No description provided for @statsExportScope.
+  ///
+  /// In ru, this message translates to:
+  /// **'Срез'**
+  String get statsExportScope;
+
+  /// No description provided for @statsExportExported.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выгружено'**
+  String get statsExportExported;
+
+  /// No description provided for @statsExportMetric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показатель'**
+  String get statsExportMetric;
+
+  /// No description provided for @statsExportValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение'**
+  String get statsExportValue;
+
+  /// No description provided for @statsExportRated.
+  ///
+  /// In ru, this message translates to:
+  /// **'С оценкой'**
+  String get statsExportRated;
+
+  /// No description provided for @statsExportRating.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оценка'**
+  String get statsExportRating;
+
+  /// No description provided for @statsExportCategory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Категория'**
+  String get statsExportCategory;
+
+  /// No description provided for @statsExportMonth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Месяц'**
+  String get statsExportMonth;
+
   /// No description provided for @wishlistTitle.
   ///
   /// In ru, this message translates to:
@@ -5162,6 +5330,42 @@ abstract class AppLocalizations {
   /// **'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.'**
   String get dbEncryptionFailed;
 
+  /// No description provided for @idleLockSetting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запирать при бездействии'**
+  String get idleLockSetting;
+
+  /// No description provided for @idleLockSettingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Через сколько минут простоя снова спрашивать пароль. Это и есть ответ на то, от чего шифрование не защищает: от подошедшего к включённому устройству.'**
+  String get idleLockSettingHint;
+
+  /// No description provided for @idleLockNever.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не запирать'**
+  String get idleLockNever;
+
+  /// No description provided for @idleLockAfter.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Через {count} минуту} few{Через {count} минуты} many{Через {count} минут} other{Через {count} минут}}'**
+  String idleLockAfter(int count);
+
+  /// No description provided for @idleLockTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение заперто'**
+  String get idleLockTitle;
+
+  /// No description provided for @idleLockMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'С приложением давно не работали. Введите пароль, чтобы вернуться туда же.'**
+  String get idleLockMessage;
+
   /// No description provided for @dbEncryptionRememberTitle.
   ///
   /// In ru, this message translates to:
@@ -5177,7 +5381,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsWordsDbEncryption.
   ///
   /// In ru, this message translates to:
-  /// **'шифрование база пароль защита диск'**
+  /// **'шифрование база пароль защита диск замок бездействие'**
   String get settingsWordsDbEncryption;
 
   /// No description provided for @keyStorageTitle.

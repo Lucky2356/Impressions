@@ -23,6 +23,7 @@ enum NotificationKind {
   yearReview,
   wishlist,
   stalled,
+  revisit,
 }
 
 /// Событие для центра уведомлений.
@@ -79,6 +80,7 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     SettingKeys.productAutoUpdateAt,
     SettingKeys.wishlistReminder,
     SettingKeys.stalledReminder,
+    SettingKeys.revisitReminder,
   ]);
 
   final seenRaw = stored[_seenKey];
@@ -280,6 +282,31 @@ final notificationsProvider = FutureProvider<List<AppNotification>>((
     }
   }
 
+  // Любимое, к которому давно не возвращались. Два напоминания выше — про
+  // то, до чего не дошли руки; это — про то, что уже понравилось настолько,
+  // что стоит вернуться. Порог здесь годы, а не месяцы: перечитывать через
+  // полгода незачем, да и не напоминают об этом так часто.
+  if (profile != null && stored[SettingKeys.revisitReminder] == 'true') {
+    final revisit = await ref
+        .watch(entryRepositoryProvider)
+        .favouritesToRevisit(profile.id);
+    final since = revisit.since;
+    if (revisit.count > 0 && since != null) {
+      final at = DateTime(now.year, now.month);
+      result.add(
+        AppNotification(
+          kind: NotificationKind.revisit,
+          title: '${revisit.count}',
+          body: since.toIso8601String(),
+          icon: Icons.replay_rounded,
+          at: at,
+          unread: unread(at),
+          target: NavIds.catalog,
+        ),
+      );
+    }
+  }
+
   result.sort((a, b) => b.at.compareTo(a.at));
   return result;
 });
@@ -347,6 +374,7 @@ class NotificationPanel extends ConsumerWidget {
       NotificationKind.yearReview => l10n.notificationYearTitle,
       NotificationKind.wishlist => l10n.notificationWishlistTitle,
       NotificationKind.stalled => l10n.notificationStalledTitle,
+      NotificationKind.revisit => l10n.notificationRevisitTitle,
     };
 
     final dateFormat = localeDate(context, 'd MMMM, HH:mm');
@@ -375,6 +403,10 @@ class NotificationPanel extends ConsumerWidget {
         localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
       ),
       NotificationKind.stalled => l10n.notificationStalledBody(
+        int.tryParse(n.title) ?? 0,
+        localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
+      ),
+      NotificationKind.revisit => l10n.notificationRevisitBody(
         int.tryParse(n.title) ?? 0,
         localeDate(context, 'LLLL yyyy').format(DateTime.parse(n.body)),
       ),

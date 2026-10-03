@@ -138,6 +138,16 @@ class StalledProgress {
   final DateTime? since;
 }
 
+/// Любимое, к которому давно не возвращались, — для напоминания.
+class RevisitFavourites {
+  const RevisitFavourites({required this.count, this.since});
+
+  final int count;
+
+  /// Когда давнее из них случилось в последний раз. `null`, если таких нет.
+  final DateTime? since;
+}
+
 /// Развёрнутая статистика профиля (§14).
 ///
 /// Отдельно от [ProfileStats]: та отвечает за плитки на главной и должна

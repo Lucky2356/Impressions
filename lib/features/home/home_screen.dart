@@ -17,6 +17,8 @@ import '../entry/entry_context_menu.dart';
 import '../entry/entry_detail_sheet.dart';
 import '../quick_add/quick_add_sheet.dart';
 import '../wishlist/wishlist_screen.dart';
+import '../year/year_providers.dart';
+import '../year/year_screen.dart';
 import 'home_providers.dart';
 import 'pinned_store.dart';
 
@@ -170,6 +172,9 @@ class _MainColumn extends ConsumerWidget {
               ),
             ],
           ),
+        // Цель года — сразу под числами: это тоже «как идут дела», только
+        // отнесённое к задуманному.
+        const _GoalBlock(),
         // Начатое — выше недавнего: «на чём я остановился» спрашивают чаще,
         // чем «что я заводил последним».
         const _ContinueBlock(),
@@ -362,6 +367,59 @@ class _ContinueBlock extends ConsumerWidget {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Цель на год: сколько из задуманного уже случилось.
+///
+/// Показывается только когда цель поставлена. Главная не предлагает её
+/// поставить: место под приглашение она бы занимала постоянно, а ставят цель
+/// раз в год — на экране итогов, где видно, чем кончился прошлый.
+class _GoalBlock extends ConsumerWidget {
+  const _GoalBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final goal = ref.watch(currentYearGoalProvider).value;
+    if (goal == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppDimens.space24),
+        SectionHeader(title: l10n.yearGoalTitle),
+        const SizedBox(height: AppDimens.space16),
+        AppCard(
+          onTap: () => YearScreen.show(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    l10n.yearGoalProgress(goal.done, goal.goal),
+                    style: context.text.titleLarge,
+                  ),
+                  const Spacer(),
+                  Text(
+                    goal.reached
+                        ? l10n.yearGoalReached
+                        : l10n.yearGoalLeft(goal.left),
+                    style: context.text.labelMedium?.copyWith(
+                      color: goal.reached ? c.chartGreen : c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimens.space12),
+              YearGoalBar(goal: goal),
+            ],
+          ),
+        ),
       ],
     );
   }

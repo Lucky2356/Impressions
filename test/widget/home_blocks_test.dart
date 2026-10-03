@@ -15,6 +15,7 @@ import 'package:impressions/features/collections/collection_providers.dart';
 import 'package:impressions/features/home/home_providers.dart';
 import 'package:impressions/features/home/home_screen.dart';
 import 'package:impressions/features/home/pinned_store.dart';
+import 'package:impressions/features/year/year_providers.dart';
 
 import '../db/test_db.dart';
 
@@ -69,6 +70,7 @@ void main() {
     List<EntryView> planned = const [],
     List<String> pinnedCategories = const [],
     List<CategoryRow> categories = const [],
+    YearGoal? goal,
   }) async {
     tester.view.physicalSize = const Size(1400, 1400);
     tester.view.devicePixelRatio = 1.0;
@@ -100,6 +102,7 @@ void main() {
           collectionsProvider.overrideWith(
             (ref) async => const <CollectionView>[],
           ),
+          currentYearGoalProvider.overrideWith((ref) async => goal),
         ],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -129,6 +132,7 @@ void main() {
     await pumpHome(tester);
 
     expect(find.text('Продолжить начатое'), findsNothing);
+    expect(find.text('Цель на год'), findsNothing);
     expect(find.text('Год назад'), findsNothing);
     expect(find.text('Закреплённое'), findsNothing);
     expect(find.text('Может, сегодня?'), findsNothing);
@@ -187,5 +191,32 @@ void main() {
     expect(PinnedIds.parse(null), isEmpty);
     expect(PinnedIds.parse('не json'), isEmpty);
     expect(PinnedIds.parse('["c1", 5, "", "c2"]'), ['c1', 'c2']);
+  });
+
+  testWidgets('цель года показывает, сколько пройдено', (tester) async {
+    await pumpHome(
+      tester,
+      goal: YearGoal(year: 2026, goal: 50, done: 34, now: DateTime(2026, 7, 1)),
+    );
+
+    expect(find.text('Цель на год'), findsOneWidget);
+    expect(find.text('34 из 50'), findsOneWidget);
+    expect(find.text('осталось 16 впечатлений'), findsOneWidget);
+  });
+
+  testWidgets('выполненная цель так и говорит', (tester) async {
+    await pumpHome(
+      tester,
+      goal: YearGoal(
+        year: 2026,
+        goal: 50,
+        done: 51,
+        now: DateTime(2026, 12, 1),
+      ),
+    );
+
+    // Не «осталось минус одно»: перевыполненная цель — это выполненная цель.
+    expect(find.text('Цель выполнена'), findsOneWidget);
+    expect(find.textContaining('осталось'), findsNothing);
   });
 }

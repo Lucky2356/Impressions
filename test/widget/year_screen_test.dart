@@ -49,6 +49,16 @@ class _RecordingDelivery implements FileDeliveryService {
   Directory? get stagingDirectory => null;
 }
 
+/// Год, который показывает экран.
+///
+/// Иначе он брался бы из настоящего календаря, а итоги в тесте — из
+/// поддельного набора: в пустом состоянии кнопка цели ставила бы её не на тот
+/// год, который видно на экране.
+class _FixedYear extends YearReviewYear {
+  @override
+  int build() => 2025;
+}
+
 void main() {
   EntryView entry(String title, {double? rating}) => EntryView(
     entryId: 'e-$title',
@@ -83,6 +93,7 @@ void main() {
     WidgetTester tester,
     YearReview data, {
     FileDeliveryService? delivery,
+    YearGoal? goal,
   }) async {
     tester.view.physicalSize = const Size(900, 1400);
     tester.view.devicePixelRatio = 1.0;
@@ -92,7 +103,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          yearReviewYearProvider.overrideWith(_FixedYear.new),
           yearReviewProvider.overrideWith((ref) async => data),
+          yearGoalProvider.overrideWith((ref) async => goal),
           if (delivery != null)
             fileDeliveryProvider.overrideWithValue(delivery),
         ],
@@ -127,6 +140,11 @@ void main() {
       ),
     );
 
+    // Вторая карточка — цель года; лучшее за ней.
+    await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('Цель на год'), findsOneWidget);
+
     await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
     await tester.pumpAndSettle();
     expect(find.text('Лучшее за год'), findsOneWidget);
@@ -150,7 +168,7 @@ void main() {
     await pump(tester, review(), delivery: delivery);
 
     // Последняя карточка — та, которой делятся.
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 5; i++) {
       await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
       await tester.pumpAndSettle();
     }
@@ -166,5 +184,67 @@ void main() {
     expect(delivery.fileName, 'impressions-2025.png');
     // Файл именно картинка, а не пустышка: PNG начинается со своей подписи.
     expect(delivery.bytes!.take(4), [137, 80, 78, 71]);
+  });
+
+  testWidgets('без цели карточка предлагает её поставить', (tester) async {
+    await pump(tester, review());
+
+    await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Цель на 2025 не поставлена'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Поставить цель'), findsOneWidget);
+  });
+
+  testWidgets('поставленная цель считается от итога года', (tester) async {
+    // Пройденное — то же число, что на первой карточке: по итогам цель и
+    // проверяют.
+    await pump(
+      tester,
+      review(total: 42),
+      goal: YearGoal(year: 2025, goal: 50, done: 42, now: DateTime(2025, 7, 1)),
+    );
+
+    await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
+    await tester.pumpAndSettle();
+
+    expect(find.text('42 из 50'), findsOneWidget);
+    expect(find.text('осталось 8 впечатлений'), findsOneWidget);
+    expect(find.textContaining('до конца года'), findsOneWidget);
+  });
+
+  testWidgets('у прошедшего года про остаток времени не пишут', (tester) async {
+    await pump(
+      tester,
+      review(total: 42),
+      goal: YearGoal(year: 2025, goal: 50, done: 42, now: DateTime(2026, 4, 1)),
+    );
+
+    await tester.fling(find.byType(PageView), const Offset(-600, 0), 1000);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('до конца года'), findsNothing);
+  });
+
+  testWidgets('пустой год даёт поставить цель', (tester) async {
+    // В январе итогов ещё нет, а решение на год уже принято: без этой кнопки
+    // цель было бы некуда поставить до первой записи.
+    await pump(tester, YearReview.empty);
+
+    expect(find.text('Год пока пуст'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Поставить цель'), findsOneWidget);
+  });
+
+  testWidgets('цель ставится диалогом', (tester) async {
+    await pump(tester, YearReview.empty);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Поставить цель'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Цель на 2025 год'), findsOneWidget);
+    // Круглые числа на выбор: цель обычно такой и задумывают.
+    await tester.tap(find.widgetWithText(ActionChip, '50'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '50'), findsOneWidget);
   });
 }

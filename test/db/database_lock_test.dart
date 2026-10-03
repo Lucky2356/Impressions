@@ -168,6 +168,36 @@ void main() {
     });
   });
 
+  group('сверка пароля', () {
+    test('пароль нынешнего сеанса подходит', () async {
+      databaseKey = await cipher.encrypt('верный');
+
+      expect(await lock.matches('верный'), isTrue);
+    });
+
+    test('чужой пароль не подходит', () async {
+      databaseKey = await cipher.encrypt('верный');
+
+      expect(await lock.matches('неверный'), isFalse);
+    });
+
+    test('сверяется с ключом сеанса, а не с файлом базы', () async {
+      // База зашифрована «верным», а сеанс идёт с ключом от другой базы: так
+      // выглядит подменённый под работающим приложением файл. Пароль к файлу
+      // к этому сеансу не подходит.
+      await cipher.encrypt('верный');
+      databaseKey = alienKey;
+
+      expect(await lock.matches('верный'), isFalse);
+    });
+
+    test('без шифрования сверять нечего', () async {
+      databaseKey = null;
+
+      expect(await lock.matches('что угодно'), isTrue);
+    });
+  });
+
   group('запомнить и забыть', () {
     test('запомненный ключ читается обратно', () async {
       expect(await lock.isRemembered(), isFalse);

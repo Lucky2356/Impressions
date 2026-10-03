@@ -36,6 +36,14 @@
   "quickAddTitle": "Новая запись",
   "quickAddNameLabel": "Название",
   "quickAddNameHint": "Например: Папа может",
+  "quickAddPaste": "Вставить: {title}",
+  "@quickAddPaste": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "quickAddNameRequired": "Укажите название",
   "quickAddTypeLabel": "Тип",
   "quickAddCategoryLabel": "Категория",
@@ -160,6 +168,7 @@
   "catalogWithoutRating": "Без оценки",
   "catalogWithoutCategory": "Без категории",
   "catalogWithoutPhoto": "Без фотографии",
+  "catalogWithoutNote": "Без заметки",
   "catalogRecommended": "Мне посоветовали",
   "catalogFound": "{count, plural, one{Найдена {count} запись} few{Найдено {count} записи} many{Найдено {count} записей} other{Найдено {count} записей}}",
   "@catalogFound": {
@@ -251,6 +260,57 @@
   "collectionArchive": "Архивировать подборку",
   "collectionArchived": "Подборка убрана в архив",
   "collectionAdded": "Добавлено в подборку",
+  "yearGoalTitle": "Цель на год",
+  "yearGoalNone": "Цель на {year} не поставлена",
+  "@yearGoalNone": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalSet": "Поставить цель",
+  "yearGoalChange": "Изменить цель",
+  "yearGoalRemove": "Убрать цель",
+  "yearGoalProgress": "{done} из {goal}",
+  "@yearGoalProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalLeft": "{count, plural, one{осталось {count} впечатление} few{осталось {count} впечатления} many{осталось {count} впечатлений} other{осталось {count} впечатлений}}",
+  "@yearGoalLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalDaysLeft": "{count, plural, one{до конца года {count} день} few{до конца года {count} дня} many{до конца года {count} дней} other{до конца года {count} дней}}",
+  "@yearGoalDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearGoalReached": "Цель выполнена",
+  "yearGoalDialogTitle": "Цель на {year} год",
+  "@yearGoalDialogTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearGoalDialogLabel": "Сколько впечатлений",
+  "yearGoalDialogHint": "Например: 50",
+  "yearGoalEmptyHint": "Пока ни одного впечатления",
   "yearTitle": "Итоги года",
   "yearOpen": "Итоги года",
   "yearPrevious": "Предыдущий год",
@@ -329,6 +389,20 @@
   "notificationWishlistTitle": "Задуманное ждёт",
   "notificationWishlistBody": "{count, plural, one{{count} задумка ждёт с {since}} few{{count} задумки ждут с {since}} many{{count} задумок ждут с {since}} other{{count} задумок ждут с {since}}}",
   "notificationStalledTitle": "Начатое стоит на месте",
+  "notificationRevisitTitle": "Любимое ждёт возвращения",
+  "notificationRevisitBody": "{count, plural, one{К {count} любимой записи вы не возвращались с {since}} few{К {count} любимым записям вы не возвращались с {since}} many{К {count} любимым записям вы не возвращались с {since}} other{К {count} любимым записям вы не возвращались с {since}}}",
+  "@notificationRevisitBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsRevisitReminder": "Напоминать вернуться к любимому",
+  "settingsRevisitReminderHint": "Раз в месяц, если к высокой оценке не возвращались два года",
   "notificationStalledBody": "{count, plural, one{{count} запись начата и не двигалась с {since}} few{{count} записи начаты и не двигались с {since}} many{{count} записей начаты и не двигались с {since}} other{{count} записей начаты и не двигались с {since}}}",
   "@notificationStalledBody": {
     "placeholders": {
@@ -1327,6 +1401,15 @@
   "insightsScopeEmpty": "В этом срезе записей нет",
   "insightsCategories": "Самые заполненные категории",
   "insightsTimeline": "Добавления по месяцам",
+  "statsExportAction": "Выгрузить",
+  "statsExportScope": "Срез",
+  "statsExportExported": "Выгружено",
+  "statsExportMetric": "Показатель",
+  "statsExportValue": "Значение",
+  "statsExportRated": "С оценкой",
+  "statsExportRating": "Оценка",
+  "statsExportCategory": "Категория",
+  "statsExportMonth": "Месяц",
   "wishlistTitle": "Хочу попробовать",
   "wishlistSubtitle": "{count, plural, one{{count} задумка} few{{count} задумки} many{{count} задумок} other{{count} задумок}}",
   "@wishlistSubtitle": {
@@ -1452,9 +1535,22 @@
   "dbEncryptionOffDone": "Шифрование выключено",
   "dbEncryptionRestartMessage": "Закройте приложение и откройте снова — работать с перешифрованной базой можно только после перезапуска.",
   "dbEncryptionFailed": "Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.",
+  "idleLockSetting": "Запирать при бездействии",
+  "idleLockSettingHint": "Через сколько минут простоя снова спрашивать пароль. Это и есть ответ на то, от чего шифрование не защищает: от подошедшего к включённому устройству.",
+  "idleLockNever": "Не запирать",
+  "idleLockAfter": "{count, plural, one{Через {count} минуту} few{Через {count} минуты} many{Через {count} минут} other{Через {count} минут}}",
+  "@idleLockAfter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "idleLockTitle": "Приложение заперто",
+  "idleLockMessage": "С приложением давно не работали. Введите пароль, чтобы вернуться туда же.",
   "dbEncryptionRememberTitle": "Не спрашивать пароль на этом устройстве",
   "dbEncryptionRememberHint": "Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.",
-  "settingsWordsDbEncryption": "шифрование база пароль защита диск",
+  "settingsWordsDbEncryption": "шифрование база пароль защита диск замок бездействие",
   "keyStorageTitle": "Хранение закрытого ключа",
   "keyStorageOs": "Отдельно от базы, под защитой системы",
   "keyStorageOsWindows": "Файл зашифрован средствами Windows (DPAPI) на вашу учётную запись: на другом компьютере он бесполезен.",

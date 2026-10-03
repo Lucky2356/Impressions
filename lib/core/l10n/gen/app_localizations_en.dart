@@ -117,6 +117,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAddNameHint => 'For example: Earl Grey tea';
 
   @override
+  String quickAddPaste(String title) {
+    return 'Paste: $title';
+  }
+
+  @override
   String get quickAddNameRequired => 'Enter a title';
 
   @override
@@ -403,6 +408,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get catalogWithoutPhoto => 'Without a photo';
 
   @override
+  String get catalogWithoutNote => 'No note';
+
+  @override
   String get catalogRecommended => 'Recommended to me';
 
   @override
@@ -590,6 +598,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionAdded => 'Added to the collection';
 
   @override
+  String get yearGoalTitle => 'Goal for the year';
+
+  @override
+  String yearGoalNone(String year) {
+    return 'No goal set for $year';
+  }
+
+  @override
+  String get yearGoalSet => 'Set a goal';
+
+  @override
+  String get yearGoalChange => 'Change the goal';
+
+  @override
+  String get yearGoalRemove => 'Remove the goal';
+
+  @override
+  String yearGoalProgress(int done, int goal) {
+    return '$done of $goal';
+  }
+
+  @override
+  String yearGoalLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count impressions to go',
+      one: '$count impression to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearGoalDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left in the year',
+      one: '$count day left in the year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearGoalReached => 'Goal reached';
+
+  @override
+  String yearGoalDialogTitle(String year) {
+    return 'Goal for $year';
+  }
+
+  @override
+  String get yearGoalDialogLabel => 'How many impressions';
+
+  @override
+  String get yearGoalDialogHint => 'For example: 50';
+
+  @override
+  String get yearGoalEmptyHint => 'Not a single impression yet';
+
+  @override
   String get yearTitle => 'Year in review';
 
   @override
@@ -706,6 +775,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationStalledTitle => 'Something you started has stalled';
+
+  @override
+  String get notificationRevisitTitle => 'A favourite is waiting';
+
+  @override
+  String notificationRevisitBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You have not returned to $count favourites since $since',
+      one: 'You have not returned to $count favourite since $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsRevisitReminder => 'Remind me to return to favourites';
+
+  @override
+  String get settingsRevisitReminderHint =>
+      'Once a month, if a highly rated entry has not come up in two years';
 
   @override
   String notificationStalledBody(int count, String since) {
@@ -2809,6 +2899,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get insightsTimeline => 'Additions by month';
 
   @override
+  String get statsExportAction => 'Export';
+
+  @override
+  String get statsExportScope => 'Scope';
+
+  @override
+  String get statsExportExported => 'Exported';
+
+  @override
+  String get statsExportMetric => 'Metric';
+
+  @override
+  String get statsExportValue => 'Value';
+
+  @override
+  String get statsExportRated => 'Rated';
+
+  @override
+  String get statsExportRating => 'Rating';
+
+  @override
+  String get statsExportCategory => 'Category';
+
+  @override
+  String get statsExportMonth => 'Month';
+
+  @override
   String get wishlistTitle => 'Want to try';
 
   @override
@@ -3068,6 +3185,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Re-encryption failed. The database is unchanged and the backup is in place.';
 
   @override
+  String get idleLockSetting => 'Lock when idle';
+
+  @override
+  String get idleLockSettingHint =>
+      'How many idle minutes before the password is asked again. This is the answer to what encryption does not cover: someone walking up to your unlocked device.';
+
+  @override
+  String get idleLockNever => 'Never';
+
+  @override
+  String idleLockAfter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'After $count minutes',
+      one: 'After $count minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get idleLockTitle => 'The app is locked';
+
+  @override
+  String get idleLockMessage =>
+      'You have not worked with the app for a while. Enter the password to get back where you were.';
+
+  @override
   String get dbEncryptionRememberTitle =>
       'Do not ask for the password on this device';
 
@@ -3077,7 +3222,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsWordsDbEncryption =>
-      'encryption database password protection disk';
+      'encryption database password protection disk lock idle';
 
   @override
   String get keyStorageTitle => 'Where the private key is kept';

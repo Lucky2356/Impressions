@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../models/entry_view.dart';
+import 'csv_text.dart';
 
 /// В каком виде выгружать записи для чтения человеком.
 enum ReadableFormat { csv, markdown }
@@ -44,20 +45,14 @@ class ReadableExportService {
 
   // ---- CSV ----
 
-  /// Разделитель — точка с запятой: русский Excel по умолчанию понимает
-  /// именно её, а запятая внутри чисел ломала бы колонки.
-  static const _separator = ';';
-
   String _csv(List<EntryView> entries, String Function(String?) relationLabel) {
     final buffer = StringBuffer()
-      // BOM: без него Excel открывает файл в системной кодировке и портит
-      // кириллицу.
-      ..write('﻿')
-      ..writeln(csvHeaders.map(_cell).join(_separator));
+      ..write(csvBom)
+      ..writeln(csvRow(csvHeaders));
 
     for (final e in entries) {
       buffer.writeln(
-        [
+        csvRow([
           e.title,
           e.typeName,
           e.categoryPath.join(' / '),
@@ -65,22 +60,10 @@ class ReadableExportService {
           e.rating == null ? '' : e.rating!.toStringAsFixed(1),
           e.impressionDate == null ? '' : _date.format(e.impressionDate!),
           e.createdAt == null ? '' : _date.format(e.createdAt!),
-        ].map(_cell).join(_separator),
+        ]),
       );
     }
     return buffer.toString();
-  }
-
-  /// Экранирование по RFC 4180: кавычки удваиваются, поле берётся в кавычки,
-  /// если содержит разделитель, кавычку или перенос строки.
-  String _cell(String value) {
-    final escaped = value.replaceAll('"', '""');
-    final needsQuotes =
-        value.contains(_separator) ||
-        value.contains('"') ||
-        value.contains('\n') ||
-        value.contains('\r');
-    return needsQuotes ? '"$escaped"' : escaped;
   }
 
   // ---- Markdown ----

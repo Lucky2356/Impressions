@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_state.dart';
@@ -11,6 +11,7 @@ import '../../core/domain/custom_fields.dart';
 import '../../core/domain/entry_status.dart';
 import '../../core/domain/relation.dart';
 import '../../core/utils/normalize.dart';
+import '../../core/utils/pasted_title.dart';
 import '../../core/l10n/gen/app_localizations.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/theme_context.dart';
@@ -91,6 +92,17 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
   /// Курсор в названии: после «Сохранить и ещё» он должен вернуться сюда.
   final _titleFocus = FocusNode();
+
+  /// Название, которое лежит в буфере обмена, — или null, если предлагать
+  /// нечего.
+  String? _pasted;
+
+  /// Пусто ли поле названия.
+  ///
+  /// Отдельным полем, потому что набор в поле сам по себе перерисовки не
+  /// вызывает: кнопки под названием зависят от того, есть ли что в нём, и без
+  /// этого появлялись бы только на следующей перерисовке по другому поводу.
+  bool _titleEmpty = true;
 
   String? _typeId;
 
@@ -176,11 +188,44 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     // Набор в полях сам по себе не вызывает setState, поэтому черновик
     // отмечается изменённым отдельно.
     _title.addListener(_scheduleDraftSave);
+    _title.addListener(_watchTitle);
     _note.addListener(_scheduleDraftSave);
     _progressCurrent.addListener(_scheduleDraftSave);
     _progressTotal.addListener(_scheduleDraftSave);
     _restoreDraft();
     _readLookupSetting();
+    _readClipboard();
+  }
+
+  /// Следит, пусто ли название.
+  ///
+  /// Через `super.setState`: обычный записал бы черновик, а подстановка полей
+  /// нарочно идёт со снятыми слушателями именно для того, чтобы этого не
+  /// случилось.
+  void _watchTitle() {
+    final empty = _title.text.trim().isEmpty;
+    if (empty == _titleEmpty) return;
+    super.setState(() => _titleEmpty = empty);
+  }
+
+  /// Смотрит, не лежит ли в буфере обмена название.
+  ///
+  /// Названия почти всегда откуда-то копируют, и набирать скопированное
+  /// заново — самая частая лишняя работа в этой форме. Подставлять молча
+  /// нельзя: в буфере может лежать что угодно, вплоть до пароля, — поэтому
+  /// предложение видно целиком, и вставляет его человек.
+  Future<void> _readClipboard() async {
+    String? text;
+    try {
+      text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+    } on Object {
+      // Буфер может быть занят другим приложением или недоступен вовсе.
+      // Форма от этого не зависит.
+      return;
+    }
+    final suggestion = pastedTitle(text);
+    if (!mounted || suggestion == null) return;
+    super.setState(() => _pasted = suggestion);
   }
 
   /// Настройка сети: включён ли поиск сведений по названию.
@@ -247,6 +292,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   void dispose() {
     _draftTimer?.cancel();
     _titleFocus.dispose();
+    _title.removeListener(_watchTitle);
     _title.dispose();
     _note.dispose();
     _progressCurrent.dispose();
@@ -530,6 +576,19 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   /// Заменяет название, автора и год — ровно то, что человек иначе печатал бы
   /// руками. Оценку, отношение и заметку не трогает: это его слова, а не
   /// сведения из справочника.
+  /// Переносит название из буфера в поле.
+  ///
+  /// Курсор уходит в конец: вставленное чаще дописывают, чем правят с начала.
+  void _applyPasted() {
+    final suggestion = _pasted;
+    if (suggestion == null) return;
+    _title.value = TextEditingValue(
+      text: suggestion,
+      selection: TextSelection.collapsed(offset: suggestion.length),
+    );
+    _titleFocus.requestFocus();
+  }
+
   Future<void> _lookupByTitle() async {
     final query = _title.text.trim();
     if (query.isEmpty) return;
@@ -898,10 +957,29 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                       ? l10n.quickAddNameRequired
                       : null,
                 ),
+                // Название из буфера обмена. Кнопка стоит только над пустым
+                // полем: набранное она бы затирала.
+                if (_pasted != null && _titleEmpty) ...[
+                  const SizedBox(height: AppDimens.space4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _busy ? null : _applyPasted,
+                      icon: const Icon(Icons.content_paste_rounded, size: 18),
+                      // Предлагаемое название видно целиком до вставки: в
+                      // буфере может лежать что угодно.
+                      label: Text(
+                        l10n.quickAddPaste(_pasted!),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
                 // Поиск сведений по названию. Кнопка появляется, только
                 // когда есть что искать: на пустом поле она предлагала бы
                 // искать пустоту.
-                if (_lookupEnabled && _title.text.trim().isNotEmpty) ...[
+                if (_lookupEnabled && !_titleEmpty) ...[
                   const SizedBox(height: AppDimens.space4),
                   Align(
                     alignment: Alignment.centerLeft,

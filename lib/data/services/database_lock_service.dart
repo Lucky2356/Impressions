@@ -83,6 +83,35 @@ class DatabaseLockService {
     return true;
   }
 
+  /// Сверяет пароль с ключом нынешнего сеанса, не трогая файл базы.
+  ///
+  /// Нужно для замка по бездействию: база в этот момент открыта и drift
+  /// держит файл: `opens` полез бы в него второй раз и на занятом файле мог
+  /// бы отказать — это выглядело бы как неверный пароль. Сверять с ключом
+  /// точнее: он выведен из того же пароля и уже доказал, что подходит.
+  ///
+  /// Незашифрованная база отпирается чем угодно: запирать там нечего, а
+  /// сравнивать не с чем.
+  Future<bool> matches(String password) async {
+    final key = databaseKey;
+    if (key == null) return true;
+
+    final cipher = await this.cipher();
+    final state = await cipher.readState();
+    if (!state.encrypted) return true;
+
+    final derived = await DatabaseCipher.deriveKey(password, state.salt);
+    if (derived.length != key.length) return false;
+    // Посимвольное сравнение с выходом на первом расхождении отвечает тем
+    // быстрее, чем длиннее совпавшее начало. Здесь это гадание по времени
+    // ответа маловероятно, но и стоит отказ от него одной строки.
+    var diff = 0;
+    for (var i = 0; i < key.length; i++) {
+      diff |= derived[i] ^ key[i];
+    }
+    return diff == 0;
+  }
+
   /// Запоминает ключ нынешнего сеанса или забывает его.
   Future<void> remember(List<int> key) =>
       secrets.write(secretName, DatabaseCipher.encodeKey(key));

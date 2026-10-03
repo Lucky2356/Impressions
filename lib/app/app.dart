@@ -18,6 +18,7 @@ import '../design_system/design_system.dart';
 import '../features/barcode/barcode_scan_sheet.dart';
 import '../features/collections/smart_collections.dart';
 import '../features/exchange/import_screen.dart';
+import '../features/lock/idle_lock.dart';
 import '../features/onboarding/app_tour.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/quick_add/quick_add_sheet.dart';
@@ -53,7 +54,9 @@ class ImpressionsApp extends ConsumerWidget {
       // Масштаб интерфейса и общий предел кегля — в одном месте, потому что
       // важен их порядок.
       builder: appTextScaleBuilder,
-      home: const _SystemBars(child: _RootGate()),
+      // Замок по бездействию стоит выше всего остального: он обязан
+      // накрывать и открытый диалог, и лист.
+      home: const _SystemBars(child: IdleLockGate(child: _RootGate())),
     );
   }
 }

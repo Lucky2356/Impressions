@@ -117,6 +117,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickAddNameHint => 'Например: Папа может';
 
   @override
+  String quickAddPaste(String title) {
+    return 'Вставить: $title';
+  }
+
+  @override
   String get quickAddNameRequired => 'Укажите название';
 
   @override
@@ -417,6 +422,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catalogWithoutPhoto => 'Без фотографии';
 
   @override
+  String get catalogWithoutNote => 'Без заметки';
+
+  @override
   String get catalogRecommended => 'Мне посоветовали';
 
   @override
@@ -611,6 +619,71 @@ class AppLocalizationsRu extends AppLocalizations {
   String get collectionAdded => 'Добавлено в подборку';
 
   @override
+  String get yearGoalTitle => 'Цель на год';
+
+  @override
+  String yearGoalNone(String year) {
+    return 'Цель на $year не поставлена';
+  }
+
+  @override
+  String get yearGoalSet => 'Поставить цель';
+
+  @override
+  String get yearGoalChange => 'Изменить цель';
+
+  @override
+  String get yearGoalRemove => 'Убрать цель';
+
+  @override
+  String yearGoalProgress(int done, int goal) {
+    return '$done из $goal';
+  }
+
+  @override
+  String yearGoalLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'осталось $count впечатлений',
+      many: 'осталось $count впечатлений',
+      few: 'осталось $count впечатления',
+      one: 'осталось $count впечатление',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearGoalDaysLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'до конца года $count дней',
+      many: 'до конца года $count дней',
+      few: 'до конца года $count дня',
+      one: 'до конца года $count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get yearGoalReached => 'Цель выполнена';
+
+  @override
+  String yearGoalDialogTitle(String year) {
+    return 'Цель на $year год';
+  }
+
+  @override
+  String get yearGoalDialogLabel => 'Сколько впечатлений';
+
+  @override
+  String get yearGoalDialogHint => 'Например: 50';
+
+  @override
+  String get yearGoalEmptyHint => 'Пока ни одного впечатления';
+
+  @override
   String get yearTitle => 'Итоги года';
 
   @override
@@ -733,6 +806,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationStalledTitle => 'Начатое стоит на месте';
+
+  @override
+  String get notificationRevisitTitle => 'Любимое ждёт возвращения';
+
+  @override
+  String notificationRevisitBody(int count, String since) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'К $count любимым записям вы не возвращались с $since',
+      many: 'К $count любимым записям вы не возвращались с $since',
+      few: 'К $count любимым записям вы не возвращались с $since',
+      one: 'К $count любимой записи вы не возвращались с $since',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsRevisitReminder => 'Напоминать вернуться к любимому';
+
+  @override
+  String get settingsRevisitReminderHint =>
+      'Раз в месяц, если к высокой оценке не возвращались два года';
 
   @override
   String notificationStalledBody(int count, String since) {
@@ -2879,6 +2975,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get insightsTimeline => 'Добавления по месяцам';
 
   @override
+  String get statsExportAction => 'Выгрузить';
+
+  @override
+  String get statsExportScope => 'Срез';
+
+  @override
+  String get statsExportExported => 'Выгружено';
+
+  @override
+  String get statsExportMetric => 'Показатель';
+
+  @override
+  String get statsExportValue => 'Значение';
+
+  @override
+  String get statsExportRated => 'С оценкой';
+
+  @override
+  String get statsExportRating => 'Оценка';
+
+  @override
+  String get statsExportCategory => 'Категория';
+
+  @override
+  String get statsExportMonth => 'Месяц';
+
+  @override
   String get wishlistTitle => 'Хочу попробовать';
 
   @override
@@ -3146,6 +3269,36 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перешифровать не удалось. База осталась в прежнем виде, резервная копия на месте.';
 
   @override
+  String get idleLockSetting => 'Запирать при бездействии';
+
+  @override
+  String get idleLockSettingHint =>
+      'Через сколько минут простоя снова спрашивать пароль. Это и есть ответ на то, от чего шифрование не защищает: от подошедшего к включённому устройству.';
+
+  @override
+  String get idleLockNever => 'Не запирать';
+
+  @override
+  String idleLockAfter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Через $count минут',
+      many: 'Через $count минут',
+      few: 'Через $count минуты',
+      one: 'Через $count минуту',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get idleLockTitle => 'Приложение заперто';
+
+  @override
+  String get idleLockMessage =>
+      'С приложением давно не работали. Введите пароль, чтобы вернуться туда же.';
+
+  @override
   String get dbEncryptionRememberTitle =>
       'Не спрашивать пароль на этом устройстве';
 
@@ -3154,7 +3307,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ключ ляжет в хранилище системы рядом с ключом профиля. Удобно, но тогда пароль защищает только от чужого устройства, а не от вашего же включённого.';
 
   @override
-  String get settingsWordsDbEncryption => 'шифрование база пароль защита диск';
+  String get settingsWordsDbEncryption =>
+      'шифрование база пароль защита диск замок бездействие';
 
   @override
   String get keyStorageTitle => 'Хранение закрытого ключа';
